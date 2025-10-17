@@ -8,4 +8,4 @@ set_target_properties(Graph PROPERTIES
         SOVERSION 1
         PUBLIC_HEADER "${graph_header}")
 
-target_link_libraries(Graph PRIVATE Logger)
+#target_link_libraries(Graph PRIVATE Logger)

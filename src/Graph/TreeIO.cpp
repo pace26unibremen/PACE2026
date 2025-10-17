@@ -1,7 +1,5 @@
 #include "TreeIO.hpp"
 
-#include "../Logger/Logger.hpp"
-
 #include <fstream>
 #include <stack>
 #include <unordered_map>

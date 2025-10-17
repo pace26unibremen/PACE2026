@@ -13,14 +13,14 @@ include(CPack)
 enable_testing()
 
 add_executable(TreeIOTests TreeIOTests.cpp)
-target_link_libraries(TreeIOTests PRIVATE Graph Logger Catch2::Catch2WithMain)
+target_link_libraries(TreeIOTests PRIVATE Graph Catch2::Catch2WithMain)
 add_test(NAME TreeIOTests COMMAND $<TARGET_FILE:TreeIOTests>)
 target_compile_definitions(TreeIOTests PRIVATE TEST_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/res/examples/")
 
 add_executable(TreeContractTests TreeContractTests.cpp)
-target_link_libraries(TreeContractTests PRIVATE Graph Logger Catch2::Catch2WithMain)
+target_link_libraries(TreeContractTests PRIVATE Graph Catch2::Catch2WithMain)
 add_test(NAME TreeContractTests COMMAND $<TARGET_FILE:TreeContractTests>)
 
 add_executable(TreeEqualTests TreeEqualTests.cpp)
-target_link_libraries(TreeEqualTests PRIVATE Graph Logger Catch2::Catch2WithMain)
+target_link_libraries(TreeEqualTests PRIVATE Graph Catch2::Catch2WithMain)
 add_test(NAME TreeEqualTests COMMAND $<TARGET_FILE:TreeEqualTests>)

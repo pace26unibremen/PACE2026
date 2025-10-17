@@ -1,4 +1,4 @@
-add_subdirectory(Logger)
+#add_subdirectory(Logger)
 add_subdirectory(Graph)
 #add_subdirectory(Solver)
 
