@@ -18,8 +18,8 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_DEBUG} -O3 -Wall")
 #    include("${CMAKE_SOURCE_DIR}/LocalConfig.cmake.in")
 #endif ()
 
-link_directories(${CPLEX_ROOT}/cplex/lib/${CPLEX_ARCH}/static_pic)
-link_directories(${CPLEX_ROOT}/concert/lib/${CPLEX_ARCH}/static_pic)
+#link_directories(${CPLEX_ROOT}/cplex/lib/${CPLEX_ARCH}/static_pic)
+#link_directories(${CPLEX_ROOT}/concert/lib/${CPLEX_ARCH}/static_pic)
 
 add_subdirectory(src)
 add_subdirectory(tests)
