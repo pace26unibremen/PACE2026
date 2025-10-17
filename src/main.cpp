@@ -1,5 +1,4 @@
 #include "Graph/Tree.hpp"
-#include "Logger/Logger.hpp"
 
 #include <iostream>
 #include <string>
