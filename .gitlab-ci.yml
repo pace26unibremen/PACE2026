@@ -1,0 +1,25 @@
+build-job:
+  stage: build
+  script:
+    - mkdir build/
+    - cd build/
+    - cmake ..
+    - make -j 4
+    - mkdir install
+    - make DESTDIR=install install
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - build/tests/TreeIOTests
+      - build/tests/TreeEqualTests
+      - build/tests/TreeContractTests
+
+test-graph_representation:
+  stage: test
+  script:
+    - apt-get --yes --force-yes install libboost-log-dev
+    - cd build/tests/
+    - ./TreeIOTests
+    - ./TreeEqualTests
+    - ./TreeContractTests
+
