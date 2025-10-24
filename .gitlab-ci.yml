@@ -1,5 +1,9 @@
 image: lpenz/ghaction-cmake
 
+stages:
+  - build
+  - test
+
 build-job:
   stage: build
   script:
@@ -16,7 +20,7 @@ build-job:
       - build/tests/TreeEqualTests
       - build/tests/TreeContractTests
 
-test-graph_representation:
+graph-representation:
   stage: test
   script:
     - cd build/tests/
