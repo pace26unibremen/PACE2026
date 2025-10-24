@@ -1,4 +1,4 @@
-image: lpenz/ghaction-cmake
+image: kitware/kwiver
 
 stages:
   - build
