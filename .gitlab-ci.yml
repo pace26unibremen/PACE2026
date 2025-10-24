@@ -1,3 +1,5 @@
+image: lpenz/ghaction-cmake
+
 build-job:
   stage: build
   script:
@@ -17,7 +19,6 @@ build-job:
 test-graph_representation:
   stage: test
   script:
-    - apt-get --yes --force-yes install libboost-log-dev
     - cd build/tests/
     - ./TreeIOTests
     - ./TreeEqualTests
