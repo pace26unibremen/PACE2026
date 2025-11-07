@@ -1,6 +1,5 @@
 #include "Tree.hpp"
 
-//#include "../Logger/Logger.hpp"
 #include "TreeIO.hpp"
 
 #include <algorithm>
@@ -30,13 +29,11 @@ Tree::Tree(filesystem::path path)
 {
     if (path.empty())
     {
-//        LOG_ERR_CH("Tree") << "Provided file path is empty!";
         throw invalid_argument("Tree : Constructor : provided file path is empty");
     }
     ifstream file = ifstream(path);
     if (!file.is_open())
     {
-//        LOG_ERR_CH("Tree") << "Unable to open file: " << path;
         throw invalid_argument("Tree : Constructor : unable to open file");
     }
     *this = TreeIO::ReadNewick(file);
@@ -56,7 +53,6 @@ void Tree::write(const string& path) const
     std::ofstream outStream(path);
     if (!outStream.is_open())
     {
-//        LOG_ERR_CH("Parser") << "Tree : write : couldn't open file";
         throw std::invalid_argument("Tree : write : couldn't open file");
     }
     write(outStream);
@@ -73,7 +69,6 @@ void Tree::dot(const string& path) const
     std::ofstream outStream(path);
     if (!outStream.is_open())
     {
-//        LOG_ERR_CH("Parser") << "Tree : dot : couldn't open file";
         throw std::invalid_argument("Tree : dot : couldn't open file");
     }
     dot(outStream);
@@ -151,13 +146,13 @@ void Tree::print() const
         rowFstChild << std::setw(7) << n.firstChildIndex << " |";
         rowSndChild << std::setw(7) << n.secondChildIndex << " |";
     }
-//    LOG_INF_CH("Tree") << "\n"
-//                       << rowIndex.str() << "\n"
-//                       << rowLine.str() << "\n"
-//                       << rowParent.str() << "\n"
-//                       << rowSibling.str() << "\n"
-//                       << rowFstChild.str() << "\n"
-//                       << rowSndChild.str() << endl;
+    std::clog << "\n"
+              << rowIndex.str() << "\n"
+              << rowLine.str() << "\n"
+              << rowParent.str() << "\n"
+              << rowSibling.str() << "\n"
+              << rowFstChild.str() << "\n"
+              << rowSndChild.str() << endl;
 }
 
 bool Tree::isValid() const
@@ -167,8 +162,8 @@ bool Tree::isValid() const
     for (int i = 0; i < (int)nodes->size(); ++i)
     {
         const Node& node = nodes->at(i);
-        if(node.parentIndex == -1 and node.siblingIndex == -1 and
-           node.firstChildIndex == -1 and node.secondChildIndex == -1)
+        if (node.parentIndex == -1 and node.siblingIndex == -1 and node.firstChildIndex == -1 and
+            node.secondChildIndex == -1)
         {
             continue;
         }
@@ -176,14 +171,14 @@ bool Tree::isValid() const
         {
             if (node.siblingIndex != -1 or node.parentIndex != -1)
             {
-//                LOG_INF_CH("Tree") << "isValid: Root with sibling or parent #" << i;
+                std::clog << "Tree: isValid: Root with sibling or parent #" << i;
             }
         }
         if (terminalIndexToLabel->contains(i))
         {
             if (node.firstChildIndex != -1 or node.secondChildIndex != -1)
             {
-//                LOG_INF_CH("Tree") << "isValid: Terminal with children #" << i;
+                std::clog << "Tree: isValid: Terminal with children #" << i;
             }
         }
 
@@ -192,31 +187,31 @@ bool Tree::isValid() const
             // check for correct siblings
             if (node.siblingIndex >= (int)nodes->size() or node.siblingIndex < 0)
             {
-//                LOG_INF_CH("Tree") << "isValid: invalid index for sibling #" << i;
+                std::clog << "Tree: isValid: invalid index for sibling #" << i;
                 isValid = false;
             }
             else
             {
                 if (node.siblingIndex == i)
                 {
-//                    LOG_INF_CH("Tree") << "isValid: #" << i << " is its own sibling";
+                    std::clog << "Tree: isValid: #" << i << " is its own sibling";
                     isValid = false;
                 }
                 if (nodes->at(node.siblingIndex).siblingIndex != i)
                 {
-//                    LOG_INF_CH("Tree") << "isValid: sibling of #" << i << " is not sym";
+                    std::clog << "Tree: isValid: sibling of #" << i << " is not sym";
                     isValid = false;
                 }
                 if (nodes->at(node.siblingIndex).parentIndex != node.parentIndex)
                 {
-//                    LOG_INF_CH("Tree") << "isValid: sibling of #" << i << " has different parents";
+                    std::clog << "Tree: isValid: sibling of #" << i << " has different parents";
                     isValid = false;
                 }
             }
             // check for parents
             if (node.parentIndex >= (int)nodes->size() or node.parentIndex < 0)
             {
-//                LOG_INF_CH("Tree") << "isValid: parent index for #" << i;
+                std::clog << "Tree: isValid: parent index for #" << i;
                 isValid = false;
             }
             else
@@ -224,7 +219,7 @@ bool Tree::isValid() const
                 if (nodes->at(node.parentIndex).firstChildIndex != i and
                     nodes->at(node.parentIndex).secondChildIndex != i)
                 {
-//                    LOG_INF_CH("Tree") << "isValid: parent of #" << i << " has it not as child";
+                    std::clog << "Tree: isValid: parent of #" << i << " has it not as child";
                     isValid = false;
                 }
             }
@@ -235,7 +230,7 @@ bool Tree::isValid() const
                                        [&seen](const auto& pair) { return seen.insert(pair.second).second; });
     if (not uniqueTerminals)
     {
-//        LOG_INF_CH("Tree") << "isValid: duplicate terminal labels";
+        std::clog << "Tree: isValid: duplicate terminal labels";
         isValid = false;
     }
     return isValid;
@@ -249,7 +244,6 @@ void Tree::contractNode(int nodeIndex)
 {
     if (terminalIndexToLabel->contains((int)nodeIndex))
     {
-//        LOG_WRN_CH("Tree") << "contractNode: Cannot contract terminal node";
         return;
     }
     Node& node = nodes->at(nodeIndex);
@@ -344,7 +338,7 @@ std::shared_ptr<Tree> Tree::removeEdge(int childIndex)
     auto newTree = make_shared<Tree>(nodes, terminalIndexToLabel, childIndex);
 
     nodes->at(childIndex).parentIndex = -1;
-    if(parent.firstChildIndex == childIndex)
+    if (parent.firstChildIndex == childIndex)
     {
         parent.firstChildIndex = -1;
     }
@@ -357,8 +351,7 @@ std::shared_ptr<Tree> Tree::removeEdge(int childIndex)
 
 void Tree::orderSiblings()
 {
-    std::function<unsigned int(int)> orderSubtree = [&](int subtree) -> unsigned int
-    {
+    std::function<unsigned int(int)> orderSubtree = [&](int subtree) -> unsigned int {
         Node& subtreeRoot = nodes->at(subtree);
         if (terminalIndexToLabel->contains(subtree))
         {
@@ -366,12 +359,9 @@ void Tree::orderSiblings()
         }
         unsigned int firstMinLabel = orderSubtree(subtreeRoot.firstChildIndex);
         unsigned int secondMinLabel = orderSubtree(subtreeRoot.secondChildIndex);
-        if(firstMinLabel > secondMinLabel)
+        if (firstMinLabel > secondMinLabel)
         {
             std::swap(subtreeRoot.firstChildIndex, subtreeRoot.secondChildIndex);
-//            int temp = subtreeRoot.firstChildIndex;
-//            subtreeRoot.firstChildIndex = subtreeRoot.secondChildIndex;
-//            subtreeRoot.secondChildIndex = temp;
         }
         return std::min(firstMinLabel, secondMinLabel);
     };
@@ -400,7 +390,7 @@ bool Tree::operator==(const Tree& other) const
             return terminalIndexToLabel->at(thisNodeIdx) == other.terminalIndexToLabel->at(otherNodeIdx);
         }
         return compareSubtrees(thisNode.firstChildIndex, otherNode.firstChildIndex) and
-           compareSubtrees(thisNode.secondChildIndex, otherNode.secondChildIndex);
+               compareSubtrees(thisNode.secondChildIndex, otherNode.secondChildIndex);
     };
     return compareSubtrees(rootIndex, other.rootIndex);
 }

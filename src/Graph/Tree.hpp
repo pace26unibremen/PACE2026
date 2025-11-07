@@ -126,11 +126,11 @@ class Tree
     // ---- debug -------------------------------------------------- //
     // ------------------------------------------------------------- //
 
-    /// \brief Prints tree as table to the 'Tree' log channel with
-    /// info severity.
+    /// \brief Writes tree as table to std::clog
     void print() const;
 
-    /// \brief Checks whether the tree representation is valid.
+    /// \brief Checks whether the tree representation is valid
+    /// and writes flaws to std::clog
     bool isValid() const;
 
     // ------------------------------------------------------------- //
