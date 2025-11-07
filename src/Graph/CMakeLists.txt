@@ -7,5 +7,3 @@ set_target_properties(Graph PROPERTIES
         VERSION ${PROJECT_VERSION}
         SOVERSION 1
         PUBLIC_HEADER "${graph_header}")
-
-#target_link_libraries(Graph PRIVATE Logger)
