@@ -38,6 +38,20 @@ struct Node
 
     /// \brief Default Constructor.\n
     Node() = default;
+
+    /// Checks if two nodes have the same terminals in their subtrees.
+    /// \param other
+    /// \return true if the terminals are identical, else false
+    [[nodiscard]]
+    bool hasSameTerminals(const Node& other) const;
+
+
+    /// Checks if a node has a the minimal terminal in its subtree, compared to another node.
+    /// \param other
+    /// \return true if \c this has the minimal terminal, else false
+    [[nodiscard]]
+    bool hasSmallestTerminal(const Node& other) const;
+
 };
 
 }  // namespace graph
