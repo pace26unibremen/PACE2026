@@ -279,6 +279,19 @@ void Forest::removeEdge(int childIndex)
         sibling.parentIndex = parent.parentIndex;
         sibling.siblingIndex = parent.siblingIndex;
         nodes->at(parent.siblingIndex).siblingIndex = child.siblingIndex;
+
+        int iterateUpwards = child.parentIndex;
+        const unsigned int subtreeTerminalsSize = child.subtreeTerminals.size();
+        while(iterateUpwards >= 0)
+        {
+            Node& itNode = nodes->at(iterateUpwards);
+            for(unsigned int i = 0; i < subtreeTerminalsSize; i++)
+            {
+                itNode.subtreeTerminals[i] ^= child.subtreeTerminals[i];
+                iterateUpwards = itNode.parentIndex;
+            }
+        }
+
     }
     // clean up refs
     child.siblingIndex = -1;
