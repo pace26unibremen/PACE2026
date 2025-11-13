@@ -1,6 +1,6 @@
-#include "Tree.hpp"
+#include "Forest.hpp"
 
-#include "TreeIO.hpp"
+#include "ForestIO.hpp"
 
 #include <algorithm>
 #include <fstream>
@@ -8,6 +8,7 @@
 #include <iostream>
 #include <sstream>
 #include <unordered_set>
+#include <utility>
 
 using namespace std;
 
@@ -18,58 +19,59 @@ namespace graph
 // ---- constructors ------------------------------------------- //
 // ------------------------------------------------------------- //
 
-Tree::Tree(std::shared_ptr<std::vector<Node>> nodes,
-           std::shared_ptr<std::unordered_map<int, unsigned int>> terminalIndexToLabel, int rootIndex) :
+Forest::Forest(std::shared_ptr<std::vector<Node>> nodes,
+               std::shared_ptr<std::unordered_map<int, unsigned int>> terminalIndexToLabel,
+               std::shared_ptr<std::vector<int>> rootIndices) :
         nodes(std::move(nodes)),
         terminalIndexToLabel(std::move(terminalIndexToLabel)),
-        rootIndex(rootIndex)
+        rootIndices(std::move(rootIndices))
 {}
 
-Tree::Tree(filesystem::path path)
+Forest::Forest(const filesystem::path& path, int numberOfLeafs, int numberOfTrees)
 {
     if (path.empty())
     {
-        throw invalid_argument("Tree : Constructor : provided file path is empty");
+        throw invalid_argument("Forest : Constructor : provided file path is empty");
     }
     ifstream file = ifstream(path);
     if (!file.is_open())
     {
-        throw invalid_argument("Tree : Constructor : unable to open file");
+        throw invalid_argument("Forest : Constructor : unable to open file");
     }
-    *this = TreeIO::ReadNewick(file);
+    *this = ForestIO::ReadNewick(file, numberOfLeafs, numberOfTrees);
 }
 
 // ------------------------------------------------------------- //
 // ---- persistence -------------------------------------------- //
 // ------------------------------------------------------------- //
 
-void Tree::write(std::ostream& out_file) const
+void Forest::write(std::ostream& out_file) const
 {
-    TreeIO::WriteNewick(*this, out_file);
+    ForestIO::WriteNewick(*this, out_file);
 }
 
-void Tree::write(const string& path) const
+void Forest::write(const string& path) const
 {
     std::ofstream outStream(path);
     if (!outStream.is_open())
     {
-        throw std::invalid_argument("Tree : write : couldn't open file");
+        throw std::invalid_argument("Forest : write : couldn't open file");
     }
     write(outStream);
     outStream.close();
 }
 
-void Tree::dot(ostream& stream) const
+void Forest::dot(ostream& stream) const
 {
-    TreeIO::WriteDot(*this, stream);
+    ForestIO::WriteDot(*this, stream);
 }
 
-void Tree::dot(const string& path) const
+void Forest::dot(const string& path) const
 {
     std::ofstream outStream(path);
     if (!outStream.is_open())
     {
-        throw std::invalid_argument("Tree : dot : couldn't open file");
+        throw std::invalid_argument("Forest : dot : couldn't open file");
     }
     dot(outStream);
     outStream.close();
@@ -79,41 +81,41 @@ void Tree::dot(const string& path) const
 // ---- access to member fields -------------------------------- //
 // ------------------------------------------------------------- //
 
-vector<Node>& Tree::Nodes()
+vector<Node>& Forest::Nodes()
 {
     return *this->nodes;
 }
 
-const vector<Node>& Tree::Nodes() const
+const vector<Node>& Forest::Nodes() const
 {
     return *this->nodes;
 }
 
-unordered_map<int, unsigned int>& Tree::Terminals()
+unordered_map<int, unsigned int>& Forest::Terminals()
 {
     return *this->terminalIndexToLabel;
 }
 
-const unordered_map<int, unsigned int>& Tree::Terminals() const
+const unordered_map<int, unsigned int>& Forest::Terminals() const
 {
     return *this->terminalIndexToLabel;
 }
 
-int& Tree::RootIndex()
+vector<int>& Forest::RootIndices()
 {
-    return this->rootIndex;
+    return *this->rootIndices;
 }
 
-const int& Tree::RootIndex() const
+const vector<int>& Forest::RootIndices() const
 {
-    return this->rootIndex;
+    return *this->rootIndices;
 }
 
 // ------------------------------------------------------------- //
 // ---- debug -------------------------------------------------- //
 // ------------------------------------------------------------- //
 
-void Tree::print() const
+void Forest::print() const
 {
     stringstream rowIndex;
     stringstream rowLine;
@@ -155,92 +157,97 @@ void Tree::print() const
               << rowSndChild.str() << endl;
 }
 
-bool Tree::isValid() const
+bool Forest::isValid() const
 {
-    bool isValid = true;
+    bool valid = true;
 
-    for (int i = 0; i < (int)nodes->size(); ++i)
+    for(int nodeIndex = 0; nodeIndex < (int) nodes->size(); nodeIndex++)
     {
-        const Node& node = nodes->at(i);
-        if (node.parentIndex == -1 and node.siblingIndex == -1 and node.firstChildIndex == -1 and
-            node.secondChildIndex == -1)
+        const Node& node = nodes->at(nodeIndex);
+
+        if(node.parentIndex == -1 and
+           node.firstChildIndex == -1 and
+           node.secondChildIndex == -1)
         {
+            // fully reduced node or single node tree
             continue;
         }
-        if (i == rootIndex)
+
+        // root or leaf
+        if(node.firstChildIndex >= 0 and node.firstChildIndex < (int) nodes->size() and
+           node.secondChildIndex >= 0 and node.secondChildIndex < (int) nodes->size())
         {
-            if (node.siblingIndex != -1 or node.parentIndex != -1)
+            const Node& fstChild = nodes->at(node.firstChildIndex);
+            const Node& sndChild = nodes->at(node.secondChildIndex);
+
+            // node.child.parent == node
+            if(fstChild.parentIndex != nodeIndex)
             {
-                std::clog << "Tree: isValid: Root with sibling or parent #" << i;
+                std::clog << "Forest: isValid: inconstant parent-child relation:\n"
+                             "   parent (" << nodeIndex << ") -> (" << node.firstChildIndex <<") child\n" <<
+                             "   parent (" << fstChild.parentIndex << ") <- (" << node.firstChildIndex <<") child\n";
+                valid = false;
             }
+            if(sndChild.parentIndex != nodeIndex)
+            {
+                std::clog << "Forest: isValid: inconstant parent-child relation:\n"
+                             "   parent (" << nodeIndex << ") -> (" << node.secondChildIndex <<") child\n" <<
+                             "   parent (" << sndChild.parentIndex << ") <- (" << node.secondChildIndex <<") child\n";
+                valid = false;
+            }
+
+            // TODO check sibling order and label structure
         }
-        if (terminalIndexToLabel->contains(i))
+        // node is terminal
+        else if (node.firstChildIndex == -1 and node.secondChildIndex == -1)
         {
-            if (node.firstChildIndex != -1 or node.secondChildIndex != -1)
-            {
-                std::clog << "Tree: isValid: Terminal with children #" << i;
-            }
+            // TODO check is terminal
+        }
+        else
+        {
+            std::clog << "Forest: isValid: invalid sibling indices:\n"
+                         "   node (" << nodeIndex << "): fst Child (" << node.firstChildIndex <<") "
+                        "snd Child (" << node.secondChildIndex <<") \n";
+            valid = false;
         }
 
-        if (i != rootIndex)
+        // node is root node <=> no parent
+        if(node.parentIndex == -1)
         {
-            // check for correct siblings
-            if (node.siblingIndex >= (int)nodes->size() or node.siblingIndex < 0)
+            auto it = std::find(rootIndices->begin(), rootIndices->end(), nodeIndex);
+            if(it == rootIndices->end())
             {
-                std::clog << "Tree: isValid: invalid index for sibling #" << i;
-                isValid = false;
-            }
-            else
-            {
-                if (node.siblingIndex == i)
-                {
-                    std::clog << "Tree: isValid: #" << i << " is its own sibling";
-                    isValid = false;
-                }
-                if (nodes->at(node.siblingIndex).siblingIndex != i)
-                {
-                    std::clog << "Tree: isValid: sibling of #" << i << " is not sym";
-                    isValid = false;
-                }
-                if (nodes->at(node.siblingIndex).parentIndex != node.parentIndex)
-                {
-                    std::clog << "Tree: isValid: sibling of #" << i << " has different parents";
-                    isValid = false;
-                }
-            }
-            // check for parents
-            if (node.parentIndex >= (int)nodes->size() or node.parentIndex < 0)
-            {
-                std::clog << "Tree: isValid: parent index for #" << i;
-                isValid = false;
-            }
-            else
-            {
-                if (nodes->at(node.parentIndex).firstChildIndex != i and
-                    nodes->at(node.parentIndex).secondChildIndex != i)
-                {
-                    std::clog << "Tree: isValid: parent of #" << i << " has it not as child";
-                    isValid = false;
-                }
+                std::clog << "Forest: isValid: non-root node without parent: " << nodeIndex ;
+                valid = false;
             }
         }
+        else if(node.parentIndex < 0 or node.parentIndex >= (int) nodes->size())
+        {
+            std::clog << "Forest: isValid: invalid parent index: " << nodeIndex ;
+            valid = false;
+        }
     }
+
     std::unordered_set<unsigned int> seen;
     bool uniqueTerminals = std::all_of(terminalIndexToLabel->begin(), terminalIndexToLabel->end(),
                                        [&seen](const auto& pair) { return seen.insert(pair.second).second; });
     if (not uniqueTerminals)
     {
         std::clog << "Tree: isValid: duplicate terminal labels";
-        isValid = false;
+        valid = false;
     }
-    return isValid;
+    if(not valid)
+    {
+        print();
+    }
+    return valid;
 }
 
 // ------------------------------------------------------------- //
 // ---- graph manipulation ------------------------------------- //
 // ------------------------------------------------------------- //
 
-void Tree::contractNode(int nodeIndex)
+void Forest::contractNode(int nodeIndex)
 {
     if (terminalIndexToLabel->contains((int)nodeIndex))
     {
@@ -293,8 +300,9 @@ void Tree::contractNode(int nodeIndex)
         if (node.parentIndex == -1)
         {
             child.parentIndex = -1;
-            if (rootIndex == nodeIndex)
-                rootIndex = childIndex;
+            auto it = std::find(rootIndices->begin(), rootIndices->end(), nodeIndex);
+            if (it != rootIndices->end())
+                replace(rootIndices->begin(), rootIndices->end(), nodeIndex, childIndex);
             if (node.siblingIndex != -1)
             {
                 nodes->at(node.siblingIndex).siblingIndex = -1;
@@ -330,12 +338,10 @@ void Tree::contractNode(int nodeIndex)
     }
 }
 
-std::shared_ptr<Tree> Tree::removeEdge(int childIndex)
+int Forest::removeEdge(int childIndex)
 {
     Node& child = nodes->at(childIndex);
     Node& parent = nodes->at(child.parentIndex);
-
-    auto newTree = make_shared<Tree>(nodes, terminalIndexToLabel, childIndex);
 
     nodes->at(childIndex).parentIndex = -1;
     if (parent.firstChildIndex == childIndex)
@@ -346,10 +352,12 @@ std::shared_ptr<Tree> Tree::removeEdge(int childIndex)
     {
         parent.secondChildIndex = -1;
     }
-    return newTree;
+//     reorder the root indices or use ordered_map for rootIndices
+    rootIndices->push_back(childIndex);
+    return childIndex;
 }
 
-void Tree::orderSiblings()
+void Forest::orderSiblings()
 {
     std::function<unsigned int(int)> orderSubtree = [&](int subtree) -> unsigned int {
         Node& subtreeRoot = nodes->at(subtree);
@@ -365,14 +373,17 @@ void Tree::orderSiblings()
         }
         return std::min(firstMinLabel, secondMinLabel);
     };
-    orderSubtree(rootIndex);
+    for(const auto root : *rootIndices)
+    {
+        orderSubtree(root);
+    }
 }
 
 // ------------------------------------------------------------- //
 // ---- operators ---------------------------------------------- //
 // ------------------------------------------------------------- //
 
-bool Tree::operator==(const Tree& other) const
+bool Forest::operator==(const Forest& other) const
 {
     std::function<bool(int, int)> compareSubtrees = [&](int thisNodeIdx, int otherNodeIdx) -> bool {
         const Node& thisNode = (*nodes)[thisNodeIdx];
@@ -392,7 +403,19 @@ bool Tree::operator==(const Tree& other) const
         return compareSubtrees(thisNode.firstChildIndex, otherNode.firstChildIndex) and
                compareSubtrees(thisNode.secondChildIndex, otherNode.secondChildIndex);
     };
-    return compareSubtrees(rootIndex, other.rootIndex);
+    if(rootIndices->size() != other.rootIndices->size())
+    {
+        return false;
+    }
+    for(int i = 0; i < (int)rootIndices->size(); ++i)
+    {
+        auto eq = compareSubtrees(rootIndices->at(i), other.rootIndices->at(i));
+        if(!eq)
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 }  //namespace graph

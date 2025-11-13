@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "../src/Graph/Tree.hpp"
+#include "../src/Graph/Forest.hpp"
 
 using namespace graph;
 using namespace std;
@@ -16,18 +16,20 @@ TEST_CASE("Order Siblings", "[Tree, orderSiblings]")
         auto terminals = make_shared<unordered_map<int, unsigned int>>();
         terminals->emplace(1, 222);
         terminals->emplace(2, 111);
+        auto roots = make_shared<vector<int>>();
+        roots->emplace_back(0);
 
-        auto tree = Tree(nodes, terminals, 0);
-        int oldFirstChildIndex = tree.Nodes()[tree.RootIndex()].firstChildIndex;
-        int oldSecondChildIndex = tree.Nodes()[tree.RootIndex()].secondChildIndex;
+        auto tree = Forest(nodes, terminals, roots);
+        int oldFirstChildIndex = tree.Nodes()[tree.RootIndices()[0]].firstChildIndex;
+        int oldSecondChildIndex = tree.Nodes()[tree.RootIndices()[0]].secondChildIndex;
         REQUIRE(tree.Terminals()[oldFirstChildIndex] == 222);
         REQUIRE(tree.Terminals()[oldSecondChildIndex] == 111);
 
         tree.orderSiblings();
 
         REQUIRE(tree.isValid());
-        int newFirstChildIndex = tree.Nodes()[tree.RootIndex()].firstChildIndex;
-        int newSecondChildIndex = tree.Nodes()[tree.RootIndex()].secondChildIndex;
+        int newFirstChildIndex = tree.Nodes()[tree.RootIndices()[0]].firstChildIndex;
+        int newSecondChildIndex = tree.Nodes()[tree.RootIndices()[0]].secondChildIndex;
         REQUIRE(tree.Terminals()[newFirstChildIndex] == 111);
         REQUIRE(tree.Terminals()[newSecondChildIndex] == 222);
     }
@@ -47,13 +49,15 @@ TEST_CASE("Order Siblings", "[Tree, orderSiblings]")
         terminals->emplace(4, 333);
         terminals->emplace(5, 999);
         terminals->emplace(6, 111);
+        auto roots = make_shared<vector<int>>();
+        roots->emplace_back(0);
 
-        auto tree = Tree(nodes, terminals, 0);
+        auto tree = Forest(nodes, terminals, roots);
         tree.orderSiblings();
 
         REQUIRE(tree.isValid());
-        int newFirstSubtreeIndex = tree.Nodes()[tree.RootIndex()].firstChildIndex;
-        int newSecondSubtreeIndex = tree.Nodes()[tree.RootIndex()].secondChildIndex;
+        int newFirstSubtreeIndex = tree.Nodes()[tree.RootIndices()[0]].firstChildIndex;
+        int newSecondSubtreeIndex = tree.Nodes()[tree.RootIndices()[0]].secondChildIndex;
 
         int newFirstSubtreeIndex_FirstChild   = tree.Nodes()[newFirstSubtreeIndex].firstChildIndex;
         int newFirstSubtreeIndex_SecondChild  = tree.Nodes()[newFirstSubtreeIndex].secondChildIndex;
@@ -78,7 +82,9 @@ TEST_CASE("Compare Tree ", "[Tree, equal]")
         auto terminals_1 = make_shared<unordered_map<int, unsigned int>>();
         terminals_1->emplace(1, 222);
         terminals_1->emplace(2, 111);
-        auto tree_1 = Tree(nodes_1, terminals_1, 0);
+        auto roots_1 = make_shared<vector<int>>();
+        roots_1->emplace_back(0);
+        auto tree_1 = Forest(nodes_1, terminals_1, roots_1);
 
         auto nodes_2 = make_shared<vector<Node>>();
         nodes_2->emplace_back(-1, -1, -1, -1); // [0]
@@ -88,7 +94,9 @@ TEST_CASE("Compare Tree ", "[Tree, equal]")
         auto terminals_2 = make_shared<unordered_map<int, unsigned int>>();
         terminals_2->emplace(3, 222);
         terminals_2->emplace(2, 111);
-        auto tree_2 = Tree(nodes_2, terminals_2, 1);
+        auto roots_2 = make_shared<vector<int>>();
+        roots_2->emplace_back(1);
+        auto tree_2 = Forest(nodes_2, terminals_2, roots_2);
 
         REQUIRE(tree_1 == tree_2);
     }

@@ -1,5 +1,5 @@
-#ifndef PACE2026_TREE_HPP
-#define PACE2026_TREE_HPP
+#ifndef PACE2026_FOREST_HPP
+#define PACE2026_FOREST_HPP
 
 #include "Node.hpp"
 
@@ -12,18 +12,18 @@
 namespace graph
 {
 
-/// \brief A representation of a tree.
-class Tree
+/// \brief A representation of a forest.
+class Forest
 {
   private:
-    /// \brief Vector that stores all nodes of the tree.
+    /// \brief Vector that stores all nodes of the forest.
     std::shared_ptr<std::vector<Node>> nodes;
 
     /// \brief A map that stores all indices of terminals (in the \c nodes vector) with corresponding terminal labels.
     std::shared_ptr<std::unordered_map<int, unsigned int>> terminalIndexToLabel;
 
-    /// \brief Index of root node in \c nodes vector.
-    int rootIndex{};
+    /// \brief Indices of root nodes in \c nodes vector.
+    std::shared_ptr<std::vector<int>> rootIndices;
 
   public:
     // ------------------------------------------------------------- //
@@ -31,33 +31,35 @@ class Tree
     // ------------------------------------------------------------- //
 
     /// \brief Constructor.
-    Tree(std::shared_ptr<std::vector<Node>> nodes,
-         std::shared_ptr<std::unordered_map<int, unsigned int>> terminalIndexToLabel,
-         int rootIndex);
+    Forest(std::shared_ptr<std::vector<Node>> nodes,
+           std::shared_ptr<std::unordered_map<int, unsigned int>> terminalIndexToLabel,
+           std::shared_ptr<std::vector<int>> rootIndices);
 
-    /// \brief Constructor. Loads tree from a file in newick format.
+    /// \brief Constructor. Loads forest from a file in newick format.
     /// \param path to file
+    /// \param numberOfLeafs number of leafs (for optimized memory allocation only). \c 0 if unknown.
+    /// \param numberOfTrees number of trees. \c 1 is default.
     [[maybe_unused]]
-    explicit Tree(std::filesystem::path path);
+    explicit Forest(const std::filesystem::path& path, int numberOfLeafs = 0, int numberOfTrees = 1);
 
     // ------------------------------------------------------------- //
     // ---- persistence -------------------------------------------- //
     // ------------------------------------------------------------- //
 
-    /// \brief Writes tree to a stream in newick format.
+    /// \brief Writes forest to a stream in newick format.
     /// \param stream
     void write(std::ostream& out_file) const;
 
-    /// \brief Writes tree to a stream in newick format.
+    /// \brief Writes forest to a stream in newick format.
     /// \param path to file
     [[maybe_unused]]
     void write(const std::string& path) const;
 
-    /// \brief Writes tree as .dot graph to a stream.
+    /// \brief Writes forest as .dot graph to a stream.
     /// \param stream
     void dot(std::ostream& stream) const;
 
-    /// \brief Writes tree to as .dot graph to a file.
+    /// \brief Writes forest to as .dot graph to a file.
     /// \param path to file
     [[maybe_unused]]
     void dot(const std::string& path) const;
@@ -93,22 +95,22 @@ class Tree
     /// \brief Reference index of root node.
     /// \property
     [[nodiscard, maybe_unused]]
-    int& RootIndex();
+    std::vector<int>& RootIndices();
 
     /// \brief \c const reference index of root node.
     /// \property
     [[nodiscard, maybe_unused]]
-    const int& RootIndex() const;
+    const std::vector<int>& RootIndices() const;
 
     // ------------------------------------------------------------- //
     // ---- graph manipulation ------------------------------------- //
     // ------------------------------------------------------------- //
 
-    /// \brief Removes an edge between a parent and a child from the tree.
+    /// \brief Removes an edge between a parent and a child.
     /// \param childIndex the index of the child node.
-    /// \return the split sub tree.
+    /// \return index of the root node of the split subtree.
     [[nodiscard]]
-    std::shared_ptr<Tree> removeEdge(int childIndex);
+    int removeEdge(int childIndex);
 
     /// \brief Contracts a node.
     /// \note A node can be contracted iff\n
@@ -126,10 +128,10 @@ class Tree
     // ---- debug -------------------------------------------------- //
     // ------------------------------------------------------------- //
 
-    /// \brief Writes tree as table to std::clog
+    /// \brief Writes forest as table to std::clog
     void print() const;
 
-    /// \brief Checks whether the tree representation is valid
+    /// \brief Checks whether the forest representation is valid
     /// and writes flaws to std::clog
     bool isValid() const;
 
@@ -140,10 +142,10 @@ class Tree
     /// \brief Equality operator that compares two trees for structural equality.
     /// \param other The tree to compare with.
     /// \return true if the trees are identical, false otherwise.
-    bool operator==(const Tree& other) const;
+    bool operator==(const Forest& other) const;
 
 };
 
 }  // namespace graph
 
-#endif  //PACE2026_TREE_HPP
+#endif  //PACE2026_FOREST_HPP

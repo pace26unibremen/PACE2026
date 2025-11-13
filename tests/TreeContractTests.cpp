@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "../src/Graph/Tree.hpp"
+#include "../src/Graph/Forest.hpp"
 
 using namespace graph;
 using namespace std;
@@ -17,8 +17,10 @@ TEST_CASE("Contract nodes", "[Tree, contractNode]")
         auto terminals = make_shared<unordered_map<int, unsigned int>>();
         terminals->emplace(2, 101);
         terminals->emplace(3, 102);
+        auto roots = make_shared<vector<int>>();
+        roots->emplace_back(0);
 
-        auto tree = Tree(nodes, terminals, 0);
+        auto tree = Forest(nodes, terminals, roots);
         tree.contractNode(0);
 
         REQUIRE(tree.isValid());
@@ -35,8 +37,10 @@ TEST_CASE("Contract nodes", "[Tree, contractNode]")
         auto terminals = make_shared<unordered_map<int, unsigned int>>();
         terminals->emplace(3, 101);
         terminals->emplace(4, 102);
+        auto roots = make_shared<vector<int>>();
+        roots->emplace_back(0);
 
-        auto tree = Tree(nodes, terminals, 0);
+        auto tree = Forest(nodes, terminals, roots);
 
         tree.contractNode(2);
         REQUIRE(tree.isValid());
@@ -55,8 +59,10 @@ TEST_CASE("Contract nodes", "[Tree, contractNode]")
         terminals->emplace(3, 101);
         terminals->emplace(4, 102);
         terminals->emplace(5, 103);
+        auto roots = make_shared<vector<int>>();
+        roots->emplace_back(0);
 
-        auto tree = Tree(nodes, terminals, 0);
+        auto tree = Forest(nodes, terminals, roots);
 
         tree.contractNode(1);
 
@@ -76,8 +82,10 @@ TEST_CASE("Contract nodes", "[Tree, contractNode]")
         terminals->emplace(3, 101);
         terminals->emplace(4, 102);
         terminals->emplace(5, 103);
+        auto roots = make_shared<vector<int>>();
+        roots->emplace_back(0);
 
-        auto tree = Tree(nodes, terminals, 0);
+        auto tree = Forest(nodes, terminals, roots);
 
         tree.contractNode(1);
 

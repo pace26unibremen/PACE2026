@@ -1,4 +1,4 @@
-#include "Graph/Tree.hpp"
+#include "Graph/Forest.hpp"
 
 #include <iostream>
 #include <string>
@@ -8,10 +8,7 @@ using namespace graph;
 
 int main(int, char**)
 {
-    auto t = Tree(string(RES_DIR) + "examples/test2.tree");
-
-
-//    t.print();
-    t.dot(cout);
+    auto t = Forest(string(RES_DIR) + "examples/tree1.tree");
+    t.dot(string(RES_DIR) + "examples/test2.dot");
     return 17;
 }
