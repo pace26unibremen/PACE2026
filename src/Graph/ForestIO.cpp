@@ -174,17 +174,27 @@ void ForestIO::WriteNewick(const Forest& tree, std::ostream& out)
 void ForestIO::WriteDot(const Forest& tree, ostream& stream)
 {
     stream << "digraph Tree {\n"
-           << "node [shape = point]\n"
-           << "edge [arrowhead = none]\n"
            // << "nodesep = 0.0\n"
            // << "ranksep = 0.0\n"
-           << "splines = false\n\n";
-    stream << "\n{\nnode [shape = plaintext]\n";
+           << "splines = false\n\n"
+           << "node [\n"
+           << "    shape = circle,\n"
+           << "    fontsize = 15,\n"
+           << "    label = \"\",\n"
+           << "    height = 0.2,\n"
+           << "    fillcolor = \"#00000022\",\n"
+           << "    style = filled,\n"
+           << "    fixedsize = true,\n"
+           << "    labelloc = t];\n"
+           << "edge [arrowhead = none];\n\n";
+
+    stream << "inv[style = invis];\n\n";
+
     for (auto i : tree.Terminals())
     {
-        stream << "n" << i.first << " [label = \"" << i.second << "\"];\n";
+        stream << "n" << i.first << " [label = \"" << i.second << "\\n\\n\\n \"];\n";
+        stream << "n" << i.first << " -> inv [style = invis];\n";
     }
-    stream << "}\n";
     for (size_t i = 0; i < tree.Nodes().size(); ++i)
     {
         const Node& node = tree.Nodes()[i];
