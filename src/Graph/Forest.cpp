@@ -313,7 +313,8 @@ void Forest::sortChildrenAndCollectTerminals()
         if (terminalIndexToLabel->contains(subtree))
         {
             const unsigned int label = terminalIndexToLabel->at(subtree);
-            subtreeRoot.subtreeTerminals[label / 64] = (1 << label % 64);
+            // (label - 1) because smallest label is 1 and not 0
+            subtreeRoot.subtreeTerminals[(label - 1) / 64] = (1 << (label -1) % 64);
             return label;
         }
         unsigned int firstMinLabel = orderSubtree(subtreeRoot.firstChildIndex);
