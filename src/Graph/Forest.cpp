@@ -27,7 +27,7 @@ Forest::Forest(std::shared_ptr<std::vector<Node>> nodes,
         rootIndices(std::move(rootIndices))
 {}
 
-Forest::Forest(const filesystem::path& path, int numberOfLeafs, int numberOfTrees)
+Forest::Forest(const filesystem::path& path, int numberOfTerminals, int numberOfTrees)
 {
     if (path.empty())
     {
@@ -38,7 +38,7 @@ Forest::Forest(const filesystem::path& path, int numberOfLeafs, int numberOfTree
     {
         throw invalid_argument("Forest : Constructor : unable to open file");
     }
-    *this = ForestIO::ReadNewick(file, numberOfLeafs, numberOfTrees);
+    *this = ForestIO::ReadNewick(file, numberOfTerminals, numberOfTrees);
 }
 
 // ------------------------------------------------------------- //
@@ -289,19 +289,31 @@ void Forest::removeEdge(int childIndex)
     parent.siblingIndex = -1;
 }
 
-void Forest::orderSiblings()
+void Forest::sortChildrenAndCollectTerminals()
 {
-    std::function<unsigned int(int)> orderSubtree = [&](int subtree) -> unsigned int {
+    // the number of elements in the `subtreeTerminals` vector of each node
+    const unsigned int numberOfEntries = (terminalIndexToLabel->size() + 63) / 64;
+
+    std::function<unsigned int(int)> orderSubtree = [&, numberOfEntries](int subtree) -> unsigned int {
         Node& subtreeRoot = nodes->at(subtree);
+        subtreeRoot.subtreeTerminals.resize(numberOfEntries,0);
         if (terminalIndexToLabel->contains(subtree))
         {
-            return terminalIndexToLabel->at(subtree);
+            const unsigned int label = terminalIndexToLabel->at(subtree);
+            subtreeRoot.subtreeTerminals[label / 64] = (1 << label % 64);
+            return label;
         }
         unsigned int firstMinLabel = orderSubtree(subtreeRoot.firstChildIndex);
         unsigned int secondMinLabel = orderSubtree(subtreeRoot.secondChildIndex);
         if (firstMinLabel > secondMinLabel)
         {
             std::swap(subtreeRoot.firstChildIndex, subtreeRoot.secondChildIndex);
+        }
+        for(unsigned int i = 0; i < subtreeRoot.subtreeTerminals.size(); i++)
+        {
+            subtreeRoot.subtreeTerminals[i] =
+                nodes->at(subtreeRoot.firstChildIndex).subtreeTerminals[i] |
+                nodes->at(subtreeRoot.secondChildIndex).subtreeTerminals[i];
         }
         return std::min(firstMinLabel, secondMinLabel);
     };

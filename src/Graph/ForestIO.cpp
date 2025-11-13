@@ -8,16 +8,16 @@
 using namespace std;
 using namespace graph;
 
-Forest ForestIO::ReadNewick(std::istream& stream, int numberOfLeafs, int numberOfTrees)
+Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int numberOfTrees)
 {
     auto terminalIndexToLabel = make_shared<unordered_map<int, unsigned int>>();
     auto nodes = make_shared<vector<Node>>();
     auto roots = make_shared<vector<int>>();
 
-    if(numberOfLeafs > 0)
+    if(numberOfTerminals > 0)
     {
-        nodes->reserve(2*numberOfLeafs - 1);
-        terminalIndexToLabel->reserve(2*numberOfLeafs -1);
+        nodes->reserve(2* numberOfTerminals - 1);
+        terminalIndexToLabel->reserve(2* numberOfTerminals -1);
     }
 
     stack<int> parentIndexStack;
