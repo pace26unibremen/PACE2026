@@ -247,114 +247,46 @@ bool Forest::isValid() const
 // ---- graph manipulation ------------------------------------- //
 // ------------------------------------------------------------- //
 
-void Forest::contractNode(int nodeIndex)
-{
-    if (terminalIndexToLabel->contains((int)nodeIndex))
-    {
-        return;
-    }
-    Node& node = nodes->at(nodeIndex);
-    // case: no root, no child
-    if (node.firstChildIndex == -1 and node.secondChildIndex == -1 and node.parentIndex == -1)
-    {
-        if (node.siblingIndex != -1)
-        {
-            nodes->at(node.siblingIndex).siblingIndex = -1;
-            node.siblingIndex = -1;
-        }
-        return;
-    }
-
-    // case: one root, no child
-    if (node.firstChildIndex == -1 and node.secondChildIndex == -1)
-    {
-        int parentIndex = node.parentIndex;
-        Node& parent = nodes->at(parentIndex);
-
-        if (parent.firstChildIndex == nodeIndex)
-        {
-            parent.firstChildIndex = -1;
-        }
-        else if (parent.secondChildIndex == nodeIndex)
-        {
-            parent.secondChildIndex = -1;
-        }
-
-        if (node.siblingIndex != -1)
-        {
-            nodes->at(node.siblingIndex).siblingIndex = -1;
-            node.siblingIndex = -1;
-        }
-        node.parentIndex = -1;
-
-        contractNode(parentIndex);
-        return;
-    }
-
-    if (node.firstChildIndex == -1 or node.secondChildIndex == -1)
-    {
-        int childIndex = node.firstChildIndex == -1 ? node.secondChildIndex : node.firstChildIndex;
-        Node& child = nodes->at(childIndex);
-
-        // case: no root, one child
-        if (node.parentIndex == -1)
-        {
-            child.parentIndex = -1;
-            auto it = std::find(rootIndices->begin(), rootIndices->end(), nodeIndex);
-            if (it != rootIndices->end())
-                replace(rootIndices->begin(), rootIndices->end(), nodeIndex, childIndex);
-            if (node.siblingIndex != -1)
-            {
-                nodes->at(node.siblingIndex).siblingIndex = -1;
-                node.siblingIndex = -1;
-            }
-            node.firstChildIndex = -1;
-            node.secondChildIndex = -1;
-            return;
-        }
-        // case: one root, one child
-        else
-        {
-            Node& parent = nodes->at(node.parentIndex);
-            if (parent.firstChildIndex == nodeIndex)
-            {
-                parent.firstChildIndex = childIndex;
-                child.siblingIndex = parent.secondChildIndex;
-                nodes->at(parent.secondChildIndex).siblingIndex = childIndex;
-            }
-            else if (parent.secondChildIndex == nodeIndex)
-            {
-                parent.secondChildIndex = childIndex;
-                child.siblingIndex = parent.firstChildIndex;
-                nodes->at(parent.firstChildIndex).siblingIndex = childIndex;
-            }
-            child.parentIndex = node.parentIndex;
-
-            node.parentIndex = -1;
-            node.firstChildIndex = -1;
-            node.secondChildIndex = -1;
-            node.siblingIndex = -1;
-        }
-    }
-}
-
-int Forest::removeEdge(int childIndex)
+void Forest::removeEdge(int childIndex)
 {
     Node& child = nodes->at(childIndex);
+    Node& sibling = nodes->at(child.siblingIndex);
     Node& parent = nodes->at(child.parentIndex);
 
-    nodes->at(childIndex).parentIndex = -1;
-    if (parent.firstChildIndex == childIndex)
+    auto it = find(rootIndices->begin(),rootIndices->end(), child.parentIndex);
+
+    // case 1: parent is root
+    if(it != rootIndices->end())
     {
-        parent.firstChildIndex = -1;
+        rootIndices->at(*it) = parent.firstChildIndex;
+        rootIndices->push_back(parent.secondChildIndex);
+        sibling.parentIndex = -1;
+        sibling.siblingIndex = -1;
     }
+    // case 2: parent is inner node
     else
     {
-        parent.secondChildIndex = -1;
+        rootIndices->push_back(childIndex);
+        Node& grandParent = nodes->at(parent.parentIndex);
+        if (grandParent.firstChildIndex == child.parentIndex)
+        {
+            grandParent.firstChildIndex = child.siblingIndex;
+        }
+        else
+        {
+            grandParent.secondChildIndex = child.siblingIndex;
+        }
+        sibling.parentIndex = parent.parentIndex;
+        sibling.siblingIndex = parent.siblingIndex;
+        nodes->at(parent.siblingIndex).siblingIndex = child.siblingIndex;
     }
-//     reorder the root indices or use ordered_map for rootIndices
-    rootIndices->push_back(childIndex);
-    return childIndex;
+    // clean up refs
+    child.siblingIndex = -1;
+    child.parentIndex = -1;
+    parent.firstChildIndex = -1;
+    parent.secondChildIndex = -1;
+    parent.parentIndex = -1;
+    parent.siblingIndex = -1;
 }
 
 void Forest::orderSiblings()

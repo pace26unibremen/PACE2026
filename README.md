@@ -33,5 +33,5 @@ cmake ..
 make
 ./tests/ForestIOTests
 ./tests/TreeEqualTests
-./tests/TreeContractTests
+./tests/ForestRemoveEdgeTests
 ```
