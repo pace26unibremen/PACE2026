@@ -31,7 +31,7 @@ mkdir build
 cd build
 cmake ..
 make
-./tests/TreeIOTests
+./tests/ForestIOTests
 ./tests/TreeEqualTests
 ./tests/TreeContractTests
 ```
