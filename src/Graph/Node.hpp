@@ -1,6 +1,9 @@
 #ifndef PACE2026_NODE_HPP
 #define PACE2026_NODE_HPP
 
+#include <vector>
+#include <cstdint>
+
 namespace graph
 {
 
@@ -22,6 +25,9 @@ struct Node
     /// \brief Index of the second child in.
     /// \c -1 indicates that \c this has no second child.
     int secondChildIndex = -1;
+
+    /// \brieg a bitmask that stores all terminals that in the subtree of this node
+    std::vector<uint64_t> subtreeTerminals = {};
 
     /// \brief Constructor.
     /// \param parentIndex Index of parent.
