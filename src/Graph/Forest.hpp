@@ -108,16 +108,7 @@ class Forest
 
     /// \brief Removes an edge between a parent and a child.
     /// \param childIndex the index of the child node.
-    /// \return index of the root node of the split subtree.
-    [[nodiscard]]
-    int removeEdge(int childIndex);
-
-    /// \brief Contracts a node.
-    /// \note A node can be contracted iff\n
-    /// 1. It isn't a terminal and\n
-    /// 2. It has at most one child.
-    /// \param nodeIndex the index of the node to contract.
-    void contractNode(int nodeIndex);
+    void removeEdge(int childIndex);
 
     /// \brief Orders all siblings in the tree,
     /// such that for each node the subtree of the first child

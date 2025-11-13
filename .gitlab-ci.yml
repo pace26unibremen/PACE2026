@@ -16,15 +16,15 @@ build-job:
   artifacts:
     expire_in: 1 day
     paths:
-      - build/tests/TreeIOTests
+      - build/tests/ForestIOTests
       - build/tests/TreeEqualTests
-      - build/tests/TreeContractTests
+      - build/tests/ForestRemoveEdgeTests
 
 graph-representation:
   stage: test
   script:
     - cd build/tests/
-    - ./TreeIOTests
+    - ./ForestIOTests
     - ./TreeEqualTests
-    - ./TreeContractTests
+    - ./ForestRemoveEdgeTests
 
