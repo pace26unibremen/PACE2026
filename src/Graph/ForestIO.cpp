@@ -11,13 +11,15 @@ using namespace graph;
 Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int numberOfTrees)
 {
     auto terminalIndexToLabel = make_shared<unordered_map<int, unsigned int>>();
+    auto labelToTerminalIndex = make_shared<unordered_map<unsigned int, int>>();
     auto nodes = make_shared<vector<Node>>();
     auto roots = make_shared<vector<int>>();
 
     if(numberOfTerminals > 0)
     {
-        nodes->reserve(2* numberOfTerminals - 1);
-        terminalIndexToLabel->reserve(2* numberOfTerminals -1);
+        nodes->reserve(2*numberOfTerminals - 1);
+        terminalIndexToLabel->reserve(numberOfTerminals);
+        labelToTerminalIndex->reserve(numberOfTerminals);
     }
 
     stack<int> parentIndexStack;
@@ -60,6 +62,7 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
                             }
                             siblingIndex = currentIndex;
                             terminalIndexToLabel->emplace(currentIndex, stoi(label));
+                            labelToTerminalIndex->emplace(stoi(label), currentIndex);
                             label = "";
                             currentIndex++;
                         }
@@ -83,6 +86,7 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
                                 }
                             }
                             terminalIndexToLabel->emplace(currentIndex, stoi(label));
+                            labelToTerminalIndex->emplace(stoi(label), currentIndex);
                             label = "";
                             currentIndex++;
                         }
@@ -124,7 +128,7 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
             // nothing to do here, start reading next tree
         };
     }
-    return {nodes, terminalIndexToLabel, roots};
+    return {nodes, terminalIndexToLabel, labelToTerminalIndex, roots};
 }
 
 void ForestIO::WriteNewick(const Forest& tree, std::ostream& out)
