@@ -135,7 +135,18 @@ class Forest
     /// \return true if the trees are identical, false otherwise.
     bool operator==(const Forest& other) const;
 
+
+
+
+    // ------------------------------------------------------------- //
+    // ---- copy func ---------------------------------------------- //
+    // ------------------------------------------------------------- //
+    /// \brief Tree copy function that makes a separate copy to the copied tree.
+    /// @return A Copy of the Tree
+    Forest copy();
+
 };
+
 
 }  // namespace graph
 

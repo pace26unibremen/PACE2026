@@ -1,3 +1,4 @@
+
 #include "Forest.hpp"
 
 #include "ForestIO.hpp"
@@ -349,5 +350,41 @@ bool Forest::operator==(const Forest& other) const
     }
     return true;
 }
+// ------------------------------------------------------------- //
+// ---- copy func ---------------------------------------------- //
+// ------------------------------------------------------------- //
+
+Forest Forest::copy()
+{
+
+    //Init empty Forest
+    std::shared_ptr<std::vector<Node>> copiedNodes = std::make_shared<std::vector<Node>>();
+    std::shared_ptr<std::unordered_map<int, unsigned int>> copiedTerminalIndexToLabel =
+        std::make_shared<std::unordered_map<int, unsigned int>>();
+    std::shared_ptr<std::vector<int>> copiedRootIndices = std::make_shared<std::vector<int>>();
+    //Start Copying the param
+    //Nodes
+    // Anstelle -> auch nichts: this allein| nodes, Nodes()
+    for ( Node node : *nodes)
+    {
+        copiedNodes->push_back(node);
+    }
+    //Termial Indecies
+    for ( auto termIndexToLabel : *terminalIndexToLabel)
+    {
+        copiedTerminalIndexToLabel->insert(termIndexToLabel);
+    }
+    //Root Indices
+    for (int rootIndex : *rootIndices)
+    {
+        copiedRootIndices->push_back(rootIndex);
+    }
+    Forest newForest(copiedNodes, copiedTerminalIndexToLabel, copiedRootIndices);
+
+    return newForest;
+
+}
+
+
 
 }  //namespace graph
