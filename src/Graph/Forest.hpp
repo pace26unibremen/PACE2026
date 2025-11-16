@@ -22,6 +22,9 @@ class Forest
     /// \brief A map that stores all indices of terminals (in the \c nodes vector) with corresponding terminal labels.
     std::shared_ptr<std::unordered_map<int, unsigned int>> terminalIndexToLabel;
 
+    /// \brief A map that stores all leaf labels with corresponding terminal indices (in the \c nodes vector).
+    std::shared_ptr<std::unordered_map<unsigned int, int>> labelToTerminalIndex;
+
     /// \brief Indices of root nodes in \c nodes vector.
     std::shared_ptr<std::vector<int>> rootIndices;
 
@@ -33,6 +36,7 @@ class Forest
     /// \brief Constructor.
     Forest(std::shared_ptr<std::vector<Node>> nodes,
            std::shared_ptr<std::unordered_map<int, unsigned int>> terminalIndexToLabel,
+           std::shared_ptr<std::unordered_map<unsigned int, int>> labelToTerminalIndex,
            std::shared_ptr<std::vector<int>> rootIndices);
 
     /// \brief Constructor. Loads forest from a file in newick format.
@@ -135,6 +139,11 @@ class Forest
     /// \param other The tree to compare with.
     /// \return true if the trees are identical, false otherwise.
     bool operator==(const Forest& other) const;
+
+    /// \brief Operator that checks if the first tree is a subtree of the second.
+    /// \param other The tree to compare with.
+    /// \return true if the first tree is a subtree, false otherwise.
+    bool operator<=(const Forest& other) const;
 
 };
 

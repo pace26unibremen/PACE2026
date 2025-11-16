@@ -21,9 +21,11 @@ namespace graph
 
 Forest::Forest(std::shared_ptr<std::vector<Node>> nodes,
                std::shared_ptr<std::unordered_map<int, unsigned int>> terminalIndexToLabel,
+               std::shared_ptr<std::unordered_map<unsigned int, int>> labelToTerminalIndex,
                std::shared_ptr<std::vector<int>> rootIndices) :
         nodes(std::move(nodes)),
         terminalIndexToLabel(std::move(terminalIndexToLabel)),
+        labelToTerminalIndex(std::move(labelToTerminalIndex)),
         rootIndices(std::move(rootIndices))
 {}
 
@@ -429,4 +431,8 @@ bool Forest::operator==(const Forest& other) const
     return true;
 }
 
+bool Forest::operator<=(const Forest& other) const
+{
+
+}
 }  //namespace graph
