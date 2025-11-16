@@ -11,13 +11,15 @@ using namespace graph;
 Forest ForestIO::ReadNewick(std::istream& stream, int numberOfLeafs, int numberOfTrees)
 {
     auto terminalIndexToLabel = make_shared<unordered_map<int, unsigned int>>();
+    auto labelToTerminalIndex = make_shared<unordered_map<unsigned int, int>>();
     auto nodes = make_shared<vector<Node>>();
     auto roots = make_shared<vector<int>>();
 
     if(numberOfLeafs > 0)
     {
         nodes->reserve(2*numberOfLeafs - 1);
-        terminalIndexToLabel->reserve(2*numberOfLeafs -1);
+        terminalIndexToLabel->reserve(numberOfLeafs);
+        labelToTerminalIndex->reserve(numberOfLeafs);
     }
 
     stack<int> parentIndexStack;
@@ -60,6 +62,7 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfLeafs, int numberO
                             }
                             siblingIndex = currentIndex;
                             terminalIndexToLabel->emplace(currentIndex, stoi(label));
+                            labelToTerminalIndex->emplace(stoi(label), currentIndex);
                             label = "";
                             currentIndex++;
                         }
@@ -83,6 +86,7 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfLeafs, int numberO
                                 }
                             }
                             terminalIndexToLabel->emplace(currentIndex, stoi(label));
+                            labelToTerminalIndex->emplace(stoi(label), currentIndex);
                             label = "";
                             currentIndex++;
                         }
@@ -124,7 +128,7 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfLeafs, int numberO
             // nothing to do here, start reading next tree
         };
     }
-    return {nodes, terminalIndexToLabel, roots};
+    return {nodes, terminalIndexToLabel, labelToTerminalIndex, roots};
 }
 
 void ForestIO::WriteNewick(const Forest& tree, std::ostream& out)
