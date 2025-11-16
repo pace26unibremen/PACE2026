@@ -61,6 +61,7 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
                             }
                             siblingIndex = -1;
                             terminalIndexToLabel->emplace(currentIndex, stoi(label));
+                            labelToTerminalIndex->emplace(stoi(label), currentIndex);
                             label = "";
                             currentIndex++;
                         }
