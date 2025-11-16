@@ -380,6 +380,33 @@ bool Forest::operator==(const Forest& other) const
 
 bool Forest::operator<=(const Forest& other) const
 {
+    std::function<bool(int, int)> traverseUp = [&](int thisNodeIdx, int otherNodeIdx) -> bool {
+        const Node& node = (*nodes)[thisNodeIdx];
+        const Node& otherNode = (*other.nodes)[otherNodeIdx];
 
+        // if ()
+        // {
+        //     return false;
+        // }
+        if (node.parentIndex == -1)
+        {
+            return true;
+        }
+        return traverseUp(node.parentIndex, otherNode.parentIndex);
+    };
+
+    if (this->labelToTerminalIndex->size() > other.labelToTerminalIndex->size())
+    {
+        return false;
+    }
+
+    for (auto& [key, value]: *labelToTerminalIndex)
+    {
+        if (!traverseUp(value, other.labelToTerminalIndex->at(key)))
+        {
+            return false;
+        }
+    }
+    return true;
 }
 }  //namespace graph
