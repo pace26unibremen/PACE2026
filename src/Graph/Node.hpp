@@ -45,6 +45,12 @@ struct Node
     [[nodiscard]]
     bool hasSameTerminals(const Node& other) const;
 
+    /// Checks if the terminals in the subtree of a node is a \b subset of
+    /// the terminals of another node.
+    /// \param other
+    /// \return true if terminals of \c are a subset of the terminals of \c other, else false
+    [[nodiscard]]
+    bool hasSubsetTerminals(const Node& other) const;
 
     /// Checks if a node has a the minimal terminal in its subtree, compared to another node.
     /// \param other

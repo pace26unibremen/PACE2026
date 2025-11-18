@@ -9,12 +9,14 @@ graph::Node::Node(int parentIndex, int siblingIndex, int firstChildIndex, int se
 
 bool graph::Node::hasSameTerminals(const Node& other) const
 {
-    bool eq = true;
     for(unsigned int i = 0; i < subtreeTerminals.size(); i++ )
     {
-        eq &= (subtreeTerminals[i] == other.subtreeTerminals[i]);
+        if(subtreeTerminals[i] != other.subtreeTerminals[i])
+        {
+            return false;
+        }
     }
-    return eq;
+    return true;
 }
 
 bool graph::Node::hasSmallestTerminal(const graph::Node& other) const
@@ -36,4 +38,16 @@ bool graph::Node::hasSmallestTerminal(const graph::Node& other) const
         }
     }
     return false;
+}
+
+bool graph::Node::hasSubsetTerminals(const graph::Node& other) const
+{
+    for(unsigned int i = 0; i < subtreeTerminals.size(); i++ )
+    {
+        if((subtreeTerminals[i] | other.subtreeTerminals[i]) != other.subtreeTerminals[i])
+        {
+            return false;
+        }
+    }
+    return true;
 }
