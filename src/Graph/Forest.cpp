@@ -39,6 +39,7 @@ Forest::Forest(const filesystem::path& path, int numberOfTerminals, int numberOf
         throw invalid_argument("Forest : Constructor : unable to open file");
     }
     *this = ForestIO::ReadNewick(file, numberOfTerminals, numberOfTrees);
+    sortChildrenAndCollectTerminals();
 }
 
 // ------------------------------------------------------------- //

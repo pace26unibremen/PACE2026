@@ -39,7 +39,30 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
             {
                 switch (c)
                 {
-                    case ';': goto endWhile;
+                    case ';':
+                        if (not label.empty())
+                        {
+                            nodes->emplace_back();
+                            if (not parentIndexStack.empty())
+                            {
+                                nodes->at(currentIndex).parentIndex = parentIndexStack.top();
+                                if (siblingIndex == -1)
+                                {
+                                    nodes->at(parentIndexStack.top()).firstChildIndex = currentIndex;
+                                }
+                                else
+                                {
+                                    nodes->at(parentIndexStack.top()).secondChildIndex = currentIndex;
+                                    nodes->at(siblingIndex).siblingIndex = currentIndex;
+                                    nodes->at(currentIndex).siblingIndex = siblingIndex;
+                                }
+                            }
+                            siblingIndex = -1;
+                            terminalIndexToLabel->emplace(currentIndex, stoi(label));
+                            label = "";
+                            currentIndex++;
+                        }
+                        goto endWhile;
                     case ',':
                         if (not label.empty())
                         {
@@ -153,6 +176,7 @@ void ForestIO::WriteNewick(const Forest& tree, std::ostream& out)
             }
             else
             {
+                if (node.parentIndex == -1) break;
                 if (current == nodes[node.parentIndex].firstChildIndex)
                 {
                     out << ",";
@@ -161,7 +185,6 @@ void ForestIO::WriteNewick(const Forest& tree, std::ostream& out)
                 }
                 else
                 {
-                    if (node.parentIndex == -1) break;
                     out << ")";
                     current = node.parentIndex;
                 }
@@ -181,7 +204,7 @@ void ForestIO::WriteDot(const Forest& tree, ostream& stream)
            << "    shape = circle,\n"
            << "    fontsize = 15,\n"
            << "    label = \"\",\n"
-           << "    height = 0.2,\n"
+           << "    height = 0.1,\n"
            << "    fillcolor = \"#00000022\",\n"
            << "    style = filled,\n"
            << "    fixedsize = true,\n"
