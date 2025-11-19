@@ -336,6 +336,11 @@ void Forest::sortChildrenAndCollectTerminals()
     {
         orderSubtree(root);
     }
+    std::sort(rootIndices->begin(),rootIndices->end(),
+              [&](int a, int b)
+              {
+                  return nodes->at(a).hasSmallestTerminal(nodes->at(b));
+              });
 }
 
 // ------------------------------------------------------------- //
