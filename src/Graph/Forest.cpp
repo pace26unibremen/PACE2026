@@ -259,15 +259,31 @@ void Forest::removeEdge(int childIndex)
     // case 1: parent is root
     if(it != rootIndices->end())
     {
+        // first new root is always at same position than the parent
         rootIndices->at(*it) = parent.firstChildIndex;
-        rootIndices->push_back(parent.secondChildIndex);
+
+        // position of second new root is somewhere after the old parent
+        auto it2 = std::lower_bound(
+            it, rootIndices->end(), parent.secondChildIndex,
+            [&](const int& a, const int& b)
+            {
+                const Node& an = nodes->at(a);
+                const Node& bn = nodes->at(b);
+                return an.hasSmallestTerminal(bn);
+            }
+        );
+        rootIndices->insert(it2, parent.secondChildIndex);
+
         sibling.parentIndex = -1;
         sibling.siblingIndex = -1;
     }
     // case 2: parent is inner node
     else
     {
-        rootIndices->push_back(childIndex);
+        int rootIndex = *it;
+        rootIndices->erase(it);
+
+
         Node& grandParent = nodes->at(parent.parentIndex);
         if (grandParent.firstChildIndex == child.parentIndex)
         {
@@ -281,18 +297,35 @@ void Forest::removeEdge(int childIndex)
         sibling.siblingIndex = parent.siblingIndex;
         nodes->at(parent.siblingIndex).siblingIndex = child.siblingIndex;
 
-        int iterateUpwards = child.parentIndex;
+        int traverseUpwards = child.parentIndex;
         const unsigned int subtreeTerminalsSize = child.subtreeTerminals.size();
-        while(iterateUpwards >= 0)
+        while(traverseUpwards >= 0)
         {
-            Node& itNode = nodes->at(iterateUpwards);
-            for(unsigned int i = 0; i < subtreeTerminalsSize; i++)
+            Node& itNode = nodes->at(traverseUpwards);
+            for (unsigned int i = 0; i < subtreeTerminalsSize; i++)
             {
                 itNode.subtreeTerminals[i] ^= child.subtreeTerminals[i];
-                iterateUpwards = itNode.parentIndex;
+                traverseUpwards = itNode.parentIndex;
+                // TODO sort siblings
             }
         }
+        auto it2 =
+            std::lower_bound(rootIndices->begin(), rootIndices->end(), childIndex, [&](const int& a, const int& b)
+                 {
+                    const Node& an = nodes->at(a);
+                    const Node& bn = nodes->at(b);
+                    return an.hasSmallestTerminal(bn);
+                 });
+        rootIndices->insert(it2, childIndex);
 
+        it2 =
+            std::lower_bound(rootIndices->begin(), rootIndices->end(), rootIndex, [&](const int& a, const int& b)
+                {
+                    const Node& an = nodes->at(a);
+                    const Node& bn = nodes->at(b);
+                    return an.hasSmallestTerminal(bn);
+                });
+        rootIndices->insert(it2, rootIndex);
     }
     // clean up refs
     child.siblingIndex = -1;
