@@ -5,33 +5,65 @@
 using namespace graph;
 using namespace std;
 
-TEST_CASE("Compare Tree ", "[Tree, equal]")
+TEST_CASE("Equality of Trees", "[Forest, equal, ==]")
 {
-    SECTION("Compare Trees - simple")
+    SECTION("Check for equality of two simple trees - 'equal instance'")
     {
-        auto nodes_1 = make_shared<vector<Node>>();
-        nodes_1->emplace_back(-1, -1,  1,  2); // [0]  0 +-- 1 (222)
-        nodes_1->emplace_back( 0,  2, -1, -1); // [1]    |
-        nodes_1->emplace_back( 0,  1, -1, -1); // [2]    +-- 2 (111)
-        auto terminals_1 = make_shared<unordered_map<int, unsigned int>>();
-        terminals_1->emplace(1, 222);
-        terminals_1->emplace(2, 111);
-        auto roots_1 = make_shared<vector<int>>();
-        roots_1->emplace_back(0);
-        auto tree_1 = Forest(nodes_1, terminals_1, roots_1);
+        auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree");
+        auto t2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple_reordered.tree");
 
-        auto nodes_2 = make_shared<vector<Node>>();
-        nodes_2->emplace_back(-1, -1, -1, -1); // [0]
-        nodes_2->emplace_back(-1, -1,  3,  2); // [1]  1 +-- 3 (222)
-        nodes_2->emplace_back( 1,  3, -1, -1); // [2]    |
-        nodes_2->emplace_back( 1,  2, -1, -1); // [3]    +-- 2 (111)
-        auto terminals_2 = make_shared<unordered_map<int, unsigned int>>();
-        terminals_2->emplace(3, 222);
-        terminals_2->emplace(2, 111);
-        auto roots_2 = make_shared<vector<int>>();
-        roots_2->emplace_back(1);
-        auto tree_2 = Forest(nodes_2, terminals_2, roots_2);
+        REQUIRE(t1 == t2);
+        REQUIRE(t2 == t1);
+        REQUIRE(t1 == t1);
+    }
 
-        REQUIRE(tree_1 == tree_2);
+    SECTION("Check for equality of two simple trees - 'equal instance'")
+    {
+        auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree");
+        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_2_2_singleVertexTrees.tree", 0, 2);
+
+        REQUIRE_FALSE(t1 == f2);
+        REQUIRE_FALSE(f2 == t1);
+    }
+
+    SECTION("Check for equality of two trees - 'equal instance'")
+    {
+        auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree");
+        auto t2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1_reordered.tree");
+
+        REQUIRE(t1 == t2);
+        REQUIRE(t2 == t1);
+        REQUIRE(t1 == t1);
+    }
+
+    SECTION("Check for equality of two trees - 'equal instance'")
+    {
+        auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree");
+        auto t2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example2.tree");
+
+        REQUIRE_FALSE(t1 == t2);
+        REQUIRE_FALSE(t2 == t1);
+    }
+}
+
+TEST_CASE("Equality of Forests", "[Forest, equal, ==]")
+{
+    SECTION("Check for equality of two forests - 'equal instance'")
+    {
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_4_6_simple.tree",0,4);
+        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_4_6_simple_reordered.tree",0,4);
+
+        REQUIRE(f1 == f2);
+        REQUIRE(f2 == f1);
+        REQUIRE(f1 == f1);
+    }
+
+    SECTION("Check for equality of two forests - 'unequal instance'")
+    {
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_4_6_simple.tree",0,4);
+        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_6_6_singleVertexTrees.tree", 0, 6);
+
+        REQUIRE_FALSE(f1 == f2);
+        REQUIRE_FALSE(f2 == f1);
     }
 }
