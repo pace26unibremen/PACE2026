@@ -280,9 +280,14 @@ void Forest::removeEdge(int childIndex)
     // case 2: parent is inner node
     else
     {
-        int rootIndex = *it;
-        rootIndices->erase(it);
-
+        auto itOldRoot = std::find_if(rootIndices->begin(), rootIndices->end(),
+                                      [&](int a)
+                                      {
+                                          return parent.hasSubsetTerminals(nodes->at(a));
+                                      });
+        auto rootIndex = *itOldRoot;
+        clog << (itOldRoot == rootIndices->end()) << endl;
+        rootIndices->erase(itOldRoot);
 
         Node& grandParent = nodes->at(parent.parentIndex);
         if (grandParent.firstChildIndex == child.parentIndex)
@@ -309,23 +314,24 @@ void Forest::removeEdge(int childIndex)
                 // TODO sort siblings
             }
         }
-        auto it2 =
+
+        auto itNewRoot1 =
             std::lower_bound(rootIndices->begin(), rootIndices->end(), childIndex, [&](const int& a, const int& b)
                  {
                     const Node& an = nodes->at(a);
                     const Node& bn = nodes->at(b);
                     return an.hasSmallestTerminal(bn);
                  });
-        rootIndices->insert(it2, childIndex);
+        rootIndices->insert(itNewRoot1, childIndex);
 
-        it2 =
+        auto itNewRoot2 =
             std::lower_bound(rootIndices->begin(), rootIndices->end(), rootIndex, [&](const int& a, const int& b)
                 {
                     const Node& an = nodes->at(a);
                     const Node& bn = nodes->at(b);
                     return an.hasSmallestTerminal(bn);
                 });
-        rootIndices->insert(it2, rootIndex);
+        rootIndices->insert(itNewRoot2, rootIndex);
     }
     // clean up refs
     child.siblingIndex = -1;
