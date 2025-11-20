@@ -37,10 +37,10 @@ class Forest
 
     /// \brief Constructor. Loads forest from a file in newick format.
     /// \param path to file
-    /// \param numberOfLeafs number of leafs (for optimized memory allocation only). \c 0 if unknown.
+    /// \param numberOfTerminals number of leafs (for optimized memory allocation only). \c 0 if unknown.
     /// \param numberOfTrees number of trees. \c 1 is default.
     [[maybe_unused]]
-    explicit Forest(const std::filesystem::path& path, int numberOfLeafs = 0, int numberOfTrees = 1);
+    explicit Forest(const std::filesystem::path& path, int numberOfTerminals = 0, int numberOfTrees = 1);
 
     // ------------------------------------------------------------- //
     // ---- persistence -------------------------------------------- //
@@ -110,10 +110,11 @@ class Forest
     /// \param childIndex the index of the child node.
     void removeEdge(int childIndex);
 
-    /// \brief Orders all siblings in the tree,
-    /// such that for each node the subtree of the first child
-    /// contains the minimum label.
-    void orderSiblings();
+    /// \brief \b 1. Sorts the children of each node,
+    /// such that the first child
+    /// contains the minimum label of both children.\n
+    /// And \b 2. fills \c subtreeTerminals for each node.
+    void sortChildrenAndCollectTerminals();
 
     // ------------------------------------------------------------- //
     // ---- debug -------------------------------------------------- //

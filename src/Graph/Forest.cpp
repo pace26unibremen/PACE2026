@@ -27,7 +27,7 @@ Forest::Forest(std::shared_ptr<std::vector<Node>> nodes,
         rootIndices(std::move(rootIndices))
 {}
 
-Forest::Forest(const filesystem::path& path, int numberOfLeafs, int numberOfTrees)
+Forest::Forest(const filesystem::path& path, int numberOfTerminals, int numberOfTrees)
 {
     if (path.empty())
     {
@@ -38,7 +38,8 @@ Forest::Forest(const filesystem::path& path, int numberOfLeafs, int numberOfTree
     {
         throw invalid_argument("Forest : Constructor : unable to open file");
     }
-    *this = ForestIO::ReadNewick(file, numberOfLeafs, numberOfTrees);
+    *this = ForestIO::ReadNewick(file, numberOfTerminals, numberOfTrees);
+    sortChildrenAndCollectTerminals();
 }
 
 // ------------------------------------------------------------- //
@@ -258,15 +259,27 @@ void Forest::removeEdge(int childIndex)
     // case 1: parent is root
     if(it != rootIndices->end())
     {
-        rootIndices->at(*it) = parent.firstChildIndex;
-        rootIndices->push_back(parent.secondChildIndex);
+        // first new root is always at same position than the parent
+        *it = parent.firstChildIndex;
+
+        // position of second new root is somewhere after the old parent
+        auto it2 = std::lower_bound(
+            it, rootIndices->end(), parent.secondChildIndex,
+            [&](const int& a, const int& b)
+            {
+                const Node& an = nodes->at(a);
+                const Node& bn = nodes->at(b);
+                return an.hasSmallestTerminal(bn);
+            }
+        );
+        rootIndices->insert(it2, parent.secondChildIndex);
+
         sibling.parentIndex = -1;
         sibling.siblingIndex = -1;
     }
     // case 2: parent is inner node
     else
     {
-        rootIndices->push_back(childIndex);
         Node& grandParent = nodes->at(parent.parentIndex);
         if (grandParent.firstChildIndex == child.parentIndex)
         {
@@ -279,6 +292,54 @@ void Forest::removeEdge(int childIndex)
         sibling.parentIndex = parent.parentIndex;
         sibling.siblingIndex = parent.siblingIndex;
         nodes->at(parent.siblingIndex).siblingIndex = child.siblingIndex;
+
+        const unsigned int subtreeTerminalsSize = child.subtreeTerminals.size();
+        int traverseUpIndex = child.parentIndex;
+        int rootIndex;
+        while(traverseUpIndex >= 0)
+        {
+            Node& traversedNode = nodes->at(traverseUpIndex);
+            rootIndex = traverseUpIndex;
+            for (unsigned int i = 0; i < subtreeTerminalsSize; i++)
+            {
+                traversedNode.subtreeTerminals[i] ^= child.subtreeTerminals[i];
+            }
+            traverseUpIndex = traversedNode.parentIndex;
+            // sort children
+            const Node& l = nodes->at(traversedNode.firstChildIndex);
+            const Node& r = nodes->at(traversedNode.secondChildIndex);
+            if(r.hasSmallestTerminal(l))
+            {
+                swap(traversedNode.firstChildIndex, traversedNode.secondChildIndex);
+            }
+        }
+
+        auto itRoot = std::find(rootIndices->begin(), rootIndices->end(),rootIndex);
+        auto rootNode = nodes->at(*itRoot);
+
+        if(rootNode.hasSmallestTerminal(child))
+        {
+            auto itNewRoot =
+                std::lower_bound(itRoot, rootIndices->end(), childIndex, [&](const int& a, const int& b)
+                     {
+                        const Node& an = nodes->at(a);
+                        const Node& bn = nodes->at(b);
+                        return an.hasSmallestTerminal(bn);
+                     });
+            rootIndices->insert(itNewRoot, childIndex);
+        }
+        else
+        {
+            *itRoot = childIndex;
+            auto itRootNewPosition =
+                std::lower_bound(itRoot, rootIndices->end(), rootIndex, [&](const int& a, const int& b)
+                    {
+                        const Node& an = nodes->at(a);
+                        const Node& bn = nodes->at(b);
+                        return an.hasSmallestTerminal(bn);
+                    });
+            rootIndices->insert(itRootNewPosition, rootIndex);
+        }
     }
     // clean up refs
     child.siblingIndex = -1;
@@ -289,13 +350,20 @@ void Forest::removeEdge(int childIndex)
     parent.siblingIndex = -1;
 }
 
-void Forest::orderSiblings()
+void Forest::sortChildrenAndCollectTerminals()
 {
-    std::function<unsigned int(int)> orderSubtree = [&](int subtree) -> unsigned int {
+    // the number of elements in the `subtreeTerminals` vector of each node
+    const unsigned int numberOfEntries = (terminalIndexToLabel->size() + 63) / 64;
+
+    std::function<unsigned int(int)> orderSubtree = [&, numberOfEntries](int subtree) -> unsigned int {
         Node& subtreeRoot = nodes->at(subtree);
+        subtreeRoot.subtreeTerminals.resize(numberOfEntries,0);
         if (terminalIndexToLabel->contains(subtree))
         {
-            return terminalIndexToLabel->at(subtree);
+            const unsigned int label = terminalIndexToLabel->at(subtree);
+            // (label - 1) because smallest label is 1 and not 0
+            subtreeRoot.subtreeTerminals[(label - 1) / 64] = (1 << (label -1) % 64);
+            return label;
         }
         unsigned int firstMinLabel = orderSubtree(subtreeRoot.firstChildIndex);
         unsigned int secondMinLabel = orderSubtree(subtreeRoot.secondChildIndex);
@@ -303,12 +371,23 @@ void Forest::orderSiblings()
         {
             std::swap(subtreeRoot.firstChildIndex, subtreeRoot.secondChildIndex);
         }
+        for(unsigned int i = 0; i < subtreeRoot.subtreeTerminals.size(); i++)
+        {
+            subtreeRoot.subtreeTerminals[i] =
+                nodes->at(subtreeRoot.firstChildIndex).subtreeTerminals[i] |
+                nodes->at(subtreeRoot.secondChildIndex).subtreeTerminals[i];
+        }
         return std::min(firstMinLabel, secondMinLabel);
     };
     for(const auto root : *rootIndices)
     {
         orderSubtree(root);
     }
+    std::sort(rootIndices->begin(),rootIndices->end(),
+              [&](int a, int b)
+              {
+                  return nodes->at(a).hasSmallestTerminal(nodes->at(b));
+              });
 }
 
 // ------------------------------------------------------------- //
