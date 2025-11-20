@@ -260,7 +260,7 @@ void Forest::removeEdge(int childIndex)
     if(it != rootIndices->end())
     {
         // first new root is always at same position than the parent
-        rootIndices->at(*it) = parent.firstChildIndex;
+        *it = parent.firstChildIndex;
 
         // position of second new root is somewhere after the old parent
         auto it2 = std::lower_bound(
@@ -286,7 +286,6 @@ void Forest::removeEdge(int childIndex)
                                           return parent.hasSubsetTerminals(nodes->at(a));
                                       });
         auto rootIndex = *itOldRoot;
-        clog << (itOldRoot == rootIndices->end()) << endl;
         rootIndices->erase(itOldRoot);
 
         Node& grandParent = nodes->at(parent.parentIndex);
@@ -302,16 +301,22 @@ void Forest::removeEdge(int childIndex)
         sibling.siblingIndex = parent.siblingIndex;
         nodes->at(parent.siblingIndex).siblingIndex = child.siblingIndex;
 
-        int traverseUpwards = child.parentIndex;
         const unsigned int subtreeTerminalsSize = child.subtreeTerminals.size();
-        while(traverseUpwards >= 0)
+        int traverseUpIndex = child.parentIndex;
+        while(traverseUpIndex >= 0)
         {
-            Node& itNode = nodes->at(traverseUpwards);
+            Node& traversedNode = nodes->at(traverseUpIndex);
             for (unsigned int i = 0; i < subtreeTerminalsSize; i++)
             {
-                itNode.subtreeTerminals[i] ^= child.subtreeTerminals[i];
-                traverseUpwards = itNode.parentIndex;
-                // TODO sort siblings
+                traversedNode.subtreeTerminals[i] ^= child.subtreeTerminals[i];
+            }
+            traverseUpIndex = traversedNode.parentIndex;
+            // sort children
+            const Node& l = nodes->at(traversedNode.firstChildIndex);
+            const Node& r = nodes->at(traversedNode.secondChildIndex);
+            if(r.hasSmallestTerminal(l))
+            {
+                swap(traversedNode.firstChildIndex, traversedNode.secondChildIndex);
             }
         }
 
