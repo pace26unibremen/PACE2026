@@ -6,109 +6,199 @@
 #include <fstream>
 #include <sstream>
 
-TEST_CASE("Read and Write (single tree forest)", "[Forest, ForestIO]")
+TEST_CASE("Read and Write single Tree", "[Forest, ForestIO]")
 {
-    SECTION("Read")
+    SECTION("Example 1: Tree with 2 Terminals")
     {
-        auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree1.tree");
-        auto t2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree2.tree");
+        auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree");
+        SECTION("Read")
+        {
+            INFO("compare number of nodes");
+            REQUIRE(t1.Nodes().size() == 3);
+            INFO("Check number of trees");
+            REQUIRE(t1.RootIndices().size() == 1);
+            INFO("Check number of terminals");
+            REQUIRE(t1.Terminals().size() == 2);
+            INFO("check validity of tree structure");
+            REQUIRE(t1.isValid());
+        }
+        SECTION("Write")
+        {
+            std::ifstream t1StreamOriginal(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree");
+            std::stringstream t1StreamWrite;
+            t1.write(t1StreamWrite);
 
-        INFO("compare number of nodes");
-        REQUIRE(t1.Nodes().size() == 11);
-        REQUIRE(t2.Nodes().size() == 11);
-        INFO("Check number of trees");
-        REQUIRE(t1.RootIndices().size() == 1);
-        REQUIRE(t2.RootIndices().size() == 1);
-        INFO("check validity of tree structure");
-        REQUIRE(t1.isValid());
-        REQUIRE(t2.isValid());
+            std::string t1Original;
+            std::string t1Write;
+
+            INFO("compare newick representation before and after write");
+            getline(t1StreamOriginal, t1Original);
+            getline(t1StreamWrite, t1Write);
+            REQUIRE(t1Write == t1Original);
+
+            // the streams should contain a remaining empty line
+            getline(t1StreamOriginal, t1Original);
+            getline(t1StreamWrite, t1Write);
+            REQUIRE(t1Write == t1Original);
+        }
     }
 
-    SECTION("Write")
+    SECTION("Example 2: Tree with 6 Terminals")
     {
-        auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree1.tree");
-        auto t2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree2.tree");
+        auto t2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree");
+        SECTION("Read")
+        {
+            INFO("compare number of nodes");
+            REQUIRE(t2.Nodes().size() == 11);
+            INFO("Check number of trees");
+            REQUIRE(t2.RootIndices().size() == 1);
+            INFO("Check number of terminals");
+            REQUIRE(t2.Terminals().size() == 6);
+            INFO("check validity of tree structure");
+            REQUIRE(t2.isValid());
+        }
+        SECTION("Write")
+        {
+            std::ifstream t2StreamOriginal(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree");
+            std::stringstream t2StreamWrite;
+            t2.write(t2StreamWrite);
 
-        std::ifstream t1StreamOriginal(std::string(TEST_EXAMPLES_DIR) + "tree1.tree");
-        std::ifstream t2StreamOriginal(std::string(TEST_EXAMPLES_DIR) + "tree2.tree");
-        std::stringstream t1StreamWrite, t2StreamWrite;
-        t1.write(t1StreamWrite);
-        t2.write(t2StreamWrite);
+            std::string t2Original;
+            std::string t2Write;
 
-        std::string t1Original, t2Original;
-        std::string t1Write,  t2Write;
+            INFO("compare newick representation before and after write");
+            getline(t2StreamOriginal, t2Original);
+            getline(t2StreamWrite, t2Write);
+            REQUIRE(t2Write == t2Original);
 
-        INFO("compare newick representation before and after write");
-        getline(t1StreamOriginal, t1Original);
-        getline(t1StreamWrite, t1Write);
-        REQUIRE(t1Write == t1Original);
+            // the streams should contain a remaining empty line
+            getline(t2StreamOriginal, t2Original);
+            getline(t2StreamWrite, t2Write);
+            REQUIRE(t2Write == t2Original);
+        }
+    }
 
-        getline(t2StreamOriginal, t2Original);
-        getline(t2StreamWrite, t2Write);
-        REQUIRE(t2Write == t2Original);
+    SECTION("Example 3: Tree with 6 Terminals")
+    {
+        auto t3 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example2.tree");
+        SECTION("Read")
+        {
+            INFO("compare number of nodes");
+            REQUIRE(t3.Nodes().size() == 11);
+            INFO("Check number of trees");
+            REQUIRE(t3.RootIndices().size() == 1);
+            INFO("Check number of terminals");
+            REQUIRE(t3.Terminals().size() == 6);
+            INFO("check validity of tree structure");
+            REQUIRE(t3.isValid());
+        }
 
-        // the streams should contain a remaining empty line
-        getline(t1StreamOriginal, t1Original);
-        getline(t1StreamWrite, t1Write);
-        REQUIRE(t1Write == t1Original);
+        SECTION("Write")
+        {
+            std::ifstream t3StreamOriginal(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example2.tree");
+            std::stringstream t3StreamWrite;
+            t3.write(t3StreamWrite);
 
-        getline(t2StreamOriginal, t2Original);
-        getline(t2StreamWrite, t2Write);
-        REQUIRE(t2Write == t2Original);
+            std::string t3Original;
+            std::string t3Write;
+
+            INFO("compare newick representation before and after write");
+            getline(t3StreamOriginal, t3Original);
+            getline(t3StreamWrite, t3Write);
+            REQUIRE(t3Write == t3Original);
+
+            getline(t3StreamOriginal, t3Original);
+            getline(t3StreamWrite, t3Write);
+            REQUIRE(t3Write == t3Original);
+        }
     }
 }
 
-TEST_CASE("Read and Write (multiple tree forest)", "[Forest, ForestIO]")
+TEST_CASE("Read and Write Forest", "[Forest, ForestIO]")
 {
-    auto file = std::ifstream(std::string(TEST_EXAMPLES_DIR) + "forest1.tree");
-    auto f = graph::ForestIO::ReadNewick(file,0,2);
-
-    SECTION("Read")
+    SECTION("Example 1: Forest with 2 Trees and 2 Terminals")
     {
-        INFO("compare number of nodes");
-        REQUIRE(f.Nodes().size() == 22);
-        INFO("Check number of trees and root indices");
-        REQUIRE(f.RootIndices().size() == 2);
-        REQUIRE(f.RootIndices()[0] == 0);
-        REQUIRE(f.RootIndices()[1] == 11);
-        INFO("check validity of tree structure");
-        REQUIRE(f.isValid());
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_2_2_singleVertexTrees.tree",0,2);
+        SECTION("Read")
+        {
+            INFO("compare number of nodes");
+            REQUIRE(f1.Nodes().size() == 2);
+            INFO("Check number of trees");
+            REQUIRE(f1.RootIndices().size() == 2);
+            INFO("Check number of terminals");
+            REQUIRE(f1.Terminals().size() == 2);
+            INFO("check validity of tree structure");
+            REQUIRE(f1.isValid());
+        }
+
+        SECTION("Write")
+        {
+            std::ifstream streamOriginal(std::string(TEST_EXAMPLES_DIR) + "forest_2_2_singleVertexTrees.tree");
+            std::stringstream streamWrite;
+            f1.write(streamWrite);
+
+            std::string original;
+            std::string write;
+
+            INFO("compare newick representation before and after write");
+            getline(streamOriginal, original);
+            getline(streamWrite, write);
+            REQUIRE(write == original);
+
+            getline(streamOriginal, original);
+            getline(streamWrite, write);
+            REQUIRE(write == original);
+
+            getline(streamOriginal, original);
+            getline(streamWrite, write);
+            REQUIRE(write == original);
+        }
     }
 
-    SECTION("Write")
+    SECTION("Example 2: Forest with 4 Trees and 6 Terminals")
     {
-        auto streamOriginal = std::ifstream(std::string(TEST_EXAMPLES_DIR) + "forest1.tree");
-        std::stringstream streamWrite;
-        f.write(streamWrite);
+        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_4_6_simple.tree",0,4);
+        SECTION("Read")
+        {
+            INFO("compare number of nodes");
+            REQUIRE(f2.Nodes().size() == 8);
+            INFO("Check number of trees");
+            REQUIRE(f2.RootIndices().size() == 4);
+            INFO("Check number of terminals");
+            REQUIRE(f2.Terminals().size() == 6);
+            INFO("check validity of tree structure");
+            REQUIRE(f2.isValid());
+        }
 
-        std::string original;
-        std::string write;
+        SECTION("Write")
+        {
+            std::ifstream streamOriginal(std::string(TEST_EXAMPLES_DIR) + "forest_4_6_simple.tree");
+            std::stringstream streamWrite;
+            f2.write(streamWrite);
 
-        INFO("compare newick representation before and after write");
+            std::string original;
+            std::string write;
 
-        INFO("comment in original");
-        getline(streamOriginal, original);
-        REQUIRE(original[0] == '#');
+            INFO("compare newick representation before and after write");
+            getline(streamOriginal, original);
+            getline(streamWrite, write);
+            REQUIRE(write == original);
 
-        INFO("First Tree");
-        getline(streamOriginal, original);
-        getline(streamWrite, write);
-        REQUIRE(write == original);
+            getline(streamOriginal, original);
+            getline(streamWrite, write);
+            REQUIRE(write == original);
 
-        INFO("comment in original");
-        getline(streamOriginal, original);
-        REQUIRE(original[0] == '#');
+            getline(streamOriginal, original);
+            getline(streamWrite, write);
+            REQUIRE(write == original);
 
-        INFO("compare newick representation before and after write");
-        INFO("Second Tree");
-        getline(streamOriginal, original);
-        getline(streamWrite, write);
-        REQUIRE(write == original);
+            getline(streamOriginal, original);
+            getline(streamWrite, write);
+            REQUIRE(write == original);
 
-        INFO("compare newick representation before and after write");
-        INFO("Empty closing line");
-        getline(streamOriginal, original);
-        getline(streamWrite, write);
-        REQUIRE(write != original);
+            getline(streamOriginal, original);
+            getline(streamWrite, write);
+            REQUIRE(write == original);
+        }
     }
 }

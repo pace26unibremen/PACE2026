@@ -5,51 +5,159 @@
 using namespace graph;
 using namespace std;
 
-TEST_CASE("Remove Edge", "[Forest, removeEdge]")
+TEST_CASE("Remove Edge - Simple Tree with two Terminals", "[Forest, removeEdge]")
 {
-    SECTION("Remove edge from root node")
+    SECTION("Remove edge left child")
     {
-        auto nodes = make_shared<vector<Node>>();
-        nodes->emplace_back(-1, -1,  1,  2); // [0] 0 +-- 1 (label 11)
-        nodes->emplace_back( 0,  2, -1, -1); // [1]   |
-        nodes->emplace_back( 0,  1, -1, -1); // [2]   +-- 2 (label 22)
-        auto terminals = make_shared<unordered_map<int, unsigned int>>();
-        terminals->emplace(1, 11);
-        terminals->emplace(2, 22);
-        auto roots = make_shared<vector<int>>();
-        roots->emplace_back(0);
-        auto tree = Forest(nodes, terminals, roots);
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree",0,1);
+        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_2_2_singleVertexTrees.tree",0,2);
 
-        tree.removeEdge(1);
-        REQUIRE(tree.isValid());
-        REQUIRE(tree.RootIndices().size() == 2);
-        REQUIRE(tree.RootIndices()[0] == 1);
-        REQUIRE(tree.RootIndices()[1] == 2);
+        f1.removeEdge(1);
+
+        REQUIRE(f1.isValid());
+        REQUIRE(f1.RootIndices().size() == 2);
+        REQUIRE(f1.RootIndices()[0] == 1);
+        REQUIRE(f1.RootIndices()[1] == 2);
+        REQUIRE(f1 == f2);
     }
 
-    SECTION("Reduce non terminal leaf node")
+    SECTION("Remove edge from right child")
     {
-        auto nodes = make_shared<vector<Node>>();
-        nodes->emplace_back(-1, -1,  1,  2); // [0]  0 +-- 1 +-- 3 (label 11)
-        nodes->emplace_back( 0,  2,  3,  4); // [1]    |     |
-        nodes->emplace_back( 0,  1, -1, -1); // [2]    |     +-- 4 (label 22)
-        nodes->emplace_back( 1,  4, -1, -1); // [3]    |
-        nodes->emplace_back( 1,  3, -1, -1); // [4]    +-- 2 (label 33)
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree",0,1);
+        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_2_2_singleVertexTrees.tree",0,2);
 
-        auto terminals = make_shared<unordered_map<int, unsigned int>>();
-        terminals->emplace(3, 11);
-        terminals->emplace(4, 22);
-        terminals->emplace(2, 33);
+        f1.removeEdge(2);
 
-        auto roots = make_shared<vector<int>>();
-        roots->emplace_back(0);
-
-        auto tree = Forest(nodes, terminals, roots);
-
-        tree.removeEdge(3);
-        REQUIRE(tree.isValid());
-        REQUIRE(tree.RootIndices().size() == 2);
-        REQUIRE(tree.RootIndices()[0] == 0);
-        REQUIRE(tree.RootIndices()[1] == 3);
+        REQUIRE(f1.isValid());
+        REQUIRE(f1.RootIndices().size() == 2);
+        REQUIRE(f1.RootIndices()[0] == 1);
+        REQUIRE(f1.RootIndices()[1] == 2);
+        REQUIRE(f1 == f2);
     }
 }
+
+TEST_CASE("Remove Edge - Tree with six Terminals", "[Forest, removeEdge]")
+{
+    SECTION("Remove inner edge 1")
+    {
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree",0,1);
+
+        f1.removeEdge(5);
+
+        REQUIRE(f1.isValid());
+        REQUIRE(f1.RootIndices().size() == 2);
+        REQUIRE(f1.RootIndices()[0] == 0);
+        REQUIRE(f1.RootIndices()[1] == 5);
+    }
+
+    SECTION("Remove inner edge 2")
+    {
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree",0,1);
+
+        f1.removeEdge(2);
+
+        REQUIRE(f1.isValid());
+        REQUIRE(f1.RootIndices().size() == 2);
+        REQUIRE(f1.RootIndices()[0] == 2);
+        REQUIRE(f1.RootIndices()[1] == 0);
+    }
+
+    SECTION("Remove several edges")
+    {
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree",0,1);
+
+        f1.removeEdge(2);
+        f1.removeEdge(7);
+        f1.removeEdge(10);
+
+        REQUIRE(f1.isValid());
+        REQUIRE(f1.RootIndices().size() == 4);
+        REQUIRE(f1.RootIndices()[0] == 2);
+        REQUIRE(f1.RootIndices()[1] == 0);
+        REQUIRE(f1.RootIndices()[2] == 7);
+        REQUIRE(f1.RootIndices()[3] == 10);
+
+        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_4_6_simple.tree",0,4);
+        REQUIRE(f1 == f2);
+    }
+}
+
+TEST_CASE("Remove Edge - sibling & root order", "[Forest, removeEdge]")
+{
+    SECTION("Case 1")
+    {
+        INFO("Remove Edge to left root child");
+
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",0,3);
+
+        f1.removeEdge(4);
+        REQUIRE(f1.isValid());
+        REQUIRE(f1.RootIndices().size() == 4);
+        REQUIRE(f1.RootIndices()[0] == 0);
+        REQUIRE(f1.RootIndices()[1] == 4);
+        REQUIRE(f1.RootIndices()[2] == 18);
+        REQUIRE(f1.RootIndices()[3] == 11);
+    }
+
+    SECTION("Case 2")
+    {
+        INFO("Remove Edge to right root child");
+
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",0,3);
+
+        f1.removeEdge(11);
+
+        REQUIRE(f1.isValid());
+        REQUIRE(f1.RootIndices().size() == 4);
+        REQUIRE(f1.RootIndices()[0] == 0);
+        REQUIRE(f1.RootIndices()[1] == 4);
+        REQUIRE(f1.RootIndices()[2] == 18);
+        REQUIRE(f1.RootIndices()[3] == 11);
+    }
+
+
+    SECTION("Case 3")
+    {
+        INFO("Remove Edge to inner node with smallest terminal");
+
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",0,3);
+
+        f1.removeEdge(6);
+
+        REQUIRE(f1.isValid());
+        REQUIRE(f1.RootIndices().size() == 4);
+        REQUIRE(f1.RootIndices()[0] == 0);
+        REQUIRE(f1.RootIndices()[1] == 6);
+        REQUIRE(f1.RootIndices()[2] == 18);
+        REQUIRE(f1.RootIndices()[3] == 3);
+
+        auto r = f1.Nodes()[3];
+        REQUIRE(r.firstChildIndex == 11);
+        REQUIRE(r.secondChildIndex == 4);
+        auto p = f1.Nodes()[4];
+        REQUIRE(p.firstChildIndex == 8);
+        REQUIRE(p.secondChildIndex == 7);
+    }
+
+    SECTION("Case 4")
+    {
+        INFO("Remove Edge to inner node with high terminals");
+
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",0,3);
+
+        f1.removeEdge(8);
+
+        REQUIRE(f1.isValid());
+        REQUIRE(f1.RootIndices().size() == 4);
+        REQUIRE(f1.RootIndices()[0] == 0);
+        REQUIRE(f1.RootIndices()[1] == 3);
+        REQUIRE(f1.RootIndices()[2] == 18);
+        REQUIRE(f1.RootIndices()[3] == 8);
+
+        auto r = f1.Nodes()[3];
+        REQUIRE(r.firstChildIndex == 5);
+        REQUIRE(r.secondChildIndex == 11);
+    }
+
+}
+

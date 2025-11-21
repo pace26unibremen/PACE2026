@@ -17,7 +17,7 @@ build-job:
     expire_in: 1 day
     paths:
       - build/tests/ForestIOTests
-      - build/tests/TreeEqualTests
+      - build/tests/ForestEqualTests
       - build/tests/ForestRemoveEdgeTests
 
 graph-representation:
@@ -25,6 +25,6 @@ graph-representation:
   script:
     - cd build/tests/
     - ./ForestIOTests
-    - ./TreeEqualTests
+    - ./ForestEqualTests
     - ./ForestRemoveEdgeTests
 

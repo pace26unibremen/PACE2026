@@ -14,10 +14,10 @@ class ForestIO
   public:
     /// Reads a forest from input stream
     /// \param stream the input stream
-    /// \param numberOfLeafs the number of leafs, set this value for optimal memory allocation
+    /// \param numberOfTerminals the number of leafs, set this value for optimal memory allocation
     /// \param numberOfTrees the number of trees in the forest, default is 1
     /// \return a forest
-    static Forest ReadNewick(std::istream& stream, int numberOfLeafs = 0, int numberOfTrees = 1);
+    static Forest ReadNewick(std::istream& stream, int numberOfTerminals = 0, int numberOfTrees = 1);
 
     static void WriteNewick(const Forest& tree, std::ostream& stream);
 
