@@ -8,7 +8,6 @@
 #include <iostream>
 #include <sstream>
 #include <unordered_set>
-#include <utility>
 
 using namespace std;
 
@@ -255,112 +254,6 @@ bool Forest::isValid() const
         print();
     }
     return valid;
-}
-
-// ------------------------------------------------------------- //
-// ---- graph manipulation ------------------------------------- //
-// ------------------------------------------------------------- //
-
-void Forest::removeEdge(int childIndex)
-{
-    Node& child = nodes->at(childIndex);
-    Node& sibling = nodes->at(child.siblingIndex);
-    Node& parent = nodes->at(child.parentIndex);
-
-    auto it = find(rootIndices->begin(),rootIndices->end(), child.parentIndex);
-
-    // case 1: parent is root
-    if(it != rootIndices->end())
-    {
-        // first new root is always at same position than the parent
-        *it = parent.firstChildIndex;
-
-        // position of second new root is somewhere after the old parent
-        auto it2 = std::lower_bound(
-            it, rootIndices->end(), parent.secondChildIndex,
-            [&](const int& a, const int& b)
-            {
-                const Node& an = nodes->at(a);
-                const Node& bn = nodes->at(b);
-                return an.hasSmallestTerminal(bn);
-            }
-        );
-        rootIndices->insert(it2, parent.secondChildIndex);
-
-        sibling.parentIndex = -1;
-        sibling.siblingIndex = -1;
-    }
-    // case 2: parent is inner node
-    else
-    {
-        Node& grandParent = nodes->at(parent.parentIndex);
-        if (grandParent.firstChildIndex == child.parentIndex)
-        {
-            grandParent.firstChildIndex = child.siblingIndex;
-        }
-        else
-        {
-            grandParent.secondChildIndex = child.siblingIndex;
-        }
-        sibling.parentIndex = parent.parentIndex;
-        sibling.siblingIndex = parent.siblingIndex;
-        nodes->at(parent.siblingIndex).siblingIndex = child.siblingIndex;
-
-        const unsigned int subtreeTerminalsSize = child.subtreeTerminals.size();
-        int traverseUpIndex = child.parentIndex;
-        int rootIndex;
-        while(traverseUpIndex >= 0)
-        {
-            Node& traversedNode = nodes->at(traverseUpIndex);
-            rootIndex = traverseUpIndex;
-            for (unsigned int i = 0; i < subtreeTerminalsSize; i++)
-            {
-                traversedNode.subtreeTerminals[i] ^= child.subtreeTerminals[i];
-            }
-            traverseUpIndex = traversedNode.parentIndex;
-            // sort children
-            const Node& l = nodes->at(traversedNode.firstChildIndex);
-            const Node& r = nodes->at(traversedNode.secondChildIndex);
-            if(r.hasSmallestTerminal(l))
-            {
-                swap(traversedNode.firstChildIndex, traversedNode.secondChildIndex);
-            }
-        }
-
-        auto itRoot = std::find(rootIndices->begin(), rootIndices->end(),rootIndex);
-        auto rootNode = nodes->at(*itRoot);
-
-        if(rootNode.hasSmallestTerminal(child))
-        {
-            auto itNewRoot =
-                std::lower_bound(itRoot, rootIndices->end(), childIndex, [&](const int& a, const int& b)
-                     {
-                        const Node& an = nodes->at(a);
-                        const Node& bn = nodes->at(b);
-                        return an.hasSmallestTerminal(bn);
-                     });
-            rootIndices->insert(itNewRoot, childIndex);
-        }
-        else
-        {
-            *itRoot = childIndex;
-            auto itRootNewPosition =
-                std::lower_bound(itRoot, rootIndices->end(), rootIndex, [&](const int& a, const int& b)
-                    {
-                        const Node& an = nodes->at(a);
-                        const Node& bn = nodes->at(b);
-                        return an.hasSmallestTerminal(bn);
-                    });
-            rootIndices->insert(itRootNewPosition, rootIndex);
-        }
-    }
-    // clean up refs
-    child.siblingIndex = -1;
-    child.parentIndex = -1;
-    parent.firstChildIndex = -1;
-    parent.secondChildIndex = -1;
-    parent.parentIndex = -1;
-    parent.siblingIndex = -1;
 }
 
 void Forest::sortChildrenAndCollectTerminals()

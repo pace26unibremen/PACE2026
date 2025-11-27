@@ -1,9 +1,11 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "../src/Graph/Forest.hpp"
+#include "../src/Solver/DeleteEdgeAction.hpp"
 
 using namespace graph;
 using namespace std;
+using namespace solver;
 
 TEST_CASE("Remove Edge - Simple Tree with two Terminals", "[Forest, removeEdge]")
 {
@@ -12,7 +14,8 @@ TEST_CASE("Remove Edge - Simple Tree with two Terminals", "[Forest, removeEdge]"
         auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree",0,1);
         auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_2_2_singleVertexTrees.tree",0,2);
 
-        f1.removeEdge(1);
+        auto action = DeleteEdgeAction(1, std::make_shared<Forest>(f1));
+        action.doAction();
 
         REQUIRE(f1.isValid());
         REQUIRE(f1.RootIndices().size() == 2);
@@ -26,7 +29,8 @@ TEST_CASE("Remove Edge - Simple Tree with two Terminals", "[Forest, removeEdge]"
         auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree",0,1);
         auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_2_2_singleVertexTrees.tree",0,2);
 
-        f1.removeEdge(2);
+        auto action = DeleteEdgeAction(2, std::make_shared<Forest>(f1));
+        action.doAction();
 
         REQUIRE(f1.isValid());
         REQUIRE(f1.RootIndices().size() == 2);
@@ -42,7 +46,8 @@ TEST_CASE("Remove Edge - Tree with six Terminals", "[Forest, removeEdge]")
     {
         auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree",0,1);
 
-        f1.removeEdge(5);
+        auto action = DeleteEdgeAction(5, std::make_shared<Forest>(f1));
+        action.doAction();
 
         REQUIRE(f1.isValid());
         REQUIRE(f1.RootIndices().size() == 2);
@@ -54,7 +59,8 @@ TEST_CASE("Remove Edge - Tree with six Terminals", "[Forest, removeEdge]")
     {
         auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree",0,1);
 
-        f1.removeEdge(2);
+        auto action = DeleteEdgeAction(2, std::make_shared<Forest>(f1));
+        action.doAction();
 
         REQUIRE(f1.isValid());
         REQUIRE(f1.RootIndices().size() == 2);
@@ -66,9 +72,13 @@ TEST_CASE("Remove Edge - Tree with six Terminals", "[Forest, removeEdge]")
     {
         auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree",0,1);
 
-        f1.removeEdge(2);
-        f1.removeEdge(7);
-        f1.removeEdge(10);
+        auto action1 = DeleteEdgeAction(2, std::make_shared<Forest>(f1));
+        auto action2 = DeleteEdgeAction(7, std::make_shared<Forest>(f1));
+        auto action3 = DeleteEdgeAction(10, std::make_shared<Forest>(f1));
+
+        action1.doAction();
+        action2.doAction();
+        action3.doAction();
 
         REQUIRE(f1.isValid());
         REQUIRE(f1.RootIndices().size() == 4);
@@ -90,7 +100,9 @@ TEST_CASE("Remove Edge - sibling & root order", "[Forest, removeEdge]")
 
         auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",0,3);
 
-        f1.removeEdge(4);
+        auto action = DeleteEdgeAction(4, std::make_shared<Forest>(f1));
+        action.doAction();
+
         REQUIRE(f1.isValid());
         REQUIRE(f1.RootIndices().size() == 4);
         REQUIRE(f1.RootIndices()[0] == 0);
@@ -105,7 +117,8 @@ TEST_CASE("Remove Edge - sibling & root order", "[Forest, removeEdge]")
 
         auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",0,3);
 
-        f1.removeEdge(11);
+        auto action = DeleteEdgeAction(11, std::make_shared<Forest>(f1));
+        action.doAction();
 
         REQUIRE(f1.isValid());
         REQUIRE(f1.RootIndices().size() == 4);
@@ -122,7 +135,8 @@ TEST_CASE("Remove Edge - sibling & root order", "[Forest, removeEdge]")
 
         auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",0,3);
 
-        f1.removeEdge(6);
+        auto action = DeleteEdgeAction(6, std::make_shared<Forest>(f1));
+        action.doAction();
 
         REQUIRE(f1.isValid());
         REQUIRE(f1.RootIndices().size() == 4);
@@ -145,7 +159,8 @@ TEST_CASE("Remove Edge - sibling & root order", "[Forest, removeEdge]")
 
         auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",0,3);
 
-        f1.removeEdge(8);
+        auto action = DeleteEdgeAction(8, std::make_shared<Forest>(f1));
+        action.doAction();
 
         REQUIRE(f1.isValid());
         REQUIRE(f1.RootIndices().size() == 4);
