@@ -14,7 +14,7 @@ class AbstractSolver
     graph::Instance instance;
   public:
     /// \brief solve the instance
-    virtual graph::Forest& solve() = 0;
+    virtual graph::Forest solve() = 0;
 
     /// \brief \c const reference to instance
     [[nodiscard, maybe_unused]]
