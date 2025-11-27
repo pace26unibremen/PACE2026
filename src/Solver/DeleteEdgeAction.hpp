@@ -12,6 +12,21 @@ class DeleteEdgeAction : AbstractAction
   protected:
     std::shared_ptr<graph::Forest> forest;
     int childIndex;
+    int siblingIndex;
+    int parentIndex;
+    int leftIndex;
+    int rightIndex;
+    unsigned int leftRoot_RootsIndex;
+    unsigned int rightRoot_RootsIndex;
+    bool parentIsRoot;
+
+    graph::Node parentCopy;
+
+    void doParentIsRoot();
+    void doParentIsInner();
+    void undoParentIsRoot();
+    void undoParentIsInner();
+
   public:
     DeleteEdgeAction(int childIndex, const std::shared_ptr<graph::Forest>& forest);
 

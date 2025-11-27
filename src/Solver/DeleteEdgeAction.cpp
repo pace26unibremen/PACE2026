@@ -1,116 +1,40 @@
 
 #include "DeleteEdgeAction.hpp"
 
-#include <utility>
 #include <algorithm>
+#include <utility>
 
 using namespace graph;
 using namespace solver;
 
 solver::DeleteEdgeAction::DeleteEdgeAction(int childIndex, const std::shared_ptr<graph::Forest>& forest) :
-    forest(forest),
-    childIndex(childIndex)
+        forest(forest),
+        childIndex(childIndex)
 {}
 
 void solver::DeleteEdgeAction::doAction()
 {
-    Node& child = forest->Nodes()[childIndex];
-    Node& sibling = forest->Nodes()[child.siblingIndex];
-    Node& parent = forest->Nodes()[child.parentIndex];
+    siblingIndex = forest->Nodes()[childIndex].siblingIndex;
+    parentIndex = forest->Nodes()[childIndex].parentIndex;
+    leftIndex = forest->Nodes()[parentIndex].firstChildIndex;
+    rightIndex = forest->Nodes()[parentIndex].secondChildIndex;
 
-    auto it = std::find(
-        forest->RootIndices().begin(),
-        forest->RootIndices().end(),
-       child.parentIndex);
+    auto leftRootIterator = std::find(forest->RootIndices().begin(), forest->RootIndices().end(), parentIndex);
+    leftRoot_RootsIndex = std::distance(forest->RootIndices().begin(), leftRootIterator);
+    parentIsRoot = (leftRootIterator != forest->RootIndices().end());
 
-    // case 1: parent is root
-    if(it != forest->RootIndices().end())
+    if (parentIsRoot)
     {
-        // first new root is always at same position than the parent
-        *it = parent.firstChildIndex;
-
-        // position of second new root is somewhere after the old parent
-        auto it2 = std::lower_bound(
-            it, forest->RootIndices().end(), parent.secondChildIndex,
-            [&](const int& a, const int& b)
-            {
-                const Node& an = forest->Nodes()[a];
-                const Node& bn = forest->Nodes()[b];
-                return an.hasSmallestTerminal(bn);
-            }
-        );
-        forest->RootIndices().insert(it2, parent.secondChildIndex);
-
-        sibling.parentIndex = -1;
-        sibling.siblingIndex = -1;
+        doParentIsRoot();
     }
-    // case 2: parent is inner node
     else
     {
-        Node& grandParent = forest->Nodes()[parent.parentIndex];
-        if (grandParent.firstChildIndex == child.parentIndex)
-        {
-            grandParent.firstChildIndex = child.siblingIndex;
-        }
-        else
-        {
-            grandParent.secondChildIndex = child.siblingIndex;
-        }
-        sibling.parentIndex = parent.parentIndex;
-        sibling.siblingIndex = parent.siblingIndex;
-        forest->Nodes()[parent.siblingIndex].siblingIndex = child.siblingIndex;
-
-        const unsigned int subtreeTerminalsSize = child.subtreeTerminals.size();
-        int traverseUpIndex = child.parentIndex;
-        int rootIndex;
-        while(traverseUpIndex >= 0)
-        {
-            Node& traversedNode = forest->Nodes()[traverseUpIndex];
-            rootIndex = traverseUpIndex;
-            for (unsigned int i = 0; i < subtreeTerminalsSize; i++)
-            {
-                traversedNode.subtreeTerminals[i] ^= child.subtreeTerminals[i];
-            }
-            traverseUpIndex = traversedNode.parentIndex;
-            // sort children
-            const Node& l = forest->Nodes()[traversedNode.firstChildIndex];
-            const Node& r = forest->Nodes()[traversedNode.secondChildIndex];
-            if(r.hasSmallestTerminal(l))
-            {
-                std::swap(traversedNode.firstChildIndex, traversedNode.secondChildIndex);
-            }
-        }
-
-        auto itRoot = std::find(forest->RootIndices().begin(), forest->RootIndices().end(),rootIndex);
-        auto rootNode = forest->Nodes()[*itRoot];
-
-        if(rootNode.hasSmallestTerminal(child))
-        {
-            auto itNewRoot =
-                std::lower_bound(itRoot, forest->RootIndices().end(), childIndex, [&](const int& a, const int& b)
-                                 {
-                                     const Node& an = forest->Nodes()[a];
-                                     const Node& bn = forest->Nodes()[b];
-                                     return an.hasSmallestTerminal(bn);
-                                 });
-            forest->RootIndices().insert(itNewRoot, childIndex);
-        }
-        else
-        {
-            *itRoot = childIndex;
-            auto itRootNewPosition =
-                std::lower_bound(itRoot, forest->RootIndices().end(), rootIndex, [&](const int& a, const int& b)
-                                 {
-                                     const Node& an = forest->Nodes()[a];
-                                     const Node& bn = forest->Nodes()[b];
-                                     return an.hasSmallestTerminal(bn);
-                                 });
-            forest->RootIndices().insert(itRootNewPosition, rootIndex);
-        }
+        doParentIsInner();
     }
-    // clean up refs
-    child.siblingIndex = -1;
-    child.parentIndex = -1;
+
+    // can be removed if new isValid is active
+    Node& parent = forest->Nodes()[parentIndex];
+    parentCopy = parent;
     parent.firstChildIndex = -1;
     parent.secondChildIndex = -1;
     parent.parentIndex = -1;
@@ -119,5 +43,170 @@ void solver::DeleteEdgeAction::doAction()
 
 void DeleteEdgeAction::undoAction()
 {
-    throw std::invalid_argument("not implemented");
+    // can be removed if new isValid is active
+    forest->Nodes()[parentIndex] = parentCopy;
+    //
+
+    if (parentIsRoot)
+    {
+        undoParentIsRoot();
+    }
+    else
+    {
+        undoParentIsInner();
+    }
+}
+
+void DeleteEdgeAction::doParentIsRoot()
+{
+    // first new root is always at same position than the parent
+    forest->RootIndices()[leftRoot_RootsIndex] = leftIndex;
+
+    // position of second new root is somewhere after the old parent
+    auto rightRoot_Iterator =
+        std::lower_bound(forest->RootIndices().begin() + leftRoot_RootsIndex, forest->RootIndices().end(), rightIndex,
+                         [&](const int& a, const int& b) {
+                             const Node& an = forest->Nodes()[a];
+                             const Node& bn = forest->Nodes()[b];
+                             return an.hasSmallestTerminal(bn);
+                         });
+    rightRoot_RootsIndex = std::distance(forest->RootIndices().begin(), rightRoot_Iterator);
+
+    forest->RootIndices().insert(rightRoot_Iterator, rightIndex);
+
+    forest->Nodes()[siblingIndex].siblingIndex = -1;
+    forest->Nodes()[siblingIndex].parentIndex = -1;
+    forest->Nodes()[childIndex].siblingIndex = -1;
+    forest->Nodes()[childIndex].parentIndex = -1;
+}
+
+void DeleteEdgeAction::undoParentIsRoot()
+{
+    forest->Nodes()[siblingIndex].siblingIndex = childIndex;
+    forest->Nodes()[siblingIndex].parentIndex = parentIndex;
+    forest->Nodes()[childIndex].siblingIndex = siblingIndex;
+    forest->Nodes()[childIndex].parentIndex = parentIndex;
+
+    forest->RootIndices()[leftRoot_RootsIndex] = parentIndex;
+    forest->RootIndices().erase(forest->RootIndices().begin() + rightRoot_RootsIndex);
+}
+
+void DeleteEdgeAction::doParentIsInner()
+{
+    Node& child = forest->Nodes()[childIndex];
+    Node& parent = forest->Nodes()[parentIndex];
+    Node& sibling = forest->Nodes()[siblingIndex];
+    Node& grandParent = forest->Nodes()[parent.parentIndex];
+
+    if (grandParent.firstChildIndex == parentIndex)
+    {
+        grandParent.firstChildIndex = siblingIndex;
+    }
+    else
+    {
+        grandParent.secondChildIndex = siblingIndex;
+    }
+
+    sibling.parentIndex = parent.parentIndex;
+    sibling.siblingIndex = parent.siblingIndex;
+    forest->Nodes()[parent.siblingIndex].siblingIndex = siblingIndex;
+
+    const unsigned int subtreeTerminalsSize = child.subtreeTerminals.size();
+    int traverseUpIndex = child.parentIndex;
+    int rootIndex;
+    while (traverseUpIndex >= 0)
+    {
+        Node& traversedNode = forest->Nodes()[traverseUpIndex];
+        rootIndex = traverseUpIndex;
+        for (unsigned int i = 0; i < subtreeTerminalsSize; i++)
+        {
+            traversedNode.subtreeTerminals[i] ^= child.subtreeTerminals[i];
+        }
+        traverseUpIndex = traversedNode.parentIndex;
+        // sort children
+        const Node& l = forest->Nodes()[traversedNode.firstChildIndex];
+        const Node& r = forest->Nodes()[traversedNode.secondChildIndex];
+        if (r.hasSmallestTerminal(l))
+        {
+            std::swap(traversedNode.firstChildIndex, traversedNode.secondChildIndex);
+        }
+    }
+
+    auto leftRoot_Iterator = std::find(forest->RootIndices().begin(), forest->RootIndices().end(), rootIndex);
+    leftRoot_RootsIndex = std::distance(forest->RootIndices().begin(), leftRoot_Iterator);
+    auto rootNode = forest->Nodes()[*leftRoot_Iterator];
+
+    if (rootNode.hasSmallestTerminal(child))
+    {
+        auto rightRoot_Iterator = std::lower_bound(leftRoot_Iterator, forest->RootIndices().end(), childIndex,
+                                                   [&](const int& a, const int& b) {
+                                                       const Node& an = forest->Nodes()[a];
+                                                       const Node& bn = forest->Nodes()[b];
+                                                       return an.hasSmallestTerminal(bn);
+                                                   });
+        rightRoot_RootsIndex = std::distance(forest->RootIndices().begin(), rightRoot_Iterator);
+        forest->RootIndices().insert(rightRoot_Iterator, childIndex);
+    }
+    else
+    {
+        *leftRoot_Iterator = childIndex;
+        auto rightRoot_Iterator = std::lower_bound(leftRoot_Iterator, forest->RootIndices().end(), rootIndex,
+                                                   [&](const int& a, const int& b) {
+                                                       const Node& an = forest->Nodes()[a];
+                                                       const Node& bn = forest->Nodes()[b];
+                                                       return an.hasSmallestTerminal(bn);
+                                                   });
+        rightRoot_RootsIndex = std::distance(forest->RootIndices().begin(), rightRoot_Iterator);
+        forest->RootIndices().insert(rightRoot_Iterator, rootIndex);
+    }
+
+    child.siblingIndex = -1;
+    child.parentIndex = -1;
+}
+
+void DeleteEdgeAction::undoParentIsInner()
+{
+    Node& child = forest->Nodes()[childIndex];
+    Node& parent = forest->Nodes()[parentIndex];
+    Node& sibling = forest->Nodes()[siblingIndex];
+    Node& grandParent = forest->Nodes()[parent.parentIndex];
+
+    if (grandParent.firstChildIndex == siblingIndex)
+    {
+        grandParent.firstChildIndex = parentIndex;
+    }
+    else
+    {
+        grandParent.secondChildIndex = parentIndex;
+    }
+
+    sibling.parentIndex = parentIndex;
+    sibling.siblingIndex = childIndex;
+    child.siblingIndex = siblingIndex;
+    child.parentIndex = parentIndex;
+    forest->Nodes()[parent.siblingIndex].siblingIndex = parentIndex;
+
+    const unsigned int subtreeTerminalsSize = child.subtreeTerminals.size();
+    int traverseUpIndex = child.parentIndex;
+    int rootIndex;
+    while (traverseUpIndex >= 0)
+    {
+        Node& traversedNode = forest->Nodes()[traverseUpIndex];
+        rootIndex = traverseUpIndex;
+        for (unsigned int i = 0; i < subtreeTerminalsSize; i++)
+        {
+            traversedNode.subtreeTerminals[i] |= child.subtreeTerminals[i];
+        }
+        traverseUpIndex = traversedNode.parentIndex;
+        // sort children
+        const Node& l = forest->Nodes()[traversedNode.firstChildIndex];
+        const Node& r = forest->Nodes()[traversedNode.secondChildIndex];
+        if (r.hasSmallestTerminal(l))
+        {
+            std::swap(traversedNode.firstChildIndex, traversedNode.secondChildIndex);
+        }
+    }
+
+    forest->RootIndices()[leftRoot_RootsIndex] = rootIndex;
+    forest->RootIndices().erase(forest->RootIndices().begin() + rightRoot_RootsIndex);
 }
