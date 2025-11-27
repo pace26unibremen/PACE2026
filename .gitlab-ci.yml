@@ -18,7 +18,7 @@ build-job:
     paths:
       - build/tests/ForestIOTests
       - build/tests/ForestEqualTests
-      - build/tests/ForestRemoveEdgeTests
+      - build/tests/DeleteEdgeActionTests
 
 graph-representation:
   stage: test
@@ -26,5 +26,5 @@ graph-representation:
     - cd build/tests/
     - ./ForestIOTests
     - ./ForestEqualTests
-    - ./ForestRemoveEdgeTests
+    - ./DeleteEdgeActionTests
 
