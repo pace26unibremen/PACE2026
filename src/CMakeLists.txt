@@ -1,5 +1,5 @@
 add_subdirectory(Graph)
-#add_subdirectory(Solver)
+add_subdirectory(Solver)
 
 add_executable(main main.cpp)
 target_link_libraries(main PRIVATE Graph)
