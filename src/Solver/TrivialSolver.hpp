@@ -1,0 +1,20 @@
+#ifndef PACE2026_TRIVIAL_SOLVER_HPP
+#define PACE2026_TRIVIAL_SOLVER_HPP
+
+#include "AbstractSolver.hpp"
+
+namespace solver
+{
+
+/// /brief A Solver that returns the Leaf-Set as agreement forest
+class TrivialSolver : AbstractSolver
+{
+  public:
+    explicit TrivialSolver(graph::Instance& instance);
+
+    graph::Forest solve() override;
+};
+
+}  //namespace solver
+
+#endif  //PACE2026_TRIVIAL_SOLVER_HPP
