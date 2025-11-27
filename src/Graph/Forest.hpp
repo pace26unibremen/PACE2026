@@ -28,6 +28,12 @@ class Forest
     /// \brief Indices of root nodes in \c nodes vector.
     std::shared_ptr<std::vector<int>> rootIndices;
 
+    /// \brief \b 1. Sorts the children of each node,
+    /// such that the first child
+    /// contains the minimum label of both children.\n
+    /// And \b 2. fills \c subtreeTerminals for each node.
+    void sortChildrenAndCollectTerminals();
+
   public:
     // ------------------------------------------------------------- //
     // ---- constructors ------------------------------------------- //
@@ -127,12 +133,6 @@ class Forest
     /// \brief Removes an edge between a parent and a child.
     /// \param childIndex the index of the child node.
     void removeEdge(int childIndex);
-
-    /// \brief \b 1. Sorts the children of each node,
-    /// such that the first child
-    /// contains the minimum label of both children.\n
-    /// And \b 2. fills \c subtreeTerminals for each node.
-    void sortChildrenAndCollectTerminals();
 
     // ------------------------------------------------------------- //
     // ---- debug -------------------------------------------------- //

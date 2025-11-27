@@ -27,7 +27,9 @@ Forest::Forest(std::shared_ptr<std::vector<Node>> nodes,
         terminalIndexToLabel(std::move(terminalIndexToLabel)),
         labelToTerminalIndex(std::move(labelToTerminalIndex)),
         rootIndices(std::move(rootIndices))
-{}
+{
+    sortChildrenAndCollectTerminals();
+}
 
 Forest::Forest(const filesystem::path& path, int numberOfTerminals, int numberOfTrees)
 {
@@ -41,7 +43,6 @@ Forest::Forest(const filesystem::path& path, int numberOfTerminals, int numberOf
         throw invalid_argument("Forest : Constructor : unable to open file");
     }
     *this = ForestIO::ReadNewick(file, numberOfTerminals, numberOfTrees);
-    sortChildrenAndCollectTerminals();
 }
 
 // ------------------------------------------------------------- //

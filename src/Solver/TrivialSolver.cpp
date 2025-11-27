@@ -23,7 +23,5 @@ graph::Forest solver::TrivialSolver::solve()
         roots->at(index) = index;
         indexToTerminalLabel->emplace(index++,label);
     }
-    graph::Forest s = graph::Forest(nodes, indexToTerminalLabel, roots);
-    s.sortChildrenAndCollectTerminals();
-    return s;
+    return {nodes, indexToTerminalLabel, roots};
 }
