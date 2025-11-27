@@ -44,7 +44,6 @@ graph::Instance graph::ReadInstance(const std::filesystem::path& path)
         for(int i = 0; i < numberOfForests; i++)
         {
             Forest fi = ForestIO::ReadNewick(file, numberOfTerminals);
-            fi.sortChildrenAndCollectTerminals();
             result.emplace_back(fi);
         }
     }
