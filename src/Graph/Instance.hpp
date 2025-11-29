@@ -5,7 +5,7 @@
 
 namespace graph
 {
-    typedef std::vector<Forest> Instance;
+    typedef std::vector<std::shared_ptr<Forest>> Instance;
 
     Instance ReadInstance(const std::filesystem::path& path);
 }

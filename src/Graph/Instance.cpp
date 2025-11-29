@@ -43,8 +43,8 @@ graph::Instance graph::ReadInstance(const std::filesystem::path& path)
         result.reserve(numberOfForests);
         for(int i = 0; i < numberOfForests; i++)
         {
-            Forest fi = ForestIO::ReadNewick(file, numberOfTerminals);
-            result.emplace_back(fi);
+            auto fi_ptr = std::make_shared<Forest>(ForestIO::ReadNewick(file, numberOfTerminals));
+            result.emplace_back(fi_ptr);
         }
     }
     else
