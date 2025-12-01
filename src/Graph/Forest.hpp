@@ -96,6 +96,20 @@ class Forest
     [[nodiscard, maybe_unused]]
     const std::unordered_map<int, unsigned int>& Terminals() const;
 
+    /// \brief Reference to label-to-node-index map
+    /// \property
+    /// \first Leaf labels.
+    /// \second Corresponding node index.
+    [[nodiscard, maybe_unused]]
+    std::unordered_map<unsigned int, int>& LabelToTerminalIndex();
+
+    /// \brief \c const reference to label-to-node-index map
+    /// \property
+    /// \first Leaf labels.
+    /// \second Corresponding node index.
+    [[nodiscard, maybe_unused]]
+    const std::unordered_map<unsigned int, int>& LabelToTerminalIndex() const;
+
     /// \brief Reference index of root node.
     /// \property
     [[nodiscard, maybe_unused]]

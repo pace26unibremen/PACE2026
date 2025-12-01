@@ -104,6 +104,16 @@ const unordered_map<int, unsigned int>& Forest::Terminals() const
     return *this->terminalIndexToLabel;
 }
 
+unordered_map<unsigned int, int>& Forest::LabelToTerminalIndex()
+{
+    return *this->labelToTerminalIndex;
+}
+
+const unordered_map<unsigned int, int>& Forest::LabelToTerminalIndex() const
+{
+    return *this->labelToTerminalIndex;
+}
+
 vector<int>& Forest::RootIndices()
 {
     return *this->rootIndices;
