@@ -21,9 +21,11 @@ namespace graph
 
 Forest::Forest(std::shared_ptr<std::vector<Node>> nodes,
                std::shared_ptr<std::unordered_map<int, unsigned int>> terminalIndexToLabel,
+               std::shared_ptr<std::unordered_map<unsigned int, int>> labelToTerminalIndex,
                std::shared_ptr<std::vector<int>> rootIndices) :
         nodes(std::move(nodes)),
         terminalIndexToLabel(std::move(terminalIndexToLabel)),
+        labelToTerminalIndex(std::move(labelToTerminalIndex)),
         rootIndices(std::move(rootIndices))
 {}
 
@@ -100,6 +102,16 @@ unordered_map<int, unsigned int>& Forest::Terminals()
 const unordered_map<int, unsigned int>& Forest::Terminals() const
 {
     return *this->terminalIndexToLabel;
+}
+
+unordered_map<unsigned int, int>& Forest::LabelToTerminalIndex()
+{
+    return *this->labelToTerminalIndex;
+}
+
+const unordered_map<unsigned int, int>& Forest::LabelToTerminalIndex() const
+{
+    return *this->labelToTerminalIndex;
 }
 
 vector<int>& Forest::RootIndices()
