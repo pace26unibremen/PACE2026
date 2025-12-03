@@ -10,11 +10,9 @@ namespace solver
 class DebugTrivialSolutionRule : public AbstractRule
 {
   protected:
-    std::shared_ptr<graph::Instance> instanceCopy;
+    graph::Instance instanceBackUp;
 
   public:
-    DebugTrivialSolutionRule();
-
     explicit DebugTrivialSolutionRule(const std::shared_ptr<graph::Instance>& instance);
 
     void apply() override;
