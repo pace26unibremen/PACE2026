@@ -29,7 +29,7 @@ class Forest
     std::shared_ptr<std::vector<int>> rootIndices;
 
     /// \brief \b 1. Sorts the children of each node,
-    /// such that the first child
+    /// such that the left child
     /// contains the minimum label of both children.\n
     /// And \b 2. fills \c subtreeTerminals for each node.
     void sortChildrenAndCollectTerminals();
