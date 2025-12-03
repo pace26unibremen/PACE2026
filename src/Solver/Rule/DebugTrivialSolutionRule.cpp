@@ -1,8 +1,6 @@
 #include "DebugTrivialSolutionRule.hpp"
 #include "../TrivialSolver.hpp"
 
-solver::DebugTrivialSolutionRule::DebugTrivialSolutionRule() = default;
-
 solver::DebugTrivialSolutionRule::DebugTrivialSolutionRule(const std::shared_ptr<graph::Instance>& instance)
 {
     this->instance = instance;
@@ -16,11 +14,7 @@ void solver::DebugTrivialSolutionRule::apply()
     }
     isApplied = true;
 
-    this->instanceCopy = std::make_shared<graph::Instance>(instance->size());
-    for(const auto& f_ptr : *instance)
-    {
-        instanceCopy->push_back(f_ptr);
-    }
+    instanceBackUp = *instance;
 
     auto s = TrivialSolver(*instance.get());
     auto solution = s.solve();
@@ -36,11 +30,7 @@ void solver::DebugTrivialSolutionRule::unapply()
     }
     isApplied = false;
 
-    instance->erase(instance->begin());
-    for(const auto& f_ptr : *instanceCopy)
-    {
-        instance->push_back(f_ptr);
-    }
+    *instance = instanceBackUp;
 }
 
 std::shared_ptr<solver::AbstractRule> solver::DebugTrivialSolutionRule::isApplicable(const std::shared_ptr<graph::Instance>& instance)
