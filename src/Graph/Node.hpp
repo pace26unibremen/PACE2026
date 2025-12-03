@@ -20,11 +20,11 @@ struct Node
 
     /// \brief Index of the first child in.
     /// \c -1 indicates that \c this has no first child.
-    int firstChildIndex = -1;
+    int leftChildIndex = -1;
 
     /// \brief Index of the second child in.
     /// \c -1 indicates that \c this has no second child.
-    int secondChildIndex = -1;
+    int rightChildIndex = -1;
 
     /// \brieg a bitmask that stores all terminals that in the subtree of this node
     std::vector<uint64_t> subtreeTerminals = {};
@@ -32,9 +32,9 @@ struct Node
     /// \brief Constructor.
     /// \param parentIndex Index of parent.
     /// \param siblingIndex Index of the sibling.
-    /// \param firstChildIndex Index of the first child.
-    /// \param secondChildIndex Index of the second child.
-    Node(int parentIndex, int siblingIndex, int firstChildIndex, int secondChildIndex);
+    /// \param leftChildIndex Index of the left child.
+    /// \param rightChildIndex Index of the second child.
+    Node(int parentIndex, int siblingIndex, int leftChildIndex, int rightChildIndex);
 
     /// \brief Default Constructor.\n
     Node() = default;
