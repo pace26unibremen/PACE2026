@@ -487,7 +487,4 @@ Forest Forest::copy()
 
 }
 
-
-
-  //namespace graph
-}
+}  //namespace graph
