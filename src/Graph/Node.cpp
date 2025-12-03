@@ -1,10 +1,10 @@
 #include "Node.hpp"
 
-graph::Node::Node(int parentIndex, int siblingIndex, int firstChildIndex, int secondChildIndex) :
+graph::Node::Node(int parentIndex, int siblingIndex, int leftChildIndex, int rightChildIndex) :
         parentIndex(parentIndex),
         siblingIndex(siblingIndex),
-        firstChildIndex(firstChildIndex),
-        secondChildIndex(secondChildIndex)
+        leftChildIndex(leftChildIndex),
+        rightChildIndex(rightChildIndex)
 {}
 
 bool graph::Node::hasSameTerminals(const Node& other) const

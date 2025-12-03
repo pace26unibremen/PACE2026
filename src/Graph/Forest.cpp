@@ -158,8 +158,8 @@ void Forest::print() const
         rowLine << "--------+";
         rowParent << std::setw(7) << n.parentIndex << " |";
         rowSibling << std::setw(7) << n.siblingIndex << " |";
-        rowFstChild << std::setw(7) << n.firstChildIndex << " |";
-        rowSndChild << std::setw(7) << n.secondChildIndex << " |";
+        rowFstChild << std::setw(7) << n.leftChildIndex << " |";
+        rowSndChild << std::setw(7) << n.rightChildIndex << " |";
     }
     std::clog << "\n"
               << rowIndex.str() << "\n"
@@ -179,48 +179,48 @@ bool Forest::isValid() const
         const Node& node = nodes->at(nodeIndex);
 
         if(node.parentIndex == -1 and
-           node.firstChildIndex == -1 and
-           node.secondChildIndex == -1)
+           node.leftChildIndex == -1 and
+           node.rightChildIndex == -1)
         {
             // fully reduced node or single node tree
             continue;
         }
 
         // root or leaf
-        if(node.firstChildIndex >= 0 and node.firstChildIndex < (int) nodes->size() and
-           node.secondChildIndex >= 0 and node.secondChildIndex < (int) nodes->size())
+        if(node.leftChildIndex >= 0 and node.leftChildIndex < (int) nodes->size() and
+           node.rightChildIndex >= 0 and node.rightChildIndex < (int) nodes->size())
         {
-            const Node& fstChild = nodes->at(node.firstChildIndex);
-            const Node& sndChild = nodes->at(node.secondChildIndex);
+            const Node& fstChild = nodes->at(node.leftChildIndex);
+            const Node& sndChild = nodes->at(node.rightChildIndex);
 
             // node.child.parent == node
             if(fstChild.parentIndex != nodeIndex)
             {
                 std::clog << "Forest: isValid: inconstant parent-child relation:\n"
-                             "   parent (" << nodeIndex << ") -> (" << node.firstChildIndex <<") child\n" <<
-                             "   parent (" << fstChild.parentIndex << ") <- (" << node.firstChildIndex <<") child\n";
+                             "   parent (" << nodeIndex << ") -> (" << node.leftChildIndex <<") child\n" <<
+                             "   parent (" << fstChild.parentIndex << ") <- (" << node.leftChildIndex <<") child\n";
                 valid = false;
             }
             if(sndChild.parentIndex != nodeIndex)
             {
                 std::clog << "Forest: isValid: inconstant parent-child relation:\n"
-                             "   parent (" << nodeIndex << ") -> (" << node.secondChildIndex <<") child\n" <<
-                             "   parent (" << sndChild.parentIndex << ") <- (" << node.secondChildIndex <<") child\n";
+                             "   parent (" << nodeIndex << ") -> (" << node.rightChildIndex <<") child\n" <<
+                             "   parent (" << sndChild.parentIndex << ") <- (" << node.rightChildIndex <<") child\n";
                 valid = false;
             }
 
             // TODO check sibling order and label structure
         }
         // node is terminal
-        else if (node.firstChildIndex == -1 and node.secondChildIndex == -1)
+        else if (node.leftChildIndex == -1 and node.rightChildIndex == -1)
         {
             // TODO check is terminal
         }
         else
         {
             std::clog << "Forest: isValid: invalid sibling indices:\n"
-                         "   node (" << nodeIndex << "): fst Child (" << node.firstChildIndex <<") "
-                        "snd Child (" << node.secondChildIndex <<") \n";
+                         "   node (" << nodeIndex << "): fst Child (" << node.leftChildIndex <<") "
+                        "snd Child (" << node.rightChildIndex <<") \n";
             valid = false;
         }
 
@@ -271,17 +271,17 @@ void Forest::sortChildrenAndCollectTerminals()
             subtreeRoot.subtreeTerminals[(label - 1) / 64] = (1 << (label -1) % 64);
             return label;
         }
-        unsigned int firstMinLabel = orderSubtree(subtreeRoot.firstChildIndex);
-        unsigned int secondMinLabel = orderSubtree(subtreeRoot.secondChildIndex);
+        unsigned int firstMinLabel = orderSubtree(subtreeRoot.leftChildIndex);
+        unsigned int secondMinLabel = orderSubtree(subtreeRoot.rightChildIndex);
         if (firstMinLabel > secondMinLabel)
         {
-            std::swap(subtreeRoot.firstChildIndex, subtreeRoot.secondChildIndex);
+            std::swap(subtreeRoot.leftChildIndex, subtreeRoot.rightChildIndex);
         }
         for(unsigned int i = 0; i < subtreeRoot.subtreeTerminals.size(); i++)
         {
             subtreeRoot.subtreeTerminals[i] =
-                nodes->at(subtreeRoot.firstChildIndex).subtreeTerminals[i] |
-                nodes->at(subtreeRoot.secondChildIndex).subtreeTerminals[i];
+                nodes->at(subtreeRoot.leftChildIndex).subtreeTerminals[i] |
+                nodes->at(subtreeRoot.rightChildIndex).subtreeTerminals[i];
         }
         return std::min(firstMinLabel, secondMinLabel);
     };
@@ -306,8 +306,8 @@ bool Forest::operator==(const Forest& other) const
         const Node& thisNode = (*nodes)[thisNodeIdx];
         const Node& otherNode = (*other.nodes)[otherNodeIdx];
 
-        bool thisIsTerminal = thisNode.firstChildIndex == -1;
-        bool otherIsTerminal = otherNode.firstChildIndex == -1;
+        bool thisIsTerminal = thisNode.leftChildIndex == -1;
+        bool otherIsTerminal = otherNode.leftChildIndex == -1;
 
         if (thisIsTerminal != otherIsTerminal)
         {
@@ -317,8 +317,8 @@ bool Forest::operator==(const Forest& other) const
         {
             return terminalIndexToLabel->at(thisNodeIdx) == other.terminalIndexToLabel->at(otherNodeIdx);
         }
-        return compareSubtrees(thisNode.firstChildIndex, otherNode.firstChildIndex) and
-               compareSubtrees(thisNode.secondChildIndex, otherNode.secondChildIndex);
+        return compareSubtrees(thisNode.leftChildIndex, otherNode.leftChildIndex) and
+               compareSubtrees(thisNode.rightChildIndex, otherNode.rightChildIndex);
     };
     if(rootIndices->size() != other.rootIndices->size())
     {

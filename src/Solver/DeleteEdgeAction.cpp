@@ -16,8 +16,8 @@ void solver::DeleteEdgeAction::doAction()
 {
     siblingIndex = forest->Nodes()[childIndex].siblingIndex;
     parentIndex = forest->Nodes()[childIndex].parentIndex;
-    leftIndex = forest->Nodes()[parentIndex].firstChildIndex;
-    rightIndex = forest->Nodes()[parentIndex].secondChildIndex;
+    leftIndex = forest->Nodes()[parentIndex].leftChildIndex;
+    rightIndex = forest->Nodes()[parentIndex].rightChildIndex;
 
     auto leftRootIterator = std::find(forest->RootIndices().begin(), forest->RootIndices().end(), parentIndex);
     leftRoot_RootsIndex = std::distance(forest->RootIndices().begin(), leftRootIterator);
@@ -35,8 +35,8 @@ void solver::DeleteEdgeAction::doAction()
     // can be removed if new isValid is active
     Node& parent = forest->Nodes()[parentIndex];
     parentCopy = parent;
-    parent.firstChildIndex = -1;
-    parent.secondChildIndex = -1;
+    parent.leftChildIndex = -1;
+    parent.rightChildIndex = -1;
     parent.parentIndex = -1;
     parent.siblingIndex = -1;
 }
@@ -98,13 +98,13 @@ void DeleteEdgeAction::doParentIsInner()
     Node& sibling = forest->Nodes()[siblingIndex];
     Node& grandParent = forest->Nodes()[parent.parentIndex];
 
-    if (grandParent.firstChildIndex == parentIndex)
+    if (grandParent.leftChildIndex == parentIndex)
     {
-        grandParent.firstChildIndex = siblingIndex;
+        grandParent.leftChildIndex = siblingIndex;
     }
     else
     {
-        grandParent.secondChildIndex = siblingIndex;
+        grandParent.rightChildIndex = siblingIndex;
     }
 
     sibling.parentIndex = parent.parentIndex;
@@ -124,11 +124,11 @@ void DeleteEdgeAction::doParentIsInner()
         }
         traverseUpIndex = traversedNode.parentIndex;
         // sort children
-        const Node& l = forest->Nodes()[traversedNode.firstChildIndex];
-        const Node& r = forest->Nodes()[traversedNode.secondChildIndex];
+        const Node& l = forest->Nodes()[traversedNode.leftChildIndex];
+        const Node& r = forest->Nodes()[traversedNode.rightChildIndex];
         if (r.hasSmallestTerminal(l))
         {
-            std::swap(traversedNode.firstChildIndex, traversedNode.secondChildIndex);
+            std::swap(traversedNode.leftChildIndex, traversedNode.rightChildIndex);
         }
     }
 
@@ -171,13 +171,13 @@ void DeleteEdgeAction::undoParentIsInner()
     Node& sibling = forest->Nodes()[siblingIndex];
     Node& grandParent = forest->Nodes()[parent.parentIndex];
 
-    if (grandParent.firstChildIndex == siblingIndex)
+    if (grandParent.leftChildIndex == siblingIndex)
     {
-        grandParent.firstChildIndex = parentIndex;
+        grandParent.leftChildIndex = parentIndex;
     }
     else
     {
-        grandParent.secondChildIndex = parentIndex;
+        grandParent.rightChildIndex = parentIndex;
     }
 
     sibling.parentIndex = parentIndex;
@@ -199,11 +199,11 @@ void DeleteEdgeAction::undoParentIsInner()
         }
         traverseUpIndex = traversedNode.parentIndex;
         // sort children
-        const Node& l = forest->Nodes()[traversedNode.firstChildIndex];
-        const Node& r = forest->Nodes()[traversedNode.secondChildIndex];
+        const Node& l = forest->Nodes()[traversedNode.leftChildIndex];
+        const Node& r = forest->Nodes()[traversedNode.rightChildIndex];
         if (r.hasSmallestTerminal(l))
         {
-            std::swap(traversedNode.firstChildIndex, traversedNode.secondChildIndex);
+            std::swap(traversedNode.leftChildIndex, traversedNode.rightChildIndex);
         }
     }
 
