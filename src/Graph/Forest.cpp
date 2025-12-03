@@ -15,7 +15,6 @@ using namespace std;
 
 namespace graph
 {
-
 // ------------------------------------------------------------- //
 // ---- constructors ------------------------------------------- //
 // ------------------------------------------------------------- //
@@ -458,20 +457,24 @@ Forest Forest::copy()
     //Start Copying the param
     //Nodes
     // Anstelle -> auch nichts: this allein| nodes, Nodes()
+    copiedNodes->reserve(nodes->capacity());
     for ( Node node : *nodes)
     {
         copiedNodes->push_back(node);
     }
     //Terminal Indecies
+    copiedTerminalIndexToLabel->reserve(terminalIndexToLabel->size());
     for ( auto termIndexToLabel : *terminalIndexToLabel)
     {
         copiedTerminalIndexToLabel->insert(termIndexToLabel);
     }
+    copiedLabelToTerminalIndex->reserve(labelToTerminalIndex->size());
     //Labels for Terminal Indecies
     for (auto labelToTermIndex : *labelToTerminalIndex)
     {
         copiedLabelToTerminalIndex->insert(labelToTermIndex);
     }
+    copiedRootIndices->reserve(rootIndices->capacity());
     //Root Indices
     for (int rootIndex : *rootIndices)
     {
@@ -486,4 +489,5 @@ Forest Forest::copy()
 
 
 
-}  //namespace graph
+  //namespace graph
+}
