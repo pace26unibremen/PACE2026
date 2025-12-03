@@ -52,6 +52,9 @@ solver::EqualForestsRule::isApplicable(const std::shared_ptr<graph::Instance>& i
             }
         }
     }
-
+    if(toBeRemoved.empty())
+    {
+        return nullptr;
+    }
     return std::dynamic_pointer_cast<AbstractRule>(std::make_shared<EqualForestsRule>(instance, toBeRemoved));
 }
