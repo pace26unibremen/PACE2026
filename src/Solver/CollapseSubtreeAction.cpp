@@ -8,16 +8,16 @@ solver::CollapseSubtreeAction::CollapseSubtreeAction(int nodeIndex, const std::s
 void solver::CollapseSubtreeAction::doAction()
 {
     graph::Node& node = forest->Nodes()[nodeIndex];
-    leftChildIndex  = node.firstChildIndex;
-    rightChildIndex = node.secondChildIndex;
+    leftChildIndex  = node.leftChildIndex;
+    rightChildIndex = node.rightChildIndex;
 
-    node.firstChildIndex = -1;
-    node.secondChildIndex = -1;
+    node.leftChildIndex = -1;
+    node.rightChildIndex = -1;
 }
 
 void solver::CollapseSubtreeAction::undoAction()
 {
     graph::Node& node = forest->Nodes()[nodeIndex];
-    node.firstChildIndex = leftChildIndex;
-    node.secondChildIndex = rightChildIndex;
+    node.leftChildIndex = leftChildIndex;
+    node.rightChildIndex = rightChildIndex;
 }

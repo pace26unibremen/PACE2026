@@ -214,11 +214,11 @@ TEST_CASE("Delete Edge Action - sibling & root order", "[Forest, DeleteEdgeActio
         REQUIRE(f1.RootIndices()[3] == 3);
 
         auto r = f1.Nodes()[3];
-        REQUIRE(r.firstChildIndex == 11);
-        REQUIRE(r.secondChildIndex == 4);
+        REQUIRE(r.leftChildIndex == 11);
+        REQUIRE(r.rightChildIndex == 4);
         auto p = f1.Nodes()[4];
-        REQUIRE(p.firstChildIndex == 8);
-        REQUIRE(p.secondChildIndex == 7);
+        REQUIRE(p.leftChildIndex == 8);
+        REQUIRE(p.rightChildIndex == 7);
 
 
         INFO("Undo Action");
@@ -248,8 +248,8 @@ TEST_CASE("Delete Edge Action - sibling & root order", "[Forest, DeleteEdgeActio
         REQUIRE(f1.RootIndices()[3] == 8);
 
         auto r = f1.Nodes()[3];
-        REQUIRE(r.firstChildIndex == 5);
-        REQUIRE(r.secondChildIndex == 11);
+        REQUIRE(r.leftChildIndex == 5);
+        REQUIRE(r.rightChildIndex == 11);
 
         INFO("Undo Action");
         action.undoAction();
