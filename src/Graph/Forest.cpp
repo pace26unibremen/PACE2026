@@ -452,6 +452,8 @@ Forest Forest::copy()
     std::shared_ptr<std::vector<Node>> copiedNodes = std::make_shared<std::vector<Node>>();
     std::shared_ptr<std::unordered_map<int, unsigned int>> copiedTerminalIndexToLabel =
         std::make_shared<std::unordered_map<int, unsigned int>>();
+    std::shared_ptr<std::unordered_map<unsigned int, int>> copiedLabelToTerminalIndex =
+        std::make_shared<std::unordered_map<unsigned int, int>>();
     std::shared_ptr<std::vector<int>> copiedRootIndices = std::make_shared<std::vector<int>>();
     //Start Copying the param
     //Nodes
@@ -460,17 +462,23 @@ Forest Forest::copy()
     {
         copiedNodes->push_back(node);
     }
-    //Termial Indecies
+    //Terminal Indecies
     for ( auto termIndexToLabel : *terminalIndexToLabel)
     {
         copiedTerminalIndexToLabel->insert(termIndexToLabel);
+    }
+    //Labels for Terminal Indecies
+    for (auto labelToTermIndex : *labelToTerminalIndex)
+    {
+        copiedLabelToTerminalIndex->insert(labelToTermIndex);
     }
     //Root Indices
     for (int rootIndex : *rootIndices)
     {
         copiedRootIndices->push_back(rootIndex);
     }
-    Forest newForest(copiedNodes, copiedTerminalIndexToLabel, copiedRootIndices);
+
+    Forest newForest(copiedNodes, copiedTerminalIndexToLabel, copiedLabelToTerminalIndex, copiedRootIndices);
 
     return newForest;
 
