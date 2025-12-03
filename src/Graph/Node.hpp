@@ -18,12 +18,12 @@ struct Node
     /// \c -1 indicates that \c this is the last sibling.
     int siblingIndex = -1;
 
-    /// \brief Index of the first child in.
-    /// \c -1 indicates that \c this has no first child.
+    /// \brief Index of the left child in.
+    /// \c -1 indicates that \c this has no left child.
     int leftChildIndex = -1;
 
-    /// \brief Index of the second child in.
-    /// \c -1 indicates that \c this has no second child.
+    /// \brief Index of the right child in.
+    /// \c -1 indicates that \c this has no right child.
     int rightChildIndex = -1;
 
     /// \brieg a bitmask that stores all terminals that in the subtree of this node
@@ -33,7 +33,7 @@ struct Node
     /// \param parentIndex Index of parent.
     /// \param siblingIndex Index of the sibling.
     /// \param leftChildIndex Index of the left child.
-    /// \param rightChildIndex Index of the second child.
+    /// \param rightChildIndex Index of the right child.
     Node(int parentIndex, int siblingIndex, int leftChildIndex, int rightChildIndex);
 
     /// \brief Default Constructor.\n
