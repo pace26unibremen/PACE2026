@@ -14,14 +14,16 @@ graph::Forest solver::TrivialSolver::solve()
 
     auto nodes = std::make_shared<std::vector<graph::Node>>(numberOfTerminals);
     auto roots = std::make_shared<std::vector<int>>(numberOfTerminals);
-    auto indexToTerminalLabel = std::make_shared<std::unordered_map<int, unsigned int>>(numberOfTerminals);
+    auto indexToLabel = std::make_shared<std::unordered_map<int, unsigned int>>(numberOfTerminals);
+    auto labelToIndex = std::make_shared<std::unordered_map<unsigned int, int>>(numberOfTerminals);
 
     int index = 0;
     for(const auto & [_, label] : instance[0]->Terminals())
     {
         nodes->at(index) = {-1,-1,-1,-1};
         roots->at(index) = index;
-        indexToTerminalLabel->emplace(index++,label);
+        indexToLabel->emplace(index++,label);
+        labelToIndex->emplace(index++,label);
     }
-    return {nodes, indexToTerminalLabel, roots};
+    return {nodes, indexToLabel, labelToIndex, roots};
 }
