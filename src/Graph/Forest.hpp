@@ -126,6 +126,14 @@ class Forest
     [[nodiscard, maybe_unused]]
     const std::vector<int>& RootIndices() const;
 
+    /// \brief returns the index of the root node in the nodes vector, that has \c node in its subtree
+    [[nodiscard, maybe_unused]]
+    int rootIndexOf(const Node& node) const;
+
+    /// \brief returns the index of the root node in the nodes vector, that has \c node in its subtree
+    [[nodiscard, maybe_unused]]
+    int rootIndexOf(int nodeIndex) const;
+
     // ------------------------------------------------------------- //
     // ---- debug -------------------------------------------------- //
     // ------------------------------------------------------------- //
