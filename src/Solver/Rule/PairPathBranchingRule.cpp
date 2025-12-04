@@ -1,4 +1,4 @@
-#include "SiblingPathBranchingRule.hpp"
+#include "PairPathBranchingRule.hpp"
 
 #include <cassert>
 #include <list>
@@ -9,7 +9,7 @@
 typedef std::tuple<unsigned int, unsigned int, std::unordered_map<std::shared_ptr<graph::Forest>, std::list<int>>>
     context;
 
-solver::SiblingPathBranchingRule::SiblingPathBranchingRule(const std::shared_ptr<graph::Instance>& instance,
+solver::PairPathBranchingRule::PairPathBranchingRule(const std::shared_ptr<graph::Instance>& instance,
                                                            const context& context) :
         label1(get<0>(context)),
         label2(get<1>(context)),
@@ -20,7 +20,7 @@ solver::SiblingPathBranchingRule::SiblingPathBranchingRule(const std::shared_ptr
 }
 
 
-void solver::SiblingPathBranchingRule::apply()
+void solver::PairPathBranchingRule::apply()
 {
     if (this->isApplied)
     {
@@ -42,7 +42,7 @@ void solver::SiblingPathBranchingRule::apply()
                 const auto& t1 = f->Nodes()[t1Index];
                 if(t1.parentIndex != -1)
                 {
-                    changes.emplace(DeleteEdgeAction(t1Index,f));
+                    changes.emplace(t1Index,f);
                     changes.top().doAction();
                 }
             }
@@ -54,7 +54,7 @@ void solver::SiblingPathBranchingRule::apply()
                 const auto& t2 = f->Nodes()[t2Index];
                 if(t2.parentIndex != -1)
                 {
-                    changes.emplace(DeleteEdgeAction(t2Index,f));
+                    changes.emplace(t2Index,f);
                     changes.top().doAction();
                 }
             }
@@ -64,7 +64,7 @@ void solver::SiblingPathBranchingRule::apply()
             {
                 for(auto pathDel : this->forestToPathDeletions[f])
                 {
-                    changes.emplace(DeleteEdgeAction(pathDel,f));
+                    changes.emplace(pathDel,f);
                     changes.top().doAction();
                 }
             }
@@ -74,7 +74,7 @@ void solver::SiblingPathBranchingRule::apply()
     }
 }
 
-void solver::SiblingPathBranchingRule::unapply()
+void solver::PairPathBranchingRule::unapply()
 {
     if (not this->isApplied)
     {
@@ -91,7 +91,7 @@ void solver::SiblingPathBranchingRule::unapply()
 
 
 std::shared_ptr<solver::AbstractRule>
-solver::SiblingPathBranchingRule::isApplicable(const std::shared_ptr<graph::Instance>& instance)
+solver::PairPathBranchingRule::isApplicable(const std::shared_ptr<graph::Instance>& instance)
 {
     context c = context();
     get<0>(c) = 0;
@@ -163,7 +163,7 @@ solver::SiblingPathBranchingRule::isApplicable(const std::shared_ptr<graph::Inst
             it = itNode.parentIndex;
         }
 
-        if (cutAwaySubtrees.size() >= 1)
+        if (not cutAwaySubtrees.empty())
         {
             // actually the case == 1 result in another, better branching rule
             existNonTrivialPath = true;
@@ -175,10 +175,10 @@ solver::SiblingPathBranchingRule::isApplicable(const std::shared_ptr<graph::Inst
     {
         return nullptr;
     }
-    return std::dynamic_pointer_cast<AbstractRule>(std::make_shared<SiblingPathBranchingRule>(instance, c));
+    return std::dynamic_pointer_cast<AbstractRule>(std::make_shared<PairPathBranchingRule>(instance, c));
 }
 
-bool solver::SiblingPathBranchingRule::isFullyExplored() const
+bool solver::PairPathBranchingRule::isFullyExplored() const
 {
     return branch >= 3;
 }
