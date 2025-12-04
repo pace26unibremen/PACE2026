@@ -131,6 +131,7 @@ class Forest
     /// and writes flaws to std::clog
     bool isValid() const;
 
+    bool hasIdenticalSubtree(const Forest& other, int thisNodeIdx, int otherNodeIdx);
     // ------------------------------------------------------------- //
     // ---- operators ---------------------------------------------- //
     // ------------------------------------------------------------- //

@@ -9,6 +9,7 @@
 #include <sstream>
 #include <unordered_set>
 #include <utility>
+#include <stack>
 
 using namespace std;
 
@@ -244,6 +245,39 @@ bool Forest::isValid() const
         print();
     }
     return valid;
+}
+
+bool Forest::hasIdenticalSubtree(const Forest& other, int thisNodeIdx, int otherNodeIdx)
+{
+    std::stack<int> thisVisitedStack;
+    thisVisitedStack.push(thisNodeIdx);
+    std::stack<int> otherVisitedStack;
+    otherVisitedStack.push(otherNodeIdx);
+
+    while (not (thisVisitedStack.empty() or otherVisitedStack.empty()))
+    {
+        Node& thisCurrentNode = nodes->at(thisVisitedStack.top());
+        thisVisitedStack.pop();
+        Node& otherCurrentNode = nodes->at(otherVisitedStack.top());
+        otherVisitedStack.pop();
+
+        if (not thisCurrentNode.hasSameTerminals(otherCurrentNode))
+        {
+            return false;
+        }
+
+
+        thisVisitedStack.push(thisCurrentNode.firstChildIndex);
+        thisVisitedStack.push(thisCurrentNode.secondChildIndex);
+        otherVisitedStack.push(otherCurrentNode.firstChildIndex);
+        otherVisitedStack.push(otherCurrentNode.secondChildIndex);
+
+    }
+    if (thisVisitedStack.empty() and otherVisitedStack.empty())
+    {
+        return true;
+    }
+    return false;
 }
 
 // ------------------------------------------------------------- //
