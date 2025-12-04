@@ -3,6 +3,7 @@
 #include "ForestIO.hpp"
 
 #include <algorithm>
+#include <cassert>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -122,6 +123,24 @@ vector<int>& Forest::RootIndices()
 const vector<int>& Forest::RootIndices() const
 {
     return *this->rootIndices;
+}
+
+int Forest::rootIndexOf(const Node& node) const
+{
+    for(auto index : *rootIndices)
+    {
+        const auto& root = Nodes()[index];
+        if(root.hasSubsetTerminals(node))
+        {
+            return index;
+        }
+    }
+    assert(false);
+}
+
+int Forest::rootIndexOf(int nodeIndex) const
+{
+    return rootIndexOf(Nodes()[nodeIndex]);
 }
 
 // ------------------------------------------------------------- //
