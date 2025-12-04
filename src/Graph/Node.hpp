@@ -48,7 +48,7 @@ struct Node
     /// Checks if the terminals in the subtree of a node is a \b subset of
     /// the terminals of another node.
     /// \param other
-    /// \return true if terminals of \c are a subset of the terminals of \c other, else false
+    /// \return true if terminals of \c this are a subset of the terminals of \c other, else false
     [[nodiscard]]
     bool hasSubsetTerminals(const Node& other) const;
 

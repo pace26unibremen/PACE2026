@@ -130,7 +130,7 @@ int Forest::rootIndexOf(const Node& node) const
     for(auto index : *rootIndices)
     {
         const auto& root = Nodes()[index];
-        if(root.hasSubsetTerminals(node))
+        if(node.hasSubsetTerminals(root))
         {
             return index;
         }
