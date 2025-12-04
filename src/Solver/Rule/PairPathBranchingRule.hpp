@@ -10,7 +10,7 @@
 namespace solver
 {
 
-class SiblingPathBranchingRule : public AbstractBranchingRule
+class PairPathBranchingRule : public AbstractBranchingRule
 {
   protected:
     unsigned int label1;
@@ -23,7 +23,7 @@ class SiblingPathBranchingRule : public AbstractBranchingRule
     /// 1. fst label
     /// 2. snd label
     /// 3. a mapping: forest to each subtree on the path that can be deleted
-    SiblingPathBranchingRule(
+    PairPathBranchingRule(
         const std::shared_ptr<graph::Instance>& instance,
         const std::tuple<unsigned int, unsigned int,
                          std::unordered_map<std::shared_ptr<graph::Forest>, std::list<int>>>& context);

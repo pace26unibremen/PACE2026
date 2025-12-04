@@ -1,4 +1,4 @@
-#include "SiblingPathBranchingRule.hpp"
+#include "PairPathBranchingRule.hpp"
 
 #include <cassert>
 #include <list>
@@ -9,7 +9,7 @@
 typedef std::tuple<unsigned int, unsigned int, std::unordered_map<std::shared_ptr<graph::Forest>, std::list<int>>>
     context;
 
-solver::SiblingPathBranchingRule::SiblingPathBranchingRule(const std::shared_ptr<graph::Instance>& instance,
+solver::PairPathBranchingRule::PairPathBranchingRule(const std::shared_ptr<graph::Instance>& instance,
                                                            const context& context) :
         label1(get<0>(context)),
         label2(get<1>(context)),
@@ -20,7 +20,7 @@ solver::SiblingPathBranchingRule::SiblingPathBranchingRule(const std::shared_ptr
 }
 
 
-void solver::SiblingPathBranchingRule::apply()
+void solver::PairPathBranchingRule::apply()
 {
     if (this->isApplied)
     {
@@ -74,7 +74,7 @@ void solver::SiblingPathBranchingRule::apply()
     }
 }
 
-void solver::SiblingPathBranchingRule::unapply()
+void solver::PairPathBranchingRule::unapply()
 {
     if (not this->isApplied)
     {
@@ -91,7 +91,7 @@ void solver::SiblingPathBranchingRule::unapply()
 
 
 std::shared_ptr<solver::AbstractRule>
-solver::SiblingPathBranchingRule::isApplicable(const std::shared_ptr<graph::Instance>& instance)
+solver::PairPathBranchingRule::isApplicable(const std::shared_ptr<graph::Instance>& instance)
 {
     context c = context();
     get<0>(c) = 0;
@@ -175,10 +175,10 @@ solver::SiblingPathBranchingRule::isApplicable(const std::shared_ptr<graph::Inst
     {
         return nullptr;
     }
-    return std::dynamic_pointer_cast<AbstractRule>(std::make_shared<SiblingPathBranchingRule>(instance, c));
+    return std::dynamic_pointer_cast<AbstractRule>(std::make_shared<PairPathBranchingRule>(instance, c));
 }
 
-bool solver::SiblingPathBranchingRule::isFullyExplored() const
+bool solver::PairPathBranchingRule::isFullyExplored() const
 {
     return branch >= 3;
 }
