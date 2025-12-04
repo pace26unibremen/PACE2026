@@ -34,7 +34,7 @@ void solver::SingleVertexTreePropagationRule::apply()
 
 void solver::SingleVertexTreePropagationRule::unapply()
 {
-    if (this->isApplied)
+    if (not this->isApplied)
     {
         throw std::invalid_argument("EqualForestsRule : unapply : rule is not applied");
     }

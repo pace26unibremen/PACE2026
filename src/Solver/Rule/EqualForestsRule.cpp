@@ -25,7 +25,7 @@ void solver::EqualForestsRule::apply()
 
 void solver::EqualForestsRule::unapply()
 {
-    if (this->isApplied)
+    if (not this->isApplied)
     {
         throw std::invalid_argument("EqualForestsRule : unapply : rule is not applied");
     }
