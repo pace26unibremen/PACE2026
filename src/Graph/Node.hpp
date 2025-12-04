@@ -58,6 +58,10 @@ struct Node
     [[nodiscard]]
     bool hasSmallestTerminal(const Node& other) const;
 
+    /// \brief returns the smallest terminal in the nodes subtree.
+    [[nodiscard, maybe_unused]]
+    unsigned int smallestTerminal() const;
+
 };
 
 }  // namespace graph
