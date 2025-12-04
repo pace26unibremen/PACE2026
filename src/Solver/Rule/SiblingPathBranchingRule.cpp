@@ -42,7 +42,7 @@ void solver::SiblingPathBranchingRule::apply()
                 const auto& t1 = f->Nodes()[t1Index];
                 if(t1.parentIndex != -1)
                 {
-                    changes.emplace(DeleteEdgeAction(t1Index,f));
+                    changes.emplace(t1Index,f);
                     changes.top().doAction();
                 }
             }
@@ -54,7 +54,7 @@ void solver::SiblingPathBranchingRule::apply()
                 const auto& t2 = f->Nodes()[t2Index];
                 if(t2.parentIndex != -1)
                 {
-                    changes.emplace(DeleteEdgeAction(t2Index,f));
+                    changes.emplace(t2Index,f);
                     changes.top().doAction();
                 }
             }
@@ -64,7 +64,7 @@ void solver::SiblingPathBranchingRule::apply()
             {
                 for(auto pathDel : this->forestToPathDeletions[f])
                 {
-                    changes.emplace(DeleteEdgeAction(pathDel,f));
+                    changes.emplace(pathDel,f);
                     changes.top().doAction();
                 }
             }
@@ -163,7 +163,7 @@ solver::SiblingPathBranchingRule::isApplicable(const std::shared_ptr<graph::Inst
             it = itNode.parentIndex;
         }
 
-        if (cutAwaySubtrees.size() >= 1)
+        if (not cutAwaySubtrees.empty())
         {
             // actually the case == 1 result in another, better branching rule
             existNonTrivialPath = true;
