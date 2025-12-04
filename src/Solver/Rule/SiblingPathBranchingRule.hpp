@@ -2,7 +2,7 @@
 #define PACE2026_SIBLING_PATH_BRANCHING_RULE_HPP
 
 #include "../DeleteEdgeAction.hpp"
-#include "AbstractRule.hpp"
+#include "AbstractBranchingRule.hpp"
 
 #include <list>
 #include <stack>
@@ -10,13 +10,12 @@
 namespace solver
 {
 
-class SiblingPathBranchingRule : public AbstractRule
+class SiblingPathBranchingRule : public AbstractBranchingRule
 {
   protected:
     unsigned int label1;
     unsigned int label2;
     std::unordered_map<std::shared_ptr<graph::Forest>, std::list<int>> forestToPathDeletions;
-    unsigned int branch = 0;
     std::stack<DeleteEdgeAction> changes;
 
   public:
@@ -33,9 +32,8 @@ class SiblingPathBranchingRule : public AbstractRule
 
     void unapply() override;
 
-    /// \brief Checks if all branches of this rule are processed
     [[nodiscard, maybe_unused]]
-    bool isFullyExplored() const;
+    bool isFullyExplored() const override;
 
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance);
 };

@@ -1,7 +1,7 @@
 #ifndef PACE2026_PAIR_UNCONNECTED_BRANCHING_RULE_HPP
 #define PACE2026_PAIR_UNCONNECTED_BRANCHING_RULE_HPP
 
-#include "AbstractRule.hpp"
+#include "AbstractBranchingRule.hpp"
 #include "../DeleteEdgeAction.hpp"
 
 #include <list>
@@ -11,13 +11,12 @@ namespace solver
 {
 
 /// \brief
-class PairUnconnectedBranchingRule : public AbstractRule
+class PairUnconnectedBranchingRule : public AbstractBranchingRule
 {
   protected:
     unsigned int label1;
     unsigned int label2;
     std::list<std::shared_ptr<graph::Forest>> forestsConnectedLabels;
-    unsigned int branch = 0;
     std::stack<DeleteEdgeAction> changes;
 
   public:
@@ -34,9 +33,8 @@ class PairUnconnectedBranchingRule : public AbstractRule
 
     void unapply() override;
 
-    /// \brief Checks if all branches of this rule are processed
     [[nodiscard, maybe_unused]]
-    bool isFullyExplored() const;
+    bool isFullyExplored() const override;
 
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance);
 };
