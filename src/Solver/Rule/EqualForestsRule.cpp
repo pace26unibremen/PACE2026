@@ -38,15 +38,15 @@ std::shared_ptr<solver::AbstractRule>
 solver::EqualForestsRule::isApplicable(const std::shared_ptr<graph::Instance>& instance)
 {
     auto toBeRemoved = std::unordered_set<std::shared_ptr<graph::Forest>>();
-    for (unsigned int i = 0; i < instance->size(); i++)
+    for (unsigned int i = 0; i < instance->size() - 1; i++)
     {
         if (toBeRemoved.contains(instance->at(i)))
         {
             continue;
         }
-        for (unsigned int j = i; j < instance->size(); j++)
+        for (unsigned int j = i + 1; j < instance->size(); j++)
         {
-            if (instance->at(i) == instance->at(j))
+            if (*instance->at(i) == *instance->at(j))
             {
                 toBeRemoved.insert(instance->at(j));
             }
