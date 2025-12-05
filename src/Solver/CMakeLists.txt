@@ -8,3 +8,6 @@ set_target_properties(Solver PROPERTIES
         VERSION ${PROJECT_VERSION}
         SOVERSION 1
         PUBLIC_HEADER "${solver_header}")
+
+add_subdirectory(Action)
+add_subdirectory(Rule)
