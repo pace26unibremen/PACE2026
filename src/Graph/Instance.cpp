@@ -8,7 +8,7 @@
 #include "Forest.hpp"
 #include "ForestIO.hpp"
 
-graph::Instance graph::ReadInstance(const std::filesystem::path& path)
+std::shared_ptr<graph::Instance> graph::ReadInstance(const std::filesystem::path& path)
 {
     if (path.empty())
     {
@@ -20,7 +20,7 @@ graph::Instance graph::ReadInstance(const std::filesystem::path& path)
         throw std::invalid_argument("Instance : ReadInstance : unable to open file");
     }
 
-    Instance result;
+    auto result = std::make_shared<Instance>();
 
     int numberOfForests = -1;
     int numberOfTerminals = -1;
@@ -40,11 +40,11 @@ graph::Instance graph::ReadInstance(const std::filesystem::path& path)
 
     if(numberOfForests >= 0)
     {
-        result.reserve(numberOfForests);
+        result->reserve(numberOfForests);
         for(int i = 0; i < numberOfForests; i++)
         {
             auto fi_ptr = std::make_shared<Forest>(ForestIO::ReadNewick(file, numberOfTerminals));
-            result.emplace_back(fi_ptr);
+            result->emplace_back(fi_ptr);
         }
     }
     else

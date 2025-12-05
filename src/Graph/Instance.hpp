@@ -7,7 +7,7 @@ namespace graph
 {
     typedef std::vector<std::shared_ptr<Forest>> Instance;
 
-    Instance ReadInstance(const std::filesystem::path& path);
+    std::shared_ptr<Instance> ReadInstance(const std::filesystem::path& path);
 }
 
 #endif  //PACE2026_INSTANCE_HPP
