@@ -1,7 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "../src/Graph/Forest.hpp"
-#include "../src/Solver/DeleteEdgeAction.hpp"
+#include "../src/Solver/Action/DeleteEdgeAction.hpp"
 
 using namespace graph;
 using namespace std;

@@ -2,7 +2,7 @@
 #define PACE2026_Collapse_SUBTREE_ACTION_HPP
 
 #include "AbstractAction.hpp"
-#include "../Graph/Forest.hpp"
+#include "../../Graph/Forest.hpp"
 
 namespace solver
 {
@@ -22,6 +22,9 @@ class CollapseSubtreeAction : AbstractAction
 
     /// \brief left child of node
     int rightChildIndex;
+
+    /// \brief store collapsed label to terminals
+    std::unordered_map<unsigned int, int> collapsedLabelToTerminals = std::unordered_map<unsigned int, int>();
 
   public:
     /// \param nodeIndex The index of the node from which the subtree will be collapsed into single leaf.

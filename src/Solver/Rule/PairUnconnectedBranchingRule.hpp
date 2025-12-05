@@ -2,7 +2,7 @@
 #define PACE2026_PAIR_UNCONNECTED_BRANCHING_RULE_HPP
 
 #include "AbstractBranchingRule.hpp"
-#include "../DeleteEdgeAction.hpp"
+#include "../Action/DeleteEdgeAction.hpp"
 
 #include <list>
 #include <stack>
