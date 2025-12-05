@@ -3,15 +3,22 @@
 
 #include "AbstractSolver.hpp"
 
+#include "Rule/AbstractRule.hpp"
+
+#include <stack>
+
 namespace solver
 {
 
 class BranchingSolver : AbstractSolver
 {
-  public:
-    explicit BranchingSolver(graph::Instance& instance);
+  protected:
+    std::stack<std::shared_ptr<AbstractRule>> changes = std::stack<std::shared_ptr<AbstractRule>>();
 
-    graph::Forest solve() override;
+  public:
+    explicit BranchingSolver(const std::shared_ptr<graph::Instance>& instance);
+
+    std::shared_ptr<graph::Forest> solve() override;
 };
 
 }  //namespace solver

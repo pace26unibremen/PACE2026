@@ -16,9 +16,9 @@ void solver::DebugTrivialSolutionRule::apply()
 
     instanceBackUp = *instance;
 
-    auto s = TrivialSolver(*instance.get());
+    auto s = TrivialSolver(instance);
     auto solution = s.solve();
-    instance->at(0) = std::make_shared<graph::Forest>(solution);
+    instance->at(0) = solution;
     instance->erase(instance->begin() + 1, instance->end());
 }
 

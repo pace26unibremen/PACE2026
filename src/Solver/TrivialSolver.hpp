@@ -10,9 +10,9 @@ namespace solver
 class TrivialSolver : AbstractSolver
 {
   public:
-    explicit TrivialSolver(graph::Instance& instance);
+    explicit TrivialSolver(const std::shared_ptr<graph::Instance>& instance);
 
-    graph::Forest solve() override;
+    std::shared_ptr<graph::Forest> solve() override;
 };
 
 }  //namespace solver
