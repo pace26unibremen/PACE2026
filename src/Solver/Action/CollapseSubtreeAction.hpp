@@ -2,7 +2,7 @@
 #define PACE2026_Collapse_SUBTREE_ACTION_HPP
 
 #include "AbstractAction.hpp"
-#include "../Graph/Forest.hpp"
+#include "../../Graph/Forest.hpp"
 
 namespace solver
 {

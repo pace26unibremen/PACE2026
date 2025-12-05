@@ -2,7 +2,7 @@
 #define PACE2026_SINGLE_VERTEX_TREE_PROPAGATION_RULE_HPP
 
 #include "AbstractRule.hpp"
-#include "../DeleteEdgeAction.hpp"
+#include "../Action/DeleteEdgeAction.hpp"
 #include <unordered_set>
 #include <stack>
 

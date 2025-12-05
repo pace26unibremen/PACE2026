@@ -1,7 +1,7 @@
 #ifndef PACE2026_PAIR_EQUAL_RULE_HPP
 #define PACE2026_PAIR_EQUAL_RULE_HPP
 
-#include "../CollapseSubtreeAction.hpp"
+#include "../Action/CollapseSubtreeAction.hpp"
 #include "AbstractRule.hpp"
 
 #include <stack>

@@ -1,7 +1,7 @@
 #ifndef PACE2026_SIBLING_PATH_BRANCHING_RULE_HPP
 #define PACE2026_SIBLING_PATH_BRANCHING_RULE_HPP
 
-#include "../DeleteEdgeAction.hpp"
+#include "../Action/DeleteEdgeAction.hpp"
 #include "AbstractBranchingRule.hpp"
 
 #include <list>
