@@ -1,79 +1,73 @@
 #include "BranchingSolver.hpp"
 
-solver::BranchingSolver::BranchingSolver(graph::Instance& instance)
+#include "Rule/EqualForestsRule.hpp"
+#include "Rule/PairEqualRule.hpp"
+#include "Rule/PairPathBranchingRule.hpp"
+#include "Rule/PairUnconnectedBranchingRule.hpp"
+#include "Rule/SingleVertexTreePropagationRule.hpp"
+
+#include <functional>
+
+solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>& instance)
 {
-    this->instance = std::move(instance);
+    this->instance = instance;
 }
 
-graph::Forest solver::BranchingSolver::solve()
+std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
 {
+    std::vector<std::function<std::shared_ptr<AbstractRule>(std::shared_ptr<graph::Instance> instance)>>
+        applicableCheck = {solver::EqualForestsRule::isApplicable,
+                           solver::SingleVertexTreePropagationRule::isApplicable,
+                           solver::PairUnconnectedBranchingRule::isApplicable, solver::PairEqualRule::isApplicable,
+                           solver::PairPathBranchingRule::isApplicable};
 
-    // rules
-    // 1. if instance size == 1 -> solution
-    // 2. if instance i == instance j -> reduce continue
-    // 4. if subtree ti equal in instance -> reduce continue
-    // 5. if instance i == vertex only -> solution
-    // 6. if instance pair path branching
-    // 7. Debug Rule
+    std::shared_ptr<graph::Forest> solution;
 
-    // graph_changes = []
+    while (true)
+    {
+        if (instance->size() == 1)
+        {
+            if (solution == nullptr or instance->at(0)->RootIndices().size() < solution->RootIndices().size())
+            {
+                solution = std::make_shared<graph::Forest>((*instance->at(0)).copy());
+            }
+            while (true)
+            {
+                if (changes.empty())
+                {
+                    return solution;
+                }
+                auto rule = changes.top();
+                if (auto branchingRule = std::dynamic_pointer_cast<AbstractBranchingRule>(rule))
+                {
+                    if (branchingRule->isFullyExplored())
+                    {
+                        branchingRule->unapply();
+                        changes.pop();
+                    }
+                    else
+                    {
+                        branchingRule->unapply();
+                        branchingRule->apply();
+                    }
+                }
+                else
+                {
+                    rule->unapply();
+                    changes.pop();
+                }
+            }
+        }
 
-    // class rule
-    //   instance
-    //
-    //   apply()
-    //   unapply()
-    //   solvedInstance()
-    //   static isApplicable() shared_pointer on rule / null
-    //
-    // class branchingRule : rule
-    //   branch : int
-    //
-    //   isFullyExplored()
-    //
-
-    // rule_ptr = PathBranchingRule::isApplicable()
-    //                      branch 0
-    // rule_ptr.apply()     branch 1
-    //
-    // rule_ptr.unapply()
-    // rule_ptr.apply()     branch 2
-    // rule_ptr.unapply()
-    // rule_ptr.apply()     branch 3
-    // rule_ptr.unapply()
-    // rule.
-
-
-
-    // while true
-    // {
-    //      for rule in rules
-    //          if rule.isApplicable()
-    //              rule.apply()
-    //              graph_changes.put(rule)
-    //              if rule.solvedInstance()
-    //                  // save solution
-    //                  if solution_size > instance[].roots().size()
-    //                      solution_size = instance[].roots().size()
-    //                      solution = instance[0].copy
-    //
-    //                  // rebuild
-    //                  while(true)
-    //                  {
-    //                       if(graph_changes.empty) // improve with fst branch counter
-    //                           return solution[0]
-    //                       rule = graph_changes.pop()
-    //                       rule.undo()
-    //                       if(rule is branching rule)
-    //                       {
-    //                            if(rule.isFullyExplored())
-    //                               continue
-    //                            else
-    //                               rule.do()
-    //                               break
-    //                       }
-    //                  }
-    //
-    // }
-
+        for (const auto& isApplicable : applicableCheck)
+        {
+            auto rule = isApplicable(instance);
+            if (rule != nullptr)
+            {
+                rule->apply();
+                changes.push(rule);
+                break;
+            }
+        }
+    }
 }

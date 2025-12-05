@@ -2,7 +2,6 @@
 #define PACE2026_BRANCHING_SOLVER_HPP
 
 #include "AbstractSolver.hpp"
-
 #include "Rule/AbstractRule.hpp"
 
 #include <stack>
