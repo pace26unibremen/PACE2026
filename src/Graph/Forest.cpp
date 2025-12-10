@@ -249,31 +249,44 @@ bool Forest::isValid() const
 
 bool Forest::hasIdenticalSubtree(const Forest& other, int thisNodeIdx, int otherNodeIdx)
 {
-    std::stack<int> thisVisitedStack;
-    thisVisitedStack.push(thisNodeIdx);
-    std::stack<int> otherVisitedStack;
-    otherVisitedStack.push(otherNodeIdx);
+    std::stack<int> thisVisitingStack;
+    thisVisitingStack.push(thisNodeIdx);
+    std::stack<int> otherVisitingStack;
+    otherVisitingStack.push(otherNodeIdx);
 
-    while (not (thisVisitedStack.empty() or otherVisitedStack.empty()))
+    while (not (thisVisitingStack.empty() or otherVisitingStack.empty()))
     {
-        Node& thisCurrentNode = nodes->at(thisVisitedStack.top());
-        thisVisitedStack.pop();
-        Node& otherCurrentNode = nodes->at(otherVisitedStack.top());
-        otherVisitedStack.pop();
+        Node& thisCurrentNode = nodes->at(thisVisitingStack.top());
+        thisVisitingStack.pop();
+        Node& otherCurrentNode = other.nodes->at(otherVisitingStack.top());
+        otherVisitingStack.pop();
 
         if (not thisCurrentNode.hasSameTerminals(otherCurrentNode))
         {
             return false;
         }
 
+        if (not (thisCurrentNode.firstChildIndex == -1 or otherCurrentNode.secondChildIndex == -1)) //TODO: assume both child indices -1 if one is empty?
+        {
+            // neither is a leaf node
+            thisVisitingStack.push(thisCurrentNode.secondChildIndex);
+            thisVisitingStack.push(thisCurrentNode.firstChildIndex);
+            otherVisitingStack.push(otherCurrentNode.secondChildIndex);
+            otherVisitingStack.push(otherCurrentNode.firstChildIndex);
+        }
+        else
+        {
+            // one or both are leaves
+            if (not (thisCurrentNode.firstChildIndex == -1 and otherCurrentNode.secondChildIndex == -1))
+            {
+                // just one is a leaf
+                return false;
+            }
+        }
 
-        thisVisitedStack.push(thisCurrentNode.firstChildIndex);
-        thisVisitedStack.push(thisCurrentNode.secondChildIndex);
-        otherVisitedStack.push(otherCurrentNode.firstChildIndex);
-        otherVisitedStack.push(otherCurrentNode.secondChildIndex);
 
     }
-    if (thisVisitedStack.empty() and otherVisitedStack.empty())
+    if (thisVisitingStack.empty() and otherVisitingStack.empty())
     {
         return true;
     }

@@ -48,3 +48,25 @@ TEST_CASE("Sub Forest", "[Forest, sub forest, <=]")
         REQUIRE_FALSE(t1 <= f2);
     }
 }
+
+TEST_CASE("Identical Subforest", "[Forest, subforest]")
+{
+    SECTION("Check identical subforest - example 1")
+    {
+        auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree");
+        auto t2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree");
+
+        REQUIRE(t1.hasIdenticalSubtree(t2, t1.RootIndices().at(0), t2.RootIndices().at(0)));
+    }
+
+    SECTION("Check identical subforest - example 2")
+    {
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree");
+        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree");
+
+        for (int i = 0; i<f1.RootIndices().size(); i++)
+        {
+            REQUIRE(f1.hasIdenticalSubtree(f2, f1.RootIndices().at(i), f2.RootIndices().at(i)));
+        }
+    }
+}
