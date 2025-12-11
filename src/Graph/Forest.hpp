@@ -134,6 +134,9 @@ class Forest
     /// And \b 2. fills \c subtreeTerminals for each node.
     void sortChildrenAndCollectTerminals();
 
+    /// \brief Returns the maximum common X-Forest of this forest and the input forest.
+    Forest maximumCommonSubforest(Forest& other);
+
     // ------------------------------------------------------------- //
     // ---- debug -------------------------------------------------- //
     // ------------------------------------------------------------- //

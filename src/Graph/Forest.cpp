@@ -10,6 +10,7 @@
 #include <sstream>
 #include <unordered_set>
 #include <utility>
+#include <queue>
 
 using namespace std;
 
@@ -400,6 +401,44 @@ void Forest::sortChildrenAndCollectTerminals()
               {
                   return nodes->at(a).hasSmallestTerminal(nodes->at(b));
               });
+}
+
+Forest Forest::maximumCommonSubforest(const Forest& other)
+{
+    vector<Node> newNodes;
+    unordered_map<int, unsigned int> newTerminalIndexToLabel;
+    unordered_map<unsigned int, int> newLabelToTerminalIndex;
+    vector<int> newRootIndices;
+
+    unordered_map<int, int> t1Index;
+    unordered_map<int, int> t2Index;
+
+    unordered_map<int, bool> visited;
+    queue<int> toVisit;
+
+    for (auto& [leafIndex, leafLabel] : terminalIndexToLabel)
+    {
+        toVisit.push(leafIndex);
+        t1Index[leafIndex] = labelToTerminalIndex[leafLabel];
+        t2Index[leafIndex] = other.labelToTerminalIndex[leafLabel];
+    }
+
+    while (not toVisit.empty())
+    {
+        int& nodeIndex = toVisit.front();
+        Node& t1Node = nodes->at(t1Index[nodeIndex]);
+        Node& t2Node = nodes->at(t2Index[nodeIndex]);
+        Node newNode = t1Node;
+        newNodes.push_back(newNode);
+
+
+    }
+
+
+
+
+
+    Forest subforest = Forest();
 }
 
 // ------------------------------------------------------------- //
