@@ -13,6 +13,8 @@ class AbstractSolver
     /// \brief the instance to solve
     std::shared_ptr<graph::Instance> instance;
   public:
+    virtual ~AbstractSolver() = default;
+
     /// \brief solve the instance
     virtual std::shared_ptr<graph::Forest> solve() = 0;
 

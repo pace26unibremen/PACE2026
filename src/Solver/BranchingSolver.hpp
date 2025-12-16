@@ -17,6 +17,8 @@ class BranchingSolver : AbstractSolver
   public:
     explicit BranchingSolver(const std::shared_ptr<graph::Instance>& instance);
 
+    ~BranchingSolver() override = default;
+
     std::shared_ptr<graph::Forest> solve() override;
 };
 

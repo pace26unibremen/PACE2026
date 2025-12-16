@@ -12,6 +12,8 @@ class TrivialSolver : AbstractSolver
   public:
     explicit TrivialSolver(const std::shared_ptr<graph::Instance>& instance);
 
+    ~TrivialSolver() override = default;
+
     std::shared_ptr<graph::Forest> solve() override;
 };
 
