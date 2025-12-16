@@ -18,7 +18,8 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
     std::vector<std::function<std::shared_ptr<AbstractRule>(std::shared_ptr<graph::Instance> instance)>>
         applicableCheck = {solver::EqualForestsRule::isApplicable,
                            solver::SingleVertexTreePropagationRule::isApplicable,
-                           solver::PairUnconnectedBranchingRule::isApplicable, solver::PairEqualRule::isApplicable,
+                           solver::PairUnconnectedBranchingRule::isApplicable,
+                           solver::PairEqualRule::isApplicable,
                            solver::PairPathBranchingRule::isApplicable};
 
     std::shared_ptr<graph::Forest> solution;
@@ -49,6 +50,7 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
                     {
                         branchingRule->unapply();
                         branchingRule->apply();
+                        break;
                     }
                 }
                 else
