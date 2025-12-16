@@ -30,7 +30,20 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
         {
             if (solution == nullptr or instance->at(0)->RootIndices().size() < solution->RootIndices().size())
             {
+                std::stack<std::shared_ptr<AbstractRule>> temporalChangesCopy = std::stack<std::shared_ptr<AbstractRule>>();
+                while (not temporalChanges.empty())
+                {
+                    temporalChanges.top()->unapply();
+                    temporalChangesCopy.push(temporalChanges.top());
+                    temporalChanges.pop();
+                }
                 solution = std::make_shared<graph::Forest>((*instance->at(0)).copy());
+                while (not temporalChangesCopy.empty())
+                {
+                    temporalChangesCopy.top()->apply();
+                    temporalChanges.push(temporalChangesCopy.top());
+                    temporalChangesCopy.pop();
+                }
             }
             while (true)
             {
@@ -45,6 +58,10 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
                     {
                         branchingRule->unapply();
                         changes.pop();
+                        if (not temporalChanges.empty() and temporalChanges.top() == branchingRule)
+                        {
+                            temporalChanges.pop();
+                        }
                     }
                     else
                     {
@@ -57,6 +74,10 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
                 {
                     rule->unapply();
                     changes.pop();
+                    if (not temporalChanges.empty() and temporalChanges.top() == rule)
+                    {
+                        temporalChanges.pop();
+                    }
                 }
             }
         }
@@ -68,6 +89,10 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
             {
                 rule->apply();
                 changes.push(rule);
+                if (std::dynamic_pointer_cast<PairEqualRule>(rule) != nullptr)
+                {
+                    temporalChanges.push(rule);
+                }
                 break;
             }
         }
