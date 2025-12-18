@@ -131,6 +131,11 @@ class Forest
     /// and writes flaws to std::clog
     bool isValid() const;
 
+    /// \brief Operator that checks if the first tree is a subtree of the second.
+    /// \param other The tree to compare with.
+    /// \return true if the first tree is a subtree, false otherwise.
+    bool isTrueSubtreeOf(const Forest& other) const;
+
     bool hasIdenticalSubtree(const Forest& other, int thisNodeIdx, int otherNodeIdx);
     // ------------------------------------------------------------- //
     // ---- operators ---------------------------------------------- //
@@ -140,11 +145,6 @@ class Forest
     /// \param other The tree to compare with.
     /// \return true if the trees are identical, false otherwise.
     bool operator==(const Forest& other) const;
-
-    /// \brief Operator that checks if the first tree is a subtree of the second.
-    /// \param other The tree to compare with.
-    /// \return true if the first tree is a subtree, false otherwise.
-    bool operator<=(const Forest& other) const;
 
 };
 

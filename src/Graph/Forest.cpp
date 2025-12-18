@@ -247,6 +247,42 @@ bool Forest::isValid() const
     return valid;
 }
 
+bool Forest::isTrueSubtreeOf(const Forest& other) const
+{
+    std::function<bool(int, int)> traverseUp = [&](int thisNodeIdx, int otherNodeIdx) -> bool {
+        const Node& node = (*nodes)[thisNodeIdx];
+        const Node& otherNode = (*other.nodes)[otherNodeIdx];
+
+        if (not node.hasSameTerminals(otherNode))
+        {
+            return false;
+        }
+        if (node.parentIndex == -1)
+        {
+            return true;
+        }
+        if (otherNode.parentIndex == -1)
+        {
+            return false;
+        }
+        return traverseUp(node.parentIndex, otherNode.parentIndex);
+    };
+
+    if (this->labelToTerminalIndex->size() > other.labelToTerminalIndex->size())
+    {
+        return false;
+    }
+
+    for (auto& [key, value]: *labelToTerminalIndex)
+    {
+        if (not traverseUp(value, other.labelToTerminalIndex->at(key)))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool Forest::hasIdenticalSubtree(const Forest& other, int thisNodeIdx, int otherNodeIdx)
 {
     std::stack<int> thisVisitingStack;
@@ -478,39 +514,4 @@ bool Forest::operator==(const Forest& other) const
     return true;
 }
 
-bool Forest::operator<=(const Forest& other) const
-{
-    std::function<bool(int, int)> traverseUp = [&](int thisNodeIdx, int otherNodeIdx) -> bool {
-        const Node& node = (*nodes)[thisNodeIdx];
-        const Node& otherNode = (*other.nodes)[otherNodeIdx];
-
-        if (not node.hasSameTerminals(otherNode))
-        {
-            return false;
-        }
-        if (node.parentIndex == -1)
-        {
-            return true;
-        }
-        if (otherNode.parentIndex == -1)
-        {
-            return false;
-        }
-        return traverseUp(node.parentIndex, otherNode.parentIndex);
-    };
-
-    if (this->labelToTerminalIndex->size() > other.labelToTerminalIndex->size())
-    {
-        return false;
-    }
-
-    for (auto& [key, value]: *labelToTerminalIndex)
-    {
-        if (not traverseUp(value, other.labelToTerminalIndex->at(key)))
-        {
-            return false;
-        }
-    }
-    return true;
-}
 }  //namespace graph
