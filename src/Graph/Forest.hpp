@@ -135,7 +135,7 @@ class Forest
     void sortChildrenAndCollectTerminals();
 
     /// \brief Returns the maximum common X-Forest of this forest and the input forest.
-    Forest maximumCommonSubforest(Forest& other);
+    std::vector<int>& maximumCommonSubforestRoots(const Forest& other);
 
     // ------------------------------------------------------------- //
     // ---- debug -------------------------------------------------- //
@@ -147,6 +147,8 @@ class Forest
     /// \brief Checks whether the forest representation is valid
     /// and writes flaws to std::clog
     bool isValid() const;
+
+    bool hasIdenticalSubtree(const Forest& other, int thisNodeIdx, int otherNodeIdx);
 
     // ------------------------------------------------------------- //
     // ---- operators ---------------------------------------------- //

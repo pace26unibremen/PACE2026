@@ -7,10 +7,13 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <list>
+#include <queue>
+#include <ranges>
 #include <sstream>
+#include <stack>
 #include <unordered_set>
 #include <utility>
-#include <queue>
 
 using namespace std;
 
@@ -257,6 +260,53 @@ bool Forest::isValid() const
     return valid;
 }
 
+bool Forest::hasIdenticalSubtree(const Forest& other, int thisNodeIdx, int otherNodeIdx)
+{
+    std::stack<int> thisVisitingStack;
+    thisVisitingStack.push(thisNodeIdx);
+    std::stack<int> otherVisitingStack;
+    otherVisitingStack.push(otherNodeIdx);
+
+    while (not (thisVisitingStack.empty() or otherVisitingStack.empty()))
+    {
+        Node& thisCurrentNode = nodes->at(thisVisitingStack.top());
+        thisVisitingStack.pop();
+        Node& otherCurrentNode = other.nodes->at(otherVisitingStack.top());
+        otherVisitingStack.pop();
+
+        if (not thisCurrentNode.hasSameTerminals(otherCurrentNode))
+        {
+            return false;
+        }
+
+        if (not (thisCurrentNode.firstChildIndex == -1 or otherCurrentNode.secondChildIndex == -1)) //TODO: assume both child indices -1 if one is empty?
+        {
+            // neither is a leaf node
+            thisVisitingStack.push(thisCurrentNode.secondChildIndex);
+            thisVisitingStack.push(thisCurrentNode.firstChildIndex);
+            otherVisitingStack.push(otherCurrentNode.secondChildIndex);
+            otherVisitingStack.push(otherCurrentNode.firstChildIndex);
+        }
+        else
+        {
+            // one or both are leaves
+            if (not (thisCurrentNode.firstChildIndex == -1 and otherCurrentNode.secondChildIndex == -1))
+            {
+                // just one is a leaf
+                return false;
+            }
+        }
+
+
+    }
+    if (thisVisitingStack.empty() and otherVisitingStack.empty())
+    {
+        return true;
+    }
+    return false;
+}
+
+
 // ------------------------------------------------------------- //
 // ---- graph manipulation ------------------------------------- //
 // ------------------------------------------------------------- //
@@ -403,42 +453,51 @@ void Forest::sortChildrenAndCollectTerminals()
               });
 }
 
-Forest Forest::maximumCommonSubforest(const Forest& other)
+std::vector<int>& Forest::maximumCommonSubforestRoots(const Forest& other)
 {
-    vector<Node> newNodes;
-    unordered_map<int, unsigned int> newTerminalIndexToLabel;
-    unordered_map<unsigned int, int> newLabelToTerminalIndex;
-    vector<int> newRootIndices;
+    // actually: iterate upward, always checking the sibling for identicality and the parent for the same terminals, deleting seen labels from the ones left to visit
+    // vorinitialisierung von blattknoten; jeder durchlauf kreiert seinen sibling- und elternknoten; dabei sibling nur, wenn nicht besucht? ach nee, das ist was anderes. wenn nichtterminal? wird sowieso rekursiv/iterativ, also abbruchbedingung einfach? hilfsfunktion, die den gesamten sibling-subtree baut und den sibling-index zurückgibt (bei blatt halt nur rückgabe des index) bei leaf-siblings retrieval über label=index?
+    // naur, just steal it from f1: iterate upward from each unvisited leaf, always checking the sibling subtree for identicality, and once a root for the leaf is found, do the label-index relation? should be doable via the parent forests map. make a new nodes vector after scanning the whole parent forest and exclude->reindex
+    auto newNodeIndices = make_shared<unordered_set<int>>();
+    auto newRootIndices = make_shared<vector<int>>(); // indices of new root nodes in t1
 
+    newNodeIndices->reserve(2 * labelToTerminalIndex->size() - 1);
+    newRootIndices->reserve(labelToTerminalIndex->size());
+
+    // maps new forests node index to original forest indices
     unordered_map<int, int> t1Index;
     unordered_map<int, int> t2Index;
 
-    unordered_map<int, bool> visited;
-    queue<int> toVisit;
+    list<int> toVisit;
+    unordered_set<unsigned int> visitedLeaves;
 
-    for (auto& [leafIndex, leafLabel] : terminalIndexToLabel)
+    int newNodeIndex = 0;
+
+
+    for (auto& [leafIndex, leafLabel] : *terminalIndexToLabel)
     {
-        toVisit.push(leafIndex);
-        t1Index[leafIndex] = labelToTerminalIndex[leafLabel];
-        t2Index[leafIndex] = other.labelToTerminalIndex[leafLabel];
+        //TODO: populate and check for visited leaves (in the sibling subforest; check via Node::subtreeTerminals)
+        Node* t1CurrentNode = &nodes->at(leafIndex);
+        int t1CurrentIndex = leafIndex;
+        Node* t2CurrentNode = &other.nodes->at(other.labelToTerminalIndex->at(leafLabel));
+
+        while (not (t1CurrentNode->parentIndex == -1 or t2CurrentNode->parentIndex == -1))
+        { // node is root in neither tree
+            if (not hasIdenticalSubtree(other, t1CurrentNode->siblingIndex, t2CurrentNode->siblingIndex))
+            { // sibling subtree differs
+                break;
+            }
+
+            t1CurrentIndex = t1CurrentNode->parentIndex;
+            t1CurrentNode = &nodes->at(t1CurrentNode->parentIndex);
+            t2CurrentNode = &other.nodes->at(t2CurrentNode->parentIndex);
+        }
+        // currentNode is now the root of the common subtree
+        newRootIndices->push_back(t1CurrentIndex);
     }
 
-    while (not toVisit.empty())
-    {
-        int& nodeIndex = toVisit.front();
-        Node& t1Node = nodes->at(t1Index[nodeIndex]);
-        Node& t2Node = nodes->at(t2Index[nodeIndex]);
-        Node newNode = t1Node;
-        newNodes.push_back(newNode);
 
-
-    }
-
-
-
-
-
-    Forest subforest = Forest();
+    return *newRootIndices;
 }
 
 // ------------------------------------------------------------- //
