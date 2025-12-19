@@ -1,4 +1,5 @@
 #include "Solver/BranchingSolver.hpp"
+#include <fstream>
 
 int main(int argc, char* argv[]) {
     std::string infile;
