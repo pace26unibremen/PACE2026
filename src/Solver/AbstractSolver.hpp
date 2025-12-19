@@ -12,6 +12,8 @@ class AbstractSolver
   protected:
     /// \brief the instance to solve
     std::shared_ptr<graph::Instance> instance;
+
+    AbstractSolver(const std::shared_ptr<graph::Instance>& instance) : instance(instance) {};
   public:
     virtual ~AbstractSolver() = default;
 

@@ -9,9 +9,8 @@
 #include <functional>
 
 solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>& instance)
-{
-    this->instance = instance;
-}
+    : AbstractSolver(instance)
+{}
 
 std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
 {
@@ -22,7 +21,7 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
                            solver::PairEqualRule::isApplicable,
                            solver::PairPathBranchingRule::isApplicable};
 
-    std::shared_ptr<graph::Forest> solution;
+    std::shared_ptr<graph::Forest> solution = nullptr;
 
     while (true)
     {

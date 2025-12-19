@@ -4,8 +4,9 @@
 #include <numeric>
 
 solver::TrivialSolver::TrivialSolver(const std::shared_ptr<graph::Instance>& instance)
+    : AbstractSolver(instance)
 {
-    this->instance = instance;
+    // this->instance = instance;
 }
 
 std::shared_ptr<graph::Forest> solver::TrivialSolver::solve()
