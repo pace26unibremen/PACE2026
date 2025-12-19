@@ -33,7 +33,7 @@ TEST_CASE("Sub Forest", "[Forest, sub forest, <=]")
     SECTION("Check sub forest - example 1")
     {
         auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree");
-        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_4_6_simple.tree", 0, 4);
+        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_4_6_simple2.tree", 0, 4);
 
         REQUIRE(f2.isTrueSubtreeOf(t1));
         REQUIRE_FALSE(t1.isTrueSubtreeOf(f2));
@@ -42,7 +42,7 @@ TEST_CASE("Sub Forest", "[Forest, sub forest, <=]")
     SECTION("Check sub forest - example 2")
     {
         auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example2.tree");
-        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_4_6_simple.tree", 0, 4);
+        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_6_simple.tree", 0, 3);
 
         REQUIRE(f2.isTrueSubtreeOf(t1));
         REQUIRE_FALSE(t1.isTrueSubtreeOf(f2));
