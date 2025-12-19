@@ -1,10 +1,12 @@
 #include "Node.hpp"
 
-graph::Node::Node(int parentIndex, int siblingIndex, int firstChildIndex, int secondChildIndex) :
+#include <cassert>
+
+graph::Node::Node(int parentIndex, int siblingIndex, int leftChildIndex, int rightChildIndex) :
         parentIndex(parentIndex),
         siblingIndex(siblingIndex),
-        firstChildIndex(firstChildIndex),
-        secondChildIndex(secondChildIndex)
+        leftChildIndex(leftChildIndex),
+        rightChildIndex(rightChildIndex)
 {}
 
 bool graph::Node::hasSameTerminals(const Node& other) const
@@ -50,4 +52,17 @@ bool graph::Node::hasSubsetTerminals(const graph::Node& other) const
         }
     }
     return true;
+}
+
+unsigned int graph::Node::smallestTerminal() const
+{
+    for(unsigned int i = 0; i < subtreeTerminals.size(); i++ )
+    {
+        if(subtreeTerminals[i] == 0)
+        {
+            continue;
+        }
+        return (64 * i + __builtin_ctzll(subtreeTerminals[i]) + 1);
+    }
+    assert(false);
 }

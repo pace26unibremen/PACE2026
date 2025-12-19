@@ -4,13 +4,18 @@
 #include "ForestIO.hpp"
 
 #include <algorithm>
+#include <cassert>
 #include <fstream>
 #include <functional>
 #include <iostream>
-#include <set>
 #include <sstream>
 #include <unordered_set>
-#include <utility>
+#ifdef DEBUG_IMAGE_VIEW_GRAPH
+#include <graphviz/gvc.h>
+#include <opencv2/imgcodecs.hpp>
+#include <unistd.h>
+#include <fcntl.h>
+#endif
 
 using namespace std;
 
@@ -28,7 +33,13 @@ Forest::Forest(std::shared_ptr<std::vector<Node>> nodes,
         terminalIndexToLabel(std::move(terminalIndexToLabel)),
         labelToTerminalIndex(std::move(labelToTerminalIndex)),
         rootIndices(std::move(rootIndices))
-{}
+{
+    sortChildrenAndCollectTerminals();
+
+    #ifdef DEBUG_IMAGE_VIEW_GRAPH
+    renderImage();
+    #endif
+}
 
 Forest::Forest(const filesystem::path& path, int numberOfTerminals, int numberOfTrees)
 {
@@ -42,7 +53,6 @@ Forest::Forest(const filesystem::path& path, int numberOfTerminals, int numberOf
         throw invalid_argument("Forest : Constructor : unable to open file");
     }
     *this = ForestIO::ReadNewick(file, numberOfTerminals, numberOfTrees);
-    sortChildrenAndCollectTerminals();
 }
 
 // ------------------------------------------------------------- //
@@ -125,6 +135,24 @@ const vector<int>& Forest::RootIndices() const
     return *this->rootIndices;
 }
 
+int Forest::rootIndexOf(const Node& node) const
+{
+    for(auto index : *rootIndices)
+    {
+        const auto& root = Nodes()[index];
+        if(node.hasSubsetTerminals(root))
+        {
+            return index;
+        }
+    }
+    assert(false);
+}
+
+int Forest::rootIndexOf(int nodeIndex) const
+{
+    return rootIndexOf(Nodes()[nodeIndex]);
+}
+
 // ------------------------------------------------------------- //
 // ---- debug -------------------------------------------------- //
 // ------------------------------------------------------------- //
@@ -159,8 +187,8 @@ void Forest::print() const
         rowLine << "--------+";
         rowParent << std::setw(7) << n.parentIndex << " |";
         rowSibling << std::setw(7) << n.siblingIndex << " |";
-        rowFstChild << std::setw(7) << n.firstChildIndex << " |";
-        rowSndChild << std::setw(7) << n.secondChildIndex << " |";
+        rowFstChild << std::setw(7) << n.leftChildIndex << " |";
+        rowSndChild << std::setw(7) << n.rightChildIndex << " |";
     }
     std::clog << "\n"
               << rowIndex.str() << "\n"
@@ -241,7 +269,7 @@ bool Forest::checkTriple(int parentIndex, std::unordered_map<int, unsigned int>&
         tripleValid = false;
     }
     // Check Leaf
-    if (node.firstChildIndex == -1 && node.secondChildIndex == -1)
+    if (node.leftChildIndex == -1 && node.rightChildIndex == -1)
     {
         if (terminalIndexToLabel->contains(parentIndex))
         { // Add to found leafs
@@ -272,20 +300,20 @@ bool Forest::checkTriple(int parentIndex, std::unordered_map<int, unsigned int>&
     else // Has children
     {
         //Balance
-        if ((node.firstChildIndex== -1 && node.secondChildIndex != -1)||(node.firstChildIndex== -1 && node.secondChildIndex != -1))
+        if ((node.leftChildIndex== -1 && node.rightChildIndex != -1)||(node.leftChildIndex== -1 && node.rightChildIndex != -1))
         {
             std::clog << "Forest: isValid: unbalanced Tree:\n"
-                         "   parent (" << parentIndex << ") -> (" << node.firstChildIndex <<") , (" << node.secondChildIndex <<") \n"
+                         "   parent (" << parentIndex << ") -> (" << node.leftChildIndex <<") , (" << node.rightChildIndex <<") \n"
                          "   Parent needs to get active and produce another child."<< endl;
             tripleValid = false;
         }
-        const Node& fstChild = nodes->at(node.firstChildIndex);
-        const Node& sndChild = nodes->at(node.secondChildIndex);
+        const Node& fstChild = nodes->at(node.leftChildIndex);
+        const Node& sndChild = nodes->at(node.rightChildIndex);
         // Order
         if (!fstChild.hasSmallestTerminal(sndChild))
         {
             std::clog << "Forest: isValid: unordered Tree:\n"
-                         "   parent (" << parentIndex << ") -> (" << node.firstChildIndex <<") , (" << node.secondChildIndex <<") \n"
+                         "   parent (" << parentIndex << ") -> (" << node.leftChildIndex <<") , (" << node.rightChildIndex <<") \n"
                          "   Commander Cody, the time has come. Execute Order 66."<< endl;
             tripleValid = false;
         }
@@ -295,24 +323,24 @@ bool Forest::checkTriple(int parentIndex, std::unordered_map<int, unsigned int>&
         {
             std::clog << "Forest: isValid: checkTriple: first child forgot his parent:\n"
                          "   parent ("
-                      << parentIndex << ") -> (" << node.firstChildIndex
+                      << parentIndex << ") -> (" << node.leftChildIndex
                       << ") child\n"
                          "   parent ("
-                      << fstChild.parentIndex << ") <- (" << node.firstChildIndex
+                      << fstChild.parentIndex << ") <- (" << node.leftChildIndex
                       << ") child\n"
                          "   Why bother raising them if they forget about you?"
                       << endl;
             tripleValid = false;
         }
         // Check sibling
-        if (fstChild.siblingIndex != node.secondChildIndex)
+        if (fstChild.siblingIndex != node.rightChildIndex)
         {
             std::clog << "Forest: isValid: checkTriple: first child forgot his sibling:\n"
                          "   parent ("
-                      << parentIndex << ") -> (" << node.firstChildIndex << " and " << node.secondChildIndex
+                      << parentIndex << ") -> (" << node.leftChildIndex << " and " << node.rightChildIndex
                       << ") children\n"
                          "   first child ("
-                      << node.firstChildIndex << ") -> (" << fstChild.siblingIndex
+                      << node.leftChildIndex << ") -> (" << fstChild.siblingIndex
                       << ") sibling"
                          "   Maybe they had a fight?"
                       << endl;
@@ -324,24 +352,24 @@ bool Forest::checkTriple(int parentIndex, std::unordered_map<int, unsigned int>&
         {
             std::clog << "Forest: isValid: checkTriple: second child forgot his parent:\n"
                          "   parent ("
-                      << parentIndex << ") -> (" << node.secondChildIndex
+                      << parentIndex << ") -> (" << node.rightChildIndex
                       << ") child\n"
                          "   parent ("
-                      << sndChild.parentIndex << ") <- (" << node.secondChildIndex
+                      << sndChild.parentIndex << ") <- (" << node.rightChildIndex
                       << ") child\n"
                          "   Why bother raising them if they forget about you?"
                       << endl;
             tripleValid = false;
         }
         // Check sibling
-        if (sndChild.siblingIndex != node.firstChildIndex)
+        if (sndChild.siblingIndex != node.leftChildIndex)
         {
             std::clog << "Forest: isValid: checkTriple: second child forgot his sibling:\n"
                          "   parent ("
-                      << parentIndex << ") -> (" << node.firstChildIndex << " and " << node.secondChildIndex
+                      << parentIndex << ") -> (" << node.leftChildIndex << " and " << node.rightChildIndex
                       << ") children\n"
                          "   first child ("
-                      << node.secondChildIndex << ") -> (" << sndChild.siblingIndex
+                      << node.rightChildIndex << ") -> (" << sndChild.siblingIndex
                       << ") sibling"
                          "   Maybe they had a fight?"
                       << endl;
@@ -350,7 +378,7 @@ bool Forest::checkTriple(int parentIndex, std::unordered_map<int, unsigned int>&
         // Recursive call with children
         std::unordered_map<int, unsigned int> leftLeafs;
         std::unordered_map<int, unsigned int> rightLeafs;
-        tripleValid &= checkTriple(node.firstChildIndex, leftLeafs, indices,smallestTerminal) && checkTriple(node.secondChildIndex, rightLeafs, indices,smallestTerminal);
+        tripleValid &= checkTriple(node.leftChildIndex, leftLeafs, indices,smallestTerminal) && checkTriple(node.rightChildIndex, rightLeafs, indices,smallestTerminal);
         leftLeafs.merge(rightLeafs);
         subtreeLeafs = leftLeafs; // Collect leafs of subtree
     }
@@ -375,107 +403,39 @@ bool Forest::checkTriple(int parentIndex, std::unordered_map<int, unsigned int>&
 // ---- graph manipulation ------------------------------------- //
 // ------------------------------------------------------------- //
 
-void Forest::removeEdge(int childIndex)
+
+#ifdef DEBUG_IMAGE_VIEW_GRAPH
+void Forest::renderImage()
 {
-    Node& child = nodes->at(childIndex);
-    Node& sibling = nodes->at(child.siblingIndex);
-    Node& parent = nodes->at(child.parentIndex);
+    std::stringstream dotRep;
+    this->dot(dotRep);
 
-    auto it = find(rootIndices->begin(),rootIndices->end(), child.parentIndex);
+    GVC_t* gvc = gvContext();
+    Agraph_t* g = agmemread(dotRep.str().c_str());
 
-    // case 1: parent is root
-    if(it != rootIndices->end())
-    {
-        // first new root is always at same position than the parent
-        *it = parent.firstChildIndex;
+    int old_stderr = dup(STDERR_FILENO);
+    int devnull = open("/dev/null", O_WRONLY);
+    dup2(devnull, STDERR_FILENO);
+    close(devnull);
+    gvLayout(gvc, g, "dot");
+    dup2(old_stderr, STDERR_FILENO);
+    close(old_stderr);
 
-        // position of second new root is somewhere after the old parent
-        auto it2 = std::lower_bound(
-            it, rootIndices->end(), parent.secondChildIndex,
-            [&](const int& a, const int& b)
-            {
-                const Node& an = nodes->at(a);
-                const Node& bn = nodes->at(b);
-                return an.hasSmallestTerminal(bn);
-            }
-        );
-        rootIndices->insert(it2, parent.secondChildIndex);
+    char* data = nullptr;
+    unsigned int length = 0;
+    gvRenderData(gvc, g, "png", &data, &length);
 
-        sibling.parentIndex = -1;
-        sibling.siblingIndex = -1;
-    }
-    // case 2: parent is inner node
-    else
-    {
-        Node& grandParent = nodes->at(parent.parentIndex);
-        if (grandParent.firstChildIndex == child.parentIndex)
-        {
-            grandParent.firstChildIndex = child.siblingIndex;
-        }
-        else
-        {
-            grandParent.secondChildIndex = child.siblingIndex;
-        }
-        sibling.parentIndex = parent.parentIndex;
-        sibling.siblingIndex = parent.siblingIndex;
-        nodes->at(parent.siblingIndex).siblingIndex = child.siblingIndex;
+    std::vector<uchar> pngData(data, data + length);
+    cv::Mat img = cv::imdecode(pngData, cv::IMREAD_UNCHANGED);
 
-        const unsigned int subtreeTerminalsSize = child.subtreeTerminals.size();
-        int traverseUpIndex = child.parentIndex;
-        int rootIndex;
-        while(traverseUpIndex >= 0)
-        {
-            Node& traversedNode = nodes->at(traverseUpIndex);
-            rootIndex = traverseUpIndex;
-            for (unsigned int i = 0; i < subtreeTerminalsSize; i++)
-            {
-                traversedNode.subtreeTerminals[i] ^= child.subtreeTerminals[i];
-            }
-            traverseUpIndex = traversedNode.parentIndex;
-            // sort children
-            const Node& l = nodes->at(traversedNode.firstChildIndex);
-            const Node& r = nodes->at(traversedNode.secondChildIndex);
-            if(r.hasSmallestTerminal(l))
-            {
-                swap(traversedNode.firstChildIndex, traversedNode.secondChildIndex);
-            }
-        }
+    gvFreeRenderData(data);
+    gvFreeLayout(gvc, g);
+    agclose(g);
+    gvFreeContext(gvc);
 
-        auto itRoot = std::find(rootIndices->begin(), rootIndices->end(),rootIndex);
-        auto rootNode = nodes->at(*itRoot);
-
-        if(rootNode.hasSmallestTerminal(child))
-        {
-            auto itNewRoot =
-                std::lower_bound(itRoot, rootIndices->end(), childIndex, [&](const int& a, const int& b)
-                     {
-                        const Node& an = nodes->at(a);
-                        const Node& bn = nodes->at(b);
-                        return an.hasSmallestTerminal(bn);
-                     });
-            rootIndices->insert(itNewRoot, childIndex);
-        }
-        else
-        {
-            *itRoot = childIndex;
-            auto itRootNewPosition =
-                std::lower_bound(itRoot, rootIndices->end(), rootIndex, [&](const int& a, const int& b)
-                    {
-                        const Node& an = nodes->at(a);
-                        const Node& bn = nodes->at(b);
-                        return an.hasSmallestTerminal(bn);
-                    });
-            rootIndices->insert(itRootNewPosition, rootIndex);
-        }
-    }
-    // clean up refs
-    child.siblingIndex = -1;
-    child.parentIndex = -1;
-    parent.firstChildIndex = -1;
-    parent.secondChildIndex = -1;
-    parent.parentIndex = -1;
-    parent.siblingIndex = -1;
+    this->image = img;
 }
+#endif
 
 void Forest::sortChildrenAndCollectTerminals()
 {
@@ -492,17 +452,17 @@ void Forest::sortChildrenAndCollectTerminals()
             subtreeRoot.subtreeTerminals[(label - 1) / 64] = (1 << (label -1) % 64);
             return label;
         }
-        unsigned int firstMinLabel = orderSubtree(subtreeRoot.firstChildIndex);
-        unsigned int secondMinLabel = orderSubtree(subtreeRoot.secondChildIndex);
+        unsigned int firstMinLabel = orderSubtree(subtreeRoot.leftChildIndex);
+        unsigned int secondMinLabel = orderSubtree(subtreeRoot.rightChildIndex);
         if (firstMinLabel > secondMinLabel)
         {
-            std::swap(subtreeRoot.firstChildIndex, subtreeRoot.secondChildIndex);
+            std::swap(subtreeRoot.leftChildIndex, subtreeRoot.rightChildIndex);
         }
         for(unsigned int i = 0; i < subtreeRoot.subtreeTerminals.size(); i++)
         {
             subtreeRoot.subtreeTerminals[i] =
-                nodes->at(subtreeRoot.firstChildIndex).subtreeTerminals[i] |
-                nodes->at(subtreeRoot.secondChildIndex).subtreeTerminals[i];
+                nodes->at(subtreeRoot.leftChildIndex).subtreeTerminals[i] |
+                nodes->at(subtreeRoot.rightChildIndex).subtreeTerminals[i];
         }
         return std::min(firstMinLabel, secondMinLabel);
     };
@@ -527,8 +487,8 @@ bool Forest::operator==(const Forest& other) const
         const Node& thisNode = (*nodes)[thisNodeIdx];
         const Node& otherNode = (*other.nodes)[otherNodeIdx];
 
-        bool thisIsTerminal = thisNode.firstChildIndex == -1;
-        bool otherIsTerminal = otherNode.firstChildIndex == -1;
+        bool thisIsTerminal = thisNode.leftChildIndex == -1;
+        bool otherIsTerminal = otherNode.leftChildIndex == -1;
 
         if (thisIsTerminal != otherIsTerminal)
         {
@@ -538,8 +498,8 @@ bool Forest::operator==(const Forest& other) const
         {
             return terminalIndexToLabel->at(thisNodeIdx) == other.terminalIndexToLabel->at(otherNodeIdx);
         }
-        return compareSubtrees(thisNode.firstChildIndex, otherNode.firstChildIndex) and
-               compareSubtrees(thisNode.secondChildIndex, otherNode.secondChildIndex);
+        return compareSubtrees(thisNode.leftChildIndex, otherNode.leftChildIndex) and
+               compareSubtrees(thisNode.rightChildIndex, otherNode.rightChildIndex);
     };
     if(rootIndices->size() != other.rootIndices->size())
     {
