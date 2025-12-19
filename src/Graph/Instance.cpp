@@ -69,6 +69,7 @@ void graph::WriteInstance(const std::shared_ptr<Instance>& instance, std::ostrea
 
     for(const auto& forest : *instance)
     {
+        os << "# ==================== #\n";
         forest->write(os);
     }
 }

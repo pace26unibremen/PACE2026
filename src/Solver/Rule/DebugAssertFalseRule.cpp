@@ -1,7 +1,4 @@
-#include "../TrivialSolver.hpp"
 #include "DebugAssertFalseRule.hpp"
-
-#include <cassert>
 
 solver::DebugAssertFalseRule::DebugAssertFalseRule(const std::shared_ptr<graph::Instance>& instance)
 {
@@ -10,24 +7,11 @@ solver::DebugAssertFalseRule::DebugAssertFalseRule(const std::shared_ptr<graph::
 
 void solver::DebugAssertFalseRule::apply()
 {
-    if(this->isApplied)
-    {
-        throw std::invalid_argument("DebugAssertFalseRule : apply : rule was already applied");
-    }
-    isApplied = true;
-
-    graph::WriteInstance(instance,pathToWriteInstance);
-    assert(false);
+    graph::WriteInstance(instance, pathToWriteInstance);
+    throw std::runtime_error("DebugAssertFalseRule : apply : rule triggered");
 }
 
-void solver::DebugAssertFalseRule::unapply()
-{
-    if(not this->isApplied)
-    {
-        throw std::invalid_argument("DebugAssertFalseRule : unapply : rule is not applied");
-    }
-    isApplied = false;
-}
+void solver::DebugAssertFalseRule::unapply() {}
 
 std::shared_ptr<solver::AbstractRule> solver::DebugAssertFalseRule::isApplicable(const std::shared_ptr<graph::Instance>& instance)
 {

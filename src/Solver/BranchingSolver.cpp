@@ -5,6 +5,7 @@
 #include "Rule/PairPathBranchingRule.hpp"
 #include "Rule/PairUnconnectedBranchingRule.hpp"
 #include "Rule/SingleVertexTreePropagationRule.hpp"
+#include "Rule/DebugAssertFalseRule.hpp"
 
 #include <functional>
 
@@ -19,7 +20,8 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
                            solver::SingleVertexTreePropagationRule::isApplicable,
                            solver::PairUnconnectedBranchingRule::isApplicable,
                            solver::PairEqualRule::isApplicable,
-                           solver::PairPathBranchingRule::isApplicable};
+                           solver::PairPathBranchingRule::isApplicable,
+                           solver::DebugAssertFalseRule::isApplicable};
 
     std::shared_ptr<graph::Forest> solution = nullptr;
 
