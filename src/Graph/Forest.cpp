@@ -513,5 +513,4 @@ bool Forest::operator==(const Forest& other) const
     }
     return true;
 }
-
 }  //namespace graph

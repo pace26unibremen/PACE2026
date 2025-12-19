@@ -12,9 +12,9 @@ TEST_CASE("Sub Forest for simple trees with two terminals", "[Forest, sub forest
         auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree");
         auto t2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple_reordered.tree");
 
-        REQUIRE(t1 <= t2);
-        REQUIRE(t2 <= t1);
-        REQUIRE(t1 <= t1);
+        REQUIRE(t1.isTrueSubtreeOf(t2));
+        REQUIRE(t2.isTrueSubtreeOf(t1));
+        REQUIRE(t1.isTrueSubtreeOf(t1));
     }
 
     SECTION("Check sub forest on two simple trees")
@@ -22,8 +22,8 @@ TEST_CASE("Sub Forest for simple trees with two terminals", "[Forest, sub forest
         auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree");
         auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_2_2_singleVertexTrees.tree", 0, 2);
 
-        REQUIRE(f2 <= t1);
-        REQUIRE_FALSE(t1 <= f2);
+        REQUIRE(f2.isTrueSubtreeOf(t1));
+        REQUIRE_FALSE(t1.isTrueSubtreeOf(f2));
     }
 }
 
@@ -35,8 +35,8 @@ TEST_CASE("Sub Forest", "[Forest, sub forest, <=]")
         auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree");
         auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_4_6_simple.tree", 0, 4);
 
-        REQUIRE(f2 <= t1);
-        REQUIRE_FALSE(t1 <= f2);
+        REQUIRE(f2.isTrueSubtreeOf(t1));
+        REQUIRE_FALSE(t1.isTrueSubtreeOf(f2));
     }
 
     SECTION("Check sub forest - example 2")
@@ -44,8 +44,8 @@ TEST_CASE("Sub Forest", "[Forest, sub forest, <=]")
         auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example2.tree");
         auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_4_6_simple.tree", 0, 4);
 
-        REQUIRE(f2 <= t1);
-        REQUIRE_FALSE(t1 <= f2);
+        REQUIRE(f2.isTrueSubtreeOf(t1));
+        REQUIRE_FALSE(t1.isTrueSubtreeOf(f2));
     }
 }
 
