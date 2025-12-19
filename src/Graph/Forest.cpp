@@ -269,7 +269,7 @@ bool Forest::checkTriple(int parentIndex, std::unordered_map<int, unsigned int>&
         tripleValid = false;
     }
     // Check Leaf
-    if (node.firstChildIndex == -1 && node.secondChildIndex == -1)
+    if (node.leftChildIndex == -1 && node.rightChildIndex == -1)
     {
         if (terminalIndexToLabel->contains(parentIndex))
         { // Add to found leafs
@@ -300,20 +300,20 @@ bool Forest::checkTriple(int parentIndex, std::unordered_map<int, unsigned int>&
     else // Has children
     {
         //Balance
-        if ((node.firstChildIndex== -1 && node.secondChildIndex != -1)||(node.firstChildIndex== -1 && node.secondChildIndex != -1))
+        if ((node.leftChildIndex== -1 && node.rightChildIndex != -1)||(node.leftChildIndex== -1 && node.rightChildIndex != -1))
         {
             std::clog << "Forest: isValid: unbalanced Tree:\n"
-                         "   parent (" << parentIndex << ") -> (" << node.firstChildIndex <<") , (" << node.secondChildIndex <<") \n"
+                         "   parent (" << parentIndex << ") -> (" << node.leftChildIndex <<") , (" << node.rightChildIndex <<") \n"
                          "   Parent needs to get active and produce another child."<< endl;
             tripleValid = false;
         }
-        const Node& fstChild = nodes->at(node.firstChildIndex);
-        const Node& sndChild = nodes->at(node.secondChildIndex);
+        const Node& fstChild = nodes->at(node.leftChildIndex);
+        const Node& sndChild = nodes->at(node.rightChildIndex);
         // Order
         if (!fstChild.hasSmallestTerminal(sndChild))
         {
             std::clog << "Forest: isValid: unordered Tree:\n"
-                         "   parent (" << parentIndex << ") -> (" << node.firstChildIndex <<") , (" << node.secondChildIndex <<") \n"
+                         "   parent (" << parentIndex << ") -> (" << node.leftChildIndex <<") , (" << node.rightChildIndex <<") \n"
                          "   Commander Cody, the time has come. Execute Order 66."<< endl;
             tripleValid = false;
         }
@@ -323,24 +323,24 @@ bool Forest::checkTriple(int parentIndex, std::unordered_map<int, unsigned int>&
         {
             std::clog << "Forest: isValid: checkTriple: first child forgot his parent:\n"
                          "   parent ("
-                      << parentIndex << ") -> (" << node.firstChildIndex
+                      << parentIndex << ") -> (" << node.leftChildIndex
                       << ") child\n"
                          "   parent ("
-                      << fstChild.parentIndex << ") <- (" << node.firstChildIndex
+                      << fstChild.parentIndex << ") <- (" << node.leftChildIndex
                       << ") child\n"
                          "   Why bother raising them if they forget about you?"
                       << endl;
             tripleValid = false;
         }
         // Check sibling
-        if (fstChild.siblingIndex != node.secondChildIndex)
+        if (fstChild.siblingIndex != node.rightChildIndex)
         {
             std::clog << "Forest: isValid: checkTriple: first child forgot his sibling:\n"
                          "   parent ("
-                      << parentIndex << ") -> (" << node.firstChildIndex << " and " << node.secondChildIndex
+                      << parentIndex << ") -> (" << node.leftChildIndex << " and " << node.rightChildIndex
                       << ") children\n"
                          "   first child ("
-                      << node.firstChildIndex << ") -> (" << fstChild.siblingIndex
+                      << node.leftChildIndex << ") -> (" << fstChild.siblingIndex
                       << ") sibling"
                          "   Maybe they had a fight?"
                       << endl;
@@ -352,24 +352,24 @@ bool Forest::checkTriple(int parentIndex, std::unordered_map<int, unsigned int>&
         {
             std::clog << "Forest: isValid: checkTriple: second child forgot his parent:\n"
                          "   parent ("
-                      << parentIndex << ") -> (" << node.secondChildIndex
+                      << parentIndex << ") -> (" << node.rightChildIndex
                       << ") child\n"
                          "   parent ("
-                      << sndChild.parentIndex << ") <- (" << node.secondChildIndex
+                      << sndChild.parentIndex << ") <- (" << node.rightChildIndex
                       << ") child\n"
                          "   Why bother raising them if they forget about you?"
                       << endl;
             tripleValid = false;
         }
         // Check sibling
-        if (sndChild.siblingIndex != node.firstChildIndex)
+        if (sndChild.siblingIndex != node.leftChildIndex)
         {
             std::clog << "Forest: isValid: checkTriple: second child forgot his sibling:\n"
                          "   parent ("
-                      << parentIndex << ") -> (" << node.firstChildIndex << " and " << node.secondChildIndex
+                      << parentIndex << ") -> (" << node.leftChildIndex << " and " << node.rightChildIndex
                       << ") children\n"
                          "   first child ("
-                      << node.secondChildIndex << ") -> (" << sndChild.siblingIndex
+                      << node.rightChildIndex << ") -> (" << sndChild.siblingIndex
                       << ") sibling"
                          "   Maybe they had a fight?"
                       << endl;
@@ -378,7 +378,7 @@ bool Forest::checkTriple(int parentIndex, std::unordered_map<int, unsigned int>&
         // Recursive call with children
         std::unordered_map<int, unsigned int> leftLeafs;
         std::unordered_map<int, unsigned int> rightLeafs;
-        tripleValid &= checkTriple(node.firstChildIndex, leftLeafs, indices,smallestTerminal) && checkTriple(node.secondChildIndex, rightLeafs, indices,smallestTerminal);
+        tripleValid &= checkTriple(node.leftChildIndex, leftLeafs, indices,smallestTerminal) && checkTriple(node.rightChildIndex, rightLeafs, indices,smallestTerminal);
         leftLeafs.merge(rightLeafs);
         subtreeLeafs = leftLeafs; // Collect leafs of subtree
     }
