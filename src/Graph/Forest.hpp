@@ -152,6 +152,13 @@ class Forest
     /// and writes flaws to std::clog
     bool isValid() const;
 
+    /// \brief Operator that checks if the first tree is a subtree of the second.
+    /// \param other The tree to compare with.
+    /// \return true if the first tree is a subtree, false otherwise.
+    bool isTrueSubtreeOf(const Forest& other) const;
+
+    bool hasIdenticalSubtree(const Forest& other, int thisNodeIdx, int otherNodeIdx);
+
     /// \brief Checks relations between parent and children. Goes deeper recursively.
     bool checkTriple(int parentIndex, std::unordered_map<int, unsigned int>& leafs, std::set<int>& indices,
                      unsigned int& lastSmallestTerminal) const;
