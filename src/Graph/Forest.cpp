@@ -7,13 +7,12 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
-#include <list>
-#include <queue>
 #include <ranges>
 #include <sstream>
 #include <stack>
 #include <unordered_set>
 #include <utility>
+#include <climits>
 
 using namespace std;
 
@@ -468,18 +467,14 @@ std::vector<int>& Forest::maximumCommonSubforestRoots(const Forest& other)
     unordered_map<int, int> t1Index;
     unordered_map<int, int> t2Index;
 
-    list<int> toVisit;
     unordered_set<unsigned int> visitedLeaves;
-
-    int newNodeIndex = 0;
-
 
     for (auto& [leafIndex, leafLabel] : *terminalIndexToLabel)
     {
-        //TODO: populate and check for visited leaves (in the sibling subforest; check via Node::subtreeTerminals)
+        if (visitedLeaves.contains(leafLabel)){continue;}
         Node* t1CurrentNode = &nodes->at(leafIndex);
         int t1CurrentIndex = leafIndex;
-        Node* t2CurrentNode = &other.nodes->at(other.labelToTerminalIndex->at(leafLabel));
+        Node* t2CurrentNode = &other.nodes->at((*other.labelToTerminalIndex)[leafLabel]);
 
         while (not (t1CurrentNode->parentIndex == -1 or t2CurrentNode->parentIndex == -1))
         { // node is root in neither tree
@@ -493,6 +488,22 @@ std::vector<int>& Forest::maximumCommonSubforestRoots(const Forest& other)
             t2CurrentNode = &other.nodes->at(t2CurrentNode->parentIndex);
         }
         // currentNode is now the root of the common subtree
+        int offset = 0;
+        unsigned int label = 1;
+        for (uint64_t& i : t1CurrentNode->subtreeTerminals)
+        {
+            uint64_t bit = 1;
+            while (bit < LLONG_MAX) // llong is signed and thus should have one less bit that unsigned
+            {
+                if ((bit & i) == bit)
+                { // t1currentNode's subtree contains the leaf with the current value of label
+                    visitedLeaves.insert(offset + label);
+                }
+                bit = bit << 1;
+                label++;
+            };
+            offset = offset + 64; //TODO: is uint64_t really 64 bits in size? cause clang complains
+        }
         newRootIndices->push_back(t1CurrentIndex);
     }
 
