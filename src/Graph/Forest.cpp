@@ -305,18 +305,18 @@ bool Forest::hasIdenticalSubtree(const Forest& other, int thisNodeIdx, int other
             return false;
         }
 
-        if (not (thisCurrentNode.firstChildIndex == -1 or otherCurrentNode.secondChildIndex == -1)) //TODO: assume both child indices -1 if one is empty?
+        if (not (thisCurrentNode.leftChildIndex == -1 or otherCurrentNode.leftChildIndex == -1))
         {
             // neither is a leaf node
-            thisVisitingStack.push(thisCurrentNode.secondChildIndex);
-            thisVisitingStack.push(thisCurrentNode.firstChildIndex);
-            otherVisitingStack.push(otherCurrentNode.secondChildIndex);
-            otherVisitingStack.push(otherCurrentNode.firstChildIndex);
+            thisVisitingStack.push(thisCurrentNode.rightChildIndex);
+            thisVisitingStack.push(thisCurrentNode.leftChildIndex);
+            otherVisitingStack.push(otherCurrentNode.rightChildIndex);
+            otherVisitingStack.push(otherCurrentNode.leftChildIndex);
         }
         else
         {
             // one or both are leaves
-            if (not (thisCurrentNode.firstChildIndex == -1 and otherCurrentNode.secondChildIndex == -1))
+            if (not (thisCurrentNode.leftChildIndex == -1 and otherCurrentNode.rightChildIndex == -1))
             {
                 // just one is a leaf
                 return false;
