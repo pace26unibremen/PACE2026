@@ -26,7 +26,7 @@ struct Node
     /// \c -1 indicates that \c this has no second child.
     int secondChildIndex = -1;
 
-    /// \brieg a bitmask that stores all terminals that in the subtree of this node
+    /// \brieg A bitmask that stores all terminals that are in the subtree of this node.
     std::vector<uint64_t> subtreeTerminals = {};
 
     /// \brief Constructor.
