@@ -20,6 +20,7 @@ build-job:
       - build/tests/ForestEqualTests
       - build/tests/ForestRemoveEdgeTests
       - build/tests/ForestSubforestTests
+      - build/tests/DeleteEdgeActionTests
 
 graph-representation:
   stage: test
@@ -29,4 +30,4 @@ graph-representation:
     - ./ForestEqualTests
     - ./ForestRemoveEdgeTests
     - ./ForestSubforestTests
-
+    - ./DeleteEdgeActionTests

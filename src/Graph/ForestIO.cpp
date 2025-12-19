@@ -17,8 +17,8 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
 
     if(numberOfTerminals > 0)
     {
-        nodes->reserve(2*numberOfTerminals - 1);
-        terminalIndexToLabel->reserve(numberOfTerminals);
+        nodes->reserve(2* numberOfTerminals - 1);
+        terminalIndexToLabel->reserve(2* numberOfTerminals -1);
         labelToTerminalIndex->reserve(numberOfTerminals);
     }
 
@@ -50,11 +50,11 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
                                 nodes->at(currentIndex).parentIndex = parentIndexStack.top();
                                 if (siblingIndex == -1)
                                 {
-                                    nodes->at(parentIndexStack.top()).firstChildIndex = currentIndex;
+                                    nodes->at(parentIndexStack.top()).leftChildIndex = currentIndex;
                                 }
                                 else
                                 {
-                                    nodes->at(parentIndexStack.top()).secondChildIndex = currentIndex;
+                                    nodes->at(parentIndexStack.top()).rightChildIndex = currentIndex;
                                     nodes->at(siblingIndex).siblingIndex = currentIndex;
                                     nodes->at(currentIndex).siblingIndex = siblingIndex;
                                 }
@@ -75,11 +75,11 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
                                 nodes->at(currentIndex).parentIndex = parentIndexStack.top();
                                 if (siblingIndex == -1)
                                 {
-                                    nodes->at(parentIndexStack.top()).firstChildIndex = currentIndex;
+                                    nodes->at(parentIndexStack.top()).leftChildIndex = currentIndex;
                                 }
                                 else
                                 {
-                                    nodes->at(parentIndexStack.top()).secondChildIndex = currentIndex;
+                                    nodes->at(parentIndexStack.top()).rightChildIndex = currentIndex;
                                     nodes->at(siblingIndex).siblingIndex = currentIndex;
                                     nodes->at(currentIndex).siblingIndex = siblingIndex;
                                 }
@@ -100,11 +100,11 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
                                 nodes->at(currentIndex).parentIndex = parentIndexStack.top();
                                 if (siblingIndex == -1)
                                 {
-                                    nodes->at(parentIndexStack.top()).firstChildIndex = currentIndex;
+                                    nodes->at(parentIndexStack.top()).leftChildIndex = currentIndex;
                                 }
                                 else
                                 {
-                                    nodes->at(parentIndexStack.top()).secondChildIndex = currentIndex;
+                                    nodes->at(parentIndexStack.top()).rightChildIndex = currentIndex;
                                     nodes->at(siblingIndex).siblingIndex = currentIndex;
                                     nodes->at(currentIndex).siblingIndex = siblingIndex;
                                 }
@@ -124,11 +124,11 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
                             nodes->at(currentIndex).parentIndex = parentIndexStack.top();
                             if (siblingIndex == -1)
                             {
-                                nodes->at(parentIndexStack.top()).firstChildIndex = currentIndex;
+                                nodes->at(parentIndexStack.top()).leftChildIndex = currentIndex;
                             }
                             else
                             {
-                                nodes->at(parentIndexStack.top()).secondChildIndex = currentIndex;
+                                nodes->at(parentIndexStack.top()).rightChildIndex = currentIndex;
                                 nodes->at(siblingIndex).siblingIndex = currentIndex;
                                 nodes->at(currentIndex).siblingIndex = siblingIndex;
                             }
@@ -168,10 +168,10 @@ void ForestIO::WriteNewick(const Forest& tree, std::ostream& out)
             const Node& node = nodes[current];
             if (down)
             {
-                if (node.firstChildIndex != -1)
+                if (node.leftChildIndex != -1)
                 {
                     out << "(";
-                    current = node.firstChildIndex;
+                    current = node.leftChildIndex;
                 }
                 else
                 {
@@ -182,7 +182,7 @@ void ForestIO::WriteNewick(const Forest& tree, std::ostream& out)
             else
             {
                 if (node.parentIndex == -1) break;
-                if (current == nodes[node.parentIndex].firstChildIndex)
+                if (current == nodes[node.parentIndex].leftChildIndex)
                 {
                     out << ",";
                     current = node.siblingIndex;
@@ -226,10 +226,10 @@ void ForestIO::WriteDot(const Forest& tree, ostream& stream)
     for (size_t i = 0; i < tree.Nodes().size(); ++i)
     {
         const Node& node = tree.Nodes()[i];
-        if(node.firstChildIndex != -1)
-            stream << "n" << i << " -> n" << node.firstChildIndex << ";\n";
-        if(node.secondChildIndex != -1)
-            stream << "n" << i << " -> n" << node.secondChildIndex << ";\n";
+        if(node.leftChildIndex != -1)
+            stream << "n" << i << " -> n" << node.leftChildIndex << ";\n";
+        if(node.rightChildIndex != -1)
+            stream << "n" << i << " -> n" << node.rightChildIndex << ";\n";
     }
     stream << "}" << endl;
 }

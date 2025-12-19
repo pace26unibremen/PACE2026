@@ -4,6 +4,10 @@ include(CMakePrintHelpers)
 
 message(STATUS "CMake Version: ${CMAKE_VERSION}")
 
+option(DEBUG_IMAGE_VIEW_GRAPH
+       "Adds option to view graphs as image in debugger"
+       OFF)
+
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 
