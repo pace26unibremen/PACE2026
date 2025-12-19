@@ -19,6 +19,7 @@ build-job:
       - build/tests/ForestIOTests
       - build/tests/ForestEqualTests
       - build/tests/ForestRemoveEdgeTests
+      - build/tests/ForestSubforestTests
 
 graph-representation:
   stage: test
@@ -27,4 +28,5 @@ graph-representation:
     - ./ForestIOTests
     - ./ForestEqualTests
     - ./ForestRemoveEdgeTests
+    - ./ForestSubforestTests
 
