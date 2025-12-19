@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <unordered_map>
 #include <vector>
+#include <set>
 #ifdef DEBUG_IMAGE_VIEW_GRAPH
 #include <opencv2/core.hpp>
 #endif
@@ -150,6 +151,10 @@ class Forest
     /// \brief Checks whether the forest representation is valid
     /// and writes flaws to std::clog
     bool isValid() const;
+
+    /// \brief Checks relations between parent and children. Goes deeper recursively.
+    bool checkTriple(int parentIndex, std::unordered_map<int, unsigned int>& leafs, std::set<int>& indices,
+                     unsigned int& lastSmallestTerminal) const;
 
     // ------------------------------------------------------------- //
     // ---- operators ---------------------------------------------- //
