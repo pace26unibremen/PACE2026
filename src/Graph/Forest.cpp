@@ -10,6 +10,12 @@
 #include <iostream>
 #include <sstream>
 #include <unordered_set>
+#ifdef DEBUG_IMAGE_VIEW_GRAPH
+#include <graphviz/gvc.h>
+#include <opencv2/imgcodecs.hpp>
+#include <unistd.h>
+#include <fcntl.h>
+#endif
 
 using namespace std;
 
@@ -29,6 +35,10 @@ Forest::Forest(std::shared_ptr<std::vector<Node>> nodes,
         rootIndices(std::move(rootIndices))
 {
     sortChildrenAndCollectTerminals();
+
+    #ifdef DEBUG_IMAGE_VIEW_GRAPH
+    renderImage();
+    #endif
 }
 
 Forest::Forest(const filesystem::path& path, int numberOfTerminals, int numberOfTrees)
@@ -274,6 +284,39 @@ bool Forest::isValid() const
     }
     return valid;
 }
+
+#ifdef DEBUG_IMAGE_VIEW_GRAPH
+void Forest::renderImage()
+{
+    std::stringstream dotRep;
+    this->dot(dotRep);
+
+    GVC_t* gvc = gvContext();
+    Agraph_t* g = agmemread(dotRep.str().c_str());
+
+    int old_stderr = dup(STDERR_FILENO);
+    int devnull = open("/dev/null", O_WRONLY);
+    dup2(devnull, STDERR_FILENO);
+    close(devnull);
+    gvLayout(gvc, g, "dot");
+    dup2(old_stderr, STDERR_FILENO);
+    close(old_stderr);
+
+    char* data = nullptr;
+    unsigned int length = 0;
+    gvRenderData(gvc, g, "png", &data, &length);
+
+    std::vector<uchar> pngData(data, data + length);
+    cv::Mat img = cv::imdecode(pngData, cv::IMREAD_UNCHANGED);
+
+    gvFreeRenderData(data);
+    gvFreeLayout(gvc, g);
+    agclose(g);
+    gvFreeContext(gvc);
+
+    this->image = img;
+}
+#endif
 
 void Forest::sortChildrenAndCollectTerminals()
 {

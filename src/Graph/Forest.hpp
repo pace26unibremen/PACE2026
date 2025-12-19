@@ -4,10 +4,11 @@
 #include "Node.hpp"
 
 #include <filesystem>
-#include <fstream>
-#include <iostream>
 #include <unordered_map>
 #include <vector>
+#ifdef DEBUG_IMAGE_VIEW_GRAPH
+#include <opencv2/core.hpp>
+#endif
 
 namespace graph
 {
@@ -35,6 +36,11 @@ class Forest
     void sortChildrenAndCollectTerminals();
 
   public:
+    #ifdef DEBUG_IMAGE_VIEW_GRAPH
+    // an image of the forest for debug purpose
+    cv::Mat image;
+    void renderImage();
+    #endif
     // ------------------------------------------------------------- //
     // ---- constructors ------------------------------------------- //
     // ------------------------------------------------------------- //

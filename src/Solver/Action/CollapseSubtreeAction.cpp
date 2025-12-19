@@ -36,6 +36,10 @@ void solver::CollapseSubtreeAction::doAction()
         k++;
     }
     forest->Terminals().emplace(nodeIndex, smallestLabel);
+
+    #ifdef DEBUG_IMAGE_VIEW_GRAPH
+    forest->renderImage();
+    #endif
 }
 
 void solver::CollapseSubtreeAction::undoAction()
@@ -50,4 +54,8 @@ void solver::CollapseSubtreeAction::undoAction()
         forest->Terminals()[index] = label;
     }
     forest->Terminals().erase(nodeIndex);
+
+    #ifdef DEBUG_IMAGE_VIEW_GRAPH
+    forest->renderImage();
+    #endif
 }

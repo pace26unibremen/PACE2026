@@ -39,6 +39,10 @@ void solver::DeleteEdgeAction::doAction()
     parent.rightChildIndex = -1;
     parent.parentIndex = -1;
     parent.siblingIndex = -1;
+
+    #ifdef DEBUG_IMAGE_VIEW_GRAPH
+    forest->renderImage();
+    #endif
 }
 
 void DeleteEdgeAction::undoAction()
@@ -55,6 +59,10 @@ void DeleteEdgeAction::undoAction()
     {
         undoParentIsInner();
     }
+
+    #ifdef DEBUG_IMAGE_VIEW_GRAPH
+    forest->renderImage();
+    #endif
 }
 
 void DeleteEdgeAction::doParentIsRoot()
