@@ -31,5 +31,5 @@ target_compile_definitions(ForestEqualTests PRIVATE TEST_EXAMPLES_DIR="${CMAKE_S
 add_executable(ForestSubforestTests ForestSubforestTests.cpp
         ForestSubforestTests.cpp)
 target_link_libraries(ForestSubforestTests PRIVATE Graph Catch2::Catch2WithMain)
-add_test(NAME ForestSubforestTests COMMAND $<TARGET_FILE:ForestEqualTests>)
+add_test(NAME ForestSubforestTests COMMAND $<TARGET_FILE:ForestSubforestTests>)
 target_compile_definitions(ForestSubforestTests PRIVATE TEST_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/res/tests/")
