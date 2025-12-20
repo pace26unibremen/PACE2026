@@ -11,7 +11,6 @@
 #include <stack>
 #include <unordered_set>
 #include <utility>
-#include <climits>
 
 using namespace std;
 
@@ -492,7 +491,7 @@ std::vector<int>& Forest::maximumCommonSubforestRoots(const Forest& other)
         for (uint64_t& i : t1CurrentNode->subtreeTerminals)
         {
             uint64_t bit = 1;
-            while (bit < LLONG_MAX) // llong is signed and thus should have one less bit that unsigned
+            while (bit <= i)
             {
                 if ((bit & i) == bit)
                 { // t1currentNode's subtree contains the leaf with the current value of label
