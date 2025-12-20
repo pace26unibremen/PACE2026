@@ -486,9 +486,20 @@ std::vector<int>& Forest::maximumCommonSubforestRoots(const Forest& other)
             t2CurrentNode = &other.nodes->at(t2CurrentNode->parentIndex);
         }
         // currentNode is now the root of the common subtree
-        int offset = 0;
         unsigned int label = 1;
         for (uint64_t& i : t1CurrentNode->subtreeTerminals)
+        {
+            uint64_t temp = i;
+            while (temp >= 1)
+            {
+                if ((temp & 1) == 1){visitedLeaves.insert(label);}
+                label++;
+                temp = temp >> 1;
+            }
+            label = label + (65 - (label % 64));
+        }
+
+        /*for (uint64_t& i : t1CurrentNode->subtreeTerminals)
         {
             uint64_t bit = 1;
             while (bit <= i)
@@ -501,7 +512,7 @@ std::vector<int>& Forest::maximumCommonSubforestRoots(const Forest& other)
                 label++;
             };
             offset = offset + 64; //TODO: is uint64_t really 64 bits in size? cause clang complains
-        }
+        } */
         newRootIndices->push_back(t1CurrentIndex);
     }
 
