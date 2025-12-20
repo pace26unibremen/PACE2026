@@ -22,14 +22,12 @@ target_link_libraries(ForestRemoveEdgeTests PRIVATE Graph Catch2::Catch2WithMain
 add_test(NAME ForestRemoveEdgeTests COMMAND $<TARGET_FILE:ForestRemoveEdgeTests>)
 target_compile_definitions(ForestRemoveEdgeTests PRIVATE TEST_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/res/tests/")
 
-add_executable(ForestEqualTests ForestEqualTests.cpp
-        ForestSubforestTests.cpp)
+add_executable(ForestEqualTests ForestEqualTests.cpp)
 target_link_libraries(ForestEqualTests PRIVATE Graph Catch2::Catch2WithMain)
 add_test(NAME ForestEqualTests COMMAND $<TARGET_FILE:ForestEqualTests>)
 target_compile_definitions(ForestEqualTests PRIVATE TEST_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/res/tests/")
 
-add_executable(ForestSubforestTests ForestSubforestTests.cpp
-        ForestSubforestTests.cpp)
+add_executable(ForestSubforestTests ForestSubforestTests.cpp)
 target_link_libraries(ForestSubforestTests PRIVATE Graph Catch2::Catch2WithMain)
 add_test(NAME ForestSubforestTests COMMAND $<TARGET_FILE:ForestSubforestTests>)
 target_compile_definitions(ForestSubforestTests PRIVATE TEST_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/res/tests/")
