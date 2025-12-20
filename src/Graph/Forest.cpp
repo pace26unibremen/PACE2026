@@ -499,20 +499,6 @@ std::vector<int>& Forest::maximumCommonSubforestRoots(const Forest& other)
             label = label + (65 - (label % 64));
         }
 
-        /*for (uint64_t& i : t1CurrentNode->subtreeTerminals)
-        {
-            uint64_t bit = 1;
-            while (bit <= i)
-            {
-                if ((bit & i) == bit)
-                { // t1currentNode's subtree contains the leaf with the current value of label
-                    visitedLeaves.insert(offset + label);
-                }
-                bit = bit << 1;
-                label++;
-            };
-            offset = offset + 64; //TODO: is uint64_t really 64 bits in size? cause clang complains
-        } */
         newRootIndices->push_back(t1CurrentIndex);
     }
 
