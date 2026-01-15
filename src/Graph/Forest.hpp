@@ -4,10 +4,12 @@
 #include "Node.hpp"
 
 #include <filesystem>
-#include <fstream>
-#include <iostream>
 #include <unordered_map>
 #include <vector>
+#include <set>
+#ifdef DEBUG_IMAGE_VIEW_GRAPH
+#include <opencv2/core.hpp>
+#endif
 
 namespace graph
 {
@@ -28,7 +30,18 @@ class Forest
     /// \brief Indices of root nodes in \c nodes vector.
     std::shared_ptr<std::vector<int>> rootIndices;
 
+    /// \brief \b 1. Sorts the children of each node,
+    /// such that the left child
+    /// contains the minimum label of both children.\n
+    /// And \b 2. fills \c subtreeTerminals for each node.
+    void sortChildrenAndCollectTerminals();
+
   public:
+    #ifdef DEBUG_IMAGE_VIEW_GRAPH
+    // an image of the forest for debug purpose
+    cv::Mat image;
+    void renderImage();
+    #endif
     // ------------------------------------------------------------- //
     // ---- constructors ------------------------------------------- //
     // ------------------------------------------------------------- //
@@ -120,19 +133,13 @@ class Forest
     [[nodiscard, maybe_unused]]
     const std::vector<int>& RootIndices() const;
 
-    // ------------------------------------------------------------- //
-    // ---- graph manipulation ------------------------------------- //
-    // ------------------------------------------------------------- //
+    /// \brief returns the index of the root node in the nodes vector, that has \c node in its subtree
+    [[nodiscard, maybe_unused]]
+    int rootIndexOf(const Node& node) const;
 
-    /// \brief Removes an edge between a parent and a child.
-    /// \param childIndex the index of the child node.
-    void removeEdge(int childIndex);
-
-    /// \brief \b 1. Sorts the children of each node,
-    /// such that the first child
-    /// contains the minimum label of both children.\n
-    /// And \b 2. fills \c subtreeTerminals for each node.
-    void sortChildrenAndCollectTerminals();
+    /// \brief returns the index of the root node in the nodes vector, that has \c node in its subtree
+    [[nodiscard, maybe_unused]]
+    int rootIndexOf(int nodeIndex) const;
 
     /// \brief Returns the maximum common X-Forest of this forest and the input forest.
     std::vector<int> maximumCommonSubforestRoots(const Forest& other);
@@ -148,7 +155,16 @@ class Forest
     /// and writes flaws to std::clog
     bool isValid() const;
 
+    /// \brief Operator that checks if the first tree is a subtree of the second.
+    /// \param other The tree to compare with.
+    /// \return true if the first tree is a subtree, false otherwise.
+    bool isTrueSubtreeOf(const Forest& other) const;
+
     bool hasIdenticalSubtree(const Forest& other, int thisNodeIdx, int otherNodeIdx);
+
+    /// \brief Checks relations between parent and children. Goes deeper recursively.
+    bool checkTriple(int parentIndex, std::unordered_map<int, unsigned int>& leafs, std::set<int>& indices,
+                     unsigned int& lastSmallestTerminal) const;
 
     // ------------------------------------------------------------- //
     // ---- operators ---------------------------------------------- //

@@ -18,23 +18,23 @@ struct Node
     /// \c -1 indicates that \c this is the last sibling.
     int siblingIndex = -1;
 
-    /// \brief Index of the first child in.
-    /// \c -1 indicates that \c this has no first child.
-    int firstChildIndex = -1;
+    /// \brief Index of the left child in.
+    /// \c -1 indicates that \c this has no left child.
+    int leftChildIndex = -1;
 
-    /// \brief Index of the second child in.
-    /// \c -1 indicates that \c this has no second child.
-    int secondChildIndex = -1;
+    /// \brief Index of the right child in.
+    /// \c -1 indicates that \c this has no right child.
+    int rightChildIndex = -1;
 
-    /// \brieg a bitmask that stores all terminals that in the subtree of this node
+    /// \brief a bitmask that stores all terminals that in the subtree of this node
     std::vector<uint64_t> subtreeTerminals = {};
 
     /// \brief Constructor.
     /// \param parentIndex Index of parent.
     /// \param siblingIndex Index of the sibling.
-    /// \param firstChildIndex Index of the first child.
-    /// \param secondChildIndex Index of the second child.
-    Node(int parentIndex, int siblingIndex, int firstChildIndex, int secondChildIndex);
+    /// \param leftChildIndex Index of the left child.
+    /// \param rightChildIndex Index of the right child.
+    Node(int parentIndex, int siblingIndex, int leftChildIndex, int rightChildIndex);
 
     /// \brief Default Constructor.\n
     Node() = default;
@@ -48,7 +48,7 @@ struct Node
     /// Checks if the terminals in the subtree of a node is a \b subset of
     /// the terminals of another node.
     /// \param other
-    /// \return true if terminals of \c are a subset of the terminals of \c other, else false
+    /// \return true if terminals of \c this are a subset of the terminals of \c other, else false
     [[nodiscard]]
     bool hasSubsetTerminals(const Node& other) const;
 
@@ -57,6 +57,10 @@ struct Node
     /// \return true if \c this has the minimal terminal, else false
     [[nodiscard]]
     bool hasSmallestTerminal(const Node& other) const;
+
+    /// \brief returns the smallest terminal in the nodes subtree.
+    [[nodiscard, maybe_unused]]
+    unsigned int smallestTerminal() const;
 
 };
 
