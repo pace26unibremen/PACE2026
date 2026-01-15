@@ -141,6 +141,9 @@ class Forest
     [[nodiscard, maybe_unused]]
     int rootIndexOf(int nodeIndex) const;
 
+    /// \brief Returns the maximum common X-Forest of this forest and the input forest.
+    std::vector<int> maximumCommonSubforestRoots(const Forest& other);
+
     // ------------------------------------------------------------- //
     // ---- debug -------------------------------------------------- //
     // ------------------------------------------------------------- //

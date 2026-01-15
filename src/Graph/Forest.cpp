@@ -9,6 +9,7 @@
 #include <functional>
 #include <iostream>
 #include <sstream>
+#include <stack>
 #include <unordered_set>
 #include <utility>
 #include <stack>
@@ -558,6 +559,62 @@ void Forest::sortChildrenAndCollectTerminals()
               {
                   return nodes->at(a).hasSmallestTerminal(nodes->at(b));
               });
+}
+
+std::vector<int> Forest::maximumCommonSubforestRoots(const Forest& other)
+{
+    // actually: iterate upward, always checking the sibling for identicality and the parent for the same terminals, deleting seen labels from the ones left to visit
+    // vorinitialisierung von blattknoten; jeder durchlauf kreiert seinen sibling- und elternknoten; dabei sibling nur, wenn nicht besucht? ach nee, das ist was anderes. wenn nichtterminal? wird sowieso rekursiv/iterativ, also abbruchbedingung einfach? hilfsfunktion, die den gesamten sibling-subtree baut und den sibling-index zurückgibt (bei blatt halt nur rückgabe des index) bei leaf-siblings retrieval über label=index?
+    // naur, just steal it from f1: iterate upward from each unvisited leaf, always checking the sibling subtree for identicality, and once a root for the leaf is found, do the label-index relation? should be doable via the parent forests map. make a new nodes vector after scanning the whole parent forest and exclude->reindex
+    auto newNodeIndices = make_shared<unordered_set<int>>();
+    vector<int> newRootIndices; // indices of new root nodes in t1
+
+    newNodeIndices->reserve(2 * labelToTerminalIndex->size() - 1);
+    newRootIndices.reserve(labelToTerminalIndex->size());
+
+    // maps new forests node index to original forest indices
+    unordered_map<int, int> t1Index;
+    unordered_map<int, int> t2Index;
+
+    unordered_set<unsigned int> visitedLeaves;
+
+    for (auto& [leafIndex, leafLabel] : *terminalIndexToLabel)
+    {
+        if (visitedLeaves.contains(leafLabel)){continue;}
+        Node* t1CurrentNode = &nodes->at(leafIndex);
+        int t1CurrentIndex = leafIndex;
+        Node* t2CurrentNode = &other.nodes->at((*other.labelToTerminalIndex)[leafLabel]);
+
+        while (not (t1CurrentNode->parentIndex == -1 or t2CurrentNode->parentIndex == -1))
+        { // node is root in neither tree
+            if (not hasIdenticalSubtree(other, t1CurrentNode->siblingIndex, t2CurrentNode->siblingIndex))
+            { // sibling subtree differs
+                break;
+            }
+
+            t1CurrentIndex = t1CurrentNode->parentIndex;
+            t1CurrentNode = &nodes->at(t1CurrentNode->parentIndex);
+            t2CurrentNode = &other.nodes->at(t2CurrentNode->parentIndex);
+        }
+        // currentNode is now the root of the common subtree
+        unsigned int label = 1;
+        for (uint64_t& i : t1CurrentNode->subtreeTerminals)
+        {
+            uint64_t temp = i;
+            while (temp >= 1)
+            {
+                if ((temp & 1) == 1){visitedLeaves.insert(label);}
+                label++;
+                temp = temp >> 1;
+            }
+            label = label + (65 - (label % 64));
+        }
+
+        newRootIndices.push_back(t1CurrentIndex);
+    }
+
+
+    return newRootIndices;
 }
 
 // ------------------------------------------------------------- //
