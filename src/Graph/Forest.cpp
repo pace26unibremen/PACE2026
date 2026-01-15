@@ -450,16 +450,16 @@ void Forest::sortChildrenAndCollectTerminals()
               });
 }
 
-std::vector<int>& Forest::maximumCommonSubforestRoots(const Forest& other)
+std::vector<int> Forest::maximumCommonSubforestRoots(const Forest& other)
 {
     // actually: iterate upward, always checking the sibling for identicality and the parent for the same terminals, deleting seen labels from the ones left to visit
     // vorinitialisierung von blattknoten; jeder durchlauf kreiert seinen sibling- und elternknoten; dabei sibling nur, wenn nicht besucht? ach nee, das ist was anderes. wenn nichtterminal? wird sowieso rekursiv/iterativ, also abbruchbedingung einfach? hilfsfunktion, die den gesamten sibling-subtree baut und den sibling-index zurückgibt (bei blatt halt nur rückgabe des index) bei leaf-siblings retrieval über label=index?
     // naur, just steal it from f1: iterate upward from each unvisited leaf, always checking the sibling subtree for identicality, and once a root for the leaf is found, do the label-index relation? should be doable via the parent forests map. make a new nodes vector after scanning the whole parent forest and exclude->reindex
     auto newNodeIndices = make_shared<unordered_set<int>>();
-    auto newRootIndices = make_shared<vector<int>>(); // indices of new root nodes in t1
+    vector<int> newRootIndices; // indices of new root nodes in t1
 
     newNodeIndices->reserve(2 * labelToTerminalIndex->size() - 1);
-    newRootIndices->reserve(labelToTerminalIndex->size());
+    newRootIndices.reserve(labelToTerminalIndex->size());
 
     // maps new forests node index to original forest indices
     unordered_map<int, int> t1Index;
@@ -499,11 +499,11 @@ std::vector<int>& Forest::maximumCommonSubforestRoots(const Forest& other)
             label = label + (65 - (label % 64));
         }
 
-        newRootIndices->push_back(t1CurrentIndex);
+        newRootIndices.push_back(t1CurrentIndex);
     }
 
 
-    return *newRootIndices;
+    return newRootIndices;
 }
 
 // ------------------------------------------------------------- //

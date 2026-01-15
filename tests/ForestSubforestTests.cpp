@@ -12,7 +12,7 @@ TEST_CASE("Maximum common X-Forest of Trees", "[Forest, subforest]")
         auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree");
         auto t2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1_reordered.tree");
 
-        REQUIRE(t1.maximumCommonSubforestRoots(t2) == t1.RootIndices());
+        REQUIRE(t1.maximumCommonSubforestRoots((t2)) == t1.RootIndices());
     }
 
     SECTION("Check for single vertex subtrees")

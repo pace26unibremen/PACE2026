@@ -135,7 +135,7 @@ class Forest
     void sortChildrenAndCollectTerminals();
 
     /// \brief Returns the maximum common X-Forest of this forest and the input forest.
-    std::vector<int>& maximumCommonSubforestRoots(const Forest& other);
+    std::vector<int> maximumCommonSubforestRoots(const Forest& other);
 
     // ------------------------------------------------------------- //
     // ---- debug -------------------------------------------------- //
