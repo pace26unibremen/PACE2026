@@ -163,7 +163,7 @@ class Forest
     bool hasIdenticalSubtree(const Forest& other, Node* thisNode, Node* otherNode);
 
     /// \brief Checks relations between parent and children. Goes deeper recursively.
-    bool checkTriple(int parentIndex, std::unordered_map<int, unsigned int>& leafs, std::set<int>& indices,
+    bool checkTriple(Node* parentIndex, std::unordered_map<Node*, unsigned int>& leafs, std::set<Node*>& pointers,
                      unsigned int& lastSmallestTerminal) const;
 
     // ------------------------------------------------------------- //

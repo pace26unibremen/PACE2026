@@ -213,7 +213,7 @@ bool Forest::isValid() const
         std::unordered_map<Node*, unsigned int> rootLeafs;
         const Node& root = *node;
         unsigned int smallestTerminal = -1; // -> 4294967295
-        set<int> indices;
+        set<Node*> pointers;
         if (root.parent != nullptr)
         {
             std::clog << "Forest: isValid: Root has a parent:\n"
@@ -222,7 +222,7 @@ bool Forest::isValid() const
             valid = false;
         }
         // Check children (recursive)
-        valid &= checkTriple(node, rootLeafs, indices, smallestTerminal); //TODO: checkTriple
+        valid &= checkTriple(node, rootLeafs, pointers, smallestTerminal);
         totalLeafs.merge(rootLeafs);
         // Check root order
         if (smallestTerminal < lastSmallestTerminal)
@@ -333,38 +333,31 @@ bool Forest::hasIdenticalSubtree(const Forest& other, Node* thisNode, Node* othe
     return false;
 }
 
-bool Forest::checkTriple(int parentIndex, std::unordered_map<int, unsigned int>& subtreeLeafs, set<int>& indices, unsigned int& smallestTerminal) const
+bool Forest::checkTriple(Node* parentPtr, std::unordered_map<Node*, unsigned int>& subtreeLeafs, set<Node*>& pointers, unsigned int& smallestTerminal) const
 { //TODO: checkTriple
     bool tripleValid = true;
-    const Node& node = nodes->at(parentIndex);
+    const Node& node = *parentPtr;
     // Check index
-    if (parentIndex < 0)
-    {
-        std::clog << "Forest: isValid: Negative index:\n"
-                         "   Index (" << parentIndex << ") \n"
-                         "   Be positive! :)"<< endl;
-        tripleValid = false;
-    }
-    if (!indices.insert(parentIndex).second)
+    if (!pointers.insert(parentPtr).second) //TODO: auch nicht mehr nötig? umschreiben
     {
         std::clog << "Forest: isValid: Duplicate index:\n"
-                         "   Index (" << parentIndex << ") \n"
+                         "   Index (" << parentPtr << ") \n"
                          "   Who is the original?"<< endl;
         tripleValid = false;
     }
     // Check Leaf
-    if (node.leftChild == -1 && node.rightChild == -1)
+    if (node.leftChild == nullptr && node.rightChild == nullptr)
     {
-        if (terminalToLabel->contains(parentIndex))
+        if (terminalToLabel->contains(parentPtr))
         { // Add to found leafs
-            unsigned int label = terminalToLabel->at(parentIndex);
+            unsigned int label = terminalToLabel->at(parentPtr);
             // Check label -> index
-            if (labelToTerminal->at(label) != parentIndex)
+            if (labelToTerminal->at(label) != parentPtr)
             {
                 std::clog << "Forest: isValid: label to index incorrect:\n"
-                         "   Node (" << parentIndex << ") -> Label ("<< label <<")\n"
+                         "   Node (" << parentPtr << ") -> Label ("<< label <<")\n"
                          "   Label ("<< label <<") -> Index (" << labelToTerminal->at(label) << ")\n"
-                         "   Maybe we should use pointers like real c-programmers? ^^"<< endl;
+                         "   At least we're about to use pointers like real c-programmers. ^^"<< endl;
                 tripleValid = false;
             }
             // Save smallest terminal in tree
@@ -372,11 +365,11 @@ bool Forest::checkTriple(int parentIndex, std::unordered_map<int, unsigned int>&
             {
                 smallestTerminal = label;
             }
-            subtreeLeafs.emplace(parentIndex, label);
+            subtreeLeafs.emplace(parentPtr, label);
         } else
         {
             std::clog << "Forest: isValid: Leaf has no label:\n"
-                         "   Node (" << parentIndex << ") \n"
+                         "   Node (" << parentPtr << ") \n"
                          "   Maybe he can sign with Sony?"<< endl;
             tripleValid = false;
         }
@@ -384,30 +377,30 @@ bool Forest::checkTriple(int parentIndex, std::unordered_map<int, unsigned int>&
     else // Has children
     {
         //Balance
-        if ((node.leftChild== -1 && node.rightChild != -1)||(node.leftChild== -1 && node.rightChild != -1))
+        if ((node.leftChild== nullptr && node.rightChild != nullptr)||(node.leftChild== nullptr && node.rightChild != nullptr))
         {
             std::clog << "Forest: isValid: unbalanced Tree:\n"
-                         "   parent (" << parentIndex << ") -> (" << node.leftChild <<") , (" << node.rightChild <<") \n"
+                         "   parent (" << parentPtr << ") -> (" << node.leftChild <<") , (" << node.rightChild <<") \n"
                          "   Parent needs to get active and produce another child."<< endl;
             tripleValid = false;
         }
-        const Node& fstChild = nodes->at(node.leftChild);
-        const Node& sndChild = nodes->at(node.rightChild);
+        const Node& fstChild = *node.leftChild;
+        const Node& sndChild = *node.rightChild;
         // Order
         if (!fstChild.hasSmallestTerminal(sndChild))
         {
             std::clog << "Forest: isValid: unordered Tree:\n"
-                         "   parent (" << parentIndex << ") -> (" << node.leftChild <<") , (" << node.rightChild <<") \n"
+                         "   parent (" << parentPtr << ") -> (" << node.leftChild <<") , (" << node.rightChild <<") \n"
                          "   Commander Cody, the time has come. Execute Order 66."<< endl;
             tripleValid = false;
         }
         // First child
         // Check parent
-        if (fstChild.parent != parentIndex)
+        if (fstChild.parent != parentPtr)
         {
             std::clog << "Forest: isValid: checkTriple: first child forgot his parent:\n"
                          "   parent ("
-                      << parentIndex << ") -> (" << node.leftChild
+                      << parentPtr << ") -> (" << node.leftChild
                       << ") child\n"
                          "   parent ("
                       << fstChild.parent << ") <- (" << node.leftChild
@@ -421,7 +414,7 @@ bool Forest::checkTriple(int parentIndex, std::unordered_map<int, unsigned int>&
         {
             std::clog << "Forest: isValid: checkTriple: first child forgot his sibling:\n"
                          "   parent ("
-                      << parentIndex << ") -> (" << node.leftChild << " and " << node.rightChild
+                      << parentPtr << ") -> (" << node.leftChild << " and " << node.rightChild
                       << ") children\n"
                          "   first child ("
                       << node.leftChild << ") -> (" << fstChild.sibling
@@ -432,11 +425,11 @@ bool Forest::checkTriple(int parentIndex, std::unordered_map<int, unsigned int>&
         }
         // Second child
         // Check parent
-        if (sndChild.parent != parentIndex)
+        if (sndChild.parent != parentPtr)
         {
             std::clog << "Forest: isValid: checkTriple: second child forgot his parent:\n"
                          "   parent ("
-                      << parentIndex << ") -> (" << node.rightChild
+                      << parentPtr << ") -> (" << node.rightChild
                       << ") child\n"
                          "   parent ("
                       << sndChild.parent << ") <- (" << node.rightChild
@@ -450,7 +443,7 @@ bool Forest::checkTriple(int parentIndex, std::unordered_map<int, unsigned int>&
         {
             std::clog << "Forest: isValid: checkTriple: second child forgot his sibling:\n"
                          "   parent ("
-                      << parentIndex << ") -> (" << node.leftChild << " and " << node.rightChild
+                      << parentPtr << ") -> (" << node.leftChild << " and " << node.rightChild
                       << ") children\n"
                          "   first child ("
                       << node.rightChild << ") -> (" << sndChild.sibling
@@ -460,15 +453,15 @@ bool Forest::checkTriple(int parentIndex, std::unordered_map<int, unsigned int>&
             tripleValid = false;
         }
         // Recursive call with children
-        std::unordered_map<int, unsigned int> leftLeafs;
-        std::unordered_map<int, unsigned int> rightLeafs;
-        tripleValid &= checkTriple(node.leftChild, leftLeafs, indices,smallestTerminal) && checkTriple(node.rightChild, rightLeafs, indices,smallestTerminal);
+        std::unordered_map<Node*, unsigned int> leftLeafs;
+        std::unordered_map<Node*, unsigned int> rightLeafs;
+        tripleValid &= checkTriple(node.leftChild, leftLeafs, pointers,smallestTerminal) && checkTriple(node.rightChild, rightLeafs, pointers,smallestTerminal);
         leftLeafs.merge(rightLeafs);
         subtreeLeafs = leftLeafs; // Collect leafs of subtree
     }
     //TODO labelToTerminalIndex check (after change index->leaf)
 
-    vector <uint64_t> foundTerminals = {0};
+    vector <uint64_t> foundTerminals = {0}; //TODO: only accounts for 64(32?) terminals, need to add logic to scale the vector
     for( auto it = subtreeLeafs.begin(); it != subtreeLeafs.end(); ++it ) {
         foundTerminals[0]+= 1<<(it->second - 1);
     }
@@ -476,7 +469,7 @@ bool Forest::checkTriple(int parentIndex, std::unordered_map<int, unsigned int>&
     if (foundTerminals != node.subtreeTerminals)
     {
         std::clog << "Forest: isValid: subtreeTerminals list is incorrect:\n"
-                        "   at index (" << parentIndex << ") \n"
+                        "   at index (" << parentPtr << ") \n"
                         "   Maybe you should fix that? ;)"<< endl;
         tripleValid = false;
     }
