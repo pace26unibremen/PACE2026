@@ -83,7 +83,7 @@ TEST_CASE("Identical Subforest", "[Forest, subforest]")
         auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree");
         auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree");
 
-        for (int i = 0; i<f1.RootIndices().size(); i++)
+        for (int i = 0; i<f1.Roots().size(); i++)
         {
             REQUIRE(f1.hasIdenticalSubtree(f2, f1.RootIndices().at(i), f2.RootIndices().at(i)));
         }
