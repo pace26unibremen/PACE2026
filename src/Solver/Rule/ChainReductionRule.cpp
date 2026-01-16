@@ -98,7 +98,7 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
 
         //Determine x3 for case 2 for chain def in T1
         int parentOfParentIndexT1 = treeOneNodes.at(parentIndexT1).parentIndex;
-
+        int siblingOfParentIndexT1 = treeOneNodes.at(parentIndexT1).siblingIndex;
 
 
         for (const auto& terminalT2 : termIndexTreeTwo)
@@ -119,7 +119,20 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
             // -> x1,x2,x3 for case 1 known for T2
             //Determine x3 for case 2 for chain def in T2
             int parentOfParentIndexT2 = treeTwoNodes.at(parentIndexT2).parentIndex;
+            int siblingOfParentIndexT2 = treeTwoNodes.at(parentIndexT2).siblingIndex;
 
+            //Case 1: if the parent of x1 coincides with the parent of x2
+                if ()
+                {
+
+                }
+
+
+            //Case 2: or the parent of x2 is the parent of the parent of x1,
+                else if ()
+                {
+
+                }
         }
     }
 
