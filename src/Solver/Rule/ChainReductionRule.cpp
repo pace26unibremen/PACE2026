@@ -56,6 +56,7 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
     //List of chains in the tree
     std::vector<std::list<int>> chainList;
 
+
     int size;
 
     //Fetch Nodes
@@ -74,6 +75,54 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
     {
         size = termIndexTreeOne.size();
     }
+
+    //For all Terminals...
+    for (const auto& terminalT1 : termIndexTreeOne)
+    {   //Determine structure in T1
+        int parentIndexT1 = treeOneNodes.at(terminalT1.first).parentIndex;
+        bool isCurrentOnLeftSideT1;
+        if (treeOneNodes.at(parentIndexT1).leftChildIndex == terminalT1.first)
+        {
+            isCurrentOnLeftSideT1 = true;
+        }
+        else
+        {
+            isCurrentOnLeftSideT1 = false;
+        }
+
+        //Determine if sibling exists
+        int siblingIndexT1 = treeOneNodes.at(terminalT1.first).siblingIndex;
+
+
+        // -> x1, x2 and x3 for case 1 for chain def known for T1
+
+        //Determine x3 for case 2 for chain def in T1
+        int parentOfParentIndexT1 = treeOneNodes.at(parentIndexT1).parentIndex;
+
+
+
+        for (const auto& terminalT2 : termIndexTreeTwo)
+        {
+            //Determine Structure
+            int parentIndexT2 = treeTwoNodes.at(terminalT2.first).parentIndex;
+            bool isCurrentOnLeftSideT2;
+            if (treeTwoNodes.at(parentIndexT2).leftChildIndex == terminalT2.first)
+            {
+                isCurrentOnLeftSideT2 = true;
+            }
+            else
+            {
+                isCurrentOnLeftSideT2 = false;
+            }
+            int siblingIndexT2 = treeTwoNodes.at(terminalT2.first).siblingIndex;
+
+            // -> x1,x2,x3 for case 1 known for T2
+            //Determine x3 for case 2 for chain def in T2
+            int parentOfParentIndexT2 = treeTwoNodes.at(parentIndexT2).parentIndex;
+
+        }
+    }
+
 
     //For every node that could be shared between both...
     for (int currentNodeIndex = 0; currentNodeIndex < size; currentNodeIndex++)
