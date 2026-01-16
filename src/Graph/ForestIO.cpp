@@ -160,7 +160,7 @@ void ForestIO::WriteNewick(const Forest& tree, std::ostream& out)
     const auto& nodes = tree.Nodes();
     const auto& terminals = tree.Terminals();
 
-    for(int current : tree.RootIndices())
+    for(int current : tree.Roots())
     {
         int down = true; // traversing tree structure downwards
         while (true)
