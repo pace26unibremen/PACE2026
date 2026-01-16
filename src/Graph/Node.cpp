@@ -2,11 +2,11 @@
 
 #include <cassert>
 
-graph::Node::Node(int parentIndex, int siblingIndex, int leftChildIndex, int rightChildIndex) :
-        parentIndex(parentIndex),
-        siblingIndex(siblingIndex),
-        leftChildIndex(leftChildIndex),
-        rightChildIndex(rightChildIndex)
+graph::Node::Node(Node* parent, Node* sibling, Node* leftChild, Node* rightChild) :
+        parent(parent),
+        sibling(sibling),
+        leftChild(leftChild),
+        rightChild(rightChild)
 {}
 
 bool graph::Node::hasSameTerminals(const Node& other) const
