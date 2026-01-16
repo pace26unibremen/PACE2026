@@ -12,29 +12,29 @@ struct Node
 {
     /// \brief Index of parent node.\n
     /// \c -1 indicates that \c this is the root node.
-    int parentIndex = -1;
+    Node* parent = nullptr;
 
     /// \brief Index of the sibling.
     /// \c -1 indicates that \c this is the last sibling.
-    int siblingIndex = -1;
+    Node* sibling = nullptr;
 
     /// \brief Index of the left child in.
     /// \c -1 indicates that \c this has no left child.
-    int leftChildIndex = -1;
+    Node* leftChild = nullptr;
 
     /// \brief Index of the right child in.
     /// \c -1 indicates that \c this has no right child.
-    int rightChildIndex = -1;
+    Node* rightChild = nullptr;
 
     /// \brief a bitmask that stores all terminals that in the subtree of this node
     std::vector<uint64_t> subtreeTerminals = {};
 
     /// \brief Constructor.
-    /// \param parentIndex Index of parent.
-    /// \param siblingIndex Index of the sibling.
-    /// \param leftChildIndex Index of the left child.
-    /// \param rightChildIndex Index of the right child.
-    Node(int parentIndex, int siblingIndex, int leftChildIndex, int rightChildIndex);
+    /// \param parent Index of parent.
+    /// \param sibling Index of the sibling.
+    /// \param leftChild Index of the left child.
+    /// \param rightChild Index of the right child.
+    Node(Node* parent, Node* sibling, Node* leftChild, Node* rightChild);
 
     /// \brief Default Constructor.\n
     Node() = default;
