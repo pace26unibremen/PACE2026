@@ -10,19 +10,19 @@ namespace graph
 /// \brief Represents a node in a tree.
 struct Node
 {
-    /// \brief Index of parent node.\n
+    /// \brief Pointer to parent node.\n
     /// \c -1 indicates that \c this is the root node.
     Node* parent = nullptr;
 
-    /// \brief Index of the sibling.
+    /// \brief Pointer to the sibling.
     /// \c -1 indicates that \c this is the last sibling.
     Node* sibling = nullptr;
 
-    /// \brief Index of the left child in.
+    /// \brief Pointer to the left child in.
     /// \c -1 indicates that \c this has no left child.
     Node* leftChild = nullptr;
 
-    /// \brief Index of the right child in.
+    /// \brief Pointer to the right child in.
     /// \c -1 indicates that \c this has no right child.
     Node* rightChild = nullptr;
 
@@ -30,10 +30,10 @@ struct Node
     std::vector<uint64_t> subtreeTerminals = {};
 
     /// \brief Constructor.
-    /// \param parent Index of parent.
-    /// \param sibling Index of the sibling.
-    /// \param leftChild Index of the left child.
-    /// \param rightChild Index of the right child.
+    /// \param parent Pointer to parent.
+    /// \param sibling Pointer to the sibling.
+    /// \param leftChild Pointer to the left child.
+    /// \param rightChild Pointer to the right child.
     Node(Node* parent, Node* sibling, Node* leftChild, Node* rightChild);
 
     /// \brief Default Constructor.\n
