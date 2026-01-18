@@ -3,6 +3,7 @@
 
 #include "AbstractAction.hpp"
 #include "../../Graph/Forest.hpp"
+#include "../../Graph/Node.hpp"
 
 namespace solver
 {
@@ -15,26 +16,26 @@ class DeleteEdgeAction : AbstractAction
     std::shared_ptr<graph::Forest> forest;
 
     /// \brief the child on which the edge points
-    int childIndex;
+    graph::Node* child;
 
     /// \brief the sibling of the child
-    int siblingIndex;
+    graph::Node* sibling;
 
     /// \brief the parent of the child
-    int parentIndex;
+    graph::Node* parent;
 
     /// \brief the left child of the parent (should be always the sibling or the child)
-    int leftIndex;
+    graph::Node* left;
 
     /// \brief the right child of the parent (should be always the sibling or the child)
-    int rightIndex;
+    graph::Node* right;
 
-    /// \brief index of rootIndex int the rootIndices vector - with smallest terminals
+    /// \brief index of rootIndex in the roots vector - with smallest terminals
     unsigned int leftRoot_RootsIndex;
 
-    /// \brief Index of an entry in the `rootIndices` vector of the forest.
-    /// Points to one of the two affected root indices (either the root of the new tree or the old tree).
-    /// This is the index with the smaller order in the `rootIndices` vector.
+    /// \brief Index of an entry in the `roots` vector of the forest.
+    /// Points to one of the two affected roots (either the root of the new tree or the old tree).
+    /// This is the index with the smaller order in the `roots` vector.
     unsigned int rightRoot_RootsIndex;
 
     /// \brief Index of an entry in the rootIndices vector of forest.
@@ -58,9 +59,9 @@ class DeleteEdgeAction : AbstractAction
     void undoParentIsInner();
 
   public:
-    /// \param childIndex The index of the child node to which the edge points.
+    /// \param child A Pointer to the child node to which the edge points.
     /// \param forest A shared pointer to the forest on which the action will be performed.
-    DeleteEdgeAction(int childIndex, const std::shared_ptr<graph::Forest>& forest);
+    DeleteEdgeAction(graph::Node* child, const std::shared_ptr<graph::Forest>& forest);
 
     void doAction() override;
 
