@@ -7,21 +7,21 @@
 using namespace graph;
 using namespace solver;
 
-solver::DeleteEdgeAction::DeleteEdgeAction(int childIndex, const std::shared_ptr<graph::Forest>& forest) :
+solver::DeleteEdgeAction::DeleteEdgeAction(graph::Node* child, const std::shared_ptr<graph::Forest>& forest) :
         forest(forest),
-        childIndex(childIndex)
+        child(child)
 {}
 
 void solver::DeleteEdgeAction::doAction()
 {
-    siblingIndex = forest->Nodes()[childIndex].siblingIndex;
-    parentIndex = forest->Nodes()[childIndex].parentIndex;
-    leftIndex = forest->Nodes()[parentIndex].leftChildIndex;
-    rightIndex = forest->Nodes()[parentIndex].rightChildIndex;
+    sibling = child->sibling;
+    parent = child->parent;
+    left = child->leftChild;
+    right = child->rightChild;
 
-    auto leftRootIterator = std::find(forest->RootIndices().begin(), forest->RootIndices().end(), parentIndex);
-    leftRoot_RootsIndex = std::distance(forest->RootIndices().begin(), leftRootIterator);
-    parentIsRoot = (leftRootIterator != forest->RootIndices().end());
+    const auto leftRootIterator = std::ranges::find(forest->Roots(), parent);
+    leftRoot_RootsIndex = std::distance(forest->Roots().begin(), leftRootIterator);
+    parentIsRoot = (leftRootIterator != forest->Roots().end());
 
     if (parentIsRoot)
     {
@@ -33,12 +33,11 @@ void solver::DeleteEdgeAction::doAction()
     }
 
     // can be removed if new isValid is active
-    Node& parent = forest->Nodes()[parentIndex];
-    parentCopy = parent;
-    parent.leftChildIndex = -1;
-    parent.rightChildIndex = -1;
-    parent.parentIndex = -1;
-    parent.siblingIndex = -1;
+    parentCopy = *parent;
+    parent->leftChild = nullptr;
+    parent->rightChild = nullptr;
+    parent->parent = nullptr;
+    parent->sibling = nullptr;
 
     #ifdef DEBUG_IMAGE_VIEW_GRAPH
     forest->renderImage();
@@ -48,7 +47,7 @@ void solver::DeleteEdgeAction::doAction()
 void DeleteEdgeAction::undoAction()
 {
     // can be removed if new isValid is active
-    forest->Nodes()[parentIndex] = parentCopy;
+    *parent = parentCopy;
     //
 
     if (parentIsRoot)
@@ -68,153 +67,162 @@ void DeleteEdgeAction::undoAction()
 void DeleteEdgeAction::doParentIsRoot()
 {
     // first new root is always at same position than the parent
-    forest->RootIndices()[leftRoot_RootsIndex] = leftIndex;
+    forest->Roots()[leftRoot_RootsIndex] = left;
 
     // position of second new root is somewhere after the old parent
-    auto rightRoot_Iterator =
-        std::lower_bound(forest->RootIndices().begin() + leftRoot_RootsIndex, forest->RootIndices().end(), rightIndex,
-                         [&](const int& a, const int& b) {
-                             const Node& an = forest->Nodes()[a];
-                             const Node& bn = forest->Nodes()[b];
-                             return an.hasSmallestTerminal(bn);
-                         });
-    rightRoot_RootsIndex = std::distance(forest->RootIndices().begin(), rightRoot_Iterator);
+    const auto rightRoot_Iterator =
+        std::lower_bound(forest->Roots().begin() + leftRoot_RootsIndex, forest->Roots().end(), right,
+                         [&](const Node* a, const Node* b) { return a->hasSmallestTerminal(*b); });
+    rightRoot_RootsIndex = std::distance(forest->Roots().begin(), rightRoot_Iterator);
 
-    forest->RootIndices().insert(rightRoot_Iterator, rightIndex);
+    forest->Roots().insert(rightRoot_Iterator, right);
 
-    forest->Nodes()[siblingIndex].siblingIndex = -1;
-    forest->Nodes()[siblingIndex].parentIndex = -1;
-    forest->Nodes()[childIndex].siblingIndex = -1;
-    forest->Nodes()[childIndex].parentIndex = -1;
+    sibling->sibling = nullptr;
+    sibling->parent = nullptr;
+    child->sibling = nullptr;
+    child->parent = nullptr;
 }
 
 void DeleteEdgeAction::undoParentIsRoot()
 {
-    forest->Nodes()[siblingIndex].siblingIndex = childIndex;
-    forest->Nodes()[siblingIndex].parentIndex = parentIndex;
-    forest->Nodes()[childIndex].siblingIndex = siblingIndex;
-    forest->Nodes()[childIndex].parentIndex = parentIndex;
+    sibling->sibling = child;
+    sibling->parent = parent;
+    child->sibling = sibling;
+    child->parent = parent;
 
-    forest->RootIndices()[leftRoot_RootsIndex] = parentIndex;
-    forest->RootIndices().erase(forest->RootIndices().begin() + rightRoot_RootsIndex);
+    forest->Roots()[leftRoot_RootsIndex] = parent;
+    forest->Roots().erase(forest->Roots().begin() + rightRoot_RootsIndex);
 }
 
 void DeleteEdgeAction::doParentIsInner()
 {
-    Node& child = forest->Nodes()[childIndex];
-    Node& parent = forest->Nodes()[parentIndex];
-    Node& sibling = forest->Nodes()[siblingIndex];
-    Node& grandParent = forest->Nodes()[parent.parentIndex];
+    Node* grandParent = parent->parent;
 
-    if (grandParent.leftChildIndex == parentIndex)
+    // Delete necessary Node by linking sibling to grandParent on the correct side
+    if (grandParent->leftChild == parent)
     {
-        grandParent.leftChildIndex = siblingIndex;
+        grandParent->leftChild = sibling;
     }
     else
     {
-        grandParent.rightChildIndex = siblingIndex;
+        grandParent->rightChild = sibling;
     }
 
-    sibling.parentIndex = parent.parentIndex;
-    sibling.siblingIndex = parent.siblingIndex;
-    forest->Nodes()[parent.siblingIndex].siblingIndex = siblingIndex;
+    // Reassign adjacent nodes to adjust the tree structure
+    sibling->parent = grandParent;
+    sibling->sibling = parent->sibling;
+    parent->sibling->sibling = sibling;
 
-    const unsigned int subtreeTerminalsSize = child.subtreeTerminals.size();
-    int traverseUpIndex = child.parentIndex;
-    int rootIndex;
-    while (traverseUpIndex >= 0)
+    // Update subtreeTerminals up the tree, which now has child and it's subtrees removed
+    const unsigned int subtreeTerminalsSize = child->subtreeTerminals.size();
+    Node* traversedNode = parent;
+    Node* root;
+
+    // Traverse up to the root, updating subtreeTerminals and sorting children
+    while (traversedNode != nullptr)
     {
-        Node& traversedNode = forest->Nodes()[traverseUpIndex];
-        rootIndex = traverseUpIndex;
+        root = traversedNode;
+        // Update subtreeTerminals by removing child's terminals
         for (unsigned int i = 0; i < subtreeTerminalsSize; i++)
         {
-            traversedNode.subtreeTerminals[i] ^= child.subtreeTerminals[i];
+            // Use XOR to remove terminals
+            traversedNode->subtreeTerminals[i] ^= child->subtreeTerminals[i];
         }
-        traverseUpIndex = traversedNode.parentIndex;
+
+        traversedNode = traversedNode->parent;
+
         // sort children
-        const Node& l = forest->Nodes()[traversedNode.leftChildIndex];
-        const Node& r = forest->Nodes()[traversedNode.rightChildIndex];
+        const Node& l = *traversedNode->leftChild;
+        const Node& r = *traversedNode->rightChild;
+
         if (r.hasSmallestTerminal(l))
         {
-            std::swap(traversedNode.leftChildIndex, traversedNode.rightChildIndex);
+            std::swap(traversedNode->leftChild, traversedNode->rightChild);
         }
     }
 
-    auto leftRoot_Iterator = std::find(forest->RootIndices().begin(), forest->RootIndices().end(), rootIndex);
-    leftRoot_RootsIndex = std::distance(forest->RootIndices().begin(), leftRoot_Iterator);
-    auto rootNode = forest->Nodes()[*leftRoot_Iterator];
+    // Insert new root nodes into forest's rootIndices
 
-    if (rootNode.hasSmallestTerminal(child))
+    // Get indices of the old root
+    auto leftRoot_Iterator = std::ranges::find(forest->Roots(), root);
+    leftRoot_RootsIndex = std::distance(forest->Roots().begin(), leftRoot_Iterator);
+    Node* rootNode = *leftRoot_Iterator;
+
+    // If root has the smaller terminal, child goes after rootNode, else before
+    if (rootNode->hasSmallestTerminal(*child))
     {
-        auto rightRoot_Iterator = std::lower_bound(leftRoot_Iterator, forest->RootIndices().end(), childIndex,
-                                                   [&](const int& a, const int& b) {
-                                                       const Node& an = forest->Nodes()[a];
-                                                       const Node& bn = forest->Nodes()[b];
-                                                       return an.hasSmallestTerminal(bn);
-                                                   });
-        rightRoot_RootsIndex = std::distance(forest->RootIndices().begin(), rightRoot_Iterator);
-        forest->RootIndices().insert(rightRoot_Iterator, childIndex);
+        // Insert child after rootNode
+        auto rightRoot_Iterator =
+            std::lower_bound(leftRoot_Iterator, forest->Roots().end(), child,
+                             [&](const Node* a, const Node* b) { return a->hasSmallestTerminal(*b); });
+        rightRoot_RootsIndex = std::distance(forest->Roots().begin(), rightRoot_Iterator);
+        forest->Roots().insert(rightRoot_Iterator, child);
     }
     else
     {
-        *leftRoot_Iterator = childIndex;
-        auto rightRoot_Iterator = std::lower_bound(leftRoot_Iterator, forest->RootIndices().end(), rootIndex,
-                                                   [&](const int& a, const int& b) {
-                                                       const Node& an = forest->Nodes()[a];
-                                                       const Node& bn = forest->Nodes()[b];
-                                                       return an.hasSmallestTerminal(bn);
-                                                   });
-        rightRoot_RootsIndex = std::distance(forest->RootIndices().begin(), rightRoot_Iterator);
-        forest->RootIndices().insert(rightRoot_Iterator, rootIndex);
+        // Insert child before rootNode and therefor insert root after child
+        *leftRoot_Iterator = child;
+        auto rightRoot_Iterator =
+            std::lower_bound(leftRoot_Iterator, forest->Roots().end(), root,
+                             [&](const Node* a, const Node* b) { return a->hasSmallestTerminal(*b); });
+        rightRoot_RootsIndex = std::distance(forest->Roots().begin(), rightRoot_Iterator);
+        forest->Roots().insert(rightRoot_Iterator, root);
     }
 
-    child.siblingIndex = -1;
-    child.parentIndex = -1;
+    // Detach the parent and sibling from the old child, which has become a root
+    child->sibling = nullptr;
+    child->parent = nullptr;
 }
 
 void DeleteEdgeAction::undoParentIsInner()
 {
-    Node& child = forest->Nodes()[childIndex];
-    Node& parent = forest->Nodes()[parentIndex];
-    Node& sibling = forest->Nodes()[siblingIndex];
-    Node& grandParent = forest->Nodes()[parent.parentIndex];
+    Node* grandParent = parent->parent;
 
-    if (grandParent.leftChildIndex == siblingIndex)
+    // Reinsert the parent node between grandParent and sibling
+    if (grandParent->leftChild == sibling)
     {
-        grandParent.leftChildIndex = parentIndex;
+        grandParent->leftChild = parent;
     }
     else
     {
-        grandParent.rightChildIndex = parentIndex;
+        grandParent->rightChild = parent;
     }
 
-    sibling.parentIndex = parentIndex;
-    sibling.siblingIndex = childIndex;
-    child.siblingIndex = siblingIndex;
-    child.parentIndex = parentIndex;
-    forest->Nodes()[parent.siblingIndex].siblingIndex = parentIndex;
+    // Reassign adjacent nodes to restore the original tree structure
+    sibling->parent = parent;
+    sibling->sibling = child;
+    child->sibling = sibling;
+    child->parent = parent;
+    parent->sibling->sibling = parent;
 
-    const unsigned int subtreeTerminalsSize = child.subtreeTerminals.size();
-    int traverseUpIndex = child.parentIndex;
-    int rootIndex;
-    while (traverseUpIndex >= 0)
+    // Update subtreeTerminals up the tree, which now has child and it's subtrees added again
+    const unsigned int subtreeTerminalsSize = child->subtreeTerminals.size();
+    Node* traversedNode = parent;
+    Node* root;
+
+    // Traverse up to the root, updating subtreeTerminals and sorting children
+    while (traversedNode != nullptr)
     {
-        Node& traversedNode = forest->Nodes()[traverseUpIndex];
-        rootIndex = traverseUpIndex;
+        root = traversedNode;
+        // Update subtreeTerminals by removing child's terminals
         for (unsigned int i = 0; i < subtreeTerminalsSize; i++)
         {
-            traversedNode.subtreeTerminals[i] |= child.subtreeTerminals[i];
+            // Use OR to add terminals back
+            traversedNode->subtreeTerminals[i] |= child->subtreeTerminals[i];
         }
-        traverseUpIndex = traversedNode.parentIndex;
+        traversedNode = traversedNode->parent;
+
         // sort children
-        const Node& l = forest->Nodes()[traversedNode.leftChildIndex];
-        const Node& r = forest->Nodes()[traversedNode.rightChildIndex];
+        const Node& l = *traversedNode->leftChild;
+        const Node& r = *traversedNode->rightChild;
+
         if (r.hasSmallestTerminal(l))
         {
-            std::swap(traversedNode.leftChildIndex, traversedNode.rightChildIndex);
+            std::swap(traversedNode->leftChild, traversedNode->rightChild);
         }
     }
 
-    forest->RootIndices()[leftRoot_RootsIndex] = rootIndex;
-    forest->RootIndices().erase(forest->RootIndices().begin() + rightRoot_RootsIndex);
+    // Override the prior added child with the restored root and erase the other root
+    forest->Roots()[leftRoot_RootsIndex] = root;
+    forest->Roots().erase(forest->Roots().begin() + rightRoot_RootsIndex);
 }
