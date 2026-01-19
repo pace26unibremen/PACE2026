@@ -29,7 +29,7 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
     {
         if (instance->size() == 1)
         {
-            if (solution == nullptr or instance->at(0)->RootIndices().size() < solution->RootIndices().size())
+            if (solution == nullptr or instance->at(0)->Roots().size() < solution->Roots().size())
             {
                 std::stack<std::shared_ptr<AbstractRule>> temporalChangesCopy = std::stack<std::shared_ptr<AbstractRule>>();
                 while (not temporalChanges.empty())
