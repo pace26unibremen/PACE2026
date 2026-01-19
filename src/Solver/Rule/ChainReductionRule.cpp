@@ -9,6 +9,8 @@
 #include <list>
 #include <string>
 
+// TODO: Refactor node indices to node pointers when the rule is implemented
+
 solver::ChainReductionRule::ChainReductionRule()
 {
     //Copying of the Trees maybe irrelevant when doing this without const params. Not sure.
