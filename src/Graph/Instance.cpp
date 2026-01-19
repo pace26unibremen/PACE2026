@@ -25,7 +25,7 @@ std::shared_ptr<graph::Instance> graph::ReadInstance(const std::filesystem::path
     int numberOfForests = -1;
     int numberOfTerminals = -1;
 
-    static const std::regex regex_header = std::regex(R"(#p\s(\d+)\s(\d+))");
+    static const std::regex regex_header = std::regex(R"(#p\s(\d+)\s(\d+)\s*)");
     std::smatch match;
     std::string line;
     while(getline(file, line))
