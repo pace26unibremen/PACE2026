@@ -114,13 +114,17 @@ void graph::DotInstance(const std::shared_ptr<Instance>& instance, std::ostream&
             os << "    n_" << i << "_" << t.first << " [label = \"" << t.second << "\\n\\n\\n \"];\n";
             os << "    n_" << i << "_" << t.first << " -> inv_" << i << "[style = invis];\n";
         }
-        for (size_t n = 0; n < forest->Nodes().size(); ++n)
+        // FIXME: Besides the naming this doesn't seem to handle all edges correctly.
+        //  At least the resulting dot file looks wrong, while the debugging output seems correct.
+        for (auto node : forest->Nodes())
         {
-            const Node& node = forest->Nodes()[n];
-            if(node.leftChildIndex != -1)
-                os << "    n_" << i << "_" << n << " -> n_" << i << "_" << node.leftChildIndex << ";\n";
-            if(node.rightChildIndex != -1)
-                os << "    n_" << i << "_" << n << " -> n_" << i << "_" << node.rightChildIndex << ";\n";
+            //FIXME: After the refactor from indices to Node Pointer this will probably use the memory addresses
+            // instead of the prior indices. We need some kind of representation for all nodes here,
+            //  Labels shouldn't work, as not all nodes are terminals
+            if(node.leftChild != nullptr)
+                os << "    n_" << i << "_" << &node << " -> n_" << i << "_" << node.leftChild << ";\n";
+            if(node.rightChild != nullptr)
+                os << "    n_" << i << "_" << &node << " -> n_" << i << "_" << node.rightChild << ";\n";
         }
 
         os << "}\n\n";
