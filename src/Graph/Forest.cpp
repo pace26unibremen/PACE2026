@@ -194,6 +194,29 @@ bool Forest::isValid() const
     return valid;
 }
 
+bool Forest::hasSameStructure(Forest& first,Forest& other)
+{
+    if (first.nodes->size() != other.nodes->size()) return false;
+
+    if(first.nodes->front().leftChildIndex == other.nodes->front().leftChildIndex &&
+       first.nodes->front().rightChildIndex == other.nodes->front().rightChildIndex)
+        {
+            if (first.nodes->empty() != true && other.nodes->empty() != true)
+            {
+                first.nodes->erase(first.nodes->begin());
+                other.nodes->erase(other.nodes->begin());
+            }
+
+            if (hasSameStructure(first,other))
+            {
+                return true;
+            }
+        }
+    else return false;
+
+    return false;
+}
+
 bool Forest::isTrueSubtreeOf(const Forest& other) const
 {
     std::function<bool(Node*, Node*)> traverseUp = [&](const Node* thisNodePtr, const Node* otherNodePtr) -> bool {
