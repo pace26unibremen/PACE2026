@@ -10,133 +10,242 @@ using namespace graph;
 
 Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int numberOfTrees)
 {
-    auto terminalIndexToLabel = make_shared<unordered_map<int, unsigned int>>();
-    auto labelToTerminalIndex = make_shared<unordered_map<unsigned int, int>>();
+    auto terminalToLabel = make_shared<unordered_map<Node*, unsigned int>>();
+    auto labelToTerminal = make_shared<unordered_map<unsigned int, Node*>>();
     auto nodes = make_shared<vector<Node>>();
-    auto roots = make_shared<vector<int>>();
+    auto roots = make_shared<vector<Node*>>();
 
+    // IMPORTANT for pointer stability:
+    // emplace_back() can reallocate the vector; that would invalidate Node* pointers.
+    // If you can estimate an upper bound (like 2*n-1 for a binary tree),
     if(numberOfTerminals > 0)
     {
         nodes->reserve(2* numberOfTerminals - 1);
-        terminalIndexToLabel->reserve(2* numberOfTerminals -1);
-        labelToTerminalIndex->reserve(numberOfTerminals);
+        terminalToLabel->reserve(2* numberOfTerminals -1);
+        labelToTerminal->reserve(numberOfTerminals);
     }
 
-    stack<int> parentIndexStack;
-    int siblingIndex = -1;
-    int currentIndex = 0;
+    // Stack of "currently open" internal nodes:
+    // When we see '(' we create an internal node and push it.
+    // When we see ')' we close that subtree and pop it.
+    stack<Node*> parentStack;
+
+    // Tracks the previously created child under the current parent, so we can connect siblings correctly.
+    Node* sibling = nullptr;
 
     for(int treeCounter = 0; treeCounter < numberOfTrees; treeCounter++)
     {
-        roots->push_back(currentIndex);
         string line;
+
+        // First node we create for this tree will be its root
+        Node* currentRoot = nullptr;
+
         while (getline(stream, line))
         {
+            // Skip empty lines and comments
             if (line.empty())
                 continue;
             if (line[0] == '#')
                 continue;
+
             std::string label;
+
+            // Parse the Newick format line
             for (const char& c : line)
             {
                 switch (c)
                 {
+                    // End of tree
                     case ';':
+                    {
+                        // If there is a pending label right before ';', emit that leaf.
                         if (not label.empty())
                         {
+                            // Create new internal node
                             nodes->emplace_back();
-                            if (not parentIndexStack.empty())
+                            Node* terminal = &nodes->back();
+
+                            // Link to parent (if any)
+                            if (not parentStack.empty())
                             {
-                                nodes->at(currentIndex).parentIndex = parentIndexStack.top();
-                                if (siblingIndex == -1)
+                                Node* parent = parentStack.top();
+                                terminal->parent = parent;
+
+                                // Attach as left child if it's the first child,
+                                // otherwise as right child and set sibling links.
+                                if (sibling == nullptr)
                                 {
-                                    nodes->at(parentIndexStack.top()).leftChildIndex = currentIndex;
+                                    parent->leftChild = terminal;
                                 }
                                 else
                                 {
-                                    nodes->at(parentIndexStack.top()).rightChildIndex = currentIndex;
-                                    nodes->at(siblingIndex).siblingIndex = currentIndex;
-                                    nodes->at(currentIndex).siblingIndex = siblingIndex;
+                                    parent->rightChild = terminal;
+                                    sibling->sibling = terminal;
+                                    terminal->sibling = sibling;
                                 }
                             }
-                            siblingIndex = -1;
-                            terminalIndexToLabel->emplace(currentIndex, stoi(label));
-                            labelToTerminalIndex->emplace(stoi(label), currentIndex);
-                            label = "";
-                            currentIndex++;
+
+                            // If the root is not yet assigned, this is the first node -> root
+                            if (currentRoot == nullptr)
+                                currentRoot = terminal;
+
+                            sibling = nullptr;
+
+                            unsigned int lab = static_cast<unsigned int>(std::stoi(label));
+                            terminalToLabel->emplace(terminal, lab);
+                            labelToTerminal->emplace(lab, terminal);
+                            label.clear();
                         }
-                        goto endWhile;
+
+                        goto endTree;
+                    }
+
+                    // Separator between two children
                     case ',':
+                    {
+                        // If we have collected digits, that means we just finished a terminal label.
                         if (not label.empty())
                         {
+                            // Create new internal node
                             nodes->emplace_back();
-                            if (not parentIndexStack.empty())
+                            Node* terminal = &nodes->back();
+
+                            // Link to parent (if any)
+                            if (not parentStack.empty())
                             {
-                                nodes->at(currentIndex).parentIndex = parentIndexStack.top();
-                                if (siblingIndex == -1)
+                                Node* parent = parentStack.top();
+                                terminal->parent = parent;
+
+                                // Attach as left child if it's the first child,
+                                // otherwise as right child and set sibling links.
+                                if (sibling == nullptr)
                                 {
-                                    nodes->at(parentIndexStack.top()).leftChildIndex = currentIndex;
+                                    parent->leftChild = terminal;
                                 }
                                 else
                                 {
-                                    nodes->at(parentIndexStack.top()).rightChildIndex = currentIndex;
-                                    nodes->at(siblingIndex).siblingIndex = currentIndex;
-                                    nodes->at(currentIndex).siblingIndex = siblingIndex;
+                                    parent->rightChild = terminal;
+                                    sibling->sibling = terminal;
+                                    terminal->sibling = sibling;
                                 }
                             }
-                            siblingIndex = currentIndex;
-                            terminalIndexToLabel->emplace(currentIndex, stoi(label));
-                            labelToTerminalIndex->emplace(stoi(label), currentIndex);
-                            label = "";
-                            currentIndex++;
+
+                            // If the root is not yet assigned, this is the first node -> root
+                            if (currentRoot == nullptr)
+                                currentRoot = terminal;
+
+                            // This terminal becomes the "previous child" before the comma,
+                            // so the next child can link sibling pointers to it.
+                            sibling = terminal;
+
+                            unsigned int lab = static_cast<unsigned int>(std::stoi(label));
+                            terminalToLabel->emplace(terminal, lab);
+                            labelToTerminal->emplace(lab, terminal);
+                            label.clear();
+                        }
+                        else
+                        {
+                            // comma right after ')' etc. means "next child" but no terminal label to emit
+                            sibling = nullptr;
                         }
                         break;
+                    }
+
+                    // End subtree
                     case ')':
+                    {
+                        // If there is a pending terminal label before ')', emit that terminal first.
                         if (not label.empty())
                         {
+                            // Create new internal node
                             nodes->emplace_back();
-                            if (not parentIndexStack.empty())
+                            Node* terminal = &nodes->back();
+
+                            // Link to parent (if any)
+                            if (not parentStack.empty())
                             {
-                                nodes->at(currentIndex).parentIndex = parentIndexStack.top();
-                                if (siblingIndex == -1)
+                                Node* parent = parentStack.top();
+                                terminal->parent = parent;
+
+                                // Attach as left child if it's the first child,
+                                // otherwise as right child and set sibling links.
+                                if (sibling == nullptr)
                                 {
-                                    nodes->at(parentIndexStack.top()).leftChildIndex = currentIndex;
+                                    parent->leftChild = terminal;
                                 }
                                 else
                                 {
-                                    nodes->at(parentIndexStack.top()).rightChildIndex = currentIndex;
-                                    nodes->at(siblingIndex).siblingIndex = currentIndex;
-                                    nodes->at(currentIndex).siblingIndex = siblingIndex;
+                                    parent->rightChild = terminal;
+                                    sibling->sibling = terminal;
+                                    terminal->sibling = sibling;
                                 }
                             }
-                            terminalIndexToLabel->emplace(currentIndex, stoi(label));
-                            labelToTerminalIndex->emplace(stoi(label), currentIndex);
-                            label = "";
-                            currentIndex++;
+
+                            // If the root is not yet assigned, this is the first node -> root
+                            if (currentRoot == nullptr)
+                                currentRoot = terminal;
+
+                            unsigned int lab = static_cast<unsigned int>(std::stoi(label));
+                            terminalToLabel->emplace(terminal, lab);
+                            labelToTerminal->emplace(lab, terminal);
+                            label.clear();
                         }
-                        siblingIndex = parentIndexStack.top();
-                        parentIndexStack.pop();
-                        break;
-                    case '(':
-                        nodes->emplace_back();
-                        if (not parentIndexStack.empty())
+
+                        // Close the current parent subtree
+                        if (not parentStack.empty())
                         {
-                            nodes->at(currentIndex).parentIndex = parentIndexStack.top();
-                            if (siblingIndex == -1)
+                            // After closing, the "sibling base" becomes the node we closed,
+                            // matching the original index-based logic.
+                            sibling = parentStack.top();
+                            parentStack.pop();
+                        }
+                        else
+                        {
+                            sibling = nullptr;
+                        }
+                        break;
+                    }
+
+                    // Start subtree: create a new internal node.
+                    case '(':
+                    {
+                        // Create new internal node
+                        nodes->emplace_back();
+                        Node* terminal = &nodes->back();
+
+                        // Link to parent (if any)
+                        if (not parentStack.empty())
+                        {
+                            Node* parent = parentStack.top();
+                            terminal->parent = parent;
+
+                            // Attach as left child if it's the first child,
+                            // otherwise as right child and set sibling links.
+                            if (sibling == nullptr)
                             {
-                                nodes->at(parentIndexStack.top()).leftChildIndex = currentIndex;
+                                parent->leftChild = terminal;
                             }
                             else
                             {
-                                nodes->at(parentIndexStack.top()).rightChildIndex = currentIndex;
-                                nodes->at(siblingIndex).siblingIndex = currentIndex;
-                                nodes->at(currentIndex).siblingIndex = siblingIndex;
+                                parent->rightChild = terminal;
+                                sibling->sibling = terminal;
+                                terminal->sibling = sibling;
                             }
                         }
-                        siblingIndex = -1;
-                        parentIndexStack.push(currentIndex);
-                        currentIndex++;
+
+                        // If this is the first node we created for this tree,
+                        // treat it as the tree root candidate.
+                        if (currentRoot == nullptr)
+                            currentRoot = terminal;
+
+                        // We are entering a new child list under this new internal node,
+                        // so reset sibling tracking and push this node as current parent.
+                        sibling = nullptr;
+                        parentStack.push(terminal);
                         break;
+                    }
+
+                    // Collect digits for terminal labels
                     default:
                         if (not isdigit(c))
                         {
@@ -147,55 +256,62 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
                 }
             }
         }
-        endWhile:
+        endTree:
         {
             // nothing to do here, start reading next tree
+            // Prepare for the next tree
+
+            // Finalize this tree: store its root pointer.
+            if (currentRoot != nullptr)
+                roots->push_back(currentRoot);
+
+            // Reset stacks and pointers for the next tree
+            parentStack = stack<Node*>();
+            sibling = nullptr;
         };
     }
-    return {nodes, terminalIndexToLabel, labelToTerminalIndex, roots};
+    return {nodes, terminalToLabel, labelToTerminal, roots};
 }
 
-void ForestIO::WriteNewick(const Forest& tree, std::ostream& out)
+void ForestIO::WriteNewick(const Forest& tree, std::ostream& stream)
 {
-    const auto& nodes = tree.Nodes();
     const auto& terminals = tree.Terminals();
 
-    for(int current : tree.Roots())
+    for(Node* current : tree.Roots())
     {
         int down = true; // traversing tree structure downwards
         while (true)
         {
-            const Node& node = nodes[current];
             if (down)
             {
-                if (node.leftChildIndex != -1)
+                if (current->leftChild != nullptr)
                 {
-                    out << "(";
-                    current = node.leftChildIndex;
+                    stream << "(";
+                    current = current->leftChild;
                 }
                 else
                 {
-                    out << terminals.at(current);
+                    stream << terminals.at(current);
                     down = false;
                 }
             }
             else
             {
-                if (node.parentIndex == -1) break;
-                if (current == nodes[node.parentIndex].leftChildIndex)
+                if (current->parent == nullptr) break;
+                if (current == current->parent->leftChild)
                 {
-                    out << ",";
-                    current = node.siblingIndex;
+                    stream << ",";
+                    current = current->sibling;
                     down = true;
                 }
                 else
                 {
-                    out << ")";
-                    current = node.parentIndex;
+                    stream << ")";
+                    current = current->parent;
                 }
             }
         }
-        out << ";\n";
+        stream << ";\n";
     }
 }
 
@@ -223,13 +339,21 @@ void ForestIO::WriteDot(const Forest& tree, ostream& stream)
         stream << "n" << i.first << " [label = \"" << i.second << "\\n\\n\\n \"];\n";
         stream << "n" << i.first << " -> inv [style = invis];\n";
     }
-    for (size_t i = 0; i < tree.Nodes().size(); ++i)
+
+    // FIXME: Besides the naming this doesn't seem to handle all edges correctly.
+    //  At least the resulting dot file looks wrong, while the debugging output seems correct.
+    for (auto node : tree.Nodes())
     {
-        const Node& node = tree.Nodes()[i];
-        if(node.leftChildIndex != -1)
-            stream << "n" << i << " -> n" << node.leftChildIndex << ";\n";
-        if(node.rightChildIndex != -1)
-            stream << "n" << i << " -> n" << node.rightChildIndex << ";\n";
+        //FIXME: After the refactor from indices to Node Pointer this will probably use the memory addresses
+        // instead of the prior indices. We need some kind of representation for all nodes here,
+        // Labels shouldn't work, as not all nodes are terminals. In theory the memory address could be used though.
+        // (btw. why do we got almost the exact same function twice. Instance.ccp features a similar one)
+        // const Node& node = tree.Nodes()[i];
+        if(node.leftChild != nullptr)
+            stream << "n" << &node << " -> n" << node.leftChild << ";\n";
+        if(node.rightChild != nullptr)
+            stream << "n" << &node << " -> n" << node.rightChild << ";\n";
     }
+
     stream << "}" << endl;
 }
