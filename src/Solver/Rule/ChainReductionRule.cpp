@@ -74,81 +74,81 @@ solver::ChainReductionRule::ChainReductionRule()
 
 void ChainReductionExecution(std::shared_ptr<graph::Forest>& T1, std::shared_ptr<graph::Forest>& T2)
 {
-    int size;
-    if (T1->Nodes().size() > T2->Nodes().size())
-    {
-        size = T1->Nodes().size();
-    }
-    else
-    {
-        size = T2->Nodes().size();
-    }
-
-    //Fetch Nodes
-    std::vector<graph::Node> treeOneNodes = T1->Nodes();
-    std::vector<graph::Node> treeTwoNodes = T2->Nodes();
-
-    // //Fetch Terminals
-    // std::unordered_map<int,unsigned int> termIndexTreeOne = T1->Terminals();
-    // std::unordered_map<int,unsigned int> termIndexTreeTwo = T2->Terminals();
-
-    for (int currentNodeIndex = 0; currentNodeIndex < size; currentNodeIndex++)
-    {
-        //x2 für derzeitiges x1 in T1
-        int siblingNode = treeOneNodes.at(currentNodeIndex).siblingIndex;
-
-
-        //If x2 of x1 is equal across T1 and T2, and Parent of x2 equal in both trees, and parent of x1 equal in both
-        //then 3-common-chain
-        if (siblingNode == treeTwoNodes.at(currentNodeIndex).siblingIndex &&
-            treeOneNodes.at(siblingNode).parentIndex == treeTwoNodes.at(siblingNode).parentIndex &&
-            treeOneNodes.at(currentNodeIndex).parentIndex == treeTwoNodes.at(currentNodeIndex).parentIndex)
-        {
-            //x3
-            int parentNode = treeOneNodes.at(currentNodeIndex).parentIndex;
-
-
-            //3-common-chain
-            std::list commonChainNodes = {currentNodeIndex, siblingNode, parentNode};
-
-            bool isCurrentParentEqual = true;
-
-            //Suche alle weitere gleichen Vaterknoten.
-            while (isCurrentParentEqual)
-            {
-                //Parents of current parent node in chain
-                int parentNodeT1 = treeOneNodes.at(parentNode).parentIndex;
-                int parentNodeT2 = treeTwoNodes.at(parentNode).parentIndex;
-
-                if (parentNodeT1 == parentNodeT2)
-                {
-                    //Not a root check
-                    if (parentNodeT1 != -1 && parentNodeT2 != -1)
-                    {
-                        commonChainNodes.push_back(parentNodeT1);
-                        parentNode = treeOneNodes.at(parentNode).parentIndex;
-                    }
-                    else
-                    {
-                        isCurrentParentEqual = false;
-                    }
-                }
-                else
-                {
-
-
-                }
-            }  //Das Terminiert irgendwann, keine sorge.
-
-            //Falls n>=4...
-            if (commonChainNodes.size() >= 4)
-            {
-
-            }
-
-
-        }
-    }
+    // int size;
+    // if (T1->Nodes().size() > T2->Nodes().size())
+    // {
+    //     size = T1->Nodes().size();
+    // }
+    // else
+    // {
+    //     size = T2->Nodes().size();
+    // }
+    //
+    // //Fetch Nodes
+    // std::vector<graph::Node> treeOneNodes = T1->Nodes();
+    // std::vector<graph::Node> treeTwoNodes = T2->Nodes();
+    //
+    // // //Fetch Terminals
+    // // std::unordered_map<int,unsigned int> termIndexTreeOne = T1->Terminals();
+    // // std::unordered_map<int,unsigned int> termIndexTreeTwo = T2->Terminals();
+    //
+    // for (int currentNodeIndex = 0; currentNodeIndex < size; currentNodeIndex++)
+    // {
+    //     //x2 für derzeitiges x1 in T1
+    //     int siblingNode = treeOneNodes.at(currentNodeIndex).siblingIndex;
+    //
+    //
+    //     //If x2 of x1 is equal across T1 and T2, and Parent of x2 equal in both trees, and parent of x1 equal in both
+    //     //then 3-common-chain
+    //     if (siblingNode == treeTwoNodes.at(currentNodeIndex).siblingIndex &&
+    //         treeOneNodes.at(siblingNode).parentIndex == treeTwoNodes.at(siblingNode).parentIndex &&
+    //         treeOneNodes.at(currentNodeIndex).parentIndex == treeTwoNodes.at(currentNodeIndex).parentIndex)
+    //     {
+    //         //x3
+    //         int parentNode = treeOneNodes.at(currentNodeIndex).parentIndex;
+    //
+    //
+    //         //3-common-chain
+    //         std::list commonChainNodes = {currentNodeIndex, siblingNode, parentNode};
+    //
+    //         bool isCurrentParentEqual = true;
+    //
+    //         //Suche alle weitere gleichen Vaterknoten.
+    //         while (isCurrentParentEqual)
+    //         {
+    //             //Parents of current parent node in chain
+    //             int parentNodeT1 = treeOneNodes.at(parentNode).parentIndex;
+    //             int parentNodeT2 = treeTwoNodes.at(parentNode).parentIndex;
+    //
+    //             if (parentNodeT1 == parentNodeT2)
+    //             {
+    //                 //Not a root check
+    //                 if (parentNodeT1 != -1 && parentNodeT2 != -1)
+    //                 {
+    //                     commonChainNodes.push_back(parentNodeT1);
+    //                     parentNode = treeOneNodes.at(parentNode).parentIndex;
+    //                 }
+    //                 else
+    //                 {
+    //                     isCurrentParentEqual = false;
+    //                 }
+    //             }
+    //             else
+    //             {
+    //
+    //
+    //             }
+    //         }  //Das Terminiert irgendwann, keine sorge.
+    //
+    //         //Falls n>=4...
+    //         if (commonChainNodes.size() >= 4)
+    //         {
+    //
+    //         }
+    //
+    //
+    //     }
+    // }
 
     // int maximumSharedNodes = sizeOfSharedNodes(treeOneNodes,treeTwoNodes);
 
