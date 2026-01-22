@@ -16,8 +16,8 @@ void solver::DeleteEdgeAction::doAction()
 {
     sibling = child->sibling;
     parent = child->parent;
-    left = child->leftChild;
-    right = child->rightChild;
+    left = parent->leftChild;
+    right = parent->rightChild;
 
     const auto leftRootIterator = std::ranges::find(forest->Roots(), parent);
     leftRoot_RootsIndex = std::distance(forest->Roots().begin(), leftRootIterator);
@@ -129,8 +129,6 @@ void DeleteEdgeAction::doParentIsInner()
             traversedNode->subtreeTerminals[i] ^= child->subtreeTerminals[i];
         }
 
-        traversedNode = traversedNode->parent;
-
         // sort children
         const Node& l = *traversedNode->leftChild;
         const Node& r = *traversedNode->rightChild;
@@ -139,6 +137,8 @@ void DeleteEdgeAction::doParentIsInner()
         {
             std::swap(traversedNode->leftChild, traversedNode->rightChild);
         }
+
+        traversedNode = traversedNode->parent;
     }
 
     // Insert new root nodes into forest's rootIndices
@@ -210,7 +210,6 @@ void DeleteEdgeAction::undoParentIsInner()
             // Use OR to add terminals back
             traversedNode->subtreeTerminals[i] |= child->subtreeTerminals[i];
         }
-        traversedNode = traversedNode->parent;
 
         // sort children
         const Node& l = *traversedNode->leftChild;
@@ -220,6 +219,8 @@ void DeleteEdgeAction::undoParentIsInner()
         {
             std::swap(traversedNode->leftChild, traversedNode->rightChild);
         }
+
+        traversedNode = traversedNode->parent;
     }
 
     // Override the prior added child with the restored root and erase the other root

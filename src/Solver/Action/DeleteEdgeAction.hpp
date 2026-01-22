@@ -31,16 +31,16 @@ class DeleteEdgeAction : AbstractAction
     graph::Node* right;
 
     /// \brief index of rootIndex in the roots vector - with smallest terminals
-    unsigned int leftRoot_RootsIndex;
+    /// Initialized with 0 to avoid unexpected behavior.
+    unsigned int leftRoot_RootsIndex = 0;
 
     /// \brief Index of an entry in the `roots` vector of the forest.
     /// Points to one of the two affected roots (either the root of the new tree or the old tree).
     /// This is the index with the smaller order in the `roots` vector.
-    unsigned int rightRoot_RootsIndex;
+    /// Initialized with 0 to avoid unexpected behavior.
+    unsigned int rightRoot_RootsIndex = 0;
 
-    /// \brief Index of an entry in the rootIndices vector of forest.
-    /// Points to one of the two affected root indices (either the root of the new tree or the old tree).
-    /// This is the index with the higher order in the `rootIndices` vector.
+    /// \brief whether the parent is a root node
     bool parentIsRoot;
 
     /// \brief a copy of the parent node (can be removed when the new isValid method is active)
