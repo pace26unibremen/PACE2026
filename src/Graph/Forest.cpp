@@ -37,8 +37,7 @@ Forest::Forest(std::shared_ptr<std::vector<Node>> nodes,
         labelToTerminal(std::move(labelToTerminal)),
         roots(std::move(roots))
 {
-    // FIXME: The function seems to have an error or is calling another function that isn't working correctly.
-    // sortChildrenAndCollectTerminals();
+    sortChildrenAndCollectTerminals();
 
     #ifdef DEBUG_IMAGE_VIEW_GRAPH
     renderImage();
