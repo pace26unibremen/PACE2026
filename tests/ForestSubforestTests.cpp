@@ -12,7 +12,7 @@ TEST_CASE("Maximum common X-Forest of Trees", "[Forest, subforest]")
         auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree");
         auto t2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1_reordered.tree");
 
-        REQUIRE(t1.maximumCommonSubforestRoots((t2)) == t1.RootIndices());
+        REQUIRE(t1.maximumCommonSubforestRoots((t2)) == t1.Roots());
     }
 
     SECTION("Check for single vertex subtrees")
@@ -75,7 +75,7 @@ TEST_CASE("Identical Subforest", "[Forest, subforest]")
         auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree");
         auto t2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree");
 
-        REQUIRE(t1.hasIdenticalSubtree(t2, t1.RootIndices().at(0), t2.RootIndices().at(0)));
+        REQUIRE(t1.hasIdenticalSubtree(t2, t1.Roots().at(0), t2.Roots().at(0)));
     }
 
     SECTION("Check identical subforest - example 2")
@@ -85,7 +85,7 @@ TEST_CASE("Identical Subforest", "[Forest, subforest]")
 
         for (int i = 0; i<f1.Roots().size(); i++)
         {
-            REQUIRE(f1.hasIdenticalSubtree(f2, f1.RootIndices().at(i), f2.RootIndices().at(i)));
+            REQUIRE(f1.hasIdenticalSubtree(f2, f1.Roots().at(i), f2.Roots().at(i)));
         }
     }
 }

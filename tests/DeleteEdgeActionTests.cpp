@@ -20,9 +20,9 @@ TEST_CASE("Delete Edge Action - Simple Tree with two Terminals", "[Forest, Delet
         action.doAction();
 
         REQUIRE(f1.isValid());
-        REQUIRE(f1.RootIndices().size() == 2);
-        REQUIRE(f1.RootIndices()[0] == 1);
-        REQUIRE(f1.RootIndices()[1] == 2);
+        REQUIRE(f1.Roots().size() == 2);
+        REQUIRE(f1.Roots()[0] == 1);
+        REQUIRE(f1.Roots()[1] == 2);
         REQUIRE(f1 == f2);
 
         INFO("Undo Action");
@@ -45,9 +45,9 @@ TEST_CASE("Delete Edge Action - Simple Tree with two Terminals", "[Forest, Delet
         action.doAction();
 
         REQUIRE(f1.isValid());
-        REQUIRE(f1.RootIndices().size() == 2);
-        REQUIRE(f1.RootIndices()[0] == 1);
-        REQUIRE(f1.RootIndices()[1] == 2);
+        REQUIRE(f1.Roots().size() == 2);
+        REQUIRE(f1.Roots()[0] == 1);
+        REQUIRE(f1.Roots()[1] == 2);
         REQUIRE(f1 == f2);
 
         INFO("Undo Action");
@@ -71,9 +71,9 @@ TEST_CASE("Delete Edge Action - Tree with six Terminals", "[Forest, DeleteEdgeAc
         action.doAction();
 
         REQUIRE(f1.isValid());
-        REQUIRE(f1.RootIndices().size() == 2);
-        REQUIRE(f1.RootIndices()[0] == 0);
-        REQUIRE(f1.RootIndices()[1] == 5);
+        REQUIRE(f1.Roots().size() == 2);
+        REQUIRE(f1.Roots()[0] == 0);
+        REQUIRE(f1.Roots()[1] == 5);
 
         INFO("Undo Action");
         action.undoAction();
@@ -93,9 +93,9 @@ TEST_CASE("Delete Edge Action - Tree with six Terminals", "[Forest, DeleteEdgeAc
         action.doAction();
 
         REQUIRE(f1.isValid());
-        REQUIRE(f1.RootIndices().size() == 2);
-        REQUIRE(f1.RootIndices()[0] == 2);
-        REQUIRE(f1.RootIndices()[1] == 0);
+        REQUIRE(f1.Roots().size() == 2);
+        REQUIRE(f1.Roots()[0] == 2);
+        REQUIRE(f1.Roots()[1] == 0);
 
         INFO("Undo Action");
         action.undoAction();
@@ -120,11 +120,11 @@ TEST_CASE("Delete Edge Action - Tree with six Terminals", "[Forest, DeleteEdgeAc
         action3.doAction();
 
         REQUIRE(f1.isValid());
-        REQUIRE(f1.RootIndices().size() == 4);
-        REQUIRE(f1.RootIndices()[0] == 2);
-        REQUIRE(f1.RootIndices()[1] == 0);
-        REQUIRE(f1.RootIndices()[2] == 7);
-        REQUIRE(f1.RootIndices()[3] == 10);
+        REQUIRE(f1.Roots().size() == 4);
+        REQUIRE(f1.Roots()[0] == 2);
+        REQUIRE(f1.Roots()[1] == 0);
+        REQUIRE(f1.Roots()[2] == 7);
+        REQUIRE(f1.Roots()[3] == 10);
 
         auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_4_6_simple.tree",0,4);
         REQUIRE(f1 == f2);
@@ -147,18 +147,17 @@ TEST_CASE("Delete Edge Action - sibling & root order", "[Forest, DeleteEdgeActio
         INFO("Remove Edge to left root child");
 
         auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",0,3);
-
         auto action = DeleteEdgeAction(4, std::make_shared<Forest>(f1));
 
         INFO("Do Action");
         action.doAction();
 
         REQUIRE(f1.isValid());
-        REQUIRE(f1.RootIndices().size() == 4);
-        REQUIRE(f1.RootIndices()[0] == 0);
-        REQUIRE(f1.RootIndices()[1] == 4);
-        REQUIRE(f1.RootIndices()[2] == 18);
-        REQUIRE(f1.RootIndices()[3] == 11);
+        REQUIRE(f1.Roots().size() == 4);
+        REQUIRE(f1.Roots()[0] == 0);
+        REQUIRE(f1.Roots()[1] == 4);
+        REQUIRE(f1.Roots()[2] == 18);
+        REQUIRE(f1.Roots()[3] == 11);
 
         INFO("Undo Action");
         action.undoAction();
@@ -180,11 +179,11 @@ TEST_CASE("Delete Edge Action - sibling & root order", "[Forest, DeleteEdgeActio
         action.doAction();
 
         REQUIRE(f1.isValid());
-        REQUIRE(f1.RootIndices().size() == 4);
-        REQUIRE(f1.RootIndices()[0] == 0);
-        REQUIRE(f1.RootIndices()[1] == 4);
-        REQUIRE(f1.RootIndices()[2] == 18);
-        REQUIRE(f1.RootIndices()[3] == 11);
+        REQUIRE(f1.Roots().size() == 4);
+        REQUIRE(f1.Roots()[0] == 0);
+        REQUIRE(f1.Roots()[1] == 4);
+        REQUIRE(f1.Roots()[2] == 18);
+        REQUIRE(f1.Roots()[3] == 11);
 
         INFO("Undo Action");
         action.undoAction();
@@ -207,18 +206,18 @@ TEST_CASE("Delete Edge Action - sibling & root order", "[Forest, DeleteEdgeActio
         action.doAction();
 
         REQUIRE(f1.isValid());
-        REQUIRE(f1.RootIndices().size() == 4);
-        REQUIRE(f1.RootIndices()[0] == 0);
-        REQUIRE(f1.RootIndices()[1] == 6);
-        REQUIRE(f1.RootIndices()[2] == 18);
-        REQUIRE(f1.RootIndices()[3] == 3);
+        REQUIRE(f1.Roots().size() == 4);
+        REQUIRE(f1.Roots()[0] == 0);
+        REQUIRE(f1.Roots()[1] == 6);
+        REQUIRE(f1.Roots()[2] == 18);
+        REQUIRE(f1.Roots()[3] == 3);
 
         auto r = f1.Nodes()[3];
-        REQUIRE(r.leftChildIndex == 11);
-        REQUIRE(r.rightChildIndex == 4);
+        REQUIRE(r.leftChild == 11);
+        REQUIRE(r.rightChild == 4);
         auto p = f1.Nodes()[4];
-        REQUIRE(p.leftChildIndex == 8);
-        REQUIRE(p.rightChildIndex == 7);
+        REQUIRE(p.leftChild == 8);
+        REQUIRE(p.rightChild == 7);
 
 
         INFO("Undo Action");
@@ -241,15 +240,15 @@ TEST_CASE("Delete Edge Action - sibling & root order", "[Forest, DeleteEdgeActio
         action.doAction();
 
         REQUIRE(f1.isValid());
-        REQUIRE(f1.RootIndices().size() == 4);
-        REQUIRE(f1.RootIndices()[0] == 0);
-        REQUIRE(f1.RootIndices()[1] == 3);
-        REQUIRE(f1.RootIndices()[2] == 18);
-        REQUIRE(f1.RootIndices()[3] == 8);
+        REQUIRE(f1.Roots().size() == 4);
+        REQUIRE(f1.Roots()[0] == 0);
+        REQUIRE(f1.Roots()[1] == 3);
+        REQUIRE(f1.Roots()[2] == 18);
+        REQUIRE(f1.Roots()[3] == 8);
 
         auto r = f1.Nodes()[3];
-        REQUIRE(r.leftChildIndex == 5);
-        REQUIRE(r.rightChildIndex == 11);
+        REQUIRE(r.leftChild == 5);
+        REQUIRE(r.rightChild == 11);
 
         INFO("Undo Action");
         action.undoAction();

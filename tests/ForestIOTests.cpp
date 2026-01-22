@@ -16,7 +16,7 @@ TEST_CASE("Read and Write single Tree", "[Forest, ForestIO]")
             INFO("compare number of nodes");
             REQUIRE(t1.Nodes().size() == 3);
             INFO("Check number of trees");
-            REQUIRE(t1.RootIndices().size() == 1);
+            REQUIRE(t1.Roots().size() == 1);
             INFO("Check number of terminals");
             REQUIRE(t1.Terminals().size() == 2);
             INFO("check validity of tree structure");
@@ -51,7 +51,7 @@ TEST_CASE("Read and Write single Tree", "[Forest, ForestIO]")
             INFO("compare number of nodes");
             REQUIRE(t2.Nodes().size() == 11);
             INFO("Check number of trees");
-            REQUIRE(t2.RootIndices().size() == 1);
+            REQUIRE(t2.Roots().size() == 1);
             INFO("Check number of terminals");
             REQUIRE(t2.Terminals().size() == 6);
             INFO("check validity of tree structure");
@@ -86,7 +86,7 @@ TEST_CASE("Read and Write single Tree", "[Forest, ForestIO]")
             INFO("compare number of nodes");
             REQUIRE(t3.Nodes().size() == 11);
             INFO("Check number of trees");
-            REQUIRE(t3.RootIndices().size() == 1);
+            REQUIRE(t3.Roots().size() == 1);
             INFO("Check number of terminals");
             REQUIRE(t3.Terminals().size() == 6);
             INFO("check validity of tree structure");
@@ -124,7 +124,7 @@ TEST_CASE("Read and Write Forest", "[Forest, ForestIO]")
             INFO("compare number of nodes");
             REQUIRE(f1.Nodes().size() == 2);
             INFO("Check number of trees");
-            REQUIRE(f1.RootIndices().size() == 2);
+            REQUIRE(f1.Roots().size() == 2);
             INFO("Check number of terminals");
             REQUIRE(f1.Terminals().size() == 2);
             INFO("check validity of tree structure");
@@ -163,7 +163,7 @@ TEST_CASE("Read and Write Forest", "[Forest, ForestIO]")
             INFO("compare number of nodes");
             REQUIRE(f2.Nodes().size() == 8);
             INFO("Check number of trees");
-            REQUIRE(f2.RootIndices().size() == 4);
+            REQUIRE(f2.Roots().size() == 4);
             INFO("Check number of terminals");
             REQUIRE(f2.Terminals().size() == 6);
             INFO("check validity of tree structure");

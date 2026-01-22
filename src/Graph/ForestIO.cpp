@@ -21,7 +21,7 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
     if(numberOfTerminals > 0)
     {
         nodes->reserve(2* numberOfTerminals - 1);
-        terminalToLabel->reserve(2* numberOfTerminals -1);
+        terminalToLabel->reserve(numberOfTerminals);
         labelToTerminal->reserve(numberOfTerminals);
     }
 
