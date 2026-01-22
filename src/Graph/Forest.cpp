@@ -615,16 +615,37 @@ bool Forest::operator==(const Forest& other) const
         const Node& thisNode = *thisNodePtr;
         const Node& otherNode = *otherNodePtr;
 
-        bool thisIsTerminal = thisNode.leftChild == nullptr;
-        bool otherIsTerminal = otherNode.leftChild == nullptr;
+        auto random = rand();
+
+        bool thisIsTerminal = thisNode.leftChild == nullptr && thisNode.rightChild == nullptr;
+        bool otherIsTerminal = otherNode.leftChild == nullptr && otherNode.rightChild == nullptr;
 
         if (thisIsTerminal != otherIsTerminal)
         {
             return false;
         }
-        if (thisIsTerminal)
+        if (thisIsTerminal && otherIsTerminal)
         {
-            return terminalToLabel->at(thisNodePtr) == other.terminalToLabel->at(otherNodePtr);
+
+            if (not terminalToLabel->contains(thisNodePtr))
+            {
+                std::cerr << random << " : TerminalToLabel of the Forest does not contain " << thisNodePtr << "\n";
+                return false;
+            }
+
+            if (not other.terminalToLabel->contains(otherNodePtr))
+            {
+                std::cerr << random << " : TerminalToLabel of the other Forest does not contain " << otherNodePtr << "\n";
+                return false;
+            }
+
+            if (terminalToLabel->contains(thisNodePtr) and other.terminalToLabel->contains(otherNodePtr))
+            {
+                return  terminalToLabel->at(thisNodePtr) == other.terminalToLabel->at(otherNodePtr);
+            }
+
+            return false;
+
         }
         return compareSubtrees(thisNode.leftChild, otherNode.leftChild) and
                compareSubtrees(thisNode.rightChild, otherNode.rightChild);
