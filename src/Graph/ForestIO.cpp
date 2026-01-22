@@ -143,11 +143,6 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
                             labelToTerminal->emplace(lab, terminal);
                             label.clear();
                         }
-                        else
-                        {
-                            // comma right after ')' etc. means "next child" but no terminal label to emit
-                            sibling = nullptr;
-                        }
                         break;
                     }
 
