@@ -11,8 +11,8 @@ TEST_CASE("Delete Edge Action - Simple Tree with two Terminals", "[Forest, Delet
 {
     SECTION("Remove edge left child")
     {
-        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree",0,1);
-        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_2_2_singleVertexTrees.tree",0,2);
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree",2,1);
+        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_2_2_singleVertexTrees.tree",2,2);
 
         auto action = DeleteEdgeAction(1, std::make_shared<Forest>(f1));
 
@@ -28,7 +28,7 @@ TEST_CASE("Delete Edge Action - Simple Tree with two Terminals", "[Forest, Delet
         INFO("Undo Action");
         action.undoAction();
 
-        auto f1Copy = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree",0,1);
+        auto f1Copy = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree",2,1);
         REQUIRE(f1.isValid());
         REQUIRE(f1 == f1Copy);
 
@@ -36,8 +36,8 @@ TEST_CASE("Delete Edge Action - Simple Tree with two Terminals", "[Forest, Delet
 
     SECTION("Remove edge from right child")
     {
-        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree",0,1);
-        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_2_2_singleVertexTrees.tree",0,2);
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree",2,1);
+        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_2_2_singleVertexTrees.tree",2,2);
 
         auto action = DeleteEdgeAction(2, std::make_shared<Forest>(f1));
 
@@ -53,7 +53,7 @@ TEST_CASE("Delete Edge Action - Simple Tree with two Terminals", "[Forest, Delet
         INFO("Undo Action");
         action.undoAction();
 
-        auto f1Copy = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree",0,1);
+        auto f1Copy = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree",2,1);
         REQUIRE(f1.isValid());
         REQUIRE(f1 == f1Copy);
     }
@@ -63,7 +63,7 @@ TEST_CASE("Delete Edge Action - Tree with six Terminals", "[Forest, DeleteEdgeAc
 {
     SECTION("Remove inner edge 1")
     {
-        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree",0,1);
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree",6,1);
 
         auto action = DeleteEdgeAction(5, std::make_shared<Forest>(f1));
 
@@ -78,14 +78,14 @@ TEST_CASE("Delete Edge Action - Tree with six Terminals", "[Forest, DeleteEdgeAc
         INFO("Undo Action");
         action.undoAction();
 
-        auto f1Copy = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree",0,1);
+        auto f1Copy = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree",6,1);
         REQUIRE(f1.isValid());
         REQUIRE(f1 == f1Copy);
     }
 
     SECTION("Remove inner edge 2")
     {
-        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree",0,1);
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree",6,1);
 
         auto action = DeleteEdgeAction(2, std::make_shared<Forest>(f1));
 
@@ -100,14 +100,14 @@ TEST_CASE("Delete Edge Action - Tree with six Terminals", "[Forest, DeleteEdgeAc
         INFO("Undo Action");
         action.undoAction();
 
-        auto f1Copy = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree",0,1);
+        auto f1Copy = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree",6,1);
         REQUIRE(f1.isValid());
         REQUIRE(f1 == f1Copy);
     }
 
     SECTION("Remove several edges")
     {
-        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree",0,1);
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree",6,1);
 
         auto action1 = DeleteEdgeAction(2, std::make_shared<Forest>(f1));
         auto action2 = DeleteEdgeAction(7, std::make_shared<Forest>(f1));
@@ -126,7 +126,7 @@ TEST_CASE("Delete Edge Action - Tree with six Terminals", "[Forest, DeleteEdgeAc
         REQUIRE(f1.Roots()[2] == 7);
         REQUIRE(f1.Roots()[3] == 10);
 
-        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_4_6_simple.tree",0,4);
+        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_4_6_simple.tree",6,4);
         REQUIRE(f1 == f2);
 
         INFO("Undo Actions");
@@ -134,7 +134,7 @@ TEST_CASE("Delete Edge Action - Tree with six Terminals", "[Forest, DeleteEdgeAc
         action2.undoAction();
         action1.undoAction();
 
-        auto f1Copy = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree",0,1);
+        auto f1Copy = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree",6,1);
         REQUIRE(f1.isValid());
         REQUIRE(f1 == f1Copy);
     }
@@ -146,7 +146,7 @@ TEST_CASE("Delete Edge Action - sibling & root order", "[Forest, DeleteEdgeActio
     {
         INFO("Remove Edge to left root child");
 
-        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",0,3);
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",12,3);
         auto action = DeleteEdgeAction(4, std::make_shared<Forest>(f1));
 
         INFO("Do Action");
@@ -162,7 +162,7 @@ TEST_CASE("Delete Edge Action - sibling & root order", "[Forest, DeleteEdgeActio
         INFO("Undo Action");
         action.undoAction();
 
-        auto f1Copy = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",0,3);
+        auto f1Copy = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",12,3);
         REQUIRE(f1.isValid());
         REQUIRE(f1 == f1Copy);
     }
@@ -171,7 +171,7 @@ TEST_CASE("Delete Edge Action - sibling & root order", "[Forest, DeleteEdgeActio
     {
         INFO("Remove Edge to right root child");
 
-        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",0,3);
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",12,3);
 
         auto action = DeleteEdgeAction(11, std::make_shared<Forest>(f1));
 
@@ -188,7 +188,7 @@ TEST_CASE("Delete Edge Action - sibling & root order", "[Forest, DeleteEdgeActio
         INFO("Undo Action");
         action.undoAction();
 
-        auto f1Copy = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",0,3);
+        auto f1Copy = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",12,3);
         REQUIRE(f1.isValid());
         REQUIRE(f1 == f1Copy);
     }
@@ -198,7 +198,7 @@ TEST_CASE("Delete Edge Action - sibling & root order", "[Forest, DeleteEdgeActio
     {
         INFO("Remove Edge to inner node with smallest terminal");
 
-        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",0,3);
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",12,3);
 
         auto action = DeleteEdgeAction(6, std::make_shared<Forest>(f1));
 
@@ -223,7 +223,7 @@ TEST_CASE("Delete Edge Action - sibling & root order", "[Forest, DeleteEdgeActio
         INFO("Undo Action");
         action.undoAction();
 
-        auto f1Copy = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",0,3);
+        auto f1Copy = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",12,3);
         REQUIRE(f1.isValid());
         REQUIRE(f1 == f1Copy);
     }
@@ -232,7 +232,7 @@ TEST_CASE("Delete Edge Action - sibling & root order", "[Forest, DeleteEdgeActio
     {
         INFO("Remove Edge to inner node with high terminals");
 
-        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",0,3);
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",12,3);
 
         auto action = DeleteEdgeAction(8, std::make_shared<Forest>(f1));
 
@@ -253,7 +253,7 @@ TEST_CASE("Delete Edge Action - sibling & root order", "[Forest, DeleteEdgeActio
         INFO("Undo Action");
         action.undoAction();
 
-        auto f1Copy = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",0,3);
+        auto f1Copy = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",12,3);
         REQUIRE(f1.isValid());
         REQUIRE(f1 == f1Copy);
     }

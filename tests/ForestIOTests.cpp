@@ -118,7 +118,7 @@ TEST_CASE("Read and Write Forest", "[Forest, ForestIO]")
 {
     SECTION("Example 1: Forest with 2 Trees and 2 Terminals")
     {
-        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_2_2_singleVertexTrees.tree",0,2);
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_2_2_singleVertexTrees.tree",2,2);
         SECTION("Read")
         {
             INFO("compare number of nodes");
@@ -157,7 +157,7 @@ TEST_CASE("Read and Write Forest", "[Forest, ForestIO]")
 
     SECTION("Example 2: Forest with 4 Trees and 6 Terminals")
     {
-        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_4_6_simple.tree",0,4);
+        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_4_6_simple.tree",4,4);
         SECTION("Read")
         {
             INFO("compare number of nodes");
