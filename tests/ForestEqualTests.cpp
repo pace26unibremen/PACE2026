@@ -9,8 +9,8 @@ TEST_CASE("Equality of Trees", "[Forest, equal, ==]")
 {
     SECTION("Check for equality of two simple trees - 'equal instance'")
     {
-        auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree");
-        auto t2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple_reordered.tree");
+        auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree", 2, 1);
+        auto t2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple_reordered.tree", 2, 1);
 
         REQUIRE(t1 == t2);
         REQUIRE(t2 == t1);
@@ -19,7 +19,7 @@ TEST_CASE("Equality of Trees", "[Forest, equal, ==]")
 
     SECTION("Check for equality of two simple trees - 'equal instance'")
     {
-        auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree");
+        auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree", 2,1);
         auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_2_2_singleVertexTrees.tree", 2, 2);
 
         REQUIRE_FALSE(t1 == f2);
@@ -28,8 +28,8 @@ TEST_CASE("Equality of Trees", "[Forest, equal, ==]")
 
     SECTION("Check for equality of two trees - 'equal instance'")
     {
-        auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree");
-        auto t2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1_reordered.tree");
+        auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree", 6, 1);
+        auto t2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1_reordered.tree", 6, 1);
 
         REQUIRE(t1 == t2);
         REQUIRE(t2 == t1);
@@ -38,8 +38,8 @@ TEST_CASE("Equality of Trees", "[Forest, equal, ==]")
 
     SECTION("Check for equality of two trees - 'equal instance'")
     {
-        auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree");
-        auto t2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example2.tree");
+        auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree", 6, 1);
+        auto t2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example2.tree", 6, 1);
 
         REQUIRE_FALSE(t1 == t2);
         REQUIRE_FALSE(t2 == t1);
