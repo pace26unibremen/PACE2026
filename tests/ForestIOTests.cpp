@@ -10,7 +10,7 @@ TEST_CASE("Read and Write single Tree", "[Forest, ForestIO]")
 {
     SECTION("Example 1: Tree with 2 Terminals")
     {
-        auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree");
+        auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree", 1, 2);
         SECTION("Read")
         {
             INFO("compare number of nodes");
@@ -45,7 +45,7 @@ TEST_CASE("Read and Write single Tree", "[Forest, ForestIO]")
 
     SECTION("Example 2: Tree with 6 Terminals")
     {
-        auto t2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree");
+        auto t2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree", 6, 1);
         SECTION("Read")
         {
             INFO("compare number of nodes");
@@ -80,7 +80,7 @@ TEST_CASE("Read and Write single Tree", "[Forest, ForestIO]")
 
     SECTION("Example 3: Tree with 6 Terminals")
     {
-        auto t3 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example2.tree");
+        auto t3 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example2.tree", 6, 1);
         SECTION("Read")
         {
             INFO("compare number of nodes");
