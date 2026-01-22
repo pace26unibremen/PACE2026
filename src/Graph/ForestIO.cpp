@@ -335,15 +335,10 @@ void ForestIO::WriteDot(const Forest& tree, ostream& stream)
         stream << "n" << i.first << " -> inv [style = invis];\n";
     }
 
-    // FIXME: Besides the naming this doesn't seem to handle all edges correctly.
-    //  At least the resulting dot file looks wrong, while the debugging output seems correct.
-    for (auto node : tree.Nodes())
+    // TODO: Notice: This uses the address of the Node. This will still work, but produces dot-files that are not.
+    //  Also the addresses will differ between runs, therefor the same tree will have different dot files in every run.
+    for (auto& node : tree.Nodes())
     {
-        //FIXME: After the refactor from indices to Node Pointer this will probably use the memory addresses
-        // instead of the prior indices. We need some kind of representation for all nodes here,
-        // Labels shouldn't work, as not all nodes are terminals. In theory the memory address could be used though.
-        // (btw. why do we got almost the exact same function twice. Instance.ccp features a similar one)
-        // const Node& node = tree.Nodes()[i];
         if(node.leftChild != nullptr)
             stream << "n" << &node << " -> n" << node.leftChild << ";\n";
         if(node.rightChild != nullptr)

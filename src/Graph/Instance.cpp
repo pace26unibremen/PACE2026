@@ -114,13 +114,11 @@ void graph::DotInstance(const std::shared_ptr<Instance>& instance, std::ostream&
             os << "    n_" << i << "_" << t.first << " [label = \"" << t.second << "\\n\\n\\n \"];\n";
             os << "    n_" << i << "_" << t.first << " -> inv_" << i << "[style = invis];\n";
         }
-        // FIXME: Besides the naming this doesn't seem to handle all edges correctly.
-        //  At least the resulting dot file looks wrong, while the debugging output seems correct.
-        for (auto node : forest->Nodes())
+
+        // TODO: Notice: This uses the address of the Node. This will still work, but produces dot-files that are not.
+        //  Also the addresses will differ between runs, therefor the same tree will have different dot files in every run.
+        for (auto& node : forest->Nodes())
         {
-            //FIXME: After the refactor from indices to Node Pointer this will probably use the memory addresses
-            // instead of the prior indices. We need some kind of representation for all nodes here,
-            //  Labels shouldn't work, as not all nodes are terminals
             if(node.leftChild != nullptr)
                 os << "    n_" << i << "_" << &node << " -> n_" << i << "_" << node.leftChild << ";\n";
             if(node.rightChild != nullptr)
