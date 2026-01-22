@@ -54,10 +54,10 @@ class Forest
 
     /// \brief Constructor. Loads forest from a file in newick format.
     /// \param path to file
-    /// \param numberOfTerminals number of leafs (for optimized memory allocation only). \c 0 if unknown.
-    /// \param numberOfTrees number of trees. \c 1 is default.
+    /// \param numberOfTerminals number of leafs.
+    /// \param numberOfTrees number of trees.
     [[maybe_unused]]
-    explicit Forest(const std::filesystem::path& path, int numberOfTerminals = 0, int numberOfTrees = 1);
+    explicit Forest(const std::filesystem::path& path, int numberOfTerminals, int numberOfTrees);
 
     // ------------------------------------------------------------- //
     // ---- persistence -------------------------------------------- //
