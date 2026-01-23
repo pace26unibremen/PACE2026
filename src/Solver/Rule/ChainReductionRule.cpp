@@ -72,17 +72,6 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
     {   //Determine structure in T1
         int parentIndexT1 = treeOneNodes.at(terminalT1.first).parentIndex;
 
-        // //Case 1 structure check
-        // bool case1IsCurrentlyOnLeftSideT1;
-        // if (treeOneNodes.at(parentIndexT1).leftChildIndex == terminalT1.first)
-        // {
-        //     case1IsCurrentlyOnLeftSideT1 = true;
-        // }
-        // else
-        // {
-        //     case1IsCurrentlyOnLeftSideT1 = false;
-        // }
-
         //Determine if sibling exists
         int siblingIndexT1 = treeOneNodes.at(terminalT1.first).siblingIndex;
 
@@ -109,18 +98,10 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
         {
             //Determine Structure
             int parentIndexT2 = treeTwoNodes.at(terminalT2.first).parentIndex;
-            // bool isCurrentOnLeftSideT2;
-            // if (treeTwoNodes.at(parentIndexT2).leftChildIndex == terminalT2.first)
-            // {
-            //     isCurrentOnLeftSideT2 = true;
-            // }
-            // else
-            // {
-            //     isCurrentOnLeftSideT2 = false;
-            // }
             int siblingIndexT2 = treeTwoNodes.at(terminalT2.first).siblingIndex;
 
             // -> x1,x2,x3 for case 1 known for T2
+
             //Determine x3 for case 2 for chain def in T2
             int parentOfParentIndexT2 = treeTwoNodes.at(parentIndexT2).parentIndex;
             int siblingOfParentIndexT2 = treeTwoNodes.at(parentIndexT2).siblingIndex;
@@ -136,6 +117,7 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
                 case2SiblingIsOnLeftSideT2= false;
             }
 
+
             //Case 1: if the parent of x1 coincides with the parent of x2
                 if (siblingIndexT2 != -1 && siblingIndexT1 != -1 &&
                     (treeOneNodes.at(siblingIndexT1).parentIndex == parentIndexT1)
@@ -145,17 +127,14 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
                     std::vector<std::vector<int>> chainT1T2 = {{terminalT1.first,terminalT2.first},
                         {siblingIndexT1,siblingIndexT2},{parentIndexT1,parentIndexT2}};
 
-
+                    //Chain collection bool
                     bool case1check = true;
 
                     int case1T1Parent = treeOneNodes.at(chainT1T2.back().front()).parentIndex;
                     int case1T2Parent = treeTwoNodes.at(chainT1T2.back().back()).parentIndex;
 
                     int case1T1Sibling;
-
-
                     int case1T2Sibling;
-
 
                     //T1 structure check
                     if (treeOneNodes.at(case1T1Parent).leftChildIndex == chainT1T2.back().front())
@@ -167,13 +146,13 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
                         case1T1Sibling = treeOneNodes.at(case1T1Parent).leftChildIndex;
                     }
                     //T2 structure c heck
-                    if (treeOneNodes.at(case1T2Parent).leftChildIndex == chainT1T2.back().back())
+                    if (treeTwoNodes.at(case1T2Parent).leftChildIndex == chainT1T2.back().back())
                     {
-                        case1T2Sibling = treeOneNodes.at(case1T1Parent).rightChildIndex;
+                        case1T2Sibling = treeTwoNodes.at(case1T1Parent).rightChildIndex;
                     }
                     else
                     {
-                        case1T2Sibling = treeOneNodes.at(case1T2Parent).leftChildIndex;
+                        case1T2Sibling = treeTwoNodes.at(case1T2Parent).leftChildIndex;
                     }
 
                     //Determine x4,... of chain
@@ -211,15 +190,91 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
                         chainList.push_back(chainT1T2);
                     }
                 }
-            //Case 2: or the parent of x2 is the parent of the parent of x1,
-                else if (case2SiblingIsOnLeftSideT1 == case2SiblingIsOnLeftSideT2 )
+            //Case 2: or the parent of x2 is the parent of the parent of x1, i.e parent index of sibling is
+            //the same as the index for the parent of the parent on both trees.
+                else if (case2SiblingIsOnLeftSideT1 == case2SiblingIsOnLeftSideT2 && treeOneNodes.at(siblingIndexT1).
+                    parentIndex == parentOfParentIndexT1 && treeTwoNodes.at(siblingIndexT2).parentIndex ==
+                    parentOfParentIndexT2)
                 {
+                    //Chain for both trees, x1-x3
+                    //Technically parent of x1 is ignored but, well, it gets carried in-between x1 and x3 so w/e lol
+                    std::vector<std::vector<int>> chainT1T2 = {{terminalT1.first,terminalT2.first},
+                        {siblingOfParentIndexT1,siblingOfParentIndexT2},{parentOfParentIndexT1,parentOfParentIndexT2}};
+
+                    int case2T1Parent = treeOneNodes.at(chainT1T2.back().front()).parentIndex;
+                    int case2T2Parent = treeTwoNodes.at(chainT1T2.back().back()).parentIndex;
+
+                    int case2T1Sibling;
+                    int case2T2Sibling;
+
+                    //T1 structure check
+                    if (treeOneNodes.at(case2T1Parent).leftChildIndex == chainT1T2.back().front())
+                    {
+                        case2T1Sibling = treeOneNodes.at(case2T1Parent).rightChildIndex;
+                    }
+                    else
+                    {
+                        case2T1Sibling = treeOneNodes.at(case2T1Parent).leftChildIndex;
+                    }
+                    //T2 structure c heck
+                    if (treeTwoNodes.at(case2T2Parent).leftChildIndex == chainT1T2.back().back())
+                    {
+                        case2T2Sibling = treeTwoNodes.at(case2T1Parent).rightChildIndex;
+                    }
+                    else
+                    {
+                        case2T2Sibling = treeTwoNodes.at(case2T2Parent).leftChildIndex;
+                    }
+
+                    //Chain collection bool
+                    bool case1check = true;
+
+                    //Determine x4,... of chain
+                    while (case1check)
+                    {   //Siblings exist
+                        if (case2T1Sibling != -1 && case2T2Sibling != -1 && case2T1Parent != -1 && case2T2Parent != -1)
+                        {
+                            chainT1T2.push_back({case2T1Parent,case2T2Parent});
+                            case2T1Parent = treeOneNodes.at(chainT1T2.back().front()).parentIndex;
+                            case2T2Parent = treeTwoNodes.at(chainT1T2.back().back()).parentIndex;
+                            //T1 structure check
+                            if (treeOneNodes.at(case2T1Parent).leftChildIndex == chainT1T2.back().front())
+                            {
+                                case2T1Sibling = treeOneNodes.at(case2T1Parent).rightChildIndex;
+                            }
+                            else
+                            {
+                                case2T1Sibling = treeOneNodes.at(case2T1Parent).leftChildIndex;
+                            }
+                            //T2 structure c heck
+                            if (treeOneNodes.at(case2T2Parent).leftChildIndex == chainT1T2.back().back())
+                            {
+                                case2T2Sibling = treeOneNodes.at(case2T1Parent).rightChildIndex;
+                            }
+                            else
+                            {
+                                case2T2Sibling = treeOneNodes.at(case2T2Parent).leftChildIndex;
+                            }
+                        }
+                        else case1check = false;
+                    }
+
+                    if (chainT1T2.size() >= 4)
+                    {
+                        chainList.push_back(chainT1T2);
+                    }
+                }
+
+
+
 
                 }
         }
     }
     return std::dynamic_pointer_cast<AbstractRule>(
         std::make_shared<ChainReductionRule>(T1,T2, chainList));
+
+
     // //For every node that could be shared between both...
     // for (int currentNodeIndex = 0; currentNodeIndex < size; currentNodeIndex++)
     // {
