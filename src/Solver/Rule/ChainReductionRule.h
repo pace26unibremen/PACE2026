@@ -7,6 +7,7 @@
 #include "AbstractRule.hpp"
 #include "../Action/DeleteEdgeAction.hpp"
 #include <vector>
+#include <stack>
 
 namespace solver
 {
@@ -16,6 +17,7 @@ namespace solver
         std::shared_ptr<graph::Forest> T1;
         std::shared_ptr<graph::Forest> T2;
         std::vector<std::vector<std::vector<int>>> chains;
+        std::stack<AbstractAction> changes;
 
     public:
         ChainReductionRule(const std::shared_ptr<graph::Forest>& T1, const std::shared_ptr<graph::Forest>& T2,
