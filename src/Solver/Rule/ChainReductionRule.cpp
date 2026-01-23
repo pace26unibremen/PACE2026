@@ -17,7 +17,7 @@ solver::ChainReductionRule::ChainReductionRule(
     this->T1 = T1;
     this->T2 = T2;
     this->chains = chains;
-    std::stack<AbstractRule> changes = std::stack<AbstractRule>();
+    changes = std::stack<AbstractAction>();
 }
 
 //Chain def:Let T be a rooted phylogenetic X-tree, and let C =
@@ -48,6 +48,18 @@ void solver::ChainReductionRule::apply()
 
 void solver::ChainReductionRule::unapply()
 {
+    if (not this->isApplied)
+    {
+        throw std::invalid_argument("EqualForestsRule : unapply : rule is not applied");
+    }
+    isApplied = false;
+
+    while (not changes.empty())
+    {
+        changes.top().undoAction();
+        changes.pop();
+    }
+
 
 }
 
@@ -263,10 +275,6 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
                     {
                         chainList.push_back(chainT1T2);
                     }
-
-
-
-
 
                 }
         }
