@@ -263,7 +263,7 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
                     {
                         chainList.push_back(chainT1T2);
                     }
-                }
+
 
 
 
