@@ -208,27 +208,27 @@ bool Forest::isValid() const
     std::unordered_map<Node*, unsigned int> totalLeafs;
     unsigned int lastSmallestTerminal = 0;
     // Check all reachable Roots
-    for (Node* node : *roots)
+    for (Node* rootPtr : *roots)
     {
         std::unordered_map<Node*, unsigned int> rootLeafs;
-        const Node& root = *node;
+        const Node& rootNode = *rootPtr;
         unsigned int smallestTerminal = -1; // -> 4294967295
         set<Node*> pointers;
-        if (root.parent != nullptr)
+        if (rootNode.parent != nullptr)
         {
             std::clog << "Forest: isValid: Root has a parent:\n"
-                         "   parent (" << root.parent << ") -> Root (" << node <<") \n"
+                         "   parent (" << rootNode.parent << ") -> Root (" << rootPtr <<") \n"
                          "   Let's get to the root of the issue."<< endl;
             valid = false;
         }
         // Check children (recursive)
-        valid &= checkTriple(node, rootLeafs, pointers, smallestTerminal);
+        valid &= checkTriple(rootPtr, rootLeafs, pointers, smallestTerminal);
         totalLeafs.merge(rootLeafs);
         // Check root order
         if (smallestTerminal < lastSmallestTerminal)
         {
             std::clog << "Forest: isValid: root order disrupted:\n"
-                         "   root (" << node << ") -> smallestTerminal (" << smallestTerminal <<") \n"
+                         "   root (" << rootPtr << ") -> smallestTerminal (" << smallestTerminal <<") \n"
                          "   previous smallest leaf (" << lastSmallestTerminal <<") \n"
                          "   Order in the court!"<< endl;
             valid = false;
@@ -287,7 +287,7 @@ bool Forest::isTrueSubtreeOf(const Forest& other) const
     return true;
 }
 
-bool Forest::hasIdenticalSubtree(const Forest& other, Node* thisNode, Node* otherNode)
+bool Forest::hasIdenticalSubtree(Node* thisNode, Node* otherNode)
 {
     std::stack<Node*> thisVisitingStack;
     thisVisitingStack.push(thisNode);
@@ -334,7 +334,7 @@ bool Forest::hasIdenticalSubtree(const Forest& other, Node* thisNode, Node* othe
 }
 
 bool Forest::checkTriple(Node* parentPtr, std::unordered_map<Node*, unsigned int>& subtreeLeafs, set<Node*>& pointers, unsigned int& smallestTerminal) const
-{ //TODO: checkTriple
+{
     bool tripleValid = true;
     const Node& node = *parentPtr;
     // Check index
@@ -384,10 +384,10 @@ bool Forest::checkTriple(Node* parentPtr, std::unordered_map<Node*, unsigned int
                          "   Parent needs to get active and produce another child."<< endl;
             tripleValid = false;
         }
-        const Node& fstChild = *node.leftChild;
-        const Node& sndChild = *node.rightChild;
+        const Node& fstChildNode = *node.leftChild;
+        const Node& sndChildNode = *node.rightChild;
         // Order
-        if (!fstChild.hasSmallestTerminal(sndChild))
+        if (!fstChildNode.hasSmallestTerminal(sndChildNode))
         {
             std::clog << "Forest: isValid: unordered Tree:\n"
                          "   parent (" << parentPtr << ") -> (" << node.leftChild <<") , (" << node.rightChild <<") \n"
@@ -396,28 +396,28 @@ bool Forest::checkTriple(Node* parentPtr, std::unordered_map<Node*, unsigned int
         }
         // First child
         // Check parent
-        if (fstChild.parent != parentPtr)
+        if (fstChildNode.parent != parentPtr)
         {
             std::clog << "Forest: isValid: checkTriple: first child forgot his parent:\n"
                          "   parent ("
                       << parentPtr << ") -> (" << node.leftChild
                       << ") child\n"
                          "   parent ("
-                      << fstChild.parent << ") <- (" << node.leftChild
+                      << fstChildNode.parent << ") <- (" << node.leftChild
                       << ") child\n"
                          "   Why bother raising them if they forget about you?"
                       << endl;
             tripleValid = false;
         }
         // Check sibling
-        if (fstChild.sibling != node.rightChild)
+        if (fstChildNode.sibling != node.rightChild)
         {
             std::clog << "Forest: isValid: checkTriple: first child forgot his sibling:\n"
                          "   parent ("
                       << parentPtr << ") -> (" << node.leftChild << " and " << node.rightChild
                       << ") children\n"
                          "   first child ("
-                      << node.leftChild << ") -> (" << fstChild.sibling
+                      << node.leftChild << ") -> (" << fstChildNode.sibling
                       << ") sibling"
                          "   Maybe they had a fight?"
                       << endl;
@@ -425,28 +425,28 @@ bool Forest::checkTriple(Node* parentPtr, std::unordered_map<Node*, unsigned int
         }
         // Second child
         // Check parent
-        if (sndChild.parent != parentPtr)
+        if (sndChildNode.parent != parentPtr)
         {
             std::clog << "Forest: isValid: checkTriple: second child forgot his parent:\n"
                          "   parent ("
                       << parentPtr << ") -> (" << node.rightChild
                       << ") child\n"
                          "   parent ("
-                      << sndChild.parent << ") <- (" << node.rightChild
+                      << sndChildNode.parent << ") <- (" << node.rightChild
                       << ") child\n"
                          "   Why bother raising them if they forget about you?"
                       << endl;
             tripleValid = false;
         }
         // Check sibling
-        if (sndChild.sibling != node.leftChild)
+        if (sndChildNode.sibling != node.leftChild)
         {
             std::clog << "Forest: isValid: checkTriple: second child forgot his sibling:\n"
                          "   parent ("
                       << parentPtr << ") -> (" << node.leftChild << " and " << node.rightChild
                       << ") children\n"
                          "   first child ("
-                      << node.rightChild << ") -> (" << sndChild.sibling
+                      << node.rightChild << ") -> (" << sndChildNode.sibling
                       << ") sibling"
                          "   Maybe they had a fight?"
                       << endl;
@@ -519,27 +519,27 @@ void Forest::sortChildrenAndCollectTerminals()
     // the number of elements in the `subtreeTerminals` vector of each node
     const unsigned int numberOfEntries = (terminalToLabel->size() + 63) / 64;
 
-    std::function<unsigned int(Node*)> orderSubtree = [&, numberOfEntries](Node* subtree) -> unsigned int {
-        Node& subtreeRoot = *subtree;
-        subtreeRoot.subtreeTerminals.resize(numberOfEntries,0);
-        if (terminalToLabel->contains(subtree))
+    std::function<unsigned int(Node*)> orderSubtree = [&, numberOfEntries](Node* subtreePtr) -> unsigned int {
+        Node& subtreeRootNode = *subtreePtr;
+        subtreeRootNode.subtreeTerminals.resize(numberOfEntries,0);
+        if (terminalToLabel->contains(subtreePtr))
         {
-            const unsigned int label = terminalToLabel->at(subtree);
+            const unsigned int label = terminalToLabel->at(subtreePtr);
             // (label - 1) because smallest label is 1 and not 0
-            subtreeRoot.subtreeTerminals[(label - 1) / 64] = (1 << (label -1) % 64);
+            subtreeRootNode.subtreeTerminals[(label - 1) / 64] = (1 << (label -1) % 64);
             return label;
         }
-        unsigned int firstMinLabel = orderSubtree(subtreeRoot.leftChild);
-        unsigned int secondMinLabel = orderSubtree(subtreeRoot.rightChild);
+        unsigned int firstMinLabel = orderSubtree(subtreeRootNode.leftChild);
+        unsigned int secondMinLabel = orderSubtree(subtreeRootNode.rightChild);
         if (firstMinLabel > secondMinLabel)
         {
-            std::swap(subtreeRoot.leftChild, subtreeRoot.rightChild);
+            std::swap(subtreeRootNode.leftChild, subtreeRootNode.rightChild);
         }
-        for(unsigned int i = 0; i < subtreeRoot.subtreeTerminals.size(); i++)
+        for(unsigned int i = 0; i < subtreeRootNode.subtreeTerminals.size(); i++)
         {
-            subtreeRoot.subtreeTerminals[i] =
-                subtreeRoot.leftChild->subtreeTerminals[i] |
-                subtreeRoot.rightChild->subtreeTerminals[i];
+            subtreeRootNode.subtreeTerminals[i] =
+                subtreeRootNode.leftChild->subtreeTerminals[i] |
+                subtreeRootNode.rightChild->subtreeTerminals[i];
         }
         return std::min(firstMinLabel, secondMinLabel);
     };
@@ -559,8 +559,8 @@ std::vector<Node*> Forest::maximumCommonSubforestRoots(const Forest& other)
     // actually: iterate upward, always checking the sibling for identicality and the parent for the same terminals, deleting seen labels from the ones left to visit
     // vorinitialisierung von blattknoten; jeder durchlauf kreiert seinen sibling- und elternknoten; dabei sibling nur, wenn nicht besucht? ach nee, das ist was anderes. wenn nichtterminal? wird sowieso rekursiv/iterativ, also abbruchbedingung einfach? hilfsfunktion, die den gesamten sibling-subtree baut und den sibling-index zurückgibt (bei blatt halt nur rückgabe des index) bei leaf-siblings retrieval über label=index?
     // naur, just steal it from f1: iterate upward from each unvisited leaf, always checking the sibling subtree for identicality, and once a root for the leaf is found, do the label-index relation? should be doable via the parent forests map. make a new nodes vector after scanning the whole parent forest and exclude->reindex
-    vector<Node*> newRootIndices; // indices of new root nodes in t1
-    newRootIndices.reserve(labelToTerminal->size());
+    vector<Node*> newRootPtrs; // indices of new root nodes in t1
+    newRootPtrs.reserve(labelToTerminal->size());
 
     // maps new forests node index to original forest indices
     unordered_map<int, int> t1Index;
@@ -568,25 +568,25 @@ std::vector<Node*> Forest::maximumCommonSubforestRoots(const Forest& other)
 
     unordered_set<unsigned int> visitedLeaves;
 
-    for (auto& [leaf, leafLabel] : *terminalToLabel)
+    for (auto& [leafPtr, leafLabel] : *terminalToLabel)
     {
         if (visitedLeaves.contains(leafLabel)){continue;}
-        Node* t1CurrentNode = leaf;
-        Node* t2CurrentNode = (*other.labelToTerminal)[leafLabel];
+        Node* t1CurrentNodePtr = leafPtr;
+        Node* t2CurrentNodePtr = (*other.labelToTerminal)[leafLabel];
 
-        while (not (t1CurrentNode->parent == nullptr or t2CurrentNode->parent == nullptr))
+        while (not (t1CurrentNodePtr->parent == nullptr or t2CurrentNodePtr->parent == nullptr))
         { // node is root in neither tree
-            if (not hasIdenticalSubtree(other, t1CurrentNode->sibling, t2CurrentNode->sibling))
+            if (not hasIdenticalSubtree(t1CurrentNodePtr->sibling, t2CurrentNodePtr->sibling))
             { // sibling subtree differs
                 break;
             }
 
-            t1CurrentNode = t1CurrentNode->parent;
-            t2CurrentNode = t2CurrentNode->parent;
+            t1CurrentNodePtr = t1CurrentNodePtr->parent;
+            t2CurrentNodePtr = t2CurrentNodePtr->parent;
         }
         // currentNode is now the root of the common subtree
         unsigned int label = 1;
-        for (uint64_t& i : t1CurrentNode->subtreeTerminals)
+        for (uint64_t& i : t1CurrentNodePtr->subtreeTerminals)
         {
             uint64_t temp = i;
             while (temp >= 1)
@@ -598,10 +598,10 @@ std::vector<Node*> Forest::maximumCommonSubforestRoots(const Forest& other)
             label = label + (65 - (label % 64));
         }
 
-        newRootIndices.push_back(t1CurrentNode);
+        newRootPtrs.push_back(t1CurrentNodePtr);
     }
 
-    return newRootIndices;
+    return newRootPtrs;
 }
 
 // ------------------------------------------------------------- //
