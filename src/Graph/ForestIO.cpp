@@ -23,6 +23,7 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
         nodes->reserve(2* numberOfTerminals - 1);
         terminalToLabel->reserve(numberOfTerminals);
         labelToTerminal->reserve(numberOfTerminals);
+        roots->reserve(numberOfTerminals);
     }
 
     // Stack of "currently open" internal nodes:
@@ -335,7 +336,7 @@ void ForestIO::WriteDot(const Forest& tree, ostream& stream)
         stream << "n" << i.first << " -> inv [style = invis];\n";
     }
 
-    // TODO: Notice: This uses the address of the Node. This will still work, but produces dot-files that are not.
+    // TODO: Notice: This uses the address of the Node. This will still work, but produces dot-files that are not comparable.
     //  Also the addresses will differ between runs, therefor the same tree will have different dot files in every run.
     for (auto& node : tree.Nodes())
     {
