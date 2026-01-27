@@ -130,12 +130,12 @@ void DeleteEdgeAction::doParentIsInner()
         }
 
         // sort children
-        const Node& l = *traversedNode->leftChild;
-        const Node& r = *traversedNode->rightChild;
+        const Node* l = traversedNode->leftChild;
+        const Node* r = traversedNode->rightChild;
 
-        if (r.hasSmallestTerminal(l))
+        if (r->hasSmallestTerminal(*l))
         {
-            std::swap(traversedNode->leftChild, traversedNode->rightChild);
+            std::swap(l, r);
         }
 
         traversedNode = traversedNode->parent;
@@ -146,12 +146,12 @@ void DeleteEdgeAction::doParentIsInner()
     // Get indices of the old root
     auto leftRoot_Iterator = std::ranges::find(forest->Roots(), root);
     leftRoot_RootsIndex = std::distance(forest->Roots().begin(), leftRoot_Iterator);
-    Node* rootNode = *leftRoot_Iterator;
+    Node* rootPtr = *leftRoot_Iterator;
 
-    // If root has the smaller terminal, child goes after rootNode, else before
-    if (rootNode->hasSmallestTerminal(*child))
+    // If root has the smaller terminal, child goes after rootPtr, else before
+    if (rootPtr->hasSmallestTerminal(*child))
     {
-        // Insert child after rootNode
+        // Insert child after rootPtr
         auto rightRoot_Iterator =
             std::lower_bound(leftRoot_Iterator, forest->Roots().end(), child,
                              [&](const Node* a, const Node* b) { return a->hasSmallestTerminal(*b); });
@@ -160,7 +160,7 @@ void DeleteEdgeAction::doParentIsInner()
     }
     else
     {
-        // Insert child before rootNode and therefor insert root after child
+        // Insert child before rootPtr and therefor insert root after child
         *leftRoot_Iterator = child;
         auto rightRoot_Iterator =
             std::lower_bound(leftRoot_Iterator, forest->Roots().end(), root,
@@ -212,12 +212,12 @@ void DeleteEdgeAction::undoParentIsInner()
         }
 
         // sort children
-        const Node& l = *traversedNode->leftChild;
-        const Node& r = *traversedNode->rightChild;
+        const Node* l = traversedNode->leftChild;
+        const Node* r = traversedNode->rightChild;
 
-        if (r.hasSmallestTerminal(l))
+        if (r->hasSmallestTerminal(*l))
         {
-            std::swap(traversedNode->leftChild, traversedNode->rightChild);
+            std::swap(l, r);
         }
 
         traversedNode = traversedNode->parent;
