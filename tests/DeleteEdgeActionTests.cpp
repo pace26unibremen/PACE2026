@@ -13,8 +13,8 @@ TEST_CASE("Delete Edge Action - Simple Tree with two Terminals", "[Forest, Delet
     {
         auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree",2,1);
         auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_2_2_singleVertexTrees.tree",2,2);
-        Node* leftChild = f1.Roots()[0]->leftChild;
-        Node* rightChild = f1.Roots()[0]->rightChild;
+        auto leftChild = f1.Roots()[0]->leftChild;
+        auto rightChild = f1.Roots()[0]->rightChild;
 
         auto action = DeleteEdgeAction(leftChild, std::make_shared<Forest>(f1));
 
@@ -40,8 +40,8 @@ TEST_CASE("Delete Edge Action - Simple Tree with two Terminals", "[Forest, Delet
     {
         auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree",2,1);
         auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_2_2_singleVertexTrees.tree",2,2);
-        Node* leftChild = f1.Roots()[0]->leftChild;
-        Node* rightChild = f1.Roots()[0]->rightChild;
+        auto leftChild = f1.Roots()[0]->leftChild;
+        auto rightChild = f1.Roots()[0]->rightChild;
 
         auto action = DeleteEdgeAction(rightChild, std::make_shared<Forest>(f1));
 
@@ -62,22 +62,23 @@ TEST_CASE("Delete Edge Action - Simple Tree with two Terminals", "[Forest, Delet
         REQUIRE(f1 == f1Copy);
     }
 }
-// TODO Fix tests to work with pointers instead of indices
-/*TEST_CASE("Delete Edge Action - Tree with six Terminals", "[Forest, DeleteEdgeAction, AbstractAction]")
+
+TEST_CASE("Delete Edge Action - Tree with six Terminals", "[Forest, DeleteEdgeAction, AbstractAction]")
 {
     SECTION("Remove inner edge 1")
     {
         auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree",6,1);
-
-        auto action = DeleteEdgeAction(5, std::make_shared<Forest>(f1));
+        auto root = f1.Roots()[0];
+        auto node1 = root -> leftChild -> rightChild;
+        auto action = DeleteEdgeAction(node1, std::make_shared<Forest>(f1));
 
         INFO("Do Action");
         action.doAction();
 
         REQUIRE(f1.isValid());
         REQUIRE(f1.Roots().size() == 2);
-        REQUIRE(f1.Roots()[0] == 0);
-        REQUIRE(f1.Roots()[1] == 5);
+        REQUIRE(f1.Roots()[0] == root);
+        REQUIRE(f1.Roots()[1] == node1);
 
         INFO("Undo Action");
         action.undoAction();
@@ -90,16 +91,17 @@ TEST_CASE("Delete Edge Action - Simple Tree with two Terminals", "[Forest, Delet
     SECTION("Remove inner edge 2")
     {
         auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree",6,1);
-
-        auto action = DeleteEdgeAction(2, std::make_shared<Forest>(f1));
+        auto root = f1.Roots()[0];
+        auto node2 = root -> leftChild -> leftChild;
+        auto action = DeleteEdgeAction(node2, std::make_shared<Forest>(f1));
 
         INFO("Do Action");
         action.doAction();
 
         REQUIRE(f1.isValid());
         REQUIRE(f1.Roots().size() == 2);
-        REQUIRE(f1.Roots()[0] == 2);
-        REQUIRE(f1.Roots()[1] == 0);
+        REQUIRE(f1.Roots()[0] == node2);
+        REQUIRE(f1.Roots()[1] == root);
 
         INFO("Undo Action");
         action.undoAction();
@@ -112,10 +114,13 @@ TEST_CASE("Delete Edge Action - Simple Tree with two Terminals", "[Forest, Delet
     SECTION("Remove several edges")
     {
         auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree",6,1);
-
-        auto action1 = DeleteEdgeAction(2, std::make_shared<Forest>(f1));
-        auto action2 = DeleteEdgeAction(7, std::make_shared<Forest>(f1));
-        auto action3 = DeleteEdgeAction(10, std::make_shared<Forest>(f1));
+        auto root = f1.Roots()[0];
+        auto node2 = root->leftChild->leftChild;
+        auto node7 = root->leftChild->rightChild->leftChild;
+        auto node10 = root->rightChild->leftChild;
+        auto action1 = DeleteEdgeAction(node2, std::make_shared<Forest>(f1));
+        auto action2 = DeleteEdgeAction(node7, std::make_shared<Forest>(f1));
+        auto action3 = DeleteEdgeAction(node10, std::make_shared<Forest>(f1));
 
         INFO("Do Actions");
 
@@ -125,10 +130,10 @@ TEST_CASE("Delete Edge Action - Simple Tree with two Terminals", "[Forest, Delet
 
         REQUIRE(f1.isValid());
         REQUIRE(f1.Roots().size() == 4);
-        REQUIRE(f1.Roots()[0] == 2);
-        REQUIRE(f1.Roots()[1] == 0);
-        REQUIRE(f1.Roots()[2] == 7);
-        REQUIRE(f1.Roots()[3] == 10);
+        REQUIRE(f1.Roots()[0] == node2);
+        REQUIRE(f1.Roots()[1] == root);
+        REQUIRE(f1.Roots()[2] == node7);
+        REQUIRE(f1.Roots()[3] == node10);
 
         auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_4_6_simple.tree",6,4);
         REQUIRE(f1 == f2);
@@ -142,26 +147,31 @@ TEST_CASE("Delete Edge Action - Simple Tree with two Terminals", "[Forest, Delet
         REQUIRE(f1.isValid());
         REQUIRE(f1 == f1Copy);
     }
-}*/
+}
 
-/*TEST_CASE("Delete Edge Action - sibling & root order", "[Forest, DeleteEdgeAction, AbstractAction]")
+TEST_CASE("Delete Edge Action - sibling & root order", "[Forest, DeleteEdgeAction, AbstractAction]")
 {
     SECTION("Case 1")
     {
         INFO("Remove Edge to left root child");
 
         auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",12,3);
-        auto action = DeleteEdgeAction(4, std::make_shared<Forest>(f1));
+        auto root0 = f1.Roots()[0];
+        auto root1 = f1.Roots()[1];
+        auto root2 = f1.Roots()[2];
+        auto node4 = root1->leftChild;
+        auto node11 = root1->rightChild;
+        auto action = DeleteEdgeAction(node4, std::make_shared<Forest>(f1));
 
         INFO("Do Action");
         action.doAction();
 
         REQUIRE(f1.isValid());
         REQUIRE(f1.Roots().size() == 4);
-        REQUIRE(f1.Roots()[0] == 0);
-        REQUIRE(f1.Roots()[1] == 4);
-        REQUIRE(f1.Roots()[2] == 18);
-        REQUIRE(f1.Roots()[3] == 11);
+        REQUIRE(f1.Roots()[0] == root0);
+        REQUIRE(f1.Roots()[1] == node4);
+        REQUIRE(f1.Roots()[2] == root2);
+        REQUIRE(f1.Roots()[3] == node11);
 
         INFO("Undo Action");
         action.undoAction();
@@ -176,18 +186,22 @@ TEST_CASE("Delete Edge Action - Simple Tree with two Terminals", "[Forest, Delet
         INFO("Remove Edge to right root child");
 
         auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",12,3);
-
-        auto action = DeleteEdgeAction(11, std::make_shared<Forest>(f1));
+        auto root0 = f1.Roots()[0];
+        auto root1 = f1.Roots()[1];
+        auto root2 = f1.Roots()[2];
+        auto node4 = root1->leftChild;
+        auto node11 = root1->rightChild;
+        auto action = DeleteEdgeAction(node11, std::make_shared<Forest>(f1));
 
         INFO("Do Action");
         action.doAction();
 
         REQUIRE(f1.isValid());
         REQUIRE(f1.Roots().size() == 4);
-        REQUIRE(f1.Roots()[0] == 0);
-        REQUIRE(f1.Roots()[1] == 4);
-        REQUIRE(f1.Roots()[2] == 18);
-        REQUIRE(f1.Roots()[3] == 11);
+        REQUIRE(f1.Roots()[0] == root0);
+        REQUIRE(f1.Roots()[1] == node4);
+        REQUIRE(f1.Roots()[2] == root2);
+        REQUIRE(f1.Roots()[3] == node11);
 
         INFO("Undo Action");
         action.undoAction();
@@ -203,25 +217,32 @@ TEST_CASE("Delete Edge Action - Simple Tree with two Terminals", "[Forest, Delet
         INFO("Remove Edge to inner node with smallest terminal");
 
         auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",12,3);
-
-        auto action = DeleteEdgeAction(6, std::make_shared<Forest>(f1));
+        auto root0 = f1.Roots()[0];
+        auto root1 = f1.Roots()[1];
+        auto root2 = f1.Roots()[2];
+        auto node4 = root1->leftChild;
+        auto node6 = root1->leftChild->leftChild->rightChild;
+        auto node7 = root1->leftChild->leftChild->leftChild;
+        auto node8 = root1->leftChild->rightChild;
+        auto node11 = root1->rightChild;
+        auto action = DeleteEdgeAction(node6, std::make_shared<Forest>(f1));
 
         INFO("Do Action");
         action.doAction();
 
         REQUIRE(f1.isValid());
         REQUIRE(f1.Roots().size() == 4);
-        REQUIRE(f1.Roots()[0] == 0);
-        REQUIRE(f1.Roots()[1] == 6);
-        REQUIRE(f1.Roots()[2] == 18);
-        REQUIRE(f1.Roots()[3] == 3);
+        REQUIRE(f1.Roots()[0] == root0);
+        REQUIRE(f1.Roots()[1] == node6);
+        REQUIRE(f1.Roots()[2] == root2);
+        REQUIRE(f1.Roots()[3] == root1);
 
         auto r = f1.Nodes()[3];
-        REQUIRE(r.leftChild == 11);
-        REQUIRE(r.rightChild == 4);
+        REQUIRE(r.leftChild == node11);
+        REQUIRE(r.rightChild == node4);
         auto p = f1.Nodes()[4];
-        REQUIRE(p.leftChild == 8);
-        REQUIRE(p.rightChild == 7);
+        REQUIRE(p.leftChild == node8);
+        REQUIRE(p.rightChild == node7);
 
 
         INFO("Undo Action");
@@ -237,22 +258,27 @@ TEST_CASE("Delete Edge Action - Simple Tree with two Terminals", "[Forest, Delet
         INFO("Remove Edge to inner node with high terminals");
 
         auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_3_12_example3.tree",12,3);
-
-        auto action = DeleteEdgeAction(8, std::make_shared<Forest>(f1));
+        auto root0 = f1.Roots()[0];
+        auto root1 = f1.Roots()[1];
+        auto root2 = f1.Roots()[2];
+        auto node5 = root1->leftChild->leftChild;;
+        auto node8 = root1->leftChild->rightChild;
+        auto node11 = root1->rightChild;
+        auto action = DeleteEdgeAction(node8, std::make_shared<Forest>(f1));
 
         INFO("Do Action");
         action.doAction();
 
         REQUIRE(f1.isValid());
         REQUIRE(f1.Roots().size() == 4);
-        REQUIRE(f1.Roots()[0] == 0);
-        REQUIRE(f1.Roots()[1] == 3);
-        REQUIRE(f1.Roots()[2] == 18);
-        REQUIRE(f1.Roots()[3] == 8);
+        REQUIRE(f1.Roots()[0] == root0);
+        REQUIRE(f1.Roots()[1] == root1);
+        REQUIRE(f1.Roots()[2] == root2);
+        REQUIRE(f1.Roots()[3] == node8);
 
         auto r = f1.Nodes()[3];
-        REQUIRE(r.leftChild == 5);
-        REQUIRE(r.rightChild == 11);
+        REQUIRE(r.leftChild == node5);
+        REQUIRE(r.rightChild == node11);
 
         INFO("Undo Action");
         action.undoAction();
@@ -262,5 +288,5 @@ TEST_CASE("Delete Edge Action - Simple Tree with two Terminals", "[Forest, Delet
         REQUIRE(f1 == f1Copy);
     }
 
-}*/
+}
 
