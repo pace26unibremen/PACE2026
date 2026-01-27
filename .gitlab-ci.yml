@@ -1,4 +1,4 @@
-image: gcc:13  # GCC 14+ with CMake 3.28+, C++20 ready
+image: ghcr.io/rikorose/gcc-cmake:gcc-13  # GCC 14+ with CMake 3.28+, C++20 ready
 
 stages:
   - build
