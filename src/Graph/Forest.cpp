@@ -377,7 +377,7 @@ bool Forest::checkTriple(Node* parentPtr, std::unordered_map<Node*, unsigned int
     else // Has children
     {
         //Balance
-        if ((node.leftChild== nullptr && node.rightChild != nullptr)||(node.leftChild== nullptr && node.rightChild != nullptr))
+        if ((node.leftChild == nullptr && node.rightChild != nullptr)||(node.leftChild != nullptr && node.rightChild == nullptr))
         {
             std::clog << "Forest: isValid: unbalanced Tree:\n"
                          "   parent (" << parentPtr << ") -> (" << node.leftChild <<") , (" << node.rightChild <<") \n"
