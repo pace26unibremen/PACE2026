@@ -130,13 +130,14 @@ void DeleteEdgeAction::doParentIsInner()
         }
 
         // sort children
-        const Node* l = traversedNode->leftChild;
-        const Node* r = traversedNode->rightChild;
+        Node& l = *traversedNode->leftChild;
+        Node& r = *traversedNode->rightChild;
 
-        if (r->hasSmallestTerminal(l))
+        if (r.hasSmallestTerminal(&l))
         {
-            std::swap(l, r);
-        }
+            traversedNode->leftChild = &r;
+            traversedNode->rightChild = &l;
+        }std::swap
 
         traversedNode = traversedNode->parent;
     }
