@@ -137,7 +137,7 @@ void DeleteEdgeAction::doParentIsInner()
         {
             traversedNode->leftChild = &r;
             traversedNode->rightChild = &l;
-        }std::swap
+        }
 
         traversedNode = traversedNode->parent;
     }
