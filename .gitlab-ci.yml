@@ -1,14 +1,16 @@
-image: kitware/kwiver
-
 stages:
   - build
   - test
+  - benchmark
+
+# C++ build and tests
 
 build-job:
   stage: build
+  image: kitware/kwiver
   script:
-    - mkdir build/
-    - cd build/
+    - mkdir -p build
+    - cd build
     - cmake ..
     - make -j 4
     - mkdir install
@@ -23,9 +25,51 @@ build-job:
 
 graph-representation:
   stage: test
+  image: kitware/kwiver
   script:
-    - cd build/tests/
+    - cd build/tests
     - ./ForestIOTests
     - ./ForestEqualTests
     - ./ForestSubforestTests
     - ./DeleteEdgeActionTests
+
+# Build stride from source
+
+build_stride:
+  stage: build
+  image: rust:1.80-slim
+  script:
+    - apt-get update && apt-get install -y musl-tools
+    - rustup target add x86_64-unknown-linux-musl
+    - git clone https://github.com/manpen/pace26stride.git
+    - cd pace26stride
+    - cargo build --profile smaller-release --target x86_64-unknown-linux-musl
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - pace26stride/target/x86_64-unknown-linux-musl/smaller-release/stride
+
+run_stride_benchmark:
+  stage: benchmark
+  image: ubuntu:22.04
+  dependencies:
+    - build-job
+    - build_stride
+  script:
+    - cp pace26stride/target/x86_64-unknown-linux-musl/smaller-release/stride .
+    - chmod +x stride
+    - export STRIDE_SOLVER="$CI_PROJECT_DIR/build/solver"
+    # Set a timeout of 30 minutes for stride operations, which is the official limit for the exact Track
+    - export STRIDE_TIMEOUT=1800
+    # 10 seconds of grace period to wrap up, which is also official limit for the exact Track
+    - export STRIDE_GRACE=10
+    - export STRIDE_DOWNLOADS_PATH="$CI_PROJECT_DIR/.stride-downloads"
+    - mkdir -p "$STRIDE_DOWNLOADS_PATH"
+    - wget -O 20leaves.lst https://pace2026.imada.sdu.dk/meta/20leaves.lst
+    - ./stride download -i 20leaves.lst
+    - ./stride run -Oo -i 20leaves.lst
+  artifacts:
+    paths:
+      - stride-logs/
+      - summary.json
+    expire_in: 1 week
