@@ -210,7 +210,7 @@ bool Forest::isValid() const
     for (Node* rootPtr : *roots)
     {
         std::unordered_map<Node*, unsigned int> rootLeafs;
-        unsigned int smallestTerminal = -1; // -> 4294967295
+        unsigned int smallestTerminal = -1; // -> max value of unsigned int
         set<Node*> pointers;
         if (rootPtr->parent != nullptr)
         {
@@ -510,7 +510,7 @@ void Forest::renderImage()
 }
 #endif
 
-void Forest::sortChildrenAndCollectTerminals()
+void Forest::sortChildrenAndCollectTerminals() //TODO check if std:swap still works
 {
     // the number of elements in the `subtreeTerminals` vector of each node
     const unsigned int numberOfEntries = (terminalToLabel->size() + 63) / 64;
