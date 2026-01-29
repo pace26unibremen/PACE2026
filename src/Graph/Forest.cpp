@@ -506,7 +506,7 @@ void Forest::renderImage()
     close(old_stderr);
 
     char* data = nullptr;
-    unsigned int length = 0;
+    size_t length = 0;
     gvRenderData(gvc, g, "png", &data, &length);
 
     std::vector<uchar> pngData(data, data + length);
