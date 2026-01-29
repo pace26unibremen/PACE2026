@@ -37,7 +37,7 @@ graph-representation:
 
 build_stride:
   stage: build
-  image: rust:1.80-slim
+  image: rust:1.80
   script:
     - apt-get update && apt-get install -y musl-tools
     - rustup target add x86_64-unknown-linux-musl
