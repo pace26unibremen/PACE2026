@@ -116,8 +116,8 @@ TEST_CASE("Delete Edge Action - Tree with six Terminals", "[Forest, DeleteEdgeAc
         auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree",6,1);
         auto root = f1.Roots()[0];
         auto node2 = root->leftChild->leftChild;
-        auto node7 = root->leftChild->rightChild->leftChild;
-        auto node10 = root->rightChild->leftChild;
+        auto node7 = root->leftChild->rightChild->rightChild;
+        auto node10 = root->rightChild->rightChild;
         auto action1 = DeleteEdgeAction(node2, std::make_shared<Forest>(f1));
         auto action2 = DeleteEdgeAction(node7, std::make_shared<Forest>(f1));
         auto action3 = DeleteEdgeAction(node10, std::make_shared<Forest>(f1));
@@ -221,8 +221,8 @@ TEST_CASE("Delete Edge Action - sibling & root order", "[Forest, DeleteEdgeActio
         auto root1 = f1.Roots()[1];
         auto root2 = f1.Roots()[2];
         auto node4 = root1->leftChild;
-        auto node6 = root1->leftChild->leftChild->rightChild;
-        auto node7 = root1->leftChild->leftChild->leftChild;
+        auto node6 = root1->leftChild->leftChild->leftChild;
+        auto node7 = root1->leftChild->leftChild->rightChild;
         auto node8 = root1->leftChild->rightChild;
         auto node11 = root1->rightChild;
         auto action = DeleteEdgeAction(node6, std::make_shared<Forest>(f1));
