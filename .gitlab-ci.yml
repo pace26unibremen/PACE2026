@@ -7,7 +7,7 @@ stages:
 
 build-job:
   stage: build
-  image: kitware/kwiver
+  image: ghcr.io/rikorose/gcc-cmake:gcc-13
   script:
     - mkdir -p build
     - cd build
@@ -18,6 +18,7 @@ build-job:
   artifacts:
     expire_in: 1 day
     paths:
+      - build/src/startSolver
       - build/tests/ForestIOTests
       - build/tests/ForestEqualTests
       - build/tests/ForestSubforestTests
@@ -25,7 +26,7 @@ build-job:
 
 graph-representation:
   stage: test
-  image: kitware/kwiver
+  image: ghcr.io/rikorose/gcc-cmake:gcc-13
   script:
     - cd build/tests
     - ./ForestIOTests
@@ -51,7 +52,7 @@ build_stride:
 
 run_stride_benchmark:
   stage: benchmark
-  image: ubuntu:22.04
+  image: ghcr.io/rikorose/gcc-cmake:gcc-13
   dependencies:
     - build-job
     - build_stride
@@ -59,12 +60,12 @@ run_stride_benchmark:
     - apt update && apt install -y wget
     - cp pace26stride/target/x86_64-unknown-linux-musl/smaller-release/stride .
     - chmod +x stride
-    - export STRIDE_SOLVER="$CI_PROJECT_DIR/build/solver"
+    - export STRIDE_SOLVER="./build/src/startSolver"
     # Set a timeout of 30 minutes for stride operations, which is the official limit for the exact Track
     - export STRIDE_TIMEOUT=1800
     # 10 seconds of grace period to wrap up, which is also official limit for the exact Track
     - export STRIDE_GRACE=10
-    - export STRIDE_DOWNLOADS_PATH="$CI_PROJECT_DIR/.stride-downloads"
+    - export STRIDE_DOWNLOADS_PATH=".stride-downloads"
     - mkdir -p "$STRIDE_DOWNLOADS_PATH"
     - wget -O 20leaves.lst https://pace2026.imada.sdu.dk/meta/20leaves.lst
     - ./stride download -i 20leaves.lst
@@ -73,4 +74,4 @@ run_stride_benchmark:
     paths:
       - stride-logs/
       - summary.json
-    expire_in: 1 week
+    expire_in: 1 Month
