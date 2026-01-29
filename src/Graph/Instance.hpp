@@ -9,6 +9,8 @@ namespace graph
 
     std::shared_ptr<Instance> ReadInstance(const std::filesystem::path& path);
 
+    std::shared_ptr<Instance> ReadInstance(std::istream& inputStream);
+
     void WriteInstance(const std::shared_ptr<Instance>& instance, std::ostream& os);
 
     void WriteInstance(const std::shared_ptr<Instance>& instance, const std::filesystem::path& path);
