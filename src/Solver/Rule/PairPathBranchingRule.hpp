@@ -32,9 +32,6 @@ class PairPathBranchingRule : public AbstractBranchingRule
 
     void unapply() override;
 
-    [[nodiscard, maybe_unused]]
-    bool isFullyExplored() const override;
-
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance);
 
     [[nodiscard]]
