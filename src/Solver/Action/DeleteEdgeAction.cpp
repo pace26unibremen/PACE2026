@@ -72,7 +72,7 @@ void DeleteEdgeAction::doParentIsRoot()
     // position of second new root is somewhere after the old parent
     const auto rightRoot_Iterator =
         std::lower_bound(forest->Roots().begin() + leftRoot_RootsIndex, forest->Roots().end(), right,
-                         [&](const Node* a, const Node* b) { return a->hasSmallestTerminal(*b); });
+                         [&](const Node* a, const Node* b) { return a->hasSmallestTerminal(b); });
     rightRoot_RootsIndex = std::distance(forest->Roots().begin(), rightRoot_Iterator);
 
     forest->Roots().insert(rightRoot_Iterator, right);
@@ -133,7 +133,7 @@ void DeleteEdgeAction::doParentIsInner()
         const Node* l = traversedNode->leftChild;
         const Node* r = traversedNode->rightChild;
 
-        if (r->hasSmallestTerminal(*l))
+        if (r->hasSmallestTerminal(l))
         {
             std::swap(l, r);
         }
@@ -149,12 +149,12 @@ void DeleteEdgeAction::doParentIsInner()
     Node* rootPtr = *leftRoot_Iterator;
 
     // If root has the smaller terminal, child goes after rootPtr, else before
-    if (rootPtr->hasSmallestTerminal(*child))
+    if (rootPtr->hasSmallestTerminal(child))
     {
         // Insert child after rootPtr
         auto rightRoot_Iterator =
             std::lower_bound(leftRoot_Iterator, forest->Roots().end(), child,
-                             [&](const Node* a, const Node* b) { return a->hasSmallestTerminal(*b); });
+                             [&](const Node* a, const Node* b) { return a->hasSmallestTerminal(b); });
         rightRoot_RootsIndex = std::distance(forest->Roots().begin(), rightRoot_Iterator);
         forest->Roots().insert(rightRoot_Iterator, child);
     }
@@ -164,7 +164,7 @@ void DeleteEdgeAction::doParentIsInner()
         *leftRoot_Iterator = child;
         auto rightRoot_Iterator =
             std::lower_bound(leftRoot_Iterator, forest->Roots().end(), root,
-                             [&](const Node* a, const Node* b) { return a->hasSmallestTerminal(*b); });
+                             [&](const Node* a, const Node* b) { return a->hasSmallestTerminal(b); });
         rightRoot_RootsIndex = std::distance(forest->Roots().begin(), rightRoot_Iterator);
         forest->Roots().insert(rightRoot_Iterator, root);
     }
@@ -215,7 +215,7 @@ void DeleteEdgeAction::undoParentIsInner()
         const Node* l = traversedNode->leftChild;
         const Node* r = traversedNode->rightChild;
 
-        if (r->hasSmallestTerminal(*l))
+        if (r->hasSmallestTerminal(l))
         {
             std::swap(l, r);
         }
