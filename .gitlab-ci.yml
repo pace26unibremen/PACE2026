@@ -56,6 +56,7 @@ run_stride_benchmark:
     - build-job
     - build_stride
   script:
+    - apt update && apt install -y wget
     - cp pace26stride/target/x86_64-unknown-linux-musl/smaller-release/stride .
     - chmod +x stride
     - export STRIDE_SOLVER="$CI_PROJECT_DIR/build/solver"
