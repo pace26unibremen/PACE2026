@@ -75,7 +75,7 @@ TEST_CASE("Identical Subforest", "[Forest, subforest]")
         auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree", 6, 1);
         auto t2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree", 6, 1);
 
-        REQUIRE(t1.hasIdenticalSubtree(t2, t1.Roots().at(0), t2.Roots().at(0)));
+        REQUIRE(t1.hasIdenticalSubtree(t1.Roots().at(0), t2.Roots().at(0)));
     }
 
     SECTION("Check identical subforest - example 2")
@@ -85,7 +85,7 @@ TEST_CASE("Identical Subforest", "[Forest, subforest]")
 
         for (int i = 0; i<f1.Roots().size(); i++)
         {
-            REQUIRE(f1.hasIdenticalSubtree(f2, f1.Roots().at(i), f2.Roots().at(i)));
+            REQUIRE(f1.hasIdenticalSubtree(f1.Roots().at(i), f2.Roots().at(i)));
         }
     }
 }
