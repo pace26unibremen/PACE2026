@@ -11,7 +11,6 @@ void runOnStream(std::istream& inStream, std::ostream& outStream) {
     auto endTime = std::clock();
     auto time_delta_ms = ((double) (endTime - startTime)) / ((double) CLOCKS_PER_SEC / 1000.0);
     outStream << "# t " << time_delta_ms << "\n# s " << solution->RootIndices().size() << "\n";
-    // graph::WriteInstance(instance, outStream);
     solution->write(outStream);
 }
 

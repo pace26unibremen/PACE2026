@@ -5,5 +5,5 @@ add_executable(main main.cpp)
 target_link_libraries(main PRIVATE Solver Graph)
 target_compile_definitions(main PRIVATE RES_DIR="${CMAKE_SOURCE_DIR}/res/")
 
-add_executable(solver solver.cpp)
-target_link_libraries(solver PRIVATE Solver Graph)
+add_executable(startSolver startSolver.cpp)
+target_link_libraries(startSolver PRIVATE Solver Graph)
