@@ -119,7 +119,7 @@ void solver::DebugPlugin::init(const std::shared_ptr<graph::Instance>& _instance
     overviewFile << "digraph overview {\n"
                  << "splines=ortho;\n"
                  << "node [shape=box, margin=\"0.1,0.1\"];\n"
-                 << "initial [style=invis];\n";
+                 << "initial [label=\"\", shape=doublecircle, style=filled, fillcolor=green];\n";
     stateIDs.push(0);
     writeStateNode();
     overviewFile << "initial -> state_0 [URL=\"start.dot.svg\"]\n";
