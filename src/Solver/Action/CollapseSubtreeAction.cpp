@@ -31,6 +31,10 @@ void solver::CollapseSubtreeAction::doAction()
             int index = forest->LabelToTerminalIndex()[label];
             collapsedLabelToTerminals.emplace(label, index);
             forest->LabelToTerminalIndex()[label] = nodeIndex;
+            if (forest->Terminals().contains(index) and forest->Terminals()[index] == label)
+            {
+                collapsedTerminals.emplace(index, label);
+            }
             forest->Terminals().erase(index);
         }
         k++;
@@ -51,8 +55,12 @@ void solver::CollapseSubtreeAction::undoAction()
     for(const auto& [label, index] : collapsedLabelToTerminals)
     {
         forest->LabelToTerminalIndex()[label] = index;
+    }
+    for ( const auto& [index, label] : collapsedTerminals)
+    {
         forest->Terminals()[index] = label;
     }
+
     forest->Terminals().erase(nodeIndex);
 
     #ifdef DEBUG_IMAGE_VIEW_GRAPH
