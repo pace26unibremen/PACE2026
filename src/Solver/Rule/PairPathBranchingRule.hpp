@@ -36,6 +36,9 @@ class PairPathBranchingRule : public AbstractBranchingRule
     bool isFullyExplored() const override;
 
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance);
+
+    [[nodiscard]]
+    std::string name() const override;
 };
 
 }  //namespace solver

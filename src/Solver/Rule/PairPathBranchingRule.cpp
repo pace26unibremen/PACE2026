@@ -178,6 +178,11 @@ solver::PairPathBranchingRule::isApplicable(const std::shared_ptr<graph::Instanc
     return std::dynamic_pointer_cast<AbstractRule>(std::make_shared<PairPathBranchingRule>(instance, c));
 }
 
+std::string solver::PairPathBranchingRule::name() const
+{
+    return "PairPathBranchingRule";
+}
+
 bool solver::PairPathBranchingRule::isFullyExplored() const
 {
     return branch >= 3;

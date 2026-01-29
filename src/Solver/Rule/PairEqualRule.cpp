@@ -86,3 +86,8 @@ solver::PairEqualRule::isApplicable(const std::shared_ptr<graph::Instance>& inst
 
     return std::dynamic_pointer_cast<AbstractRule>(std::make_shared<PairEqualRule>(instance, forestToSubtree));
 }
+
+std::string solver::PairEqualRule::name() const
+{
+    return "PairEqualRule";
+}

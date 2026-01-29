@@ -125,6 +125,11 @@ solver::PairUnconnectedBranchingRule::isApplicable(const std::shared_ptr<graph::
     return std::dynamic_pointer_cast<AbstractRule>(std::make_shared<PairUnconnectedBranchingRule>(instance, c));
 }
 
+std::string solver::PairUnconnectedBranchingRule::name() const
+{
+    return "PairUnconnectedBranchingRule";
+}
+
 bool solver::PairUnconnectedBranchingRule::isFullyExplored() const
 {
     return branch >= 2;
