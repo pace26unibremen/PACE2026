@@ -122,7 +122,7 @@ solver::PairPathBranchingRule::isApplicable(const std::shared_ptr<graph::Instanc
         auto t1 = fi->LabelToTerminal()[get<0>(c)];
         auto t2 = fi->LabelToTerminal()[get<1>(c)];
         auto root = fi->rootOf(t1);
-        if (not t2->hasSubsetTerminals(*root))
+        if (not t2->hasSubsetTerminals(root))
         {
             // we have a better rule for this case
             return nullptr;
@@ -135,7 +135,7 @@ solver::PairPathBranchingRule::isApplicable(const std::shared_ptr<graph::Instanc
         while (true)
         {
             assert(it->parent != nullptr);
-            if (t2->hasSubsetTerminals(*it->parent))
+            if (t2->hasSubsetTerminals(it->parent))
             {
                 lca = it->parent;
                 break;

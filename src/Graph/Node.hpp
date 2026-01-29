@@ -43,20 +43,20 @@ struct Node
     /// \param other
     /// \return true if the terminals are identical, else false
     [[nodiscard]]
-    bool hasSameTerminals(const Node& other) const;
+    bool hasSameTerminals(const Node* other) const;
 
     /// Checks if the terminals in the subtree of a node is a \b subset of
     /// the terminals of another node.
     /// \param other
     /// \return true if terminals of \c this are a subset of the terminals of \c other, else false
     [[nodiscard]]
-    bool hasSubsetTerminals(const Node& other) const;
+    bool hasSubsetTerminals(const Node* other) const;
 
     /// Checks if a node has a the minimal terminal in its subtree, compared to another node.
     /// \param other
     /// \return true if \c this has the minimal terminal, else false
     [[nodiscard]]
-    bool hasSmallestTerminal(const Node& other) const;
+    bool hasSmallestTerminal(const Node* other) const;
 
     /// \brief returns the smallest terminal in the nodes subtree.
     [[nodiscard, maybe_unused]]
