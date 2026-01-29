@@ -39,13 +39,14 @@ void solver::DebugPlugin::writeRuleNode(const std::shared_ptr<AbstractRule>& rul
         << "  cluster=true;\n"
         << "  width=3.5;\n"
         << "  label=\"" << branchingRule->name() << "\";\n"
+        << "  labelloc=b;\n"
         << "  style=\"filled,rounded\";\n"
         << "  fillcolor=orange;\n";
         for (int branchId = 1; branchId <= branchingRule->MaxBranch(); branchId++)
         {
             overviewFile << "  rule_" << stateIDs.top() << "_" << branchId
                          << " [label=" << branchId << ", style=\"filled,dotted,rounded\", "
-                                                      "fillcolor=darkorange, width=0.9];\n";
+                                                      "fillcolor=darkorange, width=0.9, height=0.25, fixedsize=true];\n";
         }
         overviewFile << "}\n;";
     }
@@ -118,6 +119,7 @@ void solver::DebugPlugin::init(const std::shared_ptr<graph::Instance>& _instance
 
     overviewFile << "digraph overview {\n"
                  << "splines=ortho;\n"
+                 << "ranksep=0.8;\n"
                  << "node [shape=box, margin=\"0.1,0.1\"];\n"
                  << "initial [label=\"\", shape=doublecircle, style=filled, fillcolor=green];\n";
     stateIDs.push(0);
