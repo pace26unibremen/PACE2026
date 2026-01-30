@@ -57,7 +57,6 @@ run_stride_benchmark:
     - build-job
     - build_stride
   script:
-    - apt update && apt install -y wget
     - cp pace26stride/target/x86_64-unknown-linux-musl/smaller-release/stride .
     - chmod +x stride
     - export STRIDE_SOLVER="./build/src/startSolver"
@@ -67,9 +66,8 @@ run_stride_benchmark:
     - export STRIDE_GRACE=10
     - export STRIDE_DOWNLOADS_PATH=".stride-downloads"
     - mkdir -p "$STRIDE_DOWNLOADS_PATH"
-    - wget -O 20leaves.lst https://pace2026.imada.sdu.dk/meta/20leaves.lst
-    - ./stride download -i 20leaves.lst
-    - ./stride run -Oo -i 20leaves.lst
+    - ./stride download -i res/instances/mixed.lst
+    - ./stride run -Oo -i res/instances/mixed.lst
   artifacts:
     paths:
       - stride-logs/
