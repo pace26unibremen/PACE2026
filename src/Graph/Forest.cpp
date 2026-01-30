@@ -62,9 +62,9 @@ Forest::Forest(const filesystem::path& path, int numberOfTerminals, int numberOf
 // ---- persistence -------------------------------------------- //
 // ------------------------------------------------------------- //
 
-void Forest::write(std::ostream& out_file) const
+void Forest::write(std::ostream& stream) const
 {
-    ForestIO::WriteNewick(*this, out_file);
+    ForestIO::WriteNewick(*this, stream);
 }
 
 void Forest::write(const string& path) const
