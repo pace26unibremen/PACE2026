@@ -3,7 +3,9 @@ file (GLOB solver_header *.hpp)
 
 add_library(Solver ${solver_source}
         Rule/ChainReductionRule.cpp
-        Rule/ChainReductionRule.h)
+        Rule/ChainReductionRule.h
+        Action/DeleteNodeActionInChains.cpp
+        Action/DeleteNodeActionInChains.h)
 target_link_libraries(Solver Graph)
 
 set_target_properties(Solver PROPERTIES

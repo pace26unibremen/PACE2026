@@ -4,6 +4,8 @@
 
 #include "ChainReductionRule.h"
 
+#include "../Action/DeleteNodeActionInChains.h"
+
 #include <algorithm>
 #include <stack>
 
@@ -17,7 +19,7 @@ solver::ChainReductionRule::ChainReductionRule(
     this->T1 = T1;
     this->T2 = T2;
     this->chains = chains;
-    changes = std::stack<AbstractAction>();
+    changes = std::stack<solver::DeleteNodeActionInChains>();
 }
 
 //Chain def:Let T be a rooted phylogenetic X-tree, and let C =
@@ -38,11 +40,28 @@ void solver::ChainReductionRule::apply()
         throw std::invalid_argument("ChainReductionRule : apply : rule was already applied");
     }
     isApplied = true;
+    //Fetch Nodes
+    std::vector<graph::Node> treeOneNodes = T1->Nodes();
+    std::vector<graph::Node> treeTwoNodes = T2->Nodes();
 
-    for (int index = 3; index < chains.size(); index++)
+    //x4+
+    //For n ≥ 4, let C = (x1, x2, . . . , xn) be a
+    //maximal n-chain that is common to T and T' . Then set
+    //S = T |X \ {x4, x5, . . . , xn} and S'= T'|X \ {x4, x5, . . . , xn}.
+    for (const auto& chain : chains)
     {
+        for (int index = chain.size() ; index > 3; index--)
+        {   int indexOfNodeInChainT1 = chain.at(index).at(0);
+            int indexOfNodeInChainT2 = chain.at(index).at(1);
 
+            changes.emplace(treeOneNodes.at(indexOfNodeInChainT1),T1);
+            changes.top().doAction();
+            changes.emplace(treeTwoNodes.at(indexOfNodeInChainT2),T2);
+            changes.top().doAction();
+        }
     }
+
+
 
 }
 
@@ -50,7 +69,7 @@ void solver::ChainReductionRule::unapply()
 {
     if (not this->isApplied)
     {
-        throw std::invalid_argument("EqualForestsRule : unapply : rule is not applied");
+        throw std::invalid_argument("ChainReductionRule : unapply : rule is not applied");
     }
     isApplied = false;
 
@@ -81,7 +100,9 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
 
     //For all Terminals...
     for (const auto& terminalT1 : termIndexTreeOne)
-    {   //Determine structure in T1
+    {   //T1
+
+        //Determine parent
         int parentIndexT1 = treeOneNodes.at(terminalT1.first).parentIndex;
 
         //Determine if sibling exists
@@ -107,7 +128,8 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
 
 
         for (const auto& terminalT2 : termIndexTreeTwo)
-        {
+        {   //T2
+
             //Determine Structure
             int parentIndexT2 = treeTwoNodes.at(terminalT2.first).parentIndex;
             int siblingIndexT2 = treeTwoNodes.at(terminalT2.first).siblingIndex;
@@ -211,7 +233,8 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
                     //Chain for both trees, x1-x3
                     //Technically parent of x1 is ignored but, well, it gets carried in-between x1 and x3 so w/e lol
                     std::vector<std::vector<int>> chainT1T2 = {{terminalT1.first,terminalT2.first},
-                        {siblingOfParentIndexT1,siblingOfParentIndexT2},{parentOfParentIndexT1,parentOfParentIndexT2}};
+                        {siblingOfParentIndexT1,siblingOfParentIndexT2},
+                        {parentOfParentIndexT1,parentOfParentIndexT2}};
 
                     int case2T1Parent = treeOneNodes.at(chainT1T2.back().front()).parentIndex;
                     int case2T2Parent = treeTwoNodes.at(chainT1T2.back().back()).parentIndex;
