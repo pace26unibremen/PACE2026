@@ -21,13 +21,13 @@ class Forest
     /// \brief Vector that stores all nodes of the forest.
     std::shared_ptr<std::vector<Node>> nodes;
 
-    /// \brief A map that stores all indices of terminals (in the \c nodes vector) with corresponding terminal labels.
+    /// \brief A map that stores all pointers to terminals with corresponding terminal labels.
     std::shared_ptr<std::unordered_map<Node*, unsigned int>> terminalToLabel;
 
-    /// \brief A map that stores all leaf labels with corresponding terminal indices (in the \c nodes vector).
+    /// \brief A map that stores all leaf labels with corresponding terminal Pointers.
     std::shared_ptr<std::unordered_map<unsigned int, Node*>> labelToTerminal;
 
-    /// \brief Indices of root nodes in \c nodes vector.
+    /// \brief Node pointers to root Nodes.
     std::shared_ptr<std::vector<Node*>> roots;
 
     /// \brief \b 1. Sorts the children of each node,
@@ -64,8 +64,8 @@ class Forest
     // ------------------------------------------------------------- //
 
     /// \brief Writes forest to a stream in newick format.
-    /// \param stream
-    void write(std::ostream& out_file) const;
+    /// \param stream the forest gets written to
+    void write(std::ostream& stream) const;
 
     /// \brief Writes forest to a stream in newick format.
     /// \param path to file
@@ -97,47 +97,47 @@ class Forest
 
     /// \brief Reference to terminals map
     /// \property
-    /// \first Terminal indices.
+    /// \first Terminal pointer.
     /// \second Corresponding terminal label.
     [[nodiscard, maybe_unused]]
     std::unordered_map<Node*, unsigned int>& Terminals();
 
     /// \brief \c const reference to terminals map
     /// \property
-    /// \first Terminal indices.
+    /// \first Terminal pointer.
     /// \second Corresponding terminal label.
     [[nodiscard, maybe_unused]]
     const std::unordered_map<Node*, unsigned int>& Terminals() const;
 
-    /// \brief Reference to label-to-node-index map
+    /// \brief Reference to labelToTerminal map
     /// \property
     /// \first Leaf labels.
-    /// \second Corresponding node index.
+    /// \second Corresponding node pointer.
     [[nodiscard, maybe_unused]]
     std::unordered_map<unsigned int, Node*>& LabelToTerminal();
 
-    /// \brief \c const reference to label-to-node-index map
+    /// \brief \c const reference to labelToTerminal map
     /// \property
     /// \first Leaf labels.
-    /// \second Corresponding node index.
+    /// \second Corresponding node pointer.
     [[nodiscard, maybe_unused]]
     const std::unordered_map<unsigned int, Node*>& LabelToTerminal() const;
 
-    /// \brief Reference index of root node.
+    /// \brief Reference vector of root node pointer.
     /// \property
     [[nodiscard, maybe_unused]]
     std::vector<Node*>& Roots();
 
-    /// \brief \c const reference index of root node.
+    /// \brief \c const reference vector of root node pointer.
     /// \property
     [[nodiscard, maybe_unused]]
     const std::vector<Node*>& Roots() const;
 
-    /// \brief returns the index of the root node in the nodes vector, that has \c node in its subtree
+    /// \brief returns a pointer to the root node, that has \c node in its subtree
     [[nodiscard, maybe_unused]]
     Node* rootOf(const Node& node) const;
 
-    /// \brief returns the index of the root node in the nodes vector, that has \c node in its subtree
+    /// \brief returns a pointer to the root node, that has \c node in its subtree
     [[nodiscard, maybe_unused]]
     Node* rootOf(Node* node) const;
 
