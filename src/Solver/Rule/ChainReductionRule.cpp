@@ -192,7 +192,10 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
                     //Determine x4,... of chain
                     while (case1check)
                     {   //Siblings exist
-                        if (case1T1Sibling != -1 && case1T2Sibling != -1 && case1T1Parent != -1 && case1T2Parent != -1)
+                        if (case1T1Sibling != -1 && case1T2Sibling != -1
+                            && case1T1Parent != -1 && case1T2Parent != -1
+                            && termIndexTreeOne.contains(case1T1Sibling)
+                            && termIndexTreeTwo.contains(case1T2Sibling))
                         {
                             chainT1T2.push_back({case1T1Parent,case1T2Parent});
                             case1T1Parent = treeOneNodes.at(chainT1T2.back().front()).parentIndex;
@@ -262,12 +265,15 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
                     }
 
                     //Chain collection bool
-                    bool case1check = true;
+                    bool case2check = true;
 
                     //Determine x4,... of chain
-                    while (case1check)
+                    while (case2check)
                     {   //Siblings exist
-                        if (case2T1Sibling != -1 && case2T2Sibling != -1 && case2T1Parent != -1 && case2T2Parent != -1)
+                        if (case2T1Sibling != -1 && case2T2Sibling != -1
+                            && case2T1Parent != -1 && case2T2Parent != -1
+                            && termIndexTreeOne.contains(case2T1Sibling)
+                            && termIndexTreeTwo.contains(case2T2Sibling))
                         {
                             chainT1T2.push_back({case2T1Parent,case2T2Parent});
                             case2T1Parent = treeOneNodes.at(chainT1T2.back().front()).parentIndex;
@@ -291,7 +297,7 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
                                 case2T2Sibling = treeOneNodes.at(case2T2Parent).leftChildIndex;
                             }
                         }
-                        else case1check = false;
+                        else case2check = false;
                     }
 
                     if (chainT1T2.size() >= 4)
