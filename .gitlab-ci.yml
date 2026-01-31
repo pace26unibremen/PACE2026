@@ -66,10 +66,18 @@ run_stride_benchmark:
     - export STRIDE_GRACE=10
     - export STRIDE_DOWNLOADS_PATH=".stride-downloads"
     - mkdir -p "$STRIDE_DOWNLOADS_PATH"
-    - ./stride download -i res/instances/mixed.lst
-    - ./stride run -Oo -i res/instances/mixed.lst
+    - ./stride download -i res/instances/30leaves.lst
+    - ./stride run -Oo -i res/instances/30leaves.lst
+
+    # Fail if stride-logs/latest/solverErr directory exists and is non‑empty
+    - |
+      if [ -d "stride-logs/latest/solvererror" ]; then
+        if [ -n "$(ls -A stride-logs/latest/solvererror)" ]; then
+          echo "Error: stride-logs/latest/solvererror is non‑empty, the solver encountered errors."
+          exit 1
+        fi
+      fi
   artifacts:
     paths:
       - stride-logs/
-      - summary.json
     expire_in: 1 Month
