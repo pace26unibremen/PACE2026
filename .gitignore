@@ -3,5 +3,7 @@ build/
 .idea/
 .vscode/
 .gitlab-ci-local*
+stride-logs
+pace26stride
 .log
 LocalConfig.cmake
