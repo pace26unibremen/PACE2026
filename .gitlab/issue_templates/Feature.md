@@ -1,28 +1,28 @@
-## Beschreibung  
-_Beschreibe kurz die neue Funktion oder Erweiterung._  
-<!-- Beispiel: Implementierung einer Heuristik. -->
+## Description  
+_Briefly describe the new function or enhancement._  
+<!-- Example: Implementation of a heuristic. -->
 
-## Ziel / Nutzen  
-_Welchen Zweck erfüllt das Feature im Projektkontext?_  
-<!-- Beispiel: Reduktion der Laufzeit bei großen Instanzen durch approximative Berechnung. -->
+## Goal / benefit  
+_What purpose does the feature serve in the project context?_  
+<!-- Example: Reduction of runtime on large instances through approximate computation. -->
 
-## Anforderungen / Akzeptanzkriterien  
-_Leg fest, wann die Implementierung als vollständig gilt._  
-<!-- Beispielsweise: (bitte entsprechend der Situation anpassen -->
-- [ ] Neue Funktion implementiert und getestet  
-- [ ] Ergebnisse validiert (z. B. Vergleich mit exakten Werten)  
-- [ ] Performance verbessert oder Ressourcenverbrauch unverändert  
-- [ ] Dokumentation und Beispielcode aktualisiert  
-- [ ] Entsprechende Unittests hinzugefügt
+## Requirements / acceptance criteria  
+_Define when the implementation is considered complete._  
+<!-- For example: (please adapt to the situation as needed) -->
+- [ ] New function implemented and tested  
+- [ ] Results validated (e.g. comparison with exact values)  
+- [ ] Performance improved or resource usage unchanged  
+- [ ] Documentation updated  
+- [ ] Appropriate unit tests added  
 
-## Rahmenbedingungen  
-_Sind technische, mathematische oder zeitliche Einschränkungen zu beachten?_  
-<!-- Beispiel: Muss mit bestehendem Solver-Interface kompatibel bleiben. -->
+## Constraints  
+_Are there technical, mathematical, or time-related constraints to be considered?_  
+<!-- Example: Must remain compatible with the existing solver interface. -->
 
-## Lösungsidee (optional)  
-_Beschreibe eine mögliche Herangehensweise oder Methodik._  
-<!-- Beispiel: Abschätzung von Operation basierend auf Abstand in Bäumen -->
+## Solution idea (optional)  
+_Describe a possible approach or methodology._  
+<!-- Example: Estimation of operations based on distance in trees -->
 
-## Referenzen (optional)  
-_Verweise auf Papers, Benchmarks oder andere relevante Quellen._  
-<!-- Beispiel: Chen et al. (2017) – "A New 2-Approximation Algorithm for rSPR Distance" -->
+## References (optional)  
+_Refer to papers, benchmarks, or other relevant sources._  
+<!-- Example: Chen et al. (2017) – "A New 2-Approximation Algorithm for rSPR Distance" -->
