@@ -233,10 +233,10 @@ bool Forest::isValid() const
         }
         lastSmallestTerminal = smallestTerminal;
     }
-    // Check terminal index -> label
+    // Check terminal -> label
     if (*terminalToLabel != totalLeafs)
     {
-        std::clog << "Forest: isValid: unreachable leafs in terminalIndexToLabel:\n"
+        std::clog << "Forest: isValid: unreachable leafs in terminalToLabel:\n"
                      "   List Leafs? \n"
                      "   She loves me. She loves me not. She loves me. She is undefined?"<< endl;
         valid = false;
@@ -334,7 +334,7 @@ bool Forest::checkTriple(Node* parentPtr, std::unordered_map<Node*, unsigned int
     bool tripleValid = true;
     const auto node = parentPtr;
     // Check pointers
-    if (!pointers.insert(parentPtr).second) //TODO: auch nicht mehr nötig?
+    if (!pointers.insert(parentPtr).second)
     {
         std::clog << "Forest: checkTriple: Node appears second time in tree:\n"
                          "   Pointer (" << parentPtr << ") \n"
@@ -347,13 +347,13 @@ bool Forest::checkTriple(Node* parentPtr, std::unordered_map<Node*, unsigned int
         if (terminalToLabel->contains(parentPtr))
         { // Add to found leafs
             unsigned int label = terminalToLabel->at(parentPtr);
-            // Check label -> index
+            // Check label -> ptr
             if (labelToTerminal->at(label) != parentPtr)
             {
-                std::clog << "Forest: checkTriple: label to index incorrect:\n"
+                std::clog << "Forest: checkTriple: label to terminal incorrect:\n"
                          "   Node (" << parentPtr << ") -> Label ("<< label <<")\n"
-                         "   Label ("<< label <<") -> Index (" << labelToTerminal->at(label) << ")\n"
-                         "   At least we're about to use pointers like real c-programmers. ^^"<< endl;
+                         "   Label ("<< label <<") -> Node (" << labelToTerminal->at(label) << ")\n"
+                         "   Is this unrequited love?"<< endl;
                 tripleValid = false;
             }
             // Save smallest terminal in tree
@@ -465,7 +465,7 @@ bool Forest::checkTriple(Node* parentPtr, std::unordered_map<Node*, unsigned int
     if (foundTerminals != node->subtreeTerminals)
     {
         std::clog << "Forest: checkTriple: subtreeTerminals list is incorrect:\n"
-                        "   at index (" << parentPtr << ") \n"
+                        "   at pointer (" << parentPtr << ") \n"
                         "   Maybe you should fix that? ;)"<< endl;
         tripleValid = false;
     }
@@ -554,7 +554,7 @@ std::vector<Node*> Forest::maximumCommonSubforestRoots(const Forest& other)
     // actually: iterate upward, always checking the sibling for identicality and the parent for the same terminals, deleting seen labels from the ones left to visit
     // vorinitialisierung von blattknoten; jeder durchlauf kreiert seinen sibling- und elternknoten; dabei sibling nur, wenn nicht besucht? ach nee, das ist was anderes. wenn nichtterminal? wird sowieso rekursiv/iterativ, also abbruchbedingung einfach? hilfsfunktion, die den gesamten sibling-subtree baut und den sibling-index zurückgibt (bei blatt halt nur rückgabe des index) bei leaf-siblings retrieval über label=index?
     // naur, just steal it from f1: iterate upward from each unvisited leaf, always checking the sibling subtree for identicality, and once a root for the leaf is found, do the label-index relation? should be doable via the parent forests map. make a new nodes vector after scanning the whole parent forest and exclude->reindex
-    vector<Node*> newRootPtrs; // indices of new root nodes in t1
+    vector<Node*> newRootPtrs; // pointers of new root nodes in t1
     newRootPtrs.reserve(labelToTerminal->size());
 
     // maps new forests node index to original forest indices
@@ -680,20 +680,20 @@ Forest Forest::copy()
     {
         copiedNodes->push_back(node);
     }
-    //Terminal Indecies
+    //Terminals
     copiedTerminalToLabel->reserve(terminalToLabel->size());
-    for ( auto termIndexToLabel : *terminalToLabel)
+    for ( auto termToLabel : *terminalToLabel)
     {
-        copiedTerminalToLabel->insert(termIndexToLabel);
+        copiedTerminalToLabel->insert(termToLabel);
     }
     copiedLabelToTerminal->reserve(labelToTerminal->size());
-    //Labels for Terminal Indecies
-    for (auto labelToTermIndex : *labelToTerminal)
+    //Labels for Terminals
+    for (auto labelToTerm : *labelToTerminal)
     {
-        copiedLabelToTerminal->insert(labelToTermIndex);
+        copiedLabelToTerminal->insert(labelToTerm);
     }
     copiedRoots->reserve(roots->capacity());
-    //Root Indices
+    //Roots
     for (Node* root : *roots)
     {
         copiedRoots->push_back(root);
