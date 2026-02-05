@@ -4,6 +4,8 @@
 #include <stack>
 #include <unordered_map>
 #include <vector>
+#include <functional>
+#include <stdexcept>
 
 using namespace std;
 using namespace graph;
@@ -17,13 +19,17 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
 
     // IMPORTANT for pointer stability:
     // emplace_back() can reallocate the vector; that would invalidate Node* pointers.
-    // If you can estimate an upper bound (like 2*n-1 for a binary tree),
+    // If you can estimate an upper bound (like 2*n-1 for a binary tree), reserve the maximum needed capacity.
     if(numberOfTerminals > 0)
     {
         nodes->reserve(2* numberOfTerminals - 1);
         terminalToLabel->reserve(numberOfTerminals);
         labelToTerminal->reserve(numberOfTerminals);
         roots->reserve(numberOfTerminals);
+    }
+    else
+    {
+        throw invalid_argument("ForestIO : ReadNewick : number of terminals must be positive");
     }
 
     // Stack of "currently open" internal nodes:
@@ -40,6 +46,39 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
 
         // First node we create for this tree will be its root
         Node* currentRoot = nullptr;
+
+        // Helper function to create a new node and link it to the current parent and sibling.
+        std::function addNode = [&]() -> Node* {
+            // Create new internal node
+            nodes->emplace_back();
+            Node* terminal = &nodes->back();
+
+            // Link to parent (if any)
+            if (not parentStack.empty())
+            {
+                Node* parent = parentStack.top();
+                terminal->parent = parent;
+
+                // Attach as left child if it's the first child,
+                // otherwise as right child and set sibling links.
+                if (sibling == nullptr)
+                {
+                    parent->leftChild = terminal;
+                }
+                else
+                {
+                    parent->rightChild = terminal;
+                    sibling->sibling = terminal;
+                    terminal->sibling = sibling;
+                }
+            }
+
+            // If the root is not yet assigned, this is the first node -> root
+            if (currentRoot == nullptr)
+                currentRoot = terminal;
+
+            return terminal;
+        };
 
         while (getline(stream, line))
         {
@@ -62,36 +101,9 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
                         // If there is a pending label right before ';', emit that leaf.
                         if (not label.empty())
                         {
-                            // Create new internal node
-                            nodes->emplace_back();
-                            Node* terminal = &nodes->back();
+                            Node* terminal = addNode();
 
-                            // Link to parent (if any)
-                            if (not parentStack.empty())
-                            {
-                                Node* parent = parentStack.top();
-                                terminal->parent = parent;
-
-                                // Attach as left child if it's the first child,
-                                // otherwise as right child and set sibling links.
-                                if (sibling == nullptr)
-                                {
-                                    parent->leftChild = terminal;
-                                }
-                                else
-                                {
-                                    parent->rightChild = terminal;
-                                    sibling->sibling = terminal;
-                                    terminal->sibling = sibling;
-                                }
-                            }
-
-                            // If the root is not yet assigned, this is the first node -> root
-                            if (currentRoot == nullptr)
-                                currentRoot = terminal;
-
-                            sibling = nullptr;
-
+                            // This is a terminal node, so we need to record its label.
                             unsigned int lab = static_cast<unsigned int>(std::stoi(label));
                             terminalToLabel->emplace(terminal, lab);
                             labelToTerminal->emplace(lab, terminal);
@@ -104,41 +116,16 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
                     // Separator between two children
                     case ',':
                     {
-                        // If we have collected digits, that means we just finished a terminal label.
+                        // If there is a pending terminal label before ',', emit that terminal first.
                         if (not label.empty())
                         {
-                            // Create new internal node
-                            nodes->emplace_back();
-                            Node* terminal = &nodes->back();
-
-                            // Link to parent (if any)
-                            if (not parentStack.empty())
-                            {
-                                Node* parent = parentStack.top();
-                                terminal->parent = parent;
-
-                                // Attach as left child if it's the first child,
-                                // otherwise as right child and set sibling links.
-                                if (sibling == nullptr)
-                                {
-                                    parent->leftChild = terminal;
-                                }
-                                else
-                                {
-                                    parent->rightChild = terminal;
-                                    sibling->sibling = terminal;
-                                    terminal->sibling = sibling;
-                                }
-                            }
-
-                            // If the root is not yet assigned, this is the first node -> root
-                            if (currentRoot == nullptr)
-                                currentRoot = terminal;
+                            Node* terminal = addNode();
 
                             // This terminal becomes the "previous child" before the comma,
                             // so the next child can link sibling pointers to it.
                             sibling = terminal;
 
+                            // This is a terminal node, so we need to record its label.
                             unsigned int lab = static_cast<unsigned int>(std::stoi(label));
                             terminalToLabel->emplace(terminal, lab);
                             labelToTerminal->emplace(lab, terminal);
@@ -153,34 +140,9 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
                         // If there is a pending terminal label before ')', emit that terminal first.
                         if (not label.empty())
                         {
-                            // Create new internal node
-                            nodes->emplace_back();
-                            Node* terminal = &nodes->back();
+                            Node* terminal = addNode();
 
-                            // Link to parent (if any)
-                            if (not parentStack.empty())
-                            {
-                                Node* parent = parentStack.top();
-                                terminal->parent = parent;
-
-                                // Attach as left child if it's the first child,
-                                // otherwise as right child and set sibling links.
-                                if (sibling == nullptr)
-                                {
-                                    parent->leftChild = terminal;
-                                }
-                                else
-                                {
-                                    parent->rightChild = terminal;
-                                    sibling->sibling = terminal;
-                                    terminal->sibling = sibling;
-                                }
-                            }
-
-                            // If the root is not yet assigned, this is the first node -> root
-                            if (currentRoot == nullptr)
-                                currentRoot = terminal;
-
+                            // This is a terminal node, so we need to record its label.
                             unsigned int lab = static_cast<unsigned int>(std::stoi(label));
                             terminalToLabel->emplace(terminal, lab);
                             labelToTerminal->emplace(lab, terminal);
@@ -190,8 +152,7 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
                         // Close the current parent subtree
                         if (not parentStack.empty())
                         {
-                            // After closing, the "sibling base" becomes the node we closed,
-                            // matching the original index-based logic.
+                            // After closing, the "sibling base" becomes the node we closed.
                             sibling = parentStack.top();
                             parentStack.pop();
                         }
@@ -205,34 +166,7 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
                     // Start subtree: create a new internal node.
                     case '(':
                     {
-                        // Create new internal node
-                        nodes->emplace_back();
-                        Node* terminal = &nodes->back();
-
-                        // Link to parent (if any)
-                        if (not parentStack.empty())
-                        {
-                            Node* parent = parentStack.top();
-                            terminal->parent = parent;
-
-                            // Attach as left child if it's the first child,
-                            // otherwise as right child and set sibling links.
-                            if (sibling == nullptr)
-                            {
-                                parent->leftChild = terminal;
-                            }
-                            else
-                            {
-                                parent->rightChild = terminal;
-                                sibling->sibling = terminal;
-                                terminal->sibling = sibling;
-                            }
-                        }
-
-                        // If this is the first node we created for this tree,
-                        // treat it as the tree root candidate.
-                        if (currentRoot == nullptr)
-                            currentRoot = terminal;
+                        Node* terminal = addNode();
 
                         // We are entering a new child list under this new internal node,
                         // so reset sibling tracking and push this node as current parent.
@@ -254,12 +188,14 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
         }
         endTree:
         {
-            // nothing to do here, start reading next tree
             // Prepare for the next tree
 
             // Finalize this tree: store its root pointer.
             if (currentRoot != nullptr)
                 roots->push_back(currentRoot);
+            else
+                // If we never created any node for this tree, that means the input was invalid (e.g. empty line or just ';').
+                throw invalid_argument("ForestIO : ReadNewick : no valid tree found in input");
 
             // Reset stacks and pointers for the next tree
             parentStack = stack<Node*>();
