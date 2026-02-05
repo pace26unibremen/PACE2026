@@ -457,10 +457,16 @@ bool Forest::checkTriple(Node* parentPtr, std::unordered_map<Node*, unsigned int
     }
     //TODO labelToTerminalIndex check (after change index->leaf)
 
-    vector <uint64_t> foundTerminals = {0}; //TODO: only accounts for 64(32?) terminals, need to add logic to scale the vector
+
+    // Convert found leafs into uint vector to compare
+    vector <uint64_t> foundTerminals = {0};
+    // Resize if leafs > 64
+    foundTerminals.resize((subtreeLeafs.size() + 63) / 64, 0);
     for( auto it = subtreeLeafs.begin(); it != subtreeLeafs.end(); ++it ) {
-        foundTerminals[0]+= 1<<(it->second - 1);
+        const unsigned int label = it->second;
+        foundTerminals[(label - 1) / 64]+= (1<<(label - 1) % 64);
     }
+
     // Compare found terminals with terminals saved in node
     if (foundTerminals != node->subtreeTerminals)
     {
