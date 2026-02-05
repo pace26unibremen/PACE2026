@@ -611,45 +611,54 @@ bool Forest::operator==(const Forest& other) const
 // ---- copy func ---------------------------------------------- //
 // ------------------------------------------------------------- //
 
-Forest Forest::copy()
-{
 
-    //Init empty Forest
-    std::shared_ptr<std::vector<Node>> copiedNodes = std::make_shared<std::vector<Node>>();
-    std::shared_ptr<std::unordered_map<Node*, unsigned int>> copiedTerminalToLabel =
-        std::make_shared<std::unordered_map<Node*, unsigned int>>();
-    std::shared_ptr<std::unordered_map<unsigned int, Node*>> copiedLabelToTerminal =
-        std::make_shared<std::unordered_map<unsigned int, Node*>>();
-    std::shared_ptr<std::vector<Node*>> copiedRoots = std::make_shared<std::vector<Node*>>();
-    //Start Copying the param Nodes
-    copiedNodes->reserve(nodes->capacity());
-    for ( Node node : *nodes)
+Forest Forest::copy() const
+{
+    // maps pointers to nodes in the og forest to pointer of corresponding nodes in the copy forest
+    std::unordered_map<Node*, Node*> newPointerLookup;
+    newPointerLookup.emplace(nullptr, nullptr);
+
+    // initialize the member fields of the copy forest with correct capacity
+    auto nodes_copy = std::make_shared<std::vector<Node>>();
+    auto terminalToLabel_copy = std::make_shared<std::unordered_map<Node*, unsigned int>>();
+    auto labelToTerminal_copy = std::make_shared<std::unordered_map<unsigned int, Node*>>();
+    auto roots_copy = std::make_shared<std::vector<Node*>>();
+    nodes_copy->reserve(nodes->capacity());
+    terminalToLabel_copy->reserve(terminalToLabel->size());
+    labelToTerminal_copy->reserve(labelToTerminal->size());
+    roots_copy->reserve(roots->capacity());
+
+    // copy the nodes with the old pointers
+    for (unsigned int i = 0; i < nodes->size(); i++)
     {
-        copiedNodes->push_back(node);
+        nodes_copy->push_back(nodes->at(i));
+        newPointerLookup.emplace(& (*nodes)[i], & (*nodes_copy)[i]);
     }
-    //Terminals
-    copiedTerminalToLabel->reserve(terminalToLabel->size());
-    for ( auto termToLabel : *terminalToLabel)
+
+    // adjust the pointers
+    for (Node& node : *nodes_copy)
     {
-        copiedTerminalToLabel->insert(termToLabel);
+        node.parent = newPointerLookup[node.parent];
+        node.sibling = newPointerLookup[node.sibling];
+        node.leftChild = newPointerLookup[node.leftChild];
+        node.rightChild = newPointerLookup[node.rightChild];
     }
-    copiedLabelToTerminal->reserve(labelToTerminal->size());
-    //Labels for Terminals
-    for (auto labelToTerm : *labelToTerminal)
+
+    for ( auto [terminal, label] : *terminalToLabel)
     {
-        copiedLabelToTerminal->insert(labelToTerm);
+        terminalToLabel_copy->emplace(newPointerLookup[terminal], label);
     }
-    copiedRoots->reserve(roots->capacity());
-    //Roots
+    for (auto [label, terminal] : *labelToTerminal)
+    {
+        labelToTerminal_copy->emplace(label, newPointerLookup[terminal]);
+    }
     for (Node* root : *roots)
     {
-        copiedRoots->push_back(root);
+        roots_copy->push_back(newPointerLookup[root]);
     }
 
-    Forest newForest(copiedNodes, copiedTerminalToLabel, copiedLabelToTerminal, copiedRoots);
-
-    return newForest;
-
+    return {nodes_copy, terminalToLabel_copy, labelToTerminal_copy, roots_copy};
 }
+
 
 }  //namespace graph
