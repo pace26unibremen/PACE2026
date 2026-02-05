@@ -1,7 +1,5 @@
 #include "TrivialSolver.hpp"
 
-#include <numeric>
-
 solver::TrivialSolver::TrivialSolver(const std::shared_ptr<graph::Instance>& instance)
     : AbstractSolver(instance)
 {
