@@ -609,8 +609,6 @@ bool Forest::operator==(const Forest& other) const
         const Node& thisNode = *thisNodePtr;
         const Node& otherNode = *otherNodePtr;
 
-        auto random = rand();
-
         bool thisIsTerminal = thisNode.leftChild == nullptr && thisNode.rightChild == nullptr;
         bool otherIsTerminal = otherNode.leftChild == nullptr && otherNode.rightChild == nullptr;
 
@@ -621,17 +619,17 @@ bool Forest::operator==(const Forest& other) const
         if (thisIsTerminal && otherIsTerminal)
         {
 
-            if (not terminalToLabel->contains(thisNodePtr))
+            // This check has been implemented due to the fact that the maps integrity was damaged during the refactor.
+            // This may be removed, (among the other checks), if we need to scrape out every last ounce of performance
+            // and it's certain again that the map will always contain the keys.
+            if (not terminalToLabel->contains(thisNodePtr) || not other.terminalToLabel->contains(otherNodePtr))
             {
-                std::cerr << random << " : TerminalToLabel of the Forest does not contain " << thisNodePtr << "\n";
+                std::cerr << "(== of Forest.cpp) terminalToLabel of either forests contains a key that isn't present within the map. "
+                             "This is catastrophic failure." << "\n";
                 return false;
             }
 
-            if (not other.terminalToLabel->contains(otherNodePtr))
-            {
-                std::cerr << random << " : TerminalToLabel of the other Forest does not contain " << otherNodePtr << "\n";
-                return false;
-            }
+
 
             if (terminalToLabel->contains(thisNodePtr) and other.terminalToLabel->contains(otherNodePtr))
             {
