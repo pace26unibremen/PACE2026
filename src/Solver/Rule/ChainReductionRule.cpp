@@ -12,13 +12,13 @@
 solver::ChainReductionRule::ChainReductionRule(
     const std::shared_ptr<graph::Forest>& T1,
     const std::shared_ptr<graph::Forest>& T2,
-    const std::vector<std::vector<std::vector<int>>>& chains
+    const std::vector<std::vector<int>>& chain
     )
 {
     //Copying of the Trees maybe irrelevant when doing this without const params. Not sure.
     this->T1 = T1;
     this->T2 = T2;
-    this->chains = chains;
+    this->chain = chain;
     changes = std::stack<solver::DeleteNodeActionInChains>();
 }
 
@@ -48,18 +48,16 @@ void solver::ChainReductionRule::apply()
     //For n ≥ 4, let C = (x1, x2, . . . , xn) be a
     //maximal n-chain that is common to T and T' . Then set
     //S = T |X \ {x4, x5, . . . , xn} and S'= T'|X \ {x4, x5, . . . , xn}.
-    for (const auto& chain : chains)
-    {
-        for (int index = chain.size() ; index > 3; index--)
-        {   int indexOfNodeInChainT1 = chain.at(index).at(0);
-            int indexOfNodeInChainT2 = chain.at(index).at(1);
+    for (int index = chain.size() ; index > 3; index--)
+    {   int indexOfNodeInChainT1 = chain.at(index).at(0);
+        int indexOfNodeInChainT2 = chain.at(index).at(1);
 
-            changes.emplace(treeOneNodes.at(indexOfNodeInChainT1),T1);
-            changes.top().doAction();
-            changes.emplace(treeTwoNodes.at(indexOfNodeInChainT2),T2);
-            changes.top().doAction();
-        }
+        changes.emplace(treeOneNodes.at(indexOfNodeInChainT1),T1);
+        changes.top().doAction();
+        changes.emplace(treeTwoNodes.at(indexOfNodeInChainT2),T2);
+        changes.top().doAction();
     }
+
 
 
 
@@ -86,8 +84,8 @@ std::shared_ptr<solver::AbstractRule>
 solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T1,
     const std::shared_ptr<graph::Forest>& T2)
 {
-    //List of chains in the tree.
-    std::vector<std::vector<std::vector<int>>> chainList;
+    //First found Chain in both trees
+    std::vector<std::vector<int>> chain;
 
 
     //Fetch Nodes
@@ -125,7 +123,10 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
         {
             case2SiblingIsOnLeftSideT1= false;
         }
-
+        if (not chain.empty())
+        {
+            break;
+        }
 
         for (const auto& terminalT2 : termIndexTreeTwo)
         {   //T2
@@ -224,7 +225,7 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
 
                     if (chainT1T2.size() >= 4)
                     {
-                        chainList.push_back(chainT1T2);
+                        chain = chainT1T2;
                     }
                 }
             //Case 2: or the parent of x2 is the parent of the parent of x1, i.e parent index of sibling is
@@ -302,14 +303,18 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
 
                     if (chainT1T2.size() >= 4)
                     {
-                        chainList.push_back(chainT1T2);
+                        chain = chainT1T2;
                     }
 
                 }
+            if (not chain.empty())
+            {
+                break;
+            }
         }
     }
     return std::dynamic_pointer_cast<AbstractRule>(
-        std::make_shared<ChainReductionRule>(T1,T2, chainList));
+        std::make_shared<ChainReductionRule>(T1,T2, chain));
 
 
     // //For every node that could be shared between both...
