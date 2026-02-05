@@ -8,16 +8,16 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
-#include <sstream>
 #include <stack>
 #include <unordered_set>
 #include <utility>
-#include <stack>
+
 #ifdef DEBUG_IMAGE_VIEW_GRAPH
 #include <graphviz/gvc.h>
 #include <opencv2/imgcodecs.hpp>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sstream>
 #endif
 
 using namespace std;
