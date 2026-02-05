@@ -336,7 +336,7 @@ void ForestIO::WriteDot(const Forest& tree, ostream& stream)
         stream << "n" << i.first << " -> inv [style = invis];\n";
     }
 
-    // TODO: Notice: This uses the address of the Node. This will still work, but produces dot-files that are not comparable.
+    //  Notice: This uses the address of the Node. This will still work, but produces dot-files that are not comparable.
     //  Also the addresses will differ between runs, therefor the same tree will have different dot files in every run.
     for (auto& node : tree.Nodes())
     {
