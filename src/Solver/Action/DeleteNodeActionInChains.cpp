@@ -134,9 +134,19 @@ void solver::DeleteNodeActionInChains::undoAction()
 
     //Determine the index of parent node and child nodes of the param node (They've most likely changed)
 
+    int parentIndex;
+    int leftChildIndex;
+    int rightChildIndex;
 
-
-
+    //Determine parent node index
+    for (const auto& node : forest->Nodes())
+    {
+        if (node.parentIndex == parentIndex)
+        {
+            parentIndex = node.parentIndex;
+            break;
+        }
+    }
 
     if (terminalOnRightSide)
     {
