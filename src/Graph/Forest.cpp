@@ -155,52 +155,6 @@ Node* Forest::rootOf(Node* node) const
     return rootOf(*node);
 }
 
-// ------------------------------------------------------------- //
-// ---- debug -------------------------------------------------- //
-// ------------------------------------------------------------- //
-
-void Forest::print() const
-{
-    stringstream rowIndex;
-    stringstream rowLine;
-    stringstream rowParent;
-    stringstream rowSibling;
-    stringstream rowFstChild;
-    stringstream rowSndChild;
-
-    rowIndex << "     Index |";
-    rowLine << "-----------+";
-    rowParent << "    Parent |";
-    rowSibling << "   Sibling |";
-    rowFstChild << " fst Child |";
-    rowSndChild << " snd Child |";
-
-    for (unsigned int i = 0; i < nodes->size(); i++)
-    {
-        Node& n = nodes->at(i);
-        if (terminalToLabel->contains(&n))
-        {
-            rowIndex << std::setw(3) << terminalToLabel->at(&n) << " " << std::setw(3) << i << " |";
-        }
-        else
-        {
-            rowIndex << std::setw(7) << i << " |";
-        }
-        rowLine << "--------+";
-        rowParent << std::setw(7) << n.parent << " |";
-        rowSibling << std::setw(7) << n.sibling << " |";
-        rowFstChild << std::setw(7) << n.leftChild << " |";
-        rowSndChild << std::setw(7) << n.rightChild << " |";
-    }
-    std::clog << "\n"
-              << rowIndex.str() << "\n"
-              << rowLine.str() << "\n"
-              << rowParent.str() << "\n"
-              << rowSibling.str() << "\n"
-              << rowFstChild.str() << "\n"
-              << rowSndChild.str() << endl;
-}
-
 bool Forest::isValid() const
 {
     bool valid = true;
@@ -241,11 +195,7 @@ bool Forest::isValid() const
                      "   She loves me. She loves me not. She loves me. She is undefined?"<< endl;
         valid = false;
     }
-    // Print forest after check (bad readability for big forests)
-    // if(not valid)
-    // {
-    //     print();
-    // }
+
     return valid;
 }
 
@@ -516,7 +466,7 @@ void Forest::renderImage()
 }
 #endif
 
-void Forest::sortChildrenAndCollectTerminals() //TODO check if std:swap still works
+void Forest::sortChildrenAndCollectTerminals()
 {
     // the number of elements in the `subtreeTerminals` vector of each node
     const unsigned int numberOfEntries = (terminalToLabel->size() + 63) / 64;
@@ -611,12 +561,10 @@ std::vector<Node*> Forest::maximumCommonSubforestRoots(const Forest& other)
 
 bool Forest::operator==(const Forest& other) const
 {
-    std::function<bool(Node*, Node*)> compareSubtrees = [&](Node* thisNodePtr, Node* otherNodePtr) -> bool {
-        const Node& thisNode = *thisNodePtr;
-        const Node& otherNode = *otherNodePtr;
+    std::function<bool(Node*, Node*)> compareSubtrees = [&](Node* thisNode, Node* otherNode) -> bool {
 
-        bool thisIsTerminal = thisNode.leftChild == nullptr && thisNode.rightChild == nullptr;
-        bool otherIsTerminal = otherNode.leftChild == nullptr && otherNode.rightChild == nullptr;
+        bool thisIsTerminal = thisNode->leftChild == nullptr && thisNode->rightChild == nullptr;
+        bool otherIsTerminal = otherNode->leftChild == nullptr && otherNode->rightChild == nullptr;
 
         if (thisIsTerminal != otherIsTerminal)
         {
@@ -624,29 +572,26 @@ bool Forest::operator==(const Forest& other) const
         }
         if (thisIsTerminal && otherIsTerminal)
         {
-
             // This check has been implemented due to the fact that the maps integrity was damaged during the refactor.
             // This may be removed, (among the other checks), if we need to scrape out every last ounce of performance
             // and it's certain again that the map will always contain the keys.
-            if (not terminalToLabel->contains(thisNodePtr) || not other.terminalToLabel->contains(otherNodePtr))
+            if (not terminalToLabel->contains(thisNode) || not other.terminalToLabel->contains(otherNode))
             {
                 std::cerr << "(== of Forest.cpp) terminalToLabel of either forests contains a key that isn't present within the map. "
                              "This is catastrophic failure." << "\n";
                 return false;
             }
 
-
-
-            if (terminalToLabel->contains(thisNodePtr) and other.terminalToLabel->contains(otherNodePtr))
+            if (terminalToLabel->contains(thisNode) and other.terminalToLabel->contains(otherNode))
             {
-                return  terminalToLabel->at(thisNodePtr) == other.terminalToLabel->at(otherNodePtr);
+                return  terminalToLabel->at(thisNode) == other.terminalToLabel->at(otherNode);
             }
 
             return false;
 
         }
-        return compareSubtrees(thisNode.leftChild, otherNode.leftChild) and
-               compareSubtrees(thisNode.rightChild, otherNode.rightChild);
+        return compareSubtrees(thisNode->leftChild, otherNode->leftChild) and
+               compareSubtrees(thisNode->rightChild, otherNode->rightChild);
     };
     if(roots->size() != other.roots->size())
     {
@@ -676,9 +621,7 @@ Forest Forest::copy()
     std::shared_ptr<std::unordered_map<unsigned int, Node*>> copiedLabelToTerminal =
         std::make_shared<std::unordered_map<unsigned int, Node*>>();
     std::shared_ptr<std::vector<Node*>> copiedRoots = std::make_shared<std::vector<Node*>>();
-    //Start Copying the param
-    //Nodes
-    // Anstelle -> auch nichts: this allein| nodes, Nodes()
+    //Start Copying the param Nodes
     copiedNodes->reserve(nodes->capacity());
     for ( Node node : *nodes)
     {

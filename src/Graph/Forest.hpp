@@ -144,13 +144,6 @@ class Forest
     /// \brief Returns the maximum common X-Forest of this forest and the input forest.
     std::vector<Node*> maximumCommonSubforestRoots(const Forest& other);
 
-    // ------------------------------------------------------------- //
-    // ---- debug -------------------------------------------------- //
-    // ------------------------------------------------------------- //
-
-    /// \brief Writes forest as table to std::clog
-    void print() const;
-
     /// \brief Checks whether the forest representation is valid
     /// and writes flaws to std::clog
     bool isValid() const;
