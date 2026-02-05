@@ -32,13 +32,6 @@ void solver::DeleteEdgeAction::doAction()
         doParentIsInner();
     }
 
-    // can be removed if new isValid is active
-    parentCopy = *parent;
-    parent->leftChild = nullptr;
-    parent->rightChild = nullptr;
-    parent->parent = nullptr;
-    parent->sibling = nullptr;
-
     #ifdef DEBUG_IMAGE_VIEW_GRAPH
     forest->renderImage();
     #endif
@@ -46,10 +39,6 @@ void solver::DeleteEdgeAction::doAction()
 
 void DeleteEdgeAction::undoAction()
 {
-    // can be removed if new isValid is active
-    *parent = parentCopy;
-    //
-
     if (parentIsRoot)
     {
         undoParentIsRoot();

@@ -45,9 +45,6 @@ class DeleteEdgeAction : AbstractAction
     /// \brief whether the parent is a root node
     bool parentIsRoot;
 
-    /// \brief a copy of the parent node (can be removed when the new isValid method is active)
-    graph::Node parentCopy;
-
     /// \brief do methode for the 'parent is a root node' case
     void doParentIsRoot();
 
