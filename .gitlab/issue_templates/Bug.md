@@ -1,37 +1,37 @@
-## Beschreibung des Fehlers  
-_Beschreibe den beobachteten Fehler und in welchem Kontext er auftritt._  
-<!-- Beispiel: Beim lösen eines MAF mit mehr als 64 Leafs kommt es zu einem Segmentation Fault. In der Methode x -->
+## Description of the bug  
+_Describe the observed bug and the context in which it occurs._  
+<!-- Example: When solving an MAF with more than 64 leaves, a segmentation fault occurs in method x. -->
 
-## Schritte zur Reproduktion  
-_Führe die genauen Schritte auf, mit denen der Fehler zuverlässig reproduziert werden kann._  
+## Steps to reproduce  
+_List the exact steps with which the bug can be reliably reproduced._  
 1.  
 2.  
 3.  
 
-## Erwartetes Verhalten  
-_Beschreibe, was das Programm eigentlich tun sollte._  
-<!-- Beispiel: Die Methode x sollte alle Bäume sortieren und für jede Node eine Liste der Leafs des Subtrees erstellen. -->
+## Expected behavior  
+_Describe what the program is supposed to do._  
+<!-- Example: Method x should sort all trees and, for each node, create a list of the leaves in its subtree. -->
 
-## Tatsächliches Verhalten  
-_Erläutere, was stattdessen passiert._  
-<!-- Beispiel: Sobald das 65. Leaf bearbeitet wird, kommt es zu einem Segmentation Fault -->
+## Actual behavior  
+_Explain what happens instead._  
+<!-- Example: As soon as the 65th leaf is processed, a segmentation fault occurs. -->
 
-## Umgebung  
-_Welche Systemumgebung wurde verwendet?_  
-- Betriebssystem und Version:  
-- Compiler und Version:  
-- Build-Typ: (Debug / Releasem, etc.)  
-- Eingabedaten / verwendete Dateien:  
-- Reproduzierbarkeit: (immer / gelegentlich / einmalig)
+## Environment  
+_Which system environment was used?_  
+- Operating system and version:  
+- Compiler and version:  
+- Build type: (Debug / Release, etc.)  
+- Input data / files used:  
+- Reproducibility: (always / occasionally / once)
 
-## Akzeptanzkriterien  
-_Definiere die Bedingungen, unter denen das Problem als gelöst gilt._  
-<!-- Beispielsweise: (bitte entsprechend der Situation anpassen -->
-- [ ] Fehler tritt nicht mehr bei den reproduzierbaren Schritten auf
-- [ ] Alle relevanten Tests laufen ohne Absturz oder Fehler
-- [ ] Dokumentation oder Kommentar angepasst, falls nötig
+## Acceptance criteria  
+_Define the conditions under which the problem is considered resolved._  
+<!-- For example: (please adapt to the situation as needed) -->
+- [ ] Bug no longer occurs with the reproducible steps  
+- [ ] All relevant tests run without crashes or errors  
+- [ ] Documentation or comments updated, if necessary  
 
-## Hinweise (optional)  
-_Ergänze zusätzliche Anmerkungen, Logs oder Vermutungen zur Ursache._  
-<!-- Beispiel: Möglicher Speicherüberlauf -->
-<!-- Beispiel: Es wurde bereits folgendes probiert: -->
+## Notes (optional)  
+_Add additional remarks, logs, or assumptions about the cause._  
+<!-- Example: Possible memory overflow -->  
+<!-- Example: The following has already been tried: -->
