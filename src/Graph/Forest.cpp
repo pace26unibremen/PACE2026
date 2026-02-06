@@ -405,7 +405,6 @@ bool Forest::checkTriple(Node* parentPtr, std::unordered_map<Node*, unsigned int
         leftLeafs.merge(rightLeafs);
         subtreeLeafs = leftLeafs; // Collect leafs of subtree
     }
-    //TODO labelToTerminalIndex check (after change index->leaf)
 
 
     // Convert found leafs into uint vector to compare
