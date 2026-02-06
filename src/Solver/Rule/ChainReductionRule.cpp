@@ -12,7 +12,7 @@
 solver::ChainReductionRule::ChainReductionRule(
     const std::shared_ptr<graph::Forest>& T1,
     const std::shared_ptr<graph::Forest>& T2,
-    const std::vector<std::vector<int>>& chain
+    const std::vector<std::vector<graph::Node*>>& chain
     )
 {
     //Copying of the Trees maybe irrelevant when doing this without const params. Not sure.
@@ -49,12 +49,12 @@ void solver::ChainReductionRule::apply()
     //maximal n-chain that is common to T and T' . Then set
     //S = T |X \ {x4, x5, . . . , xn} and S'= T'|X \ {x4, x5, . . . , xn}.
     for (int index = chain.size() ; index > 3; index--)
-    {   int indexOfNodeInChainT1 = chain.at(index).at(0);
-        int indexOfNodeInChainT2 = chain.at(index).at(1);
+    {   graph::Node* NodeInChainT1 = chain.at(index).at(0);
+        graph::Node* NodeInChainT2 = chain.at(index).at(1);
 
-        changes.emplace(treeOneNodes.at(indexOfNodeInChainT1),T1);
+        changes.emplace(NodeInChainT1,T1);
         changes.top().doAction();
-        changes.emplace(treeTwoNodes.at(indexOfNodeInChainT2),T2);
+        changes.emplace(NodeInChainT2,T2);
         changes.top().doAction();
     }
 
@@ -85,37 +85,37 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
     const std::shared_ptr<graph::Forest>& T2)
 {
     //First found Chain in both trees
-    std::vector<std::vector<int>> chain;
+    std::vector<std::vector<graph::Node*>> chain;
 
 
     //Fetch Nodes
-    std::vector<graph::Node> treeOneNodes = T1->Nodes();
-    std::vector<graph::Node> treeTwoNodes = T2->Nodes();
+    //std::vector<graph::Node> treeOneNodes = T1->Nodes();
+    //std::vector<graph::Node> treeTwoNodes = T2->Nodes();
 
     //Fetch Leaves - Terminal Index to Label
-    std::unordered_map<int,unsigned int> termIndexTreeOne = T1->Terminals();
-    std::unordered_map<int,unsigned int> termIndexTreeTwo = T2->Terminals();
+    std::unordered_map<graph::Node*,unsigned int> termIndexTreeOne = T1->Terminals();
+    std::unordered_map<graph::Node*,unsigned int> termIndexTreeTwo = T2->Terminals();
 
     //For all Terminals...
     for (const auto& terminalT1 : termIndexTreeOne)
     {   //T1
 
         //Determine parent
-        int parentIndexT1 = treeOneNodes.at(terminalT1.first).parentIndex;
+        graph::Node* parentT1 = terminalT1.first->parent;
 
         //Determine if sibling exists
-        int siblingIndexT1 = treeOneNodes.at(terminalT1.first).siblingIndex;
+        graph::Node* siblingT1 = terminalT1.first->sibling;
 
         // -> x1, x2 and x3 for case 1 for chain def known for T1
 
 
         //Determine x3 for case 2 for chain def in T1
-        int parentOfParentIndexT1 = treeOneNodes.at(parentIndexT1).parentIndex;
-        int siblingOfParentIndexT1 = treeOneNodes.at(parentIndexT1).siblingIndex;
+        graph::Node* parentOfParentT1 = parentT1->parent;
+        graph::Node* siblingOfParentT1 = parentT1->sibling;
 
         //Case 2 structure check
         bool case2SiblingIsOnLeftSideT1;
-        if (treeOneNodes.at(parentOfParentIndexT1).leftChildIndex == siblingOfParentIndexT1)
+        if (parentOfParentT1->leftChild == siblingOfParentT1)
         {
             case2SiblingIsOnLeftSideT1 = true;
         }
@@ -132,18 +132,18 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
         {   //T2
 
             //Determine Structure
-            int parentIndexT2 = treeTwoNodes.at(terminalT2.first).parentIndex;
-            int siblingIndexT2 = treeTwoNodes.at(terminalT2.first).siblingIndex;
+            graph::Node* parentT2 = terminalT2.first->parent;
+            graph::Node* siblingT2 = terminalT2.first->sibling;
 
             // -> x1,x2,x3 for case 1 known for T2
 
             //Determine x3 for case 2 for chain def in T2
-            int parentOfParentIndexT2 = treeTwoNodes.at(parentIndexT2).parentIndex;
-            int siblingOfParentIndexT2 = treeTwoNodes.at(parentIndexT2).siblingIndex;
+            graph::Node* parentOfParentT2 = parentT2->parent;
+            graph::Node* siblingOfParentT2 = parentT2->sibling;
 
             //Case 2 structure check
             bool case2SiblingIsOnLeftSideT2;
-            if (treeTwoNodes.at(parentOfParentIndexT2).leftChildIndex == siblingOfParentIndexT2)
+            if (parentOfParentT2->leftChild== siblingOfParentT2)
             {
                 case2SiblingIsOnLeftSideT2 = true;
             }
@@ -154,159 +154,159 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
 
 
             //Case 1: if the parent of x1 coincides with the parent of x2
-                if (siblingIndexT2 != -1 && siblingIndexT1 != -1 &&
-                    (treeOneNodes.at(siblingIndexT1).parentIndex == parentIndexT1)
-                    && (treeTwoNodes.at(siblingIndexT2).parentIndex == parentIndexT2))
+            if (siblingT2 != nullptr && siblingT1 != nullptr &&
+                (siblingT1->parent == parentT1)
+                && (siblingT2->parent == parentT2))
+            {
+                //Chain for both trees, x1-x3
+                std::vector<std::vector<graph::Node*>> chainT1T2 = {{terminalT1.first,terminalT2.first},
+                    {siblingT1,siblingT2},{parentT1,parentT2}};
+
+                //Chain collection bool
+                bool case1check = true;
+
+                graph::Node* case1T1Parent = chainT1T2.back().front()->parent;
+                graph::Node* case1T2Parent = chainT1T2.back().back()->parent;
+
+                graph::Node* case1T1Sibling;
+                graph::Node* case1T2Sibling;
+
+                //T1 structure check
+                if (case1T1Parent->leftChild == chainT1T2.back().front())
                 {
-                    //Chain for both trees, x1-x3
-                    std::vector<std::vector<int>> chainT1T2 = {{terminalT1.first,terminalT2.first},
-                        {siblingIndexT1,siblingIndexT2},{parentIndexT1,parentIndexT2}};
-
-                    //Chain collection bool
-                    bool case1check = true;
-
-                    int case1T1Parent = treeOneNodes.at(chainT1T2.back().front()).parentIndex;
-                    int case1T2Parent = treeTwoNodes.at(chainT1T2.back().back()).parentIndex;
-
-                    int case1T1Sibling;
-                    int case1T2Sibling;
-
-                    //T1 structure check
-                    if (treeOneNodes.at(case1T1Parent).leftChildIndex == chainT1T2.back().front())
-                    {
-                        case1T1Sibling = treeOneNodes.at(case1T1Parent).rightChildIndex;
-                    }
-                    else
-                    {
-                        case1T1Sibling = treeOneNodes.at(case1T1Parent).leftChildIndex;
-                    }
-                    //T2 structure c heck
-                    if (treeTwoNodes.at(case1T2Parent).leftChildIndex == chainT1T2.back().back())
-                    {
-                        case1T2Sibling = treeTwoNodes.at(case1T1Parent).rightChildIndex;
-                    }
-                    else
-                    {
-                        case1T2Sibling = treeTwoNodes.at(case1T2Parent).leftChildIndex;
-                    }
-
-                    //Determine x4,... of chain
-                    while (case1check)
-                    {   //Siblings exist
-                        if (case1T1Sibling != -1 && case1T2Sibling != -1
-                            && case1T1Parent != -1 && case1T2Parent != -1
-                            && termIndexTreeOne.contains(case1T1Sibling)
-                            && termIndexTreeTwo.contains(case1T2Sibling))
-                        {
-                            chainT1T2.push_back({case1T1Parent,case1T2Parent});
-                            case1T1Parent = treeOneNodes.at(chainT1T2.back().front()).parentIndex;
-                            case1T2Parent = treeTwoNodes.at(chainT1T2.back().back()).parentIndex;
-                            //T1 structure check
-                            if (treeOneNodes.at(case1T1Parent).leftChildIndex == chainT1T2.back().front())
-                            {
-                                case1T1Sibling = treeOneNodes.at(case1T1Parent).rightChildIndex;
-                            }
-                            else
-                            {
-                                case1T1Sibling = treeOneNodes.at(case1T1Parent).leftChildIndex;
-                            }
-                            //T2 structure c heck
-                            if (treeOneNodes.at(case1T2Parent).leftChildIndex == chainT1T2.back().back())
-                            {
-                                case1T2Sibling = treeOneNodes.at(case1T1Parent).rightChildIndex;
-                            }
-                            else
-                            {
-                                case1T2Sibling = treeOneNodes.at(case1T2Parent).leftChildIndex;
-                            }
-                        }
-                        else case1check = false;
-                    }
-
-                    if (chainT1T2.size() >= 4)
-                    {
-                        chain = chainT1T2;
-                    }
+                    case1T1Sibling = case1T1Parent->rightChild;
                 }
+                else
+                {
+                    case1T1Sibling = case1T1Parent->leftChild;
+                }
+                //T2 structure c heck
+                if (case1T2Parent->leftChild == chainT1T2.back().back())
+                {
+                    case1T2Sibling = case1T2Parent->rightChild;
+                }
+                else
+                {
+                    case1T2Sibling = case1T2Parent->leftChild;
+                }
+
+                //Determine x4,... of chain
+                while (case1check)
+                {   //Siblings exist
+                    if (case1T1Sibling != nullptr && case1T2Sibling != nullptr
+                        && case1T1Parent != nullptr && case1T2Parent != nullptr
+                        && termIndexTreeOne.contains(case1T1Sibling)
+                        && termIndexTreeTwo.contains(case1T2Sibling))
+                    {
+                        chainT1T2.push_back({case1T1Parent,case1T2Parent});
+                        case1T1Parent = chainT1T2.back().front()->parent;
+                        case1T2Parent = chainT1T2.back().back()->parent;
+                        //T1 structure check
+                        if (case1T1Parent->leftChild == chainT1T2.back().front())
+                        {
+                            case1T1Sibling = case1T1Parent->rightChild;
+                        }
+                        else
+                        {
+                            case1T1Sibling = case1T1Parent->leftChild;
+                        }
+                        //T2 structure c heck
+                        if (case1T2Parent->leftChild == chainT1T2.back().back())
+                        {
+                            case1T2Sibling = case1T2Parent->rightChild;
+                        }
+                        else
+                        {
+                            case1T2Sibling = case1T2Parent->leftChild;
+                        }
+                    }
+                    else case1check = false;
+                }
+
+                if (chainT1T2.size() >= 4)
+                {
+                    chain = chainT1T2;
+                }
+            }
             //Case 2: or the parent of x2 is the parent of the parent of x1, i.e parent index of sibling is
             //the same as the index for the parent of the parent on both trees.
-                else if (case2SiblingIsOnLeftSideT1 == case2SiblingIsOnLeftSideT2 && treeOneNodes.at(siblingIndexT1).
-                    parentIndex == parentOfParentIndexT1 && treeTwoNodes.at(siblingIndexT2).parentIndex ==
-                    parentOfParentIndexT2)
+            else if (case2SiblingIsOnLeftSideT1 == case2SiblingIsOnLeftSideT2 && siblingT1->parent ==
+                parentOfParentT1 &&siblingT2->parent ==
+                parentOfParentT2)
+            {
+                //Chain for both trees, x1-x3
+                //Technically parent of x1 is ignored but, well, it gets carried in-between x1 and x3 so w/e lol
+                std::vector<std::vector<graph::Node*>> chainT1T2 = {{terminalT1.first,terminalT2.first},
+                    {siblingOfParentT1,siblingOfParentT2},
+                    {parentOfParentT1,parentOfParentT2}};
+
+                graph::Node* case2T1Parent = chainT1T2.back().front()->parent;
+                graph::Node* case2T2Parent = chainT1T2.back().back()->parent;
+
+                graph::Node* case2T1Sibling;
+                graph::Node* case2T2Sibling;
+
+                //T1 structure check
+                if ( case2T1Parent->leftChild == chainT1T2.back().front())
                 {
-                    //Chain for both trees, x1-x3
-                    //Technically parent of x1 is ignored but, well, it gets carried in-between x1 and x3 so w/e lol
-                    std::vector<std::vector<int>> chainT1T2 = {{terminalT1.first,terminalT2.first},
-                        {siblingOfParentIndexT1,siblingOfParentIndexT2},
-                        {parentOfParentIndexT1,parentOfParentIndexT2}};
-
-                    int case2T1Parent = treeOneNodes.at(chainT1T2.back().front()).parentIndex;
-                    int case2T2Parent = treeTwoNodes.at(chainT1T2.back().back()).parentIndex;
-
-                    int case2T1Sibling;
-                    int case2T2Sibling;
-
-                    //T1 structure check
-                    if (treeOneNodes.at(case2T1Parent).leftChildIndex == chainT1T2.back().front())
-                    {
-                        case2T1Sibling = treeOneNodes.at(case2T1Parent).rightChildIndex;
-                    }
-                    else
-                    {
-                        case2T1Sibling = treeOneNodes.at(case2T1Parent).leftChildIndex;
-                    }
-                    //T2 structure c heck
-                    if (treeTwoNodes.at(case2T2Parent).leftChildIndex == chainT1T2.back().back())
-                    {
-                        case2T2Sibling = treeTwoNodes.at(case2T1Parent).rightChildIndex;
-                    }
-                    else
-                    {
-                        case2T2Sibling = treeTwoNodes.at(case2T2Parent).leftChildIndex;
-                    }
-
-                    //Chain collection bool
-                    bool case2check = true;
-
-                    //Determine x4,... of chain
-                    while (case2check)
-                    {   //Siblings exist
-                        if (case2T1Sibling != -1 && case2T2Sibling != -1
-                            && case2T1Parent != -1 && case2T2Parent != -1
-                            && termIndexTreeOne.contains(case2T1Sibling)
-                            && termIndexTreeTwo.contains(case2T2Sibling))
-                        {
-                            chainT1T2.push_back({case2T1Parent,case2T2Parent});
-                            case2T1Parent = treeOneNodes.at(chainT1T2.back().front()).parentIndex;
-                            case2T2Parent = treeTwoNodes.at(chainT1T2.back().back()).parentIndex;
-                            //T1 structure check
-                            if (treeOneNodes.at(case2T1Parent).leftChildIndex == chainT1T2.back().front())
-                            {
-                                case2T1Sibling = treeOneNodes.at(case2T1Parent).rightChildIndex;
-                            }
-                            else
-                            {
-                                case2T1Sibling = treeOneNodes.at(case2T1Parent).leftChildIndex;
-                            }
-                            //T2 structure c heck
-                            if (treeOneNodes.at(case2T2Parent).leftChildIndex == chainT1T2.back().back())
-                            {
-                                case2T2Sibling = treeOneNodes.at(case2T1Parent).rightChildIndex;
-                            }
-                            else
-                            {
-                                case2T2Sibling = treeOneNodes.at(case2T2Parent).leftChildIndex;
-                            }
-                        }
-                        else case2check = false;
-                    }
-
-                    if (chainT1T2.size() >= 4)
-                    {
-                        chain = chainT1T2;
-                    }
-
+                    case2T1Sibling = case2T1Parent->rightChild;
                 }
+                else
+                {
+                    case2T1Sibling = case2T1Parent->leftChild;
+                }
+                //T2 structure c heck
+                if (case2T2Parent->leftChild == chainT1T2.back().back())
+                {
+                    case2T2Sibling = case2T2Parent->rightChild;
+                }
+                else
+                {
+                    case2T2Sibling = case2T2Parent->leftChild;
+                }
+
+                //Chain collection bool
+                bool case2check = true;
+
+                //Determine x4,... of chain
+                while (case2check)
+                {   //Siblings exist
+                    if (case2T1Sibling != nullptr && case2T2Sibling != nullptr
+                        && case2T1Parent != nullptr && case2T2Parent != nullptr
+                        && termIndexTreeOne.contains(case2T1Sibling)
+                        && termIndexTreeTwo.contains(case2T2Sibling))
+                    {
+                        chainT1T2.push_back({case2T1Parent,case2T2Parent});
+                        case2T1Parent = chainT1T2.back().front()->parent;
+                        case2T2Parent = chainT1T2.back().back()->parent;
+                        //T1 structure check
+                        if (case2T1Parent->leftChild == chainT1T2.back().front())
+                        {
+                            case2T1Sibling = case2T1Parent->rightChild;
+                        }
+                        else
+                        {
+                            case2T1Sibling = case2T1Parent->leftChild;
+                        }
+                        //T2 structure c heck
+                        if (case2T2Parent->leftChild == chainT1T2.back().back())
+                        {
+                            case2T2Sibling = case2T1Parent->rightChild;
+                        }
+                        else
+                        {
+                            case2T2Sibling = case2T2Parent->leftChild;
+                        }
+                    }
+                    else case2check = false;
+                }
+
+                if (chainT1T2.size() >= 4)
+                {
+                    chain = chainT1T2;
+                }
+
+            }
             if (not chain.empty())
             {
                 break;
@@ -315,135 +315,6 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
     }
     return std::dynamic_pointer_cast<AbstractRule>(
         std::make_shared<ChainReductionRule>(T1,T2, chain));
-
-
-    // //For every node that could be shared between both...
-    // for (int currentNodeIndex = 0; currentNodeIndex < size; currentNodeIndex++)
-    // {
-    //     //x2 for current x1 in T1
-    //     int siblingNodeT1 = treeOneNodes.at(currentNodeIndex).siblingIndex;
-    //
-    //     //x3 for case 1
-    //     int parentNodeT1 = treeOneNodes.at(currentNodeIndex).parentIndex;
-    //     int parentNodeT2 = treeTwoNodes.at(currentNodeIndex).parentIndex;
-    //
-    //     //x3 for case 2
-    //     int x3T1 = treeOneNodes.at(parentNodeT1).parentIndex;
-    //     int x3T2 = treeTwoNodes.at(parentNodeT2).parentIndex;
-    //     //def x2 for case 2
-    //     int case2siblingT1 = -1;
-    //     int case2siblingT2 = -1;
-    //
-    //     //List of chain elements
-    //     std::list<int> commonChainNodes;
-    //
-    //     //If the left child of x3 is x2, then set case2sibling to be right side, vice versa if not
-    //     if (treeOneNodes.at(x3T1).leftChildIndex == parentNodeT1)
-    //     {
-    //         case2siblingT1 = treeOneNodes.at(x3T1).rightChildIndex;
-    //     }
-    //     else
-    //     {
-    //         case2siblingT1 = treeOneNodes.at(x3T1).leftChildIndex;
-    //     }
-    //
-    //     if (treeTwoNodes.at(x3T2).leftChildIndex == parentNodeT2)
-    //     {
-    //         case2siblingT2 = treeTwoNodes.at(x3T2).rightChildIndex;
-    //     }
-    //     else
-    //     {
-    //         case2siblingT2 = treeTwoNodes.at(x3T2).leftChildIndex;
-    //     }
-    //
-    //
-    //     // Case 1: If sibling of x1, x2, is equal across T1 and T2,
-    //     // and their parent node match in both, then they form a 3-common
-    //     if (siblingNodeT1 == treeTwoNodes.at(currentNodeIndex).siblingIndex &&
-    //         treeOneNodes.at(siblingNodeT1).parentIndex == treeTwoNodes.at(siblingNodeT1).parentIndex &&
-    //         parentNodeT1 == treeTwoNodes.at(currentNodeIndex).parentIndex)
-    //     {
-    //         //x3 von x1 und x2
-    //         int parentNode = treeOneNodes.at(currentNodeIndex).parentIndex;
-    //
-    //
-    //         //3-common-chain
-    //         commonChainNodes = {currentNodeIndex, siblingNodeT1, parentNode};
-    //
-    //         bool isCurrentParentEqual = true;
-    //
-    //         //Go up the
-    //         while (isCurrentParentEqual)
-    //         {
-    //             //Parents of current parent node in chain
-    //             int currentParentT1 = treeOneNodes.at(parentNode).parentIndex;
-    //             int currentParentT2 = treeTwoNodes.at(parentNode).parentIndex;
-    //
-    //             if (currentParentT1 == currentParentT2)
-    //             {
-    //                 //Not a root check
-    //                 if (currentParentT1!= -1 && currentParentT2 != -1)
-    //                 {
-    //                     commonChainNodes.push_back(currentParentT1);
-    //                     parentNode = treeOneNodes.at(parentNode).parentIndex;
-    //                 }
-    //                 else
-    //                 {
-    //                     isCurrentParentEqual = false;
-    //                 }
-    //             }
-    //             else
-    //             {
-    //                 isCurrentParentEqual = false;
-    //             }
-    //
-    //         }
-    //
-    //         //Falls n>=4...
-    //         //Chain reduction. For n ≥ 4, let C = (x1, x2, . . . , xn) be a
-    //         //maximal n-chain that is common to T and T' . Then set
-    //         //S = T |X \ {x4, x5, . . . , xn} and S' = T'|X \ {x4, x5, . . . , xn}.
-    //
-    //         //Execute removal of chain from x4 onwards
-    //         if (commonChainNodes.size() >= 4)
-    //         {
-    //
-    //         }
-    //     }
-    //     //Case 2: If instead: the parent of x2 is the parent of the parent of x1 in both trees,
-    //     else if (x3T1 == x3T2 && case2siblingT1 == case2siblingT2)
-    //     {
-    //         commonChainNodes = {currentNodeIndex,case2siblingT1,x3T1};
-    //
-    //         //Check
-    //         bool anyChainableParents = true;
-    //
-    //         //Find all parents in chain
-    //         while (anyChainableParents)
-    //         {
-    //             int c2currentParentT1 = treeOneNodes.at(commonChainNodes.back()).parentIndex;
-    //             int c2currentParentT2 = treeTwoNodes.at(commonChainNodes.back()).parentIndex;
-    //
-    //             if ( (c2currentParentT1 != -1 && c2currentParentT2 != -1) && c2currentParentT1 == c2currentParentT2)
-    //             {
-    //                 commonChainNodes.push_back(c2currentParentT1);
-    //             }
-    //             else
-    //             {
-    //                 anyChainableParents = false;
-    //             }
-    //         }
-    //
-    //         //Execute removal of chain from x4 onwards
-    //         if (commonChainNodes.size() >= 4)
-    //         {
-    //
-    //         }
-    //     }
-    // }
-    // int maximumSharedNodes = sizeOfSharedNodes(treeOneNodes,treeTwoNodes);
-    //Enumerate over all
-
 }
 
 
