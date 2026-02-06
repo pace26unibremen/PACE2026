@@ -3,6 +3,7 @@
 
 #include "AbstractAction.hpp"
 #include "../../Graph/Forest.hpp"
+#include "../../Graph/Node.hpp"
 
 namespace solver
 {
@@ -14,17 +15,17 @@ class CollapseSubtreeAction : AbstractAction
     /// \brief forest on which the action will be performed
     std::shared_ptr<graph::Forest> forest;
 
-    /// \brief index of the node from which the subtree will be collapsed into single leaf
-    int nodeIndex;
+    /// \brief A Pointer to the node from which the subtree will be collapsed into single leaf
+    graph::Node* node;
 
-    /// \brief left child of node
-    int leftChildIndex;
+    /// \brief A Pointer to the left child of node
+    graph::Node* leftChild;
 
-    /// \brief left child of node
-    int rightChildIndex;
+    /// \brief A Pointer to the right child of node
+    graph::Node* rightChild;
 
     /// \brief store collapsed label to terminals
-    std::unordered_map<unsigned int, int> collapsedLabelToTerminals = std::unordered_map<unsigned int, int>();
+    std::unordered_map<unsigned int, graph::Node*> collapsedLabelToTerminals = std::unordered_map<unsigned int, graph::Node*>();
 
     /// \brief store collapsed label to terminals
     std::unordered_map<int, unsigned> collapsedTerminals = std::unordered_map<int, unsigned int>();
@@ -32,9 +33,9 @@ class CollapseSubtreeAction : AbstractAction
 
 
   public:
-    /// \param nodeIndex The index of the node from which the subtree will be collapsed into single leaf.
+    /// \param node The node from which the subtree will be collapsed into single leaf.
     /// \param forest A shared pointer to the forest on which the action will be performed.
-    CollapseSubtreeAction(int nodeIndex, const std::shared_ptr<graph::Forest>& forest);
+    CollapseSubtreeAction(graph::Node* node, const std::shared_ptr<graph::Forest>& forest);
 
     void doAction() override;
 

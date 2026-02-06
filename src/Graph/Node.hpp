@@ -10,31 +10,31 @@ namespace graph
 /// \brief Represents a node in a tree.
 struct Node
 {
-    /// \brief Index of parent node.\n
+    /// \brief Pointer to parent node.\n
     /// \c -1 indicates that \c this is the root node.
-    int parentIndex = -1;
+    Node* parent = nullptr;
 
-    /// \brief Index of the sibling.
+    /// \brief Pointer to the sibling.
     /// \c -1 indicates that \c this is the last sibling.
-    int siblingIndex = -1;
+    Node* sibling = nullptr;
 
-    /// \brief Index of the left child in.
+    /// \brief Pointer to the left child in.
     /// \c -1 indicates that \c this has no left child.
-    int leftChildIndex = -1;
+    Node* leftChild = nullptr;
 
-    /// \brief Index of the right child in.
+    /// \brief Pointer to the right child in.
     /// \c -1 indicates that \c this has no right child.
-    int rightChildIndex = -1;
+    Node* rightChild = nullptr;
 
     /// \brief a bitmask that stores all terminals that in the subtree of this node
     std::vector<uint64_t> subtreeTerminals = {};
 
     /// \brief Constructor.
-    /// \param parentIndex Index of parent.
-    /// \param siblingIndex Index of the sibling.
-    /// \param leftChildIndex Index of the left child.
-    /// \param rightChildIndex Index of the right child.
-    Node(int parentIndex, int siblingIndex, int leftChildIndex, int rightChildIndex);
+    /// \param parent Pointer to parent.
+    /// \param sibling Pointer to the sibling.
+    /// \param leftChild Pointer to the left child.
+    /// \param rightChild Pointer to the right child.
+    Node(Node* parent, Node* sibling, Node* leftChild, Node* rightChild);
 
     /// \brief Default Constructor.\n
     Node() = default;
@@ -43,20 +43,20 @@ struct Node
     /// \param other
     /// \return true if the terminals are identical, else false
     [[nodiscard]]
-    bool hasSameTerminals(const Node& other) const;
+    bool hasSameTerminals(const Node* other) const;
 
     /// Checks if the terminals in the subtree of a node is a \b subset of
     /// the terminals of another node.
     /// \param other
     /// \return true if terminals of \c this are a subset of the terminals of \c other, else false
     [[nodiscard]]
-    bool hasSubsetTerminals(const Node& other) const;
+    bool hasSubsetTerminals(const Node* other) const;
 
     /// Checks if a node has a the minimal terminal in its subtree, compared to another node.
     /// \param other
     /// \return true if \c this has the minimal terminal, else false
     [[nodiscard]]
-    bool hasSmallestTerminal(const Node& other) const;
+    bool hasSmallestTerminal(const Node* other) const;
 
     /// \brief returns the smallest terminal in the nodes subtree.
     [[nodiscard, maybe_unused]]

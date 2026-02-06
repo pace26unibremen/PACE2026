@@ -6,7 +6,7 @@
 // 1. label1
 // 2. label2
 // 3. map shared_ptr forest to the list of the cut-away subtrees on the path
-typedef std::tuple<unsigned int, unsigned int, std::unordered_map<std::shared_ptr<graph::Forest>, std::list<int>>>
+typedef std::tuple<unsigned int, unsigned int, std::unordered_map<std::shared_ptr<graph::Forest>, std::list<graph::Node*>>>
     context;
 
 solver::PairPathBranchingRule::PairPathBranchingRule(const std::shared_ptr<graph::Instance>& instance,
@@ -39,11 +39,10 @@ void solver::PairPathBranchingRule::apply()
         case 1:
             for(const auto& f : *instance)
             {
-                auto t1Index = f->LabelToTerminalIndex()[label1];
-                const auto& t1 = f->Nodes()[t1Index];
-                if(t1.parentIndex != -1)
+                const auto t1 = f->LabelToTerminal()[label1];
+                if(t1->parent != nullptr)
                 {
-                    changes.emplace(t1Index,f);
+                    changes.emplace(t1,f);
                     changes.top().doAction();
                 }
             }
@@ -51,11 +50,10 @@ void solver::PairPathBranchingRule::apply()
         case 2:
             for(const auto& f : *instance)
             {
-                auto t2Index = f->LabelToTerminalIndex()[label2];
-                const auto& t2 = f->Nodes()[t2Index];
-                if(t2.parentIndex != -1)
+                const auto t2 = f->LabelToTerminal()[label2];
+                if(t2->parent != nullptr)
                 {
-                    changes.emplace(t2Index,f);
+                    changes.emplace(t2,f);
                     changes.top().doAction();
                 }
             }
@@ -99,14 +97,13 @@ solver::PairPathBranchingRule::isApplicable(const std::shared_ptr<graph::Instanc
     get<1>(c) = 0;
 
     auto f = instance->at(0);
-    for (const auto& [label, index] : f->LabelToTerminalIndex())
+    for (const auto& [label, node] : f->LabelToTerminal())
     {
-        const auto& t = f->Nodes()[index];
-        if (t.siblingIndex != -1 and f->Terminals().contains(t.siblingIndex))
+        if (node->sibling != nullptr and f->Terminals().contains(node->sibling))
         {
             get<0>(c) = label;
-            get<1>(c) = f->Nodes()[t.siblingIndex].smallestTerminal();
-            get<2>(c).emplace(f, std::list<int>());
+            get<1>(c) = node->sibling->smallestTerminal();
+            get<2>(c).emplace(f, std::list<graph::Node*>());
             break;
         }
     }
@@ -123,45 +120,42 @@ solver::PairPathBranchingRule::isApplicable(const std::shared_ptr<graph::Instanc
     for (unsigned int i = 1; i < instance->size(); i++)
     {
         auto fi = instance->at(i);
-        auto t1Index = fi->LabelToTerminalIndex()[get<0>(c)];
-        auto t2Index = fi->LabelToTerminalIndex()[get<1>(c)];
-        auto rootIndex = fi->rootIndexOf(t1Index);
-        if (not fi->Nodes()[t2Index].hasSubsetTerminals(fi->Nodes()[rootIndex]))
+        auto t1 = fi->LabelToTerminal()[get<0>(c)];
+        auto t2 = fi->LabelToTerminal()[get<1>(c)];
+        auto root = fi->rootOf(t1);
+        if (not t2->hasSubsetTerminals(root))
         {
             // we have a better rule for this case
             return nullptr;
         }
 
         // moving upwards from t1 to lca - and collect all cut-away subtrees
-        auto cutAwaySubtrees = std::list<int>();
-        int lcaIndex = 0;
-        const auto& t2 = fi->Nodes()[t2Index];
-        int it = t1Index;
+        auto cutAwaySubtrees = std::list<graph::Node*>();
+        graph::Node* lca;
+        graph::Node* it = t1;
         while (true)
         {
-            const auto& itNode = fi->Nodes()[it];
-            assert(itNode.parentIndex != -1);
-            if (t2.hasSubsetTerminals(fi->Nodes()[itNode.parentIndex]))
+            assert(it->parent != nullptr);
+            if (t2->hasSubsetTerminals(it->parent))
             {
-                lcaIndex = itNode.parentIndex;
+                lca = it->parent;
                 break;
             }
-            cutAwaySubtrees.push_back(itNode.siblingIndex);
-            it = itNode.parentIndex;
+            cutAwaySubtrees.push_back(it->sibling);
+            it = it->parent;
         }
 
         // moving upwards from t2 to lca - and collect all cut-away subtrees
-        it = t2Index;
+        it = t2;
         while (true)
         {
-            const auto& itNode = fi->Nodes()[it];
-            assert(itNode.parentIndex != -1);
-            if (itNode.parentIndex == lcaIndex)
+            assert(it->parent != nullptr);
+            if (it->parent == lca)
             {
                 break;
             }
-            cutAwaySubtrees.push_back(itNode.siblingIndex);
-            it = itNode.parentIndex;
+            cutAwaySubtrees.push_back(it->sibling);
+            it = it->parent;
         }
 
         if (not cutAwaySubtrees.empty())

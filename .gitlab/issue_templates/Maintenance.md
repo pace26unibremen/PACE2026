@@ -1,26 +1,26 @@
-## Beschreibung  
-_Beschreibe, welcher Teil des Codes oder der Infrastruktur überarbeitet werden soll._  
-<!-- Beispiel: Refaktorierung von Node Indizes zu Node Pointern. -->
+## Description  
+_Describe which part of the code or infrastructure needs to be revised._  
+<!-- Example: Refactoring node indices to node pointers. -->
 
-## Ziel  
-_Welches Ziel soll die Anpassung erreichen?_  
-<!-- Beispiel: Vereinfachung des Zugriffs auf Nodes und deren Umgebung. -->
+## Goal  
+_What goal should the adjustment achieve?_  
+<!-- Example: Simplifying access to nodes and their surroundings. -->
 
-## Begründung  
-_Erkläre, warum diese Aufgabe notwendig oder sinnvoll ist._  
-<!-- Beispiel: Der aktuelle Code verwendet Indizes, somit muss für jeden Aufruf einer Node, oder dessen Kind eine Liste aller Nodes aus dem Forest genommen werden, welche mit dem Indize die Node zurückgibt. -->
+## Justification  
+_Explain why this task is necessary or useful._  
+<!-- Example: The current code uses indices, so for every access to a node or its child, a list of all nodes in the forest must be used, which returns the node by index. -->
 
-## Akzeptanzkriterien  
-_Definiere, wann die Aufgabe als abgeschlossen gilt._  
-<!-- Beispielsweise: (bitte entsprechend der Situation anpassen -->
-- [ ] Refaktorierung abgeschlossen und alle Tests erfolgreich  
-- [ ] Kein Funktionsverlust und keine signifikante Performanceänderung  
-- [ ] Dokumentation angepasst (falls interne Struktur geändert wurde)  
+## Acceptance Criterion  
+_Define when the task is considered complete._  
+<!-- For example: (please adapt to the situation as needed) -->
+- [ ] Refactoring completed and all tests successful  
+- [ ] No loss of functionality and no significant change in performance  
+- [ ] Documentation updated (if the internal structure has been changed)  
 
-## Technische Details (optional)  
-_Beschreibe relevante Hinweise, zu prüfende Module oder Compileranforderungen._  
-<!-- Beispiel: Beim speichern von Pointern innerhalb vom Typ vector muss minuziös darauf geachtet werden, dass diese nicht resized werden, da die Pointer sonst nicht mehr auf die richtigen Objekte zeigen könnten. -->
+## Technical Details (optional)  
+_Describe relevant notes, modules to be tested, or compiler requirements._  
+<!-- Example: When storing pointers inside a vector type, great care must be taken that it is not resized, because otherwise the pointers might no longer point to the correct objects. -->
 
-## Referenzen (optional)  
-_Füge Links oder Verweise auf Issues, Merge Requests oder Analysen hinzu._  
-<!-- Beispiel: Siehe Issue [Refactor Node Indices to Pointers](#26) zum Refactoring -->
+## References (optional)  
+_Add links or references to issues, merge requests, or analyses._  
+<!-- Example: See issue [Refactor Node Indices to Pointers](#26) for the refactoring -->

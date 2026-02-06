@@ -41,16 +41,16 @@ void solver::PairUnconnectedBranchingRule::apply()
         case 1:
             for(const auto& f : forestsConnectedLabels)
             {
-                auto t1Index = f->LabelToTerminalIndex()[label1];
-                changes.emplace(t1Index, f);
+                auto t1 = f->LabelToTerminal()[label1];
+                changes.emplace(t1, f);
                 changes.top().doAction();
             }
             break;
         case 2:
             for(const auto& f : forestsConnectedLabels)
             {
-                auto t2Index = f->LabelToTerminalIndex()[label2];
-                changes.emplace(t2Index, f);
+                auto t2 = f->LabelToTerminal()[label2];
+                changes.emplace(t2, f);
                 changes.top().doAction();
             }
             break;
@@ -83,13 +83,12 @@ solver::PairUnconnectedBranchingRule::isApplicable(const std::shared_ptr<graph::
     get<1>(c) = 0;
 
     auto f = instance->at(0);
-    for (const auto& [label, index] : f->LabelToTerminalIndex())
+    for (const auto& [label, node] : f->LabelToTerminal())
     {
-        const auto& t = f->Nodes()[index];
-        if (t.siblingIndex != -1 and f->Terminals().contains(t.siblingIndex))
+        if (node->sibling != nullptr and f->Terminals().contains(node->sibling))
         {
             get<0>(c) = label;
-            get<1>(c) = f->Nodes()[t.siblingIndex].smallestTerminal();
+            get<1>(c) = node->sibling->smallestTerminal();
             get<2>(c).push_back(f);
             break;
         }
@@ -105,10 +104,10 @@ solver::PairUnconnectedBranchingRule::isApplicable(const std::shared_ptr<graph::
     for (unsigned int i = 1; i < instance->size(); i++)
     {
         auto fi = instance->at(i);
-        auto t1Index = fi->LabelToTerminalIndex()[get<0>(c)];
-        auto t2Index = fi->LabelToTerminalIndex()[get<1>(c)];
-        auto rootIndex = fi->rootIndexOf(t1Index);
-        if (not fi->Nodes()[t2Index].hasSubsetTerminals(fi->Nodes()[rootIndex]))
+        auto t1 = fi->LabelToTerminal()[get<0>(c)];
+        auto t2 = fi->LabelToTerminal()[get<1>(c)];
+        auto root = fi->rootOf(t1);
+        if (not t2->hasSubsetTerminals(root))
         {
             existsUnconnectedPair = true;
         }

@@ -21,11 +21,10 @@ void solver::SingleVertexTreePropagationRule::apply()
     {
         for (unsigned int label : labelsToBeReduced)
         {
-            int terminalIndex = f_ptr->LabelToTerminalIndex()[label];
-            const graph::Node& terminal = f_ptr->Nodes()[terminalIndex];
-            if (terminal.parentIndex != -1)
+            graph::Node* terminal = f_ptr->LabelToTerminal()[label];
+            if (terminal->parent != nullptr)
             {
-                changes.emplace(terminalIndex, f_ptr);
+                changes.emplace(terminal, f_ptr);
                 changes.top().doAction();
             }
         }
@@ -52,16 +51,15 @@ solver::SingleVertexTreePropagationRule::isApplicable(const std::shared_ptr<grap
 {
     auto labelsToBeReduced = std::unordered_set<unsigned int>();
 
-    for (unsigned int label = 1; label < instance->at(0)->LabelToTerminalIndex().size() + 1; label++)
+    for (unsigned int label = 1; label < instance->at(0)->LabelToTerminal().size() + 1; label++)
     {
         bool anySingleVertexTree = false;
         bool anyNotSingleVertexTree = false;
 
         for (const auto& f_ptr : *instance)
         {
-            const int& terminalIndex = f_ptr->LabelToTerminalIndex()[label];
-            const graph::Node& terminal = f_ptr->Nodes()[terminalIndex];
-            if (terminal.parentIndex != -1)
+            const graph::Node* terminal = f_ptr->LabelToTerminal()[label];
+            if (terminal->parent != nullptr)
             {
                 anyNotSingleVertexTree = true;
             }

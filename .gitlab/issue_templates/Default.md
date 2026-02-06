@@ -1,9 +1,9 @@
-## Hinweis
+## Note
 
-Bitte wähle ein passendes Issue-Template aus der Dropdown-Liste oben aus:
+Please select a suitable issue template from the dropdown list above:
 
-- `Bug` für Fehlerberichte und Reproduktionsanleitungen
-- `Feature` für neue Funktionen oder Erweiterungen
-- `Maintenance` für Refactorings, Build-/CI-Anpassungen, etc.
+- `Bug` for bug reports and reproduction instructions  
+- `Feature` for new functions or enhancements  
+- `Maintenance` for refactorings, build/CI adjustments, etc.  
 
-Falls du unsicher bist, wähle zunächst `Feature` und beschreibe das Ziel möglichst klar.
+If you are unsure, first choose `Feature` and describe the goal as clearly as possible.

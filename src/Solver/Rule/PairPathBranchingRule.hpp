@@ -15,7 +15,7 @@ class PairPathBranchingRule : public AbstractBranchingRule
   protected:
     unsigned int label1;
     unsigned int label2;
-    std::unordered_map<std::shared_ptr<graph::Forest>, std::list<int>> forestToPathDeletions;
+    std::unordered_map<std::shared_ptr<graph::Forest>, std::list<graph::Node*>> forestToPathDeletions;
     std::stack<DeleteEdgeAction> changes;
 
   public:
@@ -26,7 +26,7 @@ class PairPathBranchingRule : public AbstractBranchingRule
     PairPathBranchingRule(
         const std::shared_ptr<graph::Instance>& instance,
         const std::tuple<unsigned int, unsigned int,
-                         std::unordered_map<std::shared_ptr<graph::Forest>, std::list<int>>>& context);
+                         std::unordered_map<std::shared_ptr<graph::Forest>, std::list<graph::Node*>>>& context);
 
     void apply() override;
 

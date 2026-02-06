@@ -12,7 +12,7 @@ namespace solver
 class PairEqualRule : public AbstractRule
 {
   protected:
-    std::unordered_map<std::shared_ptr<graph::Forest>, int> forestToSubtree;
+    std::unordered_map<std::shared_ptr<graph::Forest>, graph::Node*> forestToSubtree;
     std::stack<CollapseSubtreeAction> changes;
 
   public:
@@ -21,7 +21,7 @@ class PairEqualRule : public AbstractRule
     /// 2. snd label
     /// 3. a mapping: forest to each subtree on the path that can be deleted
     PairEqualRule(const std::shared_ptr<graph::Instance>& instance,
-                  const std::unordered_map<std::shared_ptr<graph::Forest>, int>& forestToSubtree);
+                  const std::unordered_map<std::shared_ptr<graph::Forest>, graph::Node*>& forestToSubtree);
 
     void apply() override;
 
