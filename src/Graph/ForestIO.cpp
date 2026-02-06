@@ -250,37 +250,68 @@ void ForestIO::WriteNewick(const Forest& tree, std::ostream& stream)
 void ForestIO::WriteDot(const Forest& tree, ostream& stream)
 {
     stream << "digraph Tree {\n"
-           // << "nodesep = 0.0\n"
-           // << "ranksep = 0.0\n"
-           << "splines = false\n\n"
-           << "node [\n"
-           << "    shape = circle,\n"
-           << "    fontsize = 15,\n"
-           << "    label = \"\",\n"
-           << "    height = 0.1,\n"
-           << "    fillcolor = \"#00000022\",\n"
-           << "    style = filled,\n"
-           << "    fixedsize = true,\n"
-           << "    labelloc = t];\n"
-           << "edge [arrowhead = none];\n\n";
+           << "splines = false\n\n";
+    std::string subgraphParams =
+        "style=invis;\n"
+        "node [\n"
+        "   shape = circle,\n"
+        "   fontsize = 15,\n"
+        "   label = \"\",\n"
+        "   height = 0.1,\n"
+        "   fillcolor = \"#00000022\",\n"
+        "   style = filled,\n"
+        "   fixedsize = true,\n"
+        "   labelloc = t];\n"
+        "edge [arrowhead = none];\n\n";
 
-    stream << "inv[style = invis];\n\n";
+    WriteDotSubgraph(tree, stream, subgraphParams);
 
-    for (auto i : tree.Terminals())
+    stream << "}" << endl;
+}
+
+void ForestIO::WriteDotSubgraph(const Forest& forest, ostream& stream, std::string subgraphParams)
+{
+
+    stream << "subgraph forest_" << &forest << " {\n"
+           << "cluster=true;\n"
+           << subgraphParams << "\n";
+    stream << "inv_" << &forest << " [style = invis];\n\n";
+
+    std::stack<Node*> siblings;
+    for (auto t : forest.Roots())
     {
-        stream << "n" << i.first << " [label = \"" << i.second << "\\n\\n\\n \"];\n";
-        stream << "n" << i.first << " -> inv [style = invis];\n";
-    }
+        auto current = t;
+        while (current)
+        {
+            if (forest.Terminals().contains(current))
+            {
+                stream << "n" << current << " [label = \"" << forest.Terminals().at(current) << "\\n\\n\\n \"];\n";
+                stream << "n" << current << " -> inv_" << &forest << " [style = invis];\n";
+            }
 
-    //  Notice: This uses the address of the Node. This will still work, but produces dot-files that are not comparable.
-    //  Also the addresses will differ between runs, therefor the same tree will have different dot files in every run.
-    for (auto& node : tree.Nodes())
-    {
-        if(node.leftChild != nullptr)
-            stream << "n" << &node << " -> n" << node.leftChild << ";\n";
-        if(node.rightChild != nullptr)
-            stream << "n" << &node << " -> n" << node.rightChild << ";\n";
+            if (current->rightChild)
+            {
+                stream << "n" << current << " -> n" << current->rightChild << ";\n";
+                siblings.push(current->rightChild);
+            }
+            if (current->leftChild)
+            {
+                stream << "n" << current << " -> n" << current->leftChild << ";\n";
+                current = current->leftChild;
+            }
+            else
+            {
+                if (siblings.empty())
+                {
+                    current = nullptr;
+                }
+                else
+                {
+                    current = siblings.top();
+                    siblings.pop();
+                }
+            }
+        }
     }
-
     stream << "}" << endl;
 }
