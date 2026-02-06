@@ -6,13 +6,13 @@
 using namespace graph;
 using namespace solver;
 
-solver::DeleteNodeActionInChains::DeleteNodeActionInChains(graph::Node node, const std::shared_ptr<graph::Forest>& forest):
-    node(node),
+solver::DeleteNodeActionInChains::DeleteNodeActionInChains(graph::Node* node, const std::shared_ptr<graph::Forest>& forest):
+    node(*node),
     forest(forest)
-{   //Bestimme Seite, welche entfernt wird anhand davon, ob es den Blatt hat.
-    int leftSideIndex = node.leftChildIndex;
+{   //Determine the child terminal of the param node
+    graph::Node* leftSide = node->leftChild;
 
-    if (forest->Nodes().at(leftSideIndex).leftChildIndex == -1 && forest->Nodes().at(leftSideIndex).rightChildIndex == -1)
+    if (leftSide->leftChild == nullptr && leftSide->rightChild == nullptr )
     {
         terminalOnRightSide = false;
     }
@@ -20,142 +20,111 @@ solver::DeleteNodeActionInChains::DeleteNodeActionInChains(graph::Node node, con
     {
         terminalOnRightSide = true;
     }
-    //Bestimme den Index des Blattes.
+
+    //Assign reference to the child
     if (terminalOnRightSide)
     {
-        toBeRemovedChildNodeIndex = forest->Nodes().at(leftSideIndex).rightChildIndex;
-        childNode = forest->Nodes().at(toBeRemovedChildNodeIndex);
+        toBeRemovedChildNode = node->rightChild;
     }
     else
     {
-        toBeRemovedChildNodeIndex = forest->Nodes().at(leftSideIndex).leftChildIndex;
-        childNode = forest->Nodes().at(toBeRemovedChildNodeIndex);
+        toBeRemovedChildNode =  node->leftChild;
     }
 }
- //namespace solver
 
 void solver::DeleteNodeActionInChains::doAction()
 {
     std::vector<Node> nodes = forest->Nodes();
-    std::unordered_map<int,unsigned int> termIndexTree= forest->Terminals();
-    std::unordered_map<unsigned int, int> labels = forest->LabelToTerminalIndex();
+    std::unordered_map<graph::Node*,unsigned int> terminals= forest->Terminals();
+    std::unordered_map<unsigned int, graph::Node*> labels = forest->LabelToTerminal();
 
-    int parentIndex = node.parentIndex;
-    int siblingIndex = node.siblingIndex;
-    int leftChildIndex = node.leftChildIndex;
-    int rightChildIndex = node.rightChildIndex;
+    graph::Node* parent = node.parent;
 
-    int nodeIndex;
-    //Change every related nodes befitting of the removal
+    //Remove Child terminal from node
+    //Done because removing child node first is easier.
 
-    //Determine the actual index of the node
-    if (leftChildIndex >= 0)
-    {
-        nodeIndex = nodes.at(leftChildIndex).parentIndex;
-    }
-    else if (rightChildIndex >= 0)
-    {
-        nodeIndex = nodes.at(rightChildIndex).parentIndex;
-    }
-    else if (siblingIndex >= 0)
-    {
-        nodeIndex = nodes.at(siblingIndex).siblingIndex;
-    }
-    else
-    {
-        if (nodes.at(parentIndex).leftChildIndex == -1 && nodes.at(parentIndex).rightChildIndex != -1)
+    //Determine Index of child reference within Nodes for deletion
+    for (int index=0; index<nodes.size(); index++)
+    {   //
+        graph::Node* currentNode = &nodes.at(index);
+        if (currentNode == toBeRemovedChildNode)
         {
-            nodeIndex = nodes.at(parentIndex).rightChildIndex;
-
-        }
-        else if (nodes.at(parentIndex).rightChildIndex == -1 && nodes.at(parentIndex).leftChildIndex != -1)
-        {
-            nodeIndex = nodes.at(parentIndex).leftChildIndex;
-
-        }
-    }
-
-    //Remove child node out of Nodes List
-    forest->Nodes().erase(forest->Nodes().begin() + toBeRemovedChildNodeIndex -1);
-
-    int toBeRemovedTerminalIndex;
-
-    for(const auto& pair: forest->Terminals())
-    {
-        if (pair.first == toBeRemovedChildNodeIndex)
-        {
-            toBeRemovedTerminalIndex = pair.first;
-            break;
-
-        }
-    }
-
-    //Remove the child node in the terminal list(-s)
-    forest->Terminals().erase(toBeRemovedTerminalIndex);
-
-    int toBeRemovedLabelIndex;
-    for (const auto& labelPair : forest->LabelToTerminalIndex())
-    {
-        if (labelPair.second == toBeRemovedChildNodeIndex)
-        {
-            toBeRemovedLabelIndex = labelPair.second;
+            nodes.erase(nodes.begin()+index-1);
             break;
         }
     }
+    //Delete terminal reference within the terminal list
+    for (const auto& terminal : terminals)
+    {
+        if (terminal.first == toBeRemovedChildNode)
+        {
+            terminals.erase(toBeRemovedChildNode);
+            break;
+        }
+    }
+    //Delete label reference within the terminal list
+    for (const auto& label : labels)
+    {
+        if (label.second == toBeRemovedChildNode)
+        {
+            //
+            labels.erase(label.first);
+        }
+    }
 
-    forest->LabelToTerminalIndex().erase(toBeRemovedLabelIndex);
+    //Remove param node now
+    //First, change remaining child and parent of param node
+    graph::Node* remainingChild;
 
-    //Child terminal now removed, onto main node from param
-    //Reconnect edge between the root/parent node of param node and the not-empty side
     if (terminalOnRightSide)
     {
-        //Set parent left child to be the left child of the param node
-        forest->Nodes().at(parentIndex).leftChildIndex = forest->Nodes().at(nodeIndex).leftChildIndex;
-        //Set parent node of param nodes left child to be the parent node of the param node
-        forest->Nodes().at(forest->Nodes().at(nodeIndex).leftChildIndex).parentIndex =
-            forest->Nodes().at(nodeIndex).parentIndex;
+        remainingChild = node.leftChild;
+        parent->leftChild = remainingChild;
+        remainingChild->parent = parent;
+
     }
     else
     {
-        forest->Nodes().at(parentIndex).rightChildIndex = forest->Nodes().at(nodeIndex).rightChildIndex;
-        forest->Nodes().at(forest->Nodes().at(nodeIndex).rightChildIndex).parentIndex =
-            forest->Nodes().at(nodeIndex).parentIndex;
+        remainingChild = node.rightChild;
+        parent->rightChild = remainingChild;
+        remainingChild->parent = parent;
     }
-    //Delete the node now
-    forest->Nodes().erase(forest->Nodes().begin() + nodeIndex -1);
 
-
+    //Remove the node now.
+    for (int index=0; index<nodes.size(); index++)
+    {   //
+        graph::Node* currentNode = &nodes.at(index);
+        if (currentNode == &node)
+        {
+            nodes.erase(nodes.begin()+index-1);
+            break;
+        }
+    }
+    //Since node cannot be a terminal-> no need for terminal and label.
+    //End
 }
 
 void solver::DeleteNodeActionInChains::undoAction()
 {
-    //
+    //Reintroduce the nodes back in and fix back the edge changes back to the original node
     forest->Nodes().push_back(node);
-
-    //Determine the index of parent node and child nodes of the param node (They've most likely changed)
-
-    int parentIndex;
-    int leftChildIndex;
-    int rightChildIndex;
-
-    //Determine parent node index
-    for (const auto& node : forest->Nodes())
-    {
-        if (node.parentIndex == parentIndex)
-        {
-            parentIndex = node.parentIndex;
-            break;
-        }
-    }
 
     if (terminalOnRightSide)
     {
-        //Blatt Rechts -> Attachment links
-        //Parent node
+        forest->Nodes().push_back(*node.rightChild);
+        graph::Node* parent = node.parent;
+        graph::Node* leftChild = node.leftChild;
+
+        leftChild->parent = &node;
+        parent->leftChild = &node;
 
     }
     else
     {
-        //Blatt links -> Attachment rechts
+        forest->Nodes().push_back(*node.leftChild);
+        graph::Node* parent = node.parent;
+        graph::Node* rightChild = node.rightChild;
+        rightChild->parent = &node;
+        parent->rightChild = &node;
     }
 }

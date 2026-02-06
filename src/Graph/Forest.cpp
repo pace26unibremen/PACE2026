@@ -198,8 +198,8 @@ bool Forest::hasSameStructure(Forest& first,Forest& other)
 {
     if (first.nodes->size() != other.nodes->size()) return false;
 
-    if(first.nodes->front().leftChildIndex == other.nodes->front().leftChildIndex &&
-       first.nodes->front().rightChildIndex == other.nodes->front().rightChildIndex)
+    if(first.nodes->front().leftChild == other.nodes->front().leftChild&&
+       first.nodes->front().rightChild== other.nodes->front().rightChild)
         {
             if (first.nodes->empty() != true && other.nodes->empty() != true)
             {
