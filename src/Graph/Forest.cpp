@@ -464,7 +464,8 @@ bool Forest::checkTriple(Node* parentPtr, std::unordered_map<Node*, unsigned int
     foundTerminals.resize((subtreeLeafs.size() + 63) / 64, 0);
     for( auto it = subtreeLeafs.begin(); it != subtreeLeafs.end(); ++it ) {
         const unsigned int label = it->second;
-        foundTerminals[(label - 1) / 64]+= (1<<(label - 1) % 64);
+        const uint64_t one = 1;
+        foundTerminals[(label - 1) / 64]+= (one<<(label - 1) % 64);
     }
 
     // Compare found terminals with terminals saved in node
