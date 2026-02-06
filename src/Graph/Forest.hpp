@@ -59,6 +59,10 @@ class Forest
     [[maybe_unused]]
     explicit Forest(const std::filesystem::path& path, int numberOfTerminals, int numberOfTrees);
 
+    /// \brief Makes a deep copy of the forest.
+    /// @return The copy
+    Forest copy() const;
+
     // ------------------------------------------------------------- //
     // ---- persistence -------------------------------------------- //
     // ------------------------------------------------------------- //
@@ -144,13 +148,6 @@ class Forest
     /// \brief Returns the maximum common X-Forest of this forest and the input forest.
     std::vector<Node*> maximumCommonSubforestRoots(const Forest& other);
 
-    // ------------------------------------------------------------- //
-    // ---- debug -------------------------------------------------- //
-    // ------------------------------------------------------------- //
-
-    /// \brief Writes forest as table to std::clog
-    void print() const;
-
     /// \brief Checks whether the forest representation is valid
     /// and writes flaws to std::clog
     bool isValid() const;
@@ -175,18 +172,7 @@ class Forest
     /// \return true if the trees are identical, false otherwise.
     bool operator==(const Forest& other) const;
 
-
-
-
-    // ------------------------------------------------------------- //
-    // ---- copy func ---------------------------------------------- //
-    // ------------------------------------------------------------- //
-    /// \brief Tree copy function that makes a separate copy to the copied tree.
-    /// @return A Copy of the Tree
-    Forest copy();
-
 };
-
 
 }  // namespace graph
 

@@ -22,6 +22,8 @@ class ForestIO
     static void WriteNewick(const Forest& tree, std::ostream& stream);
 
     static void WriteDot(const Forest& tree, std::ostream& stream);
+
+    static void WriteDotSubgraph(const Forest& tree, std::ostream& stream, std::string subgraphParams = "");
 };
 
 }  // namespace graph

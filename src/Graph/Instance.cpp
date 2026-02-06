@@ -90,42 +90,22 @@ void graph::DotInstance(const std::shared_ptr<Instance>& instance, std::ostream&
     os << "digraph Instance {\n"
        << "splines = false\n\n";
 
+    std::string subgraphParams =
+       "style=dotted\n;"
+       "node [\n"
+       "    shape = circle,\n"
+       "    fontsize = 15,\n"
+       "    label = \"\",\n"
+       "    height = 0.1,\n"
+       "    fillcolor = \"#00000022\",\n"
+       "    style = filled,\n"
+       "    fixedsize = true,\n"
+       "    labelloc = t];\n"
+       "edge [arrowhead = none];\n\n";
+
     for (unsigned int i = 0; i < instance->size(); ++i)
     {
-
-        os << "subgraph cluster_" << i << " {\n"
-           << "    style = dotted;\n"
-           << "    node [\n"
-           << "        shape = circle,\n"
-           << "        fontsize = 15,\n"
-           << "        label = \"\",\n"
-           << "        height = 0.1,\n"
-           << "        fillcolor = \"#00000022\",\n"
-           << "        style = filled,\n"
-           << "        fixedsize = true,\n"
-           << "        labelloc = t];\n"
-           << "    edge [arrowhead = none];\n\n";
-
-        os << "    inv_" << i << "[style = invis];\n\n";
-
-        const auto& forest = instance->at(i);
-        for (auto t : forest->Terminals())
-        {
-            os << "    n_" << i << "_" << t.first << " [label = \"" << t.second << "\\n\\n\\n \"];\n";
-            os << "    n_" << i << "_" << t.first << " -> inv_" << i << "[style = invis];\n";
-        }
-
-        // TODO: Notice: This uses the address of the Node. This will still work, but produces dot-files that are not.
-        //  Also the addresses will differ between runs, therefor the same tree will have different dot files in every run.
-        for (auto& node : forest->Nodes())
-        {
-            if(node.leftChild != nullptr)
-                os << "    n_" << i << "_" << &node << " -> n_" << i << "_" << node.leftChild << ";\n";
-            if(node.rightChild != nullptr)
-                os << "    n_" << i << "_" << &node << " -> n_" << i << "_" << node.rightChild << ";\n";
-        }
-
-        os << "}\n\n";
+        ForestIO::WriteDotSubgraph(*instance->at(i), os, subgraphParams);
     }
 
     os << "}" << std::endl;
