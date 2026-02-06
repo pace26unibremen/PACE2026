@@ -4,10 +4,12 @@
 #include <unordered_set>
 
 solver::EqualForestsRule::EqualForestsRule(const std::shared_ptr<graph::Instance>& instance,
+                                           const std::shared_ptr<Context>& context,
                                            const std::unordered_set<std::shared_ptr<graph::Forest>>& toBeRemoved) :
         toBeRemoved(toBeRemoved)
 {
     this->instance = instance;
+    this->context = context;
 }
 
 void solver::EqualForestsRule::apply()
@@ -33,7 +35,8 @@ void solver::EqualForestsRule::unapply()
 
 
 std::shared_ptr<solver::AbstractRule>
-solver::EqualForestsRule::isApplicable(const std::shared_ptr<graph::Instance>& instance)
+solver::EqualForestsRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,
+                                       const std::shared_ptr<Context>& context)
 {
     auto toBeRemoved = std::unordered_set<std::shared_ptr<graph::Forest>>();
     for (unsigned int i = 0; i < instance->size() - 1; i++)
@@ -54,7 +57,7 @@ solver::EqualForestsRule::isApplicable(const std::shared_ptr<graph::Instance>& i
     {
         return nullptr;
     }
-    return std::dynamic_pointer_cast<AbstractRule>(std::make_shared<EqualForestsRule>(instance, toBeRemoved));
+    return std::make_shared<EqualForestsRule>(instance, context, toBeRemoved);
 }
 
 std::string solver::EqualForestsRule::name() const

@@ -3,10 +3,12 @@
 #include <cassert>
 
 solver::PairEqualRule::PairEqualRule(const std::shared_ptr<graph::Instance>& instance,
+                                     const std::shared_ptr<Context>& context,
                                      const std::unordered_map<std::shared_ptr<graph::Forest>, graph::Node*>& forestToSubtree) :
         forestToSubtree(forestToSubtree)
 {
     this->instance = instance;
+    this->context = context;
     this->changes = std::stack<solver::CollapseSubtreeAction>();
 }
 
@@ -43,7 +45,8 @@ void solver::PairEqualRule::unapply()
 
 
 std::shared_ptr<solver::AbstractRule>
-solver::PairEqualRule::isApplicable(const std::shared_ptr<graph::Instance>& instance)
+solver::PairEqualRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,
+                                    const std::shared_ptr<Context>& context)
 {
     auto forestToSubtree = std::unordered_map<std::shared_ptr<graph::Forest>, graph::Node*>();
 
@@ -81,7 +84,7 @@ solver::PairEqualRule::isApplicable(const std::shared_ptr<graph::Instance>& inst
         forestToSubtree.emplace(fi, t1->parent);
     }
 
-    return std::dynamic_pointer_cast<AbstractRule>(std::make_shared<PairEqualRule>(instance, forestToSubtree));
+    return std::make_shared<PairEqualRule>(instance, context, forestToSubtree);
 }
 
 std::string solver::PairEqualRule::name() const
