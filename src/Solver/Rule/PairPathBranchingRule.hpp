@@ -18,17 +18,27 @@ namespace solver
 class PairPathBranchingRule : public AbstractBranchingRule
 {
   protected:
+
+    /// \brief first label
     unsigned int label1;
+
+    /// \brief second label
     unsigned int label2;
+
+    /// \brief mapping for each forest to the list of nodes that can be cutted
+    /// (in the corresponding branch, where the both terminals are siblings).
     std::unordered_map<std::shared_ptr<graph::Forest>, std::list<graph::Node*>> forestToPathDeletions;
-    std::stack<DeleteEdgeAction> changes;
+
+    /// \brief Stack of action that modify the instance,
+    /// filled in the apply method and unfilled in the unapply method
+    std::stack<DeleteEdgeAction> changes = std::stack<DeleteEdgeAction>();
 
   public:
     /// \param instance the problem instance
     /// \param context information about the instance and the solver state
     /// \param cuts the position where the rule can be applied,\n
-    /// which is a tuple of the two relevant leaf labels and a mapping for each forest to the list of nodes
-    /// that can be cutted.
+    /// which is a tuple of the two relevant terminal labels and a mapping for each forest to the list of nodes
+    /// that should be cutted, to make the both terminals siblings.
     PairPathBranchingRule(
         const std::shared_ptr<graph::Instance>& instance,
         const std::shared_ptr<Context>& context,

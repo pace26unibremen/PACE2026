@@ -17,16 +17,25 @@ namespace solver
 class PairUnconnectedBranchingRule : public AbstractBranchingRule
 {
   protected:
+
+    /// \brief first label
     unsigned int label1;
+
+    /// \brief second label
     unsigned int label2;
+
+    /// list of all forests where the two terminals  aren't siblings.
     std::list<std::shared_ptr<graph::Forest>> forestsConnectedLabels;
-    std::stack<DeleteEdgeAction> changes;
+
+    /// \brief Stack of action that modify the instance,
+    /// filled in the apply method and unfilled in the unapply method
+    std::stack<DeleteEdgeAction> changes = std::stack<solver::DeleteEdgeAction>();
 
   public:
     /// \param instance the problem instance
     /// \param context information about the instance and the solver state
     /// \param affectedForests the position where the rule can be applied,\n
-    /// which is a tuple of the two relevant leaf labels and a list of all forests where the two terminals
+    /// which is a tuple of the two relevant terminal labels and a list of all forests where the two terminals
     /// aren't siblings.
     PairUnconnectedBranchingRule(
         const std::shared_ptr<graph::Instance>& instance,

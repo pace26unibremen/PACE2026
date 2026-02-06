@@ -13,8 +13,12 @@ namespace solver
 class PairEqualRule : public AbstractRule
 {
   protected:
+    /// \brief A mapping of each forest to the subtree in this forest that can be collapsed
     std::unordered_map<std::shared_ptr<graph::Forest>, graph::Node*> forestToSubtree;
-    std::stack<CollapseSubtreeAction> changes;
+
+    /// \brief Stack of action that modify the instance,
+    /// filled in the apply method and unfilled in the unapply method
+    std::stack<CollapseSubtreeAction> changes = std::stack<solver::CollapseSubtreeAction>();
 
   public:
     /// \param instance the problem instance

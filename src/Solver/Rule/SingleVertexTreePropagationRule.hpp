@@ -14,9 +14,17 @@ namespace solver
 class SingleVertexTreePropagationRule : public AbstractRule
 {
   protected:
+
+    /// \brief set of all labels where the corresponding terminals
+    /// are somewhere but not everywhere single vertex trees
     std::unordered_set<unsigned int> labelsToBeReduced;
-    std::stack<DeleteEdgeAction> changes;
-  public:
+
+
+    /// \brief Stack of action that modify the instance,
+    /// filled in the apply method and unfilled in the unapply method
+    std::stack<DeleteEdgeAction> changes = std::stack<DeleteEdgeAction>();;
+
+public:
     /// \param instance the problem instance
     /// \param context information about the instance and the solver state
     /// \param labelsToBeReduced the position where the rule can be applied,\n

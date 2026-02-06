@@ -1,11 +1,9 @@
 #include "DebugAssertFalseRule.hpp"
 
 solver::DebugAssertFalseRule::DebugAssertFalseRule(const std::shared_ptr<graph::Instance>& instance,
-                                                   const std::shared_ptr<Context>& context)
-{
-    this->instance = instance;
-    this->context = context;
-}
+                                                   const std::shared_ptr<Context>& context) :
+    AbstractRule(instance, context)
+{}
 
 void solver::DebugAssertFalseRule::apply()
 {

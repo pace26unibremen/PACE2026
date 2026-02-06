@@ -4,12 +4,9 @@ solver::SingleVertexTreePropagationRule::SingleVertexTreePropagationRule(
     const std::shared_ptr<graph::Instance>& instance,
     const std::shared_ptr<Context>& context,
     const std::unordered_set<unsigned int>& labelsToBeReduced) :
+        AbstractRule(instance, context),
         labelsToBeReduced(labelsToBeReduced)
-{
-    this->instance = instance;
-    this->context = context;
-    changes = std::stack<DeleteEdgeAction>();
-}
+{}
 
 void solver::SingleVertexTreePropagationRule::apply()
 {

@@ -15,16 +15,11 @@ typedef std::tuple<
 solver::PairPathBranchingRule::PairPathBranchingRule(const std::shared_ptr<graph::Instance>& instance,
                                                      const std::shared_ptr<Context>& context,
                                                      const cuts_type& cuts) :
-        AbstractBranchingRule(3),
+        AbstractBranchingRule(instance, context, 3),
         label1(get<0>(cuts)),
         label2(get<1>(cuts)),
         forestToPathDeletions(get<2>(cuts))
-{
-    this->instance = instance;
-    this->context = context;
-    this->changes = std::stack<solver::DeleteEdgeAction>();
-}
-
+{}
 
 void solver::PairPathBranchingRule::apply()
 {

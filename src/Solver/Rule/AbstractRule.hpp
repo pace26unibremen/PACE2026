@@ -17,12 +17,15 @@ class AbstractRule
     std::shared_ptr<graph::Instance> instance;
 
     /// \brief Context information about the instance and the solver state
-    std::shared_ptr<solver::Context> context;
+    std::shared_ptr<Context> context;
 
     /// \brief Stores if the rule is already applied
     bool isApplied = false;
 
   public:
+    /// constructor
+    AbstractRule(const std::shared_ptr<graph::Instance>&, const std::shared_ptr<Context>& context);
+
     /// destructor
     virtual ~AbstractRule() = default;
 

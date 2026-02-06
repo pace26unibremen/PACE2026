@@ -15,16 +15,11 @@ solver::PairUnconnectedBranchingRule::PairUnconnectedBranchingRule(
     const std::shared_ptr<graph::Instance>& instance,
     const std::shared_ptr<Context>& context,
     const affectedForests_type& affectedForests) :
-        AbstractBranchingRule(2),
+        AbstractBranchingRule(instance, context, 2),
         label1(get<0>(affectedForests)),
         label2(get<1>(affectedForests)),
         forestsConnectedLabels(get<2>(affectedForests))
-{
-    this->instance = instance;
-    this->context = context;
-    this->changes = std::stack<solver::DeleteEdgeAction>();
-}
-
+{}
 
 void solver::PairUnconnectedBranchingRule::apply()
 {

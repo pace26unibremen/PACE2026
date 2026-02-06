@@ -3,8 +3,11 @@
 namespace solver
 {
 
-AbstractBranchingRule::AbstractBranchingRule(int _maxBranch)
-    : maxBranch(_maxBranch)
+AbstractBranchingRule::AbstractBranchingRule(const std::shared_ptr<graph::Instance>& _instance,
+                                             const std::shared_ptr<Context>& _context,
+                                             const int _maxBranch) :
+    AbstractRule(_instance,_context),
+    maxBranch(_maxBranch)
 {}
 
 int AbstractBranchingRule::Branch() const
