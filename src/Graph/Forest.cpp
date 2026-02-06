@@ -451,7 +451,7 @@ void Forest::renderImage()
     close(old_stderr);
 
     char* data = nullptr;
-    unsigned int length = 0;
+    size_t length = 0;
     gvRenderData(gvc, g, "png", &data, &length);
 
     std::vector<uchar> pngData(data, data + length);
@@ -477,7 +477,7 @@ void Forest::sortChildrenAndCollectTerminals()
         {
             const unsigned int label = terminalToLabel->at(subtreePtr);
             // (label - 1) because smallest label is 1 and not 0
-            subtreePtr->subtreeTerminals[(label - 1) / 64] = (1 << (label -1) % 64);
+            subtreePtr->subtreeTerminals[(label - 1) / 64] = ((uint64_t) 1 << (label -1) % 64);
             return label;
         }
         unsigned int firstMinLabel = orderSubtree(subtreePtr->leftChild);

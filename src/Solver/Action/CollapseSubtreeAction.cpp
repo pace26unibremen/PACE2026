@@ -30,6 +30,10 @@ void solver::CollapseSubtreeAction::doAction()
             graph::Node* oldNode = forest->LabelToTerminal()[label];
             collapsedLabelToTerminals.emplace(label, oldNode);
             forest->LabelToTerminal()[label] = node;
+            if (forest->Terminals().contains(oldNode) and forest->Terminals()[oldNode] == label)
+            {
+                collapsedTerminals.emplace(oldNode, label);
+            }
             forest->Terminals().erase(oldNode);
         }
         k++;
@@ -49,8 +53,12 @@ void solver::CollapseSubtreeAction::undoAction()
     for(const auto& [label, oldNode] : collapsedLabelToTerminals)
     {
         forest->LabelToTerminal()[label] = oldNode;
+    }
+    for ( const auto& [oldNode, label] : collapsedTerminals)
+    {
         forest->Terminals()[oldNode] = label;
     }
+
     forest->Terminals().erase(node);
 
     #ifdef DEBUG_IMAGE_VIEW_GRAPH

@@ -13,6 +13,7 @@ typedef std::tuple<
 
 solver::PairUnconnectedBranchingRule::PairUnconnectedBranchingRule(const std::shared_ptr<graph::Instance>& instance,
                                                            const context& context) :
+        AbstractBranchingRule(2),
         label1(get<0>(context)),
         label2(get<1>(context)),
         forestsConnectedLabels(get<2>(context))
@@ -124,7 +125,7 @@ solver::PairUnconnectedBranchingRule::isApplicable(const std::shared_ptr<graph::
     return std::dynamic_pointer_cast<AbstractRule>(std::make_shared<PairUnconnectedBranchingRule>(instance, c));
 }
 
-bool solver::PairUnconnectedBranchingRule::isFullyExplored() const
+std::string solver::PairUnconnectedBranchingRule::name() const
 {
-    return branch >= 2;
+    return "PairUnconnectedBranchingRule";
 }

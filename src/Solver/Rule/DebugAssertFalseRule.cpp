@@ -17,3 +17,8 @@ std::shared_ptr<solver::AbstractRule> solver::DebugAssertFalseRule::isApplicable
 {
     return std::dynamic_pointer_cast<AbstractRule>(std::make_shared<DebugAssertFalseRule>(instance));
 }
+
+std::string solver::DebugAssertFalseRule::name() const
+{
+    return "DebugAssertFalseRule";
+}

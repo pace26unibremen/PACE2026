@@ -18,9 +18,7 @@ void solver::EqualForestsRule::apply()
     }
     isApplied = true;
     instanceBackUp = *instance;
-    instance->erase(std::remove_if(instance->begin(), instance->end(),
-                                   [&](const std::shared_ptr<graph::Forest>& f) { return toBeRemoved.contains(f); }),
-                    instance->end());
+    std::erase_if(*instance, [&](const std::shared_ptr<graph::Forest>& f) { return toBeRemoved.contains(f); });
 }
 
 void solver::EqualForestsRule::unapply()
@@ -57,4 +55,9 @@ solver::EqualForestsRule::isApplicable(const std::shared_ptr<graph::Instance>& i
         return nullptr;
     }
     return std::dynamic_pointer_cast<AbstractRule>(std::make_shared<EqualForestsRule>(instance, toBeRemoved));
+}
+
+std::string solver::EqualForestsRule::name() const
+{
+    return "EqualForestsRule";
 }

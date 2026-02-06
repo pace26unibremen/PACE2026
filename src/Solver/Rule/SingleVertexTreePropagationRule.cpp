@@ -81,3 +81,8 @@ solver::SingleVertexTreePropagationRule::isApplicable(const std::shared_ptr<grap
     return std::dynamic_pointer_cast<AbstractRule>(
         std::make_shared<SingleVertexTreePropagationRule>(instance, labelsToBeReduced));
 }
+
+std::string solver::SingleVertexTreePropagationRule::name() const
+{
+    return "SingleVertexTreePropagationRule";
+}

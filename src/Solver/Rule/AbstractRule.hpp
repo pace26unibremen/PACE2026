@@ -32,6 +32,9 @@ class AbstractRule
     [[nodiscard, maybe_unused]]
     bool IsApplied() const;
 
+    /// \brief name of the rule
+    [[nodiscard]]
+    virtual std::string name() const = 0;
 };
 
 } // namespace solver

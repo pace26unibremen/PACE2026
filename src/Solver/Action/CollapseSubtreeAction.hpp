@@ -27,6 +27,11 @@ class CollapseSubtreeAction : AbstractAction
     /// \brief store collapsed label to terminals
     std::unordered_map<unsigned int, graph::Node*> collapsedLabelToTerminals = std::unordered_map<unsigned int, graph::Node*>();
 
+    /// \brief store collapsed label to terminals
+    std::unordered_map<graph::Node*, unsigned> collapsedTerminals = std::unordered_map<graph::Node*, unsigned int>();
+
+
+
   public:
     /// \param node The node from which the subtree will be collapsed into single leaf.
     /// \param forest A shared pointer to the forest on which the action will be performed.

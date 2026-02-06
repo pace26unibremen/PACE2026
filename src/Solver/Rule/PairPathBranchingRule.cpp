@@ -11,6 +11,7 @@ typedef std::tuple<unsigned int, unsigned int, std::unordered_map<std::shared_pt
 
 solver::PairPathBranchingRule::PairPathBranchingRule(const std::shared_ptr<graph::Instance>& instance,
                                                            const context& context) :
+        AbstractBranchingRule(3),
         label1(get<0>(context)),
         label2(get<1>(context)),
         forestToPathDeletions(get<2>(context))
@@ -172,7 +173,7 @@ solver::PairPathBranchingRule::isApplicable(const std::shared_ptr<graph::Instanc
     return std::dynamic_pointer_cast<AbstractRule>(std::make_shared<PairPathBranchingRule>(instance, c));
 }
 
-bool solver::PairPathBranchingRule::isFullyExplored() const
+std::string solver::PairPathBranchingRule::name() const
 {
-    return branch >= 3;
+    return "PairPathBranchingRule";
 }
