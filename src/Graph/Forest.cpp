@@ -433,7 +433,7 @@ bool Forest::checkTriple(Node* parentPtr, std::unordered_map<Node*, unsigned int
 // ------------------------------------------------------------- //
 
 
-#ifdef DEBUG_IMAGE_VIEW_GRAPH //TODO: ??
+#ifdef DEBUG_IMAGE_VIEW_GRAPH
 void Forest::renderImage()
 {
     std::stringstream dotRep;
