@@ -1,4 +1,4 @@
-image: kitware/kwiver
+image: ghcr.io/rikorose/gcc-cmake:gcc-13  # GCC 14+ with CMake 3.28+, C++20 ready
 
 stages:
   - build
@@ -7,6 +7,7 @@ stages:
 build-job:
   stage: build
   script:
+    - gcc --version && g++ --version && cmake --version  # Verify tools
     - mkdir build/
     - cd build/
     - cmake ..
@@ -29,3 +30,5 @@ graph-representation:
     - ./ForestEqualTests
     - ./ForestSubforestTests
     - ./DeleteEdgeActionTests
+  dependencies:
+    - build-job
