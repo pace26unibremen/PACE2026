@@ -26,7 +26,7 @@ void solver::DebugPlugin::writeStateNode()
                  "label = \"" << stateIDs.top() << "\n";
     for (auto& f : *instance)
     {
-        overviewFile << f->RootIndices().size() << " ";
+        overviewFile << f->Roots().size() << " ";
     }
     overviewFile << "\"];\n";
 }
@@ -97,10 +97,10 @@ void solver::DebugPlugin::dotInstance(const std::filesystem::path& path)
         for (size_t n = 0; n < forest->Nodes().size(); ++n)
         {
             const graph::Node& node = forest->Nodes()[n];
-            if(node.leftChildIndex != -1)
-                os << "    n_" << i << "_" << n << " -> n_" << i << "_" << node.leftChildIndex << ";\n";
-            if(node.rightChildIndex != -1)
-                os << "    n_" << i << "_" << n << " -> n_" << i << "_" << node.rightChildIndex << ";\n";
+            if(node.leftChild != nullptr)
+                os << "    n_" << i << "_" << n << " -> n_" << i << "_" << node.leftChild << ";\n";
+            if(node.rightChild != nullptr)
+                os << "    n_" << i << "_" << n << " -> n_" << i << "_" << node.rightChild << ";\n";
         }
 
         os << "}\n\n";
@@ -130,6 +130,7 @@ void solver::DebugPlugin::init(const std::shared_ptr<graph::Instance>& _instance
 
 void solver::DebugPlugin::onApply(const std::shared_ptr<solver::AbstractRule>& rule)
 {
+    std::clog << " ------ " << rule->name() << std::endl;
     writeRuleNode(rule);
     maxStateId++;
     if (auto branchingRule = std::dynamic_pointer_cast<AbstractBranchingRule>(rule))
