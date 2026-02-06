@@ -3,18 +3,20 @@ stages:
   - test
   - benchmark
 
-# C++ build and tests
-
-build-job:
+# C++ build and tests — build statically with musl
+build-solver:
   stage: build
-  image: ghcr.io/rikorose/gcc-cmake:gcc-13
+  # Alpine + musl + clang gives you an easy static toolchain
+  image: alpine:3.20
   script:
+    - apk add --no-cache cmake ninja clang musl-dev libc++-dev git file
     - mkdir -p build
     - cd build
-    - cmake ..
-    - make -j 4
-    - mkdir install
-    - make DESTDIR=install install
+    # Configure CMake to use clang and link statically
+    - cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXE_LINKER_FLAGS="-static"
+    - ninja
+    # Check that the resulting binary is indeed statically linked
+    - file src/startSolver
   artifacts:
     expire_in: 1 day
     paths:
@@ -26,16 +28,19 @@ build-job:
 
 graph-representation:
   stage: test
-  image: ghcr.io/rikorose/gcc-cmake:gcc-13
+  # Use any glibc-based image here; static binary will run anywhere
+  image: ubuntu:24.04
+  dependencies:
+    - build-solver
   script:
     - cd build/tests
+    - chmod +x ForestIOTests ForestEqualTests ForestSubforestTests DeleteEdgeActionTests
     - ./ForestIOTests
     - ./ForestEqualTests
     - ./ForestSubforestTests
     - ./DeleteEdgeActionTests
 
-# Build stride from source
-
+# Build stride from source (unchanged)
 build_stride:
   stage: build
   image: rust:1.93
@@ -52,14 +57,22 @@ build_stride:
 
 run_stride_benchmark:
   stage: benchmark
-  image: ghcr.io/rikorose/gcc-cmake:gcc-13
+  image: ubuntu:24.04
   dependencies:
-    - build-job
+    - build-solver
     - build_stride
+  # Cache downloaded instances to speed up subsequent runs, since stride don't need to re-download them if they are already present in the cache
+  cache:
+    key: stride-downloads
+    paths:
+      - .stride-downloads/
   script:
+    # Install wget and ca-certificates to allow stride to download instances if needed
+    - apt-get update && apt-get install -y wget ca-certificates
     - cp pace26stride/target/x86_64-unknown-linux-musl/smaller-release/stride .
     - chmod +x stride
-    - export STRIDE_SOLVER="./build/src/startSolver"
+    - chmod +x build/src/startSolver
+    - export STRIDE_SOLVER="build/src/startSolver"
     # Set a timeout of 30 minutes for stride operations, which is the official limit for the exact Track
     - export STRIDE_TIMEOUT=1800
     # 10 seconds of grace period to wrap up, which is also official limit for the exact Track
@@ -69,7 +82,7 @@ run_stride_benchmark:
     - ./stride download -i res/instances/30leaves.lst
     - ./stride run -Oo -i res/instances/30leaves.lst
 
-    # Fail if stride-logs/latest/solverErr directory exists and is non‑empty
+    # Fail if stride-logs/latest/solvererror directory exists and is non‑empty
     - |
       if [ -d "stride-logs/latest/solvererror" ]; then
         if [ -n "$(ls -A stride-logs/latest/solvererror)" ]; then
