@@ -33,7 +33,7 @@ namespace solver
         /// \param T2 Second Tree
         /// \param chain First found chain between those two trees
         /// \return The first chain between the two forests
-       ChainReductionRule(const std::shared_ptr<graph::Forest>& T1, const std::shared_ptr<graph::Forest>& T2,
+        ChainReductionRule(const std::shared_ptr<graph::Forest>& T1, const std::shared_ptr<graph::Forest>& T2,
                          const std::vector<std::vector<graph::Node*>>& chain);
 
         /// \brief Apply the Chain Reduction rule onto the two Trees

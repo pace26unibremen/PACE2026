@@ -57,10 +57,6 @@ void solver::ChainReductionRule::apply()
         changes.emplace(NodeInChainT2,T2);
         changes.top().doAction();
     }
-
-
-
-
 }
 
 void solver::ChainReductionRule::unapply()
@@ -76,8 +72,6 @@ void solver::ChainReductionRule::unapply()
         changes.top().undoAction();
         changes.pop();
     }
-
-
 }
 
 std::shared_ptr<solver::AbstractRule>
@@ -86,11 +80,6 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
 {
     //First found Chain in both trees
     std::vector<std::vector<graph::Node*>> chain;
-
-
-    //Fetch Nodes
-    //std::vector<graph::Node> treeOneNodes = T1->Nodes();
-    //std::vector<graph::Node> treeTwoNodes = T2->Nodes();
 
     //Fetch Leaves - Terminal Index to Label
     std::unordered_map<graph::Node*,unsigned int> termIndexTreeOne = T1->Terminals();
@@ -231,8 +220,7 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
             //Case 2: or the parent of x2 is the parent of the parent of x1, i.e parent index of sibling is
             //the same as the index for the parent of the parent on both trees.
             else if (case2SiblingIsOnLeftSideT1 == case2SiblingIsOnLeftSideT2 && siblingT1->parent ==
-                parentOfParentT1 &&siblingT2->parent ==
-                parentOfParentT2)
+                parentOfParentT1 && siblingT2->parent == parentOfParentT2)
             {
                 //Chain for both trees, x1-x3
                 //Technically parent of x1 is ignored but, well, it gets carried in-between x1 and x3 so w/e lol
