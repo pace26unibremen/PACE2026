@@ -1,10 +1,10 @@
 #include "DebugPlugin.hpp"
 
+#include "../Graph/ForestIO.hpp"
 #include "Rule/AbstractBranchingRule.hpp"
 
-#include <iostream>
-#include <utility>
 #include <algorithm>
+#include <utility>
 
 solver::DebugPlugin::DebugPlugin(std::string _dirPath)
 {
@@ -73,39 +73,20 @@ void solver::DebugPlugin::dotInstance(const std::filesystem::path& path)
         std::shared_ptr<graph::Forest> forest = shadowInstance->at(i);
         auto found = std::find(instance->begin(), instance->end(), forest) != instance->end();
 
-        os << "subgraph forest_" << i << " {\n"
-           << (found ? "    style = dotted;\n" : "    style = \"dotted,filled\";\n")
-           << "    cluster = true;\n"
-           << "    node [\n"
-           << "        shape = circle,\n"
-           << "        fontsize = 15,\n"
-           << "        label = \"\",\n"
-           << "        height = 0.1,\n"
-           << "        fillcolor = \"#00000022\",\n"
-           << "        style = filled,\n"
-           << "        fixedsize = true,\n"
-           << "        labelloc = t];\n"
-           << "    edge [arrowhead = none];\n\n";
-
-        os << "    inv_" << i << "[style = invis];\n\n";
-
-        for (auto t : forest->Terminals())
-        {
-            os << "    n_" << i << "_" << t.first << " [label = \"" << t.second << "\\n\\n\\n \"];\n";
-            os << "    n_" << i << "_" << t.first << " -> inv_" << i << "[style = invis];\n";
-        }
-        for (size_t n = 0; n < forest->Nodes().size(); ++n)
-        {
-            const graph::Node& node = forest->Nodes()[n];
-            if(node.leftChild != nullptr)
-                os << "    n_" << i << "_" << n << " -> n_" << i << "_" << node.leftChild << ";\n";
-            if(node.rightChild != nullptr)
-                os << "    n_" << i << "_" << n << " -> n_" << i << "_" << node.rightChild << ";\n";
-        }
-
-        os << "}\n\n";
+        std::string subgraphParam = (found ? "    style = dotted;\n" : "    style = \"dotted,filled\";\n");
+        subgraphParam += "    cluster = true;\n"
+                         "    node [\n"
+                         "        shape = circle,\n"
+                         "        fontsize = 15,\n"
+                         "        label = \"\",\n"
+                         "        height = 0.1,\n"
+                         "        fillcolor = \"#00000022\",\n"
+                         "        style = filled,\n"
+                         "        fixedsize = true,\n"
+                         "        labelloc = t];\n"
+                         "    edge [arrowhead = none];\n\n";
+        graph::ForestIO::WriteDotSubgraph(*forest,os, subgraphParam);
     }
-
     os << "}" << std::endl;
     os.close();
 }
@@ -130,7 +111,6 @@ void solver::DebugPlugin::init(const std::shared_ptr<graph::Instance>& _instance
 
 void solver::DebugPlugin::onApply(const std::shared_ptr<solver::AbstractRule>& rule)
 {
-    std::clog << " ------ " << rule->name() << std::endl;
     writeRuleNode(rule);
     maxStateId++;
     if (auto branchingRule = std::dynamic_pointer_cast<AbstractBranchingRule>(rule))
