@@ -141,11 +141,11 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
                 case2SiblingIsOnLeftSideT2= false;
             }
 
+            bool case1applied = false;
 
             //Case 1: if the parent of x1 coincides with the parent of x2
             if (siblingT2 != nullptr && siblingT1 != nullptr &&
-                (siblingT1->parent == parentT1)
-                && (siblingT2->parent == parentT2))
+                (siblingT1->parent == parentT1) && (siblingT2->parent == parentT2))
             {
                 //Chain for both trees, x1-x3
                 std::vector<std::vector<graph::Node*>> chainT1T2 = {{terminalT1.first,terminalT2.first},
@@ -154,13 +154,15 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
                 //Chain collection bool
                 bool case1check = true;
 
+                //Determine x4 for T1, T2
                 graph::Node* case1T1Parent = chainT1T2.back().front()->parent;
                 graph::Node* case1T2Parent = chainT1T2.back().back()->parent;
 
+                //Determine Sibling of x3
                 graph::Node* case1T1Sibling;
                 graph::Node* case1T2Sibling;
 
-                //T1 structure check
+                //T1 structure check, determining sibling of x3 -> Supposed terminal
                 if (case1T1Parent->leftChild == chainT1T2.back().front())
                 {
                     case1T1Sibling = case1T1Parent->rightChild;
@@ -181,11 +183,11 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
 
                 //Determine x4,... of chain
                 while (case1check)
-                {   //Siblings exist
+                {   //Sibling is in fact a terminal
                     if (case1T1Sibling != nullptr && case1T2Sibling != nullptr
                         && case1T1Parent != nullptr && case1T2Parent != nullptr
-                        && termIndexTreeOne.contains(case1T1Sibling)
-                        && termIndexTreeTwo.contains(case1T2Sibling))
+                        && case1T1Sibling->leftChild == nullptr && case1T1Sibling->rightChild == nullptr
+                        && case1T2Sibling->leftChild == nullptr && case1T2Sibling->rightChild == nullptr)
                     {
                         chainT1T2.push_back({case1T1Parent,case1T2Parent});
                         case1T1Parent = chainT1T2.back().front()->parent;
@@ -208,19 +210,22 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
                         {
                             case1T2Sibling = case1T2Parent->leftChild;
                         }
+
+                        case1applied = true;
                     }
                     else case1check = false;
                 }
-
                 if (chainT1T2.size() >= 4)
                 {
                     chain = chainT1T2;
                 }
             }
+
             //Case 2: or the parent of x2 is the parent of the parent of x1, i.e parent index of sibling is
             //the same as the index for the parent of the parent on both trees.
-            else if (case2SiblingIsOnLeftSideT1 == case2SiblingIsOnLeftSideT2 && siblingT1->parent ==
-                parentOfParentT1 && siblingT2->parent == parentOfParentT2)
+            else if (case2SiblingIsOnLeftSideT1 == case2SiblingIsOnLeftSideT2 &&
+                siblingT1->parent == parentOfParentT1 && siblingT2->parent == parentOfParentT2 &&
+                not case1applied)
             {
                 //Chain for both trees, x1-x3
                 //Technically parent of x1 is ignored but, well, it gets carried in-between x1 and x3 so w/e lol
@@ -261,8 +266,8 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Forest>& T
                 {   //Siblings exist
                     if (case2T1Sibling != nullptr && case2T2Sibling != nullptr
                         && case2T1Parent != nullptr && case2T2Parent != nullptr
-                        && termIndexTreeOne.contains(case2T1Sibling)
-                        && termIndexTreeTwo.contains(case2T2Sibling))
+                        && case2T1Sibling->leftChild == nullptr && case2T1Sibling->rightChild == nullptr
+                        && case2T2Sibling->leftChild == nullptr && case2T2Sibling->rightChild == nullptr)
                     {
                         chainT1T2.push_back({case2T1Parent,case2T2Parent});
                         case2T1Parent = chainT1T2.back().front()->parent;
