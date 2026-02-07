@@ -13,7 +13,7 @@ class AbstractBranchingRule : public AbstractRule
     const int maxBranch;
 
   public:
-    /// \brief a abstract class for rules that branch the solution in \c _macBranch different cases.
+    /// \brief an abstract class for rules that branch the solution in \c _maxBranch different cases.
     /// \param _instance the problem instance
     /// \param _context information about the instance and the solver state
     /// \param _maxBranch the number of different branches of the rule
