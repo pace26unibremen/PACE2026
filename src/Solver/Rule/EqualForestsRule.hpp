@@ -1,5 +1,5 @@
-#ifndef PACE2026_SINGLE_FORESTRULE_HPP
-#define PACE2026_SINGLE_FORESTRULE_HPP
+#ifndef PACE2026_SINGLE_FOREST_RULE_HPP
+#define PACE2026_SINGLE_FOREST_RULE_HPP
 
 #include "AbstractRule.hpp"
 
@@ -8,7 +8,7 @@
 namespace solver
 {
 
-/// \brief Removes duplicate Forests from Instance
+/// \brief Removes duplicate forests from instance.
 class EqualForestsRule : public AbstractRule
 {
   protected:
@@ -18,14 +18,20 @@ class EqualForestsRule : public AbstractRule
     std::unordered_set<std::shared_ptr<graph::Forest>> toBeRemoved;
 
   public:
+    /// \param instance the problem instance
+    /// \param context information about the instance and the solver state
+    /// \param toBeRemoved the position where the rule can be applied,\n
+    /// which is set of all forests that can be removed.
     EqualForestsRule(const std::shared_ptr<graph::Instance>& instance,
+                     const std::shared_ptr<Context>& context,
                      const std::unordered_set<std::shared_ptr<graph::Forest>>& toBeRemoved);
 
     void apply() override;
 
     void unapply() override;
 
-    static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance);
+    static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
+                                                      const std::shared_ptr<Context>& context);
 
     [[nodiscard]]
     std::string name() const override;
@@ -33,4 +39,4 @@ class EqualForestsRule : public AbstractRule
 
 }  //namespace solver
 
-#endif  //PACE2026_SINGLE_FORESTRULE_HPP
+#endif  //PACE2026_SINGLE_FOREST_RULE_HPP

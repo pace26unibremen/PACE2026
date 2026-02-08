@@ -6,22 +6,20 @@
 // 2. label2
 // 3. list of forests that are affected
 typedef std::tuple<
-    unsigned int,
-    unsigned int,
-    std::list<std::shared_ptr<graph::Forest>>>
-    context;
+        unsigned int,
+        unsigned int,
+        std::list<std::shared_ptr<graph::Forest>>>
+    affectedForests_type;
 
-solver::PairUnconnectedBranchingRule::PairUnconnectedBranchingRule(const std::shared_ptr<graph::Instance>& instance,
-                                                           const context& context) :
-        AbstractBranchingRule(2),
-        label1(get<0>(context)),
-        label2(get<1>(context)),
-        forestsConnectedLabels(get<2>(context))
-{
-    this->instance = instance;
-    this->changes = std::stack<solver::DeleteEdgeAction>();
-}
-
+solver::PairUnconnectedBranchingRule::PairUnconnectedBranchingRule(
+    const std::shared_ptr<graph::Instance>& instance,
+    const std::shared_ptr<Context>& context,
+    const affectedForests_type& affectedForests) :
+        AbstractBranchingRule(instance, context, 2),
+        label1(get<0>(affectedForests)),
+        label2(get<1>(affectedForests)),
+        forestsConnectedLabels(get<2>(affectedForests))
+{}
 
 void solver::PairUnconnectedBranchingRule::apply()
 {
@@ -76,25 +74,26 @@ void solver::PairUnconnectedBranchingRule::unapply()
 
 
 std::shared_ptr<solver::AbstractRule>
-solver::PairUnconnectedBranchingRule::isApplicable(const std::shared_ptr<graph::Instance>& instance)
+solver::PairUnconnectedBranchingRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,
+                                                   const std::shared_ptr<Context>& context)
 {
-    context c = context();
-    get<0>(c) = 0;
-    get<1>(c) = 0;
+    affectedForests_type af = affectedForests_type();
+    get<0>(af) = 0;
+    get<1>(af) = 0;
 
     auto f = instance->at(0);
     for (const auto& [label, node] : f->LabelToTerminal())
     {
         if (node->sibling != nullptr and f->Terminals().contains(node->sibling))
         {
-            get<0>(c) = label;
-            get<1>(c) = node->sibling->smallestTerminal();
-            get<2>(c).push_back(f);
+            get<0>(af) = label;
+            get<1>(af) = node->sibling->smallestTerminal();
+            get<2>(af).push_back(f);
             break;
         }
     }
 
-    if (get<0>(c) == 0)
+    if (get<0>(af) == 0)
     {
         // we have a better rule for this case
         return nullptr;
@@ -104,8 +103,8 @@ solver::PairUnconnectedBranchingRule::isApplicable(const std::shared_ptr<graph::
     for (unsigned int i = 1; i < instance->size(); i++)
     {
         auto fi = instance->at(i);
-        auto t1 = fi->LabelToTerminal()[get<0>(c)];
-        auto t2 = fi->LabelToTerminal()[get<1>(c)];
+        auto t1 = fi->LabelToTerminal()[get<0>(af)];
+        auto t2 = fi->LabelToTerminal()[get<1>(af)];
         auto root = fi->rootOf(t1);
         if (not t2->hasSubsetTerminals(root))
         {
@@ -113,7 +112,7 @@ solver::PairUnconnectedBranchingRule::isApplicable(const std::shared_ptr<graph::
         }
         else
         {
-            get<2>(c).push_back(fi);
+            get<2>(af).push_back(fi);
         }
     }
 
@@ -122,7 +121,7 @@ solver::PairUnconnectedBranchingRule::isApplicable(const std::shared_ptr<graph::
         return nullptr;
     }
 
-    return std::dynamic_pointer_cast<AbstractRule>(std::make_shared<PairUnconnectedBranchingRule>(instance, c));
+    return std::make_shared<PairUnconnectedBranchingRule>(instance, context, af);
 }
 
 std::string solver::PairUnconnectedBranchingRule::name() const

@@ -1,9 +1,9 @@
 #include "DebugAssertFalseRule.hpp"
 
-solver::DebugAssertFalseRule::DebugAssertFalseRule(const std::shared_ptr<graph::Instance>& instance)
-{
-    this->instance = instance;
-}
+solver::DebugAssertFalseRule::DebugAssertFalseRule(const std::shared_ptr<graph::Instance>& instance,
+                                                   const std::shared_ptr<Context>& context) :
+    AbstractRule(instance, context)
+{}
 
 void solver::DebugAssertFalseRule::apply()
 {
@@ -13,9 +13,11 @@ void solver::DebugAssertFalseRule::apply()
 
 void solver::DebugAssertFalseRule::unapply() {}
 
-std::shared_ptr<solver::AbstractRule> solver::DebugAssertFalseRule::isApplicable(const std::shared_ptr<graph::Instance>& instance)
+std::shared_ptr<solver::AbstractRule>
+solver::DebugAssertFalseRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,
+                                           const std::shared_ptr<Context>& context)
 {
-    return std::dynamic_pointer_cast<AbstractRule>(std::make_shared<DebugAssertFalseRule>(instance));
+    return std::make_shared<DebugAssertFalseRule>(instance, context);
 }
 
 std::string solver::DebugAssertFalseRule::name() const

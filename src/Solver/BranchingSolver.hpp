@@ -2,8 +2,9 @@
 #define PACE2026_BRANCHING_SOLVER_HPP
 
 #include "AbstractSolver.hpp"
+#include "DebugPlugin.hpp"
 #include "Rule/AbstractRule.hpp"
-#include  "DebugPlugin.hpp"
+#include "Rule/Context.hpp"
 
 #include <stack>
 
@@ -21,6 +22,9 @@ class BranchingSolver : public AbstractSolver
 
     /// \brief A debug plugin, nullptr for no additional debug info
     std::shared_ptr<DebugPlugin> debPlugin = nullptr;
+
+    /// \brief Context information about the instance and the solver state
+    std::shared_ptr<Context> context = std::make_shared<Context>();
 
   public:
     explicit BranchingSolver(const std::shared_ptr<graph::Instance>& instance);

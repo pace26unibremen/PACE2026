@@ -6,20 +6,20 @@
 // 1. label1
 // 2. label2
 // 3. map shared_ptr forest to the list of the cut-away subtrees on the path
-typedef std::tuple<unsigned int, unsigned int, std::unordered_map<std::shared_ptr<graph::Forest>, std::list<graph::Node*>>>
-    context;
+typedef std::tuple<
+            unsigned int,
+            unsigned int,
+            std::unordered_map<std::shared_ptr<graph::Forest>, std::list<graph::Node*>>>
+    cuts_type;
 
 solver::PairPathBranchingRule::PairPathBranchingRule(const std::shared_ptr<graph::Instance>& instance,
-                                                           const context& context) :
-        AbstractBranchingRule(3),
-        label1(get<0>(context)),
-        label2(get<1>(context)),
-        forestToPathDeletions(get<2>(context))
-{
-    this->instance = instance;
-    this->changes = std::stack<solver::DeleteEdgeAction>();
-}
-
+                                                     const std::shared_ptr<Context>& context,
+                                                     const cuts_type& cuts) :
+        AbstractBranchingRule(instance, context, 3),
+        label1(get<0>(cuts)),
+        label2(get<1>(cuts)),
+        forestToPathDeletions(get<2>(cuts))
+{}
 
 void solver::PairPathBranchingRule::apply()
 {
@@ -90,9 +90,10 @@ void solver::PairPathBranchingRule::unapply()
 
 
 std::shared_ptr<solver::AbstractRule>
-solver::PairPathBranchingRule::isApplicable(const std::shared_ptr<graph::Instance>& instance)
+solver::PairPathBranchingRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,
+                                            const std::shared_ptr<Context>& context)
 {
-    context c = context();
+    auto c = cuts_type();
     get<0>(c) = 0;
     get<1>(c) = 0;
 
@@ -170,7 +171,7 @@ solver::PairPathBranchingRule::isApplicable(const std::shared_ptr<graph::Instanc
     {
         return nullptr;
     }
-    return std::dynamic_pointer_cast<AbstractRule>(std::make_shared<PairPathBranchingRule>(instance, c));
+    return std::make_shared<PairPathBranchingRule>(instance, context, c);
 }
 
 std::string solver::PairPathBranchingRule::name() const

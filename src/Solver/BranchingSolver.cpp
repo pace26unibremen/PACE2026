@@ -20,7 +20,9 @@ std::shared_ptr<solver::DebugPlugin>& solver::BranchingSolver::DebPlugin()
 
 std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
 {
-    std::vector<std::function<std::shared_ptr<AbstractRule>(std::shared_ptr<graph::Instance> instance)>>
+    const std::vector<std::function<std::shared_ptr<AbstractRule>(
+                                    const std::shared_ptr<graph::Instance>& instance,
+                                    const std::shared_ptr<Context>& context)>>
         applicableCheck = {solver::EqualForestsRule::isApplicable,
                            solver::SingleVertexTreePropagationRule::isApplicable,
                            solver::PairUnconnectedBranchingRule::isApplicable,
@@ -38,6 +40,7 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
         {
             if (solution == nullptr or instance->at(0)->Roots().size() < solution->Roots().size())
             {
+                context->bestSolutionSize = instance->at(0)->Roots().size();
                 std::stack<std::shared_ptr<AbstractRule>> temporalChangesCopy = std::stack<std::shared_ptr<AbstractRule>>();
                 while (not temporalChanges.empty())
                 {
@@ -99,7 +102,7 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
 
         for (const auto& isApplicable : applicableCheck)
         {
-            auto rule = isApplicable(instance);
+            auto rule = isApplicable(instance, context);
             if (rule != nullptr)
             {
                 if (std::dynamic_pointer_cast<DebugAssertFalseRule>(rule) != nullptr and debPlugin)
