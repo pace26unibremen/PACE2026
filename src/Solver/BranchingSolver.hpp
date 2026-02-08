@@ -6,6 +6,7 @@
 
 #include "Rule/Context.hpp"
 #include "Rule/AbstractRule.hpp"
+#include "Rule/CutBranchRule.hpp"
 #include "Rule/EqualForestsRule.hpp"
 #include "Rule/PairEqualRule.hpp"
 #include "Rule/PairPathBranchingRule.hpp"
@@ -13,8 +14,8 @@
 #include "Rule/SingleVertexTreePropagationRule.hpp"
 #include "Rule/DebugAssertFalseRule.hpp"
 
-#include <stack>
 #include <functional>
+#include <stack>
 
 namespace solver
 {
@@ -53,6 +54,7 @@ class BranchingSolver : public AbstractSolver
     /// \brief vector of the isApplicable function of rules.
     /// It defines which rules are used and in which order they are checked for applicability.
     std::vector<isApplicableFn> activeRules = {
+        solver::CutBranchRule::isApplicable,
         solver::EqualForestsRule::isApplicable,
         solver::SingleVertexTreePropagationRule::isApplicable,
         solver::PairUnconnectedBranchingRule::isApplicable,
