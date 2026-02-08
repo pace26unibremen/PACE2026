@@ -4,13 +4,13 @@
 #include <unordered_set>
 
 solver::EqualForestsRule::EqualForestsRule(const std::shared_ptr<graph::Instance>& instance,
+                                           const std::shared_ptr<Context>& context,
                                            const std::unordered_set<std::shared_ptr<graph::Forest>>& toBeRemoved) :
-        toBeRemoved(toBeRemoved)
-{
-    this->instance = instance;
-}
+    AbstractRule(instance,context),
+    toBeRemoved(toBeRemoved)
+{}
 
-void solver::EqualForestsRule::apply()
+int solver::EqualForestsRule::apply()
 {
     if (this->isApplied)
     {
@@ -19,6 +19,10 @@ void solver::EqualForestsRule::apply()
     isApplied = true;
     instanceBackUp = *instance;
     std::erase_if(*instance, [&](const std::shared_ptr<graph::Forest>& f) { return toBeRemoved.contains(f); });
+
+    // if only one forest left, we have a solution (code 1)
+    // else we have to continue (code 0)
+    return instance->size() == 1 ? 1 : 0;
 }
 
 void solver::EqualForestsRule::unapply()
@@ -33,7 +37,8 @@ void solver::EqualForestsRule::unapply()
 
 
 std::shared_ptr<solver::AbstractRule>
-solver::EqualForestsRule::isApplicable(const std::shared_ptr<graph::Instance>& instance)
+solver::EqualForestsRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,
+                                       const std::shared_ptr<Context>& context)
 {
     auto toBeRemoved = std::unordered_set<std::shared_ptr<graph::Forest>>();
     for (unsigned int i = 0; i < instance->size() - 1; i++)
@@ -54,7 +59,7 @@ solver::EqualForestsRule::isApplicable(const std::shared_ptr<graph::Instance>& i
     {
         return nullptr;
     }
-    return std::dynamic_pointer_cast<AbstractRule>(std::make_shared<EqualForestsRule>(instance, toBeRemoved));
+    return std::make_shared<EqualForestsRule>(instance, context, toBeRemoved);
 }
 
 std::string solver::EqualForestsRule::name() const

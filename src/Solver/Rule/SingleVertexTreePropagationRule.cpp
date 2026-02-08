@@ -1,15 +1,14 @@
-
 #include "SingleVertexTreePropagationRule.hpp"
 
 solver::SingleVertexTreePropagationRule::SingleVertexTreePropagationRule(
-    const std::shared_ptr<graph::Instance>& instance, const std::unordered_set<unsigned int>& labelsToBeReduced) :
+    const std::shared_ptr<graph::Instance>& instance,
+    const std::shared_ptr<Context>& context,
+    const std::unordered_set<unsigned int>& labelsToBeReduced) :
+        AbstractRule(instance, context),
         labelsToBeReduced(labelsToBeReduced)
-{
-    this->instance = instance;
-    changes = std::stack<DeleteEdgeAction>();
-}
+{}
 
-void solver::SingleVertexTreePropagationRule::apply()
+int solver::SingleVertexTreePropagationRule::apply()
 {
     if (this->isApplied)
     {
@@ -21,22 +20,23 @@ void solver::SingleVertexTreePropagationRule::apply()
     {
         for (unsigned int label : labelsToBeReduced)
         {
-            int terminalIndex = f_ptr->LabelToTerminalIndex()[label];
-            const graph::Node& terminal = f_ptr->Nodes()[terminalIndex];
-            if (terminal.parentIndex != -1)
+            graph::Node* terminal = f_ptr->LabelToTerminal()[label];
+            if (terminal->parent != nullptr)
             {
-                changes.emplace(terminalIndex, f_ptr);
+                changes.emplace(terminal, f_ptr);
                 changes.top().doAction();
             }
         }
     }
+
+    return 0;
 }
 
 void solver::SingleVertexTreePropagationRule::unapply()
 {
     if (not this->isApplied)
     {
-        throw std::invalid_argument("EqualForestsRule : unapply : rule is not applied");
+        throw std::invalid_argument("SingleVertexTreePropagationRule : unapply : rule is not applied");
     }
     isApplied = false;
 
@@ -48,20 +48,20 @@ void solver::SingleVertexTreePropagationRule::unapply()
 }
 
 std::shared_ptr<solver::AbstractRule>
-solver::SingleVertexTreePropagationRule::isApplicable(const std::shared_ptr<graph::Instance>& instance)
+solver::SingleVertexTreePropagationRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,
+                                                      const std::shared_ptr<Context>& context)
 {
     auto labelsToBeReduced = std::unordered_set<unsigned int>();
 
-    for (unsigned int label = 1; label < instance->at(0)->LabelToTerminalIndex().size() + 1; label++)
+    for (unsigned int label = 1; label < instance->at(0)->LabelToTerminal().size() + 1; label++)
     {
         bool anySingleVertexTree = false;
         bool anyNotSingleVertexTree = false;
 
         for (const auto& f_ptr : *instance)
         {
-            const int& terminalIndex = f_ptr->LabelToTerminalIndex()[label];
-            const graph::Node& terminal = f_ptr->Nodes()[terminalIndex];
-            if (terminal.parentIndex != -1)
+            const graph::Node* terminal = f_ptr->LabelToTerminal()[label];
+            if (terminal->parent != nullptr)
             {
                 anyNotSingleVertexTree = true;
             }
@@ -80,8 +80,7 @@ solver::SingleVertexTreePropagationRule::isApplicable(const std::shared_ptr<grap
     {
         return nullptr;
     }
-    return std::dynamic_pointer_cast<AbstractRule>(
-        std::make_shared<SingleVertexTreePropagationRule>(instance, labelsToBeReduced));
+    return std::make_shared<SingleVertexTreePropagationRule>(instance, context, labelsToBeReduced);
 }
 
 std::string solver::SingleVertexTreePropagationRule::name() const

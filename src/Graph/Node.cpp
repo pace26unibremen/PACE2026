@@ -2,18 +2,18 @@
 
 #include <cassert>
 
-graph::Node::Node(int parentIndex, int siblingIndex, int leftChildIndex, int rightChildIndex) :
-        parentIndex(parentIndex),
-        siblingIndex(siblingIndex),
-        leftChildIndex(leftChildIndex),
-        rightChildIndex(rightChildIndex)
+graph::Node::Node(Node* parent, Node* sibling, Node* leftChild, Node* rightChild) :
+        parent(parent),
+        sibling(sibling),
+        leftChild(leftChild),
+        rightChild(rightChild)
 {}
 
-bool graph::Node::hasSameTerminals(const Node& other) const
+bool graph::Node::hasSameTerminals(const Node* other) const
 {
     for(unsigned int i = 0; i < subtreeTerminals.size(); i++ )
     {
-        if(subtreeTerminals[i] != other.subtreeTerminals[i])
+        if(subtreeTerminals[i] != other->subtreeTerminals[i])
         {
             return false;
         }
@@ -21,15 +21,15 @@ bool graph::Node::hasSameTerminals(const Node& other) const
     return true;
 }
 
-bool graph::Node::hasSmallestTerminal(const graph::Node& other) const
+bool graph::Node::hasSmallestTerminal(const graph::Node* other) const
 {
     for(unsigned int i = 0; i < subtreeTerminals.size(); i++ )
     {
-        if(subtreeTerminals[i] == other.subtreeTerminals[i])
+        if(subtreeTerminals[i] == other->subtreeTerminals[i])
         {
             continue;
         }
-        else if(__builtin_ctzll(subtreeTerminals[i]) < __builtin_ctzll(other.subtreeTerminals[i]))
+        else if(__builtin_ctzll(subtreeTerminals[i]) < __builtin_ctzll(other->subtreeTerminals[i]))
         {
             // __builtin_ctzll counts trailing zeros
             return true;
@@ -42,11 +42,11 @@ bool graph::Node::hasSmallestTerminal(const graph::Node& other) const
     return false;
 }
 
-bool graph::Node::hasSubsetTerminals(const graph::Node& other) const
+bool graph::Node::hasSubsetTerminals(const graph::Node* other) const
 {
     for(unsigned int i = 0; i < subtreeTerminals.size(); i++ )
     {
-        if((subtreeTerminals[i] | other.subtreeTerminals[i]) != other.subtreeTerminals[i])
+        if((subtreeTerminals[i] | other->subtreeTerminals[i]) != other->subtreeTerminals[i])
         {
             return false;
         }

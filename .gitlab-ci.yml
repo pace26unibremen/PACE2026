@@ -9,6 +9,7 @@ build-job:
   stage: build
   image: ghcr.io/rikorose/gcc-cmake:gcc-13
   script:
+    - gcc --version && g++ --version && cmake --version  # Verify tools
     - mkdir -p build
     - cd build
     - cmake ..
@@ -33,6 +34,8 @@ graph-representation:
     - ./ForestEqualTests
     - ./ForestSubforestTests
     - ./DeleteEdgeActionTests
+  dependencies:
+    - build-job
 
 # Build stride from source
 
