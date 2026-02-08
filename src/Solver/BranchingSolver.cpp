@@ -42,7 +42,8 @@ bool solver::BranchingSolver::rollBackBranch()
                 branchingRule->unapply();
                 if (debPlugin) debPlugin->onUnapply(rule);
 
-                branchingRule->apply();
+                if (branchingRule->apply() != 0)
+                    throw std::logic_error("BranchingSolver : rollBackBranch : undefined return code rule " + branchingRule->name());
                 if (debPlugin) debPlugin->onApply(rule);
                 return false;
             }
