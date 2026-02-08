@@ -26,6 +26,11 @@ class EqualForestsRule : public AbstractRule
                      const std::shared_ptr<Context>& context,
                      const std::unordered_set<std::shared_ptr<graph::Forest>>& toBeRemoved);
 
+    /// \brief applies rule
+    /// \see AbstractRule::apply
+    /// \returns two return codes are possible:
+    /// - return code \c 1 (rule solves the instance), if instance now contains only one forests
+    /// - return code \c 0 (default, continue solving), if instance still contains multiple forests
     int apply() override;
 
     void unapply() override;

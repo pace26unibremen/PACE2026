@@ -34,6 +34,9 @@ public:
                                     const std::shared_ptr<Context>& context,
                                     const std::unordered_set<unsigned int>& labelsToBeReduced);
 
+    /// \brief applies rule
+    /// \see AbstractRule::apply
+    /// \returns always return code  \c 0 (default, continue solving)
     int apply() override;
 
     void unapply() override;

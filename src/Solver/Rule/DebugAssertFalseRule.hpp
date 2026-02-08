@@ -14,6 +14,9 @@ class DebugAssertFalseRule : public AbstractRule
     explicit DebugAssertFalseRule(const std::shared_ptr<graph::Instance>& instance,
                                   const std::shared_ptr<Context>& context);
 
+    /// \brief applies rule
+    /// \see AbstractRule::apply
+    /// \returns always return code  \c -1 (stop the solver)
     int apply() override;
 
     void unapply() override;
