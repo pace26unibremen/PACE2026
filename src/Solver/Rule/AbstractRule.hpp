@@ -30,7 +30,12 @@ class AbstractRule
     virtual ~AbstractRule() = default;
 
     /// \brief applies rule
-    virtual void apply() = 0;
+    /// \returns return code
+    /// - \c 0 default, continue solving
+    /// - \c 1 rule solves the instance
+    /// - \c 2 branch can be cutted
+    /// - \c -1 stop the solver (without valid solution)
+    virtual int apply() = 0;
 
     /// \brief reverts the changes of the rule
     virtual void unapply() = 0;

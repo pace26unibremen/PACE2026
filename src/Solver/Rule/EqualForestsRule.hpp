@@ -26,7 +26,7 @@ class EqualForestsRule : public AbstractRule
                      const std::shared_ptr<Context>& context,
                      const std::unordered_set<std::shared_ptr<graph::Forest>>& toBeRemoved);
 
-    void apply() override;
+    int apply() override;
 
     void unapply() override;
 

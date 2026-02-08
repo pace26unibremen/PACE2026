@@ -29,7 +29,7 @@ class PairEqualRule : public AbstractRule
                   const std::shared_ptr<Context>& context,
                   const std::unordered_map<std::shared_ptr<graph::Forest>, graph::Node*>& forestToSubtree);
 
-    void apply() override;
+    int apply() override;
 
     void unapply() override;
 

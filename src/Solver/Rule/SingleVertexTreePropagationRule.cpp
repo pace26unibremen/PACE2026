@@ -8,7 +8,7 @@ solver::SingleVertexTreePropagationRule::SingleVertexTreePropagationRule(
         labelsToBeReduced(labelsToBeReduced)
 {}
 
-void solver::SingleVertexTreePropagationRule::apply()
+int solver::SingleVertexTreePropagationRule::apply()
 {
     if (this->isApplied)
     {
@@ -28,6 +28,8 @@ void solver::SingleVertexTreePropagationRule::apply()
             }
         }
     }
+
+    return 0;
 }
 
 void solver::SingleVertexTreePropagationRule::unapply()

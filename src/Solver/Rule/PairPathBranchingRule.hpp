@@ -45,7 +45,7 @@ class PairPathBranchingRule : public AbstractBranchingRule
         const std::tuple<unsigned int, unsigned int,
                          std::unordered_map<std::shared_ptr<graph::Forest>, std::list<graph::Node*>>>& cuts);
 
-    void apply() override;
+    int apply() override;
 
     void unapply() override;
 

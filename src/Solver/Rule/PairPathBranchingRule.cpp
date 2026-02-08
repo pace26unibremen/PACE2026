@@ -21,22 +21,22 @@ solver::PairPathBranchingRule::PairPathBranchingRule(const std::shared_ptr<graph
         forestToPathDeletions(get<2>(cuts))
 {}
 
-void solver::PairPathBranchingRule::apply()
+int solver::PairPathBranchingRule::apply()
 {
     if (this->isApplied)
     {
-        throw std::invalid_argument("SiblingPathBranchingRule : apply : rule is not applied");
+        throw std::invalid_argument("PairPathBranchingRule : apply : rule is not applied");
     }
     if (this->branch >= 3)
     {
-        throw std::invalid_argument("SiblingPathBranchingRule : apply : all branches are already visited");
+        throw std::invalid_argument("PairPathBranchingRule : apply : all branches are already visited");
     }
     isApplied = true;
     branch++;
 
     switch (branch)
     {
-        case 1:
+        case 3:
             for(const auto& f : *instance)
             {
                 const auto t1 = f->LabelToTerminal()[label1];
@@ -58,7 +58,7 @@ void solver::PairPathBranchingRule::apply()
                 }
             }
             break;
-        case 3:
+        case 1:
             for(const auto& f : *instance)
             {
                 for(auto pathDel : this->forestToPathDeletions[f])
@@ -71,13 +71,15 @@ void solver::PairPathBranchingRule::apply()
         default:
             assert(false);
     }
+
+    return 0;
 }
 
 void solver::PairPathBranchingRule::unapply()
 {
     if (not this->isApplied)
     {
-        throw std::invalid_argument("SiblingPathBranchingRule : unapply : rule is not applied");
+        throw std::invalid_argument("PairPathBranchingRule : unapply : rule is not applied");
     }
     isApplied = false;
 

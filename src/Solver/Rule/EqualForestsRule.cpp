@@ -10,7 +10,7 @@ solver::EqualForestsRule::EqualForestsRule(const std::shared_ptr<graph::Instance
     toBeRemoved(toBeRemoved)
 {}
 
-void solver::EqualForestsRule::apply()
+int solver::EqualForestsRule::apply()
 {
     if (this->isApplied)
     {
@@ -19,6 +19,10 @@ void solver::EqualForestsRule::apply()
     isApplied = true;
     instanceBackUp = *instance;
     std::erase_if(*instance, [&](const std::shared_ptr<graph::Forest>& f) { return toBeRemoved.contains(f); });
+
+    // if only one forest left, we have a solution (code 1)
+    // else we have to continue (code 0)
+    return instance->size() == 1 ? 1 : 0;
 }
 
 void solver::EqualForestsRule::unapply()

@@ -34,7 +34,7 @@ public:
                                     const std::shared_ptr<Context>& context,
                                     const std::unordered_set<unsigned int>& labelsToBeReduced);
 
-    void apply() override;
+    int apply() override;
 
     void unapply() override;
 

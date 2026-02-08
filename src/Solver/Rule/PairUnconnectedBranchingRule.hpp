@@ -42,7 +42,7 @@ class PairUnconnectedBranchingRule : public AbstractBranchingRule
         const std::shared_ptr<Context>& context,
         const std::tuple<unsigned int, unsigned int, std::list<std::shared_ptr<graph::Forest>>>& affectedForests);
 
-    void apply() override;
+    int apply() override;
 
     void unapply() override;
 
