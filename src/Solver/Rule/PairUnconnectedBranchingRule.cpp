@@ -21,7 +21,7 @@ solver::PairUnconnectedBranchingRule::PairUnconnectedBranchingRule(
         forestsConnectedLabels(get<2>(affectedForests))
 {}
 
-void solver::PairUnconnectedBranchingRule::apply()
+int solver::PairUnconnectedBranchingRule::apply()
 {
     if (this->isApplied)
     {
@@ -55,6 +55,8 @@ void solver::PairUnconnectedBranchingRule::apply()
         default:
             assert(false);
     }
+
+    return 0;
 }
 
 void solver::PairUnconnectedBranchingRule::unapply()

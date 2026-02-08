@@ -5,10 +5,9 @@ solver::DebugAssertFalseRule::DebugAssertFalseRule(const std::shared_ptr<graph::
     AbstractRule(instance, context)
 {}
 
-void solver::DebugAssertFalseRule::apply()
+int solver::DebugAssertFalseRule::apply()
 {
-    graph::WriteInstance(instance, pathToWriteInstance);
-    throw std::runtime_error("DebugAssertFalseRule : apply : rule triggered");
+    return -1;
 }
 
 void solver::DebugAssertFalseRule::unapply() {}

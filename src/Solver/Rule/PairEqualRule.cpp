@@ -12,7 +12,7 @@ solver::PairEqualRule::PairEqualRule(const std::shared_ptr<graph::Instance>& ins
 }
 
 
-void solver::PairEqualRule::apply()
+int solver::PairEqualRule::apply()
 {
     if (this->isApplied)
     {
@@ -25,6 +25,8 @@ void solver::PairEqualRule::apply()
         changes.emplace(subtree, f);
         changes.top().doAction();
     }
+
+    return 0;
 }
 
 void solver::PairEqualRule::unapply()
