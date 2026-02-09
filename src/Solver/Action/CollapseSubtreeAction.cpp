@@ -1,22 +1,21 @@
 #include "CollapseSubtreeAction.hpp"
 
-solver::CollapseSubtreeAction::CollapseSubtreeAction(int nodeIndex, const std::shared_ptr<graph::Forest>& forest) :
+solver::CollapseSubtreeAction::CollapseSubtreeAction(graph::Node* node, const std::shared_ptr<graph::Forest>& forest) :
     forest(forest),
-    nodeIndex(nodeIndex)
+    node(node)
 {}
 
 void solver::CollapseSubtreeAction::doAction()
 {
-    graph::Node& node = forest->Nodes()[nodeIndex];
-    leftChildIndex  = node.leftChildIndex;
-    rightChildIndex = node.rightChildIndex;
+    leftChild  = node->leftChild;
+    rightChild = node->rightChild;
 
-    node.leftChildIndex = -1;
-    node.rightChildIndex = -1;
+    node->leftChild = nullptr;
+    node->rightChild = nullptr;
 
     unsigned int smallestLabel = 0;
     int k = 0;
-    for(uint64_t bitmask : node.subtreeTerminals)
+    for(uint64_t bitmask : node->subtreeTerminals)
     {
         while (bitmask != 0) {
             unsigned i = __builtin_ctzll(bitmask);
@@ -28,18 +27,18 @@ void solver::CollapseSubtreeAction::doAction()
                 smallestLabel = label;
             }
 
-            int index = forest->LabelToTerminalIndex()[label];
-            collapsedLabelToTerminals.emplace(label, index);
-            forest->LabelToTerminalIndex()[label] = nodeIndex;
-            if (forest->Terminals().contains(index) and forest->Terminals()[index] == label)
+            graph::Node* oldNode = forest->LabelToTerminal()[label];
+            collapsedLabelToTerminals.emplace(label, oldNode);
+            forest->LabelToTerminal()[label] = node;
+            if (forest->Terminals().contains(oldNode) and forest->Terminals()[oldNode] == label)
             {
-                collapsedTerminals.emplace(index, label);
+                collapsedTerminals.emplace(oldNode, label);
             }
-            forest->Terminals().erase(index);
+            forest->Terminals().erase(oldNode);
         }
         k++;
     }
-    forest->Terminals().emplace(nodeIndex, smallestLabel);
+    forest->Terminals().emplace(node, smallestLabel);
 
     #ifdef DEBUG_IMAGE_VIEW_GRAPH
     forest->renderImage();
@@ -48,20 +47,19 @@ void solver::CollapseSubtreeAction::doAction()
 
 void solver::CollapseSubtreeAction::undoAction()
 {
-    graph::Node& node = forest->Nodes()[nodeIndex];
-    node.leftChildIndex = leftChildIndex;
-    node.rightChildIndex = rightChildIndex;
+    node->leftChild = leftChild;
+    node->rightChild = rightChild;
 
-    for(const auto& [label, index] : collapsedLabelToTerminals)
+    for(const auto& [label, oldNode] : collapsedLabelToTerminals)
     {
-        forest->LabelToTerminalIndex()[label] = index;
+        forest->LabelToTerminal()[label] = oldNode;
     }
-    for ( const auto& [index, label] : collapsedTerminals)
+    for ( const auto& [oldNode, label] : collapsedTerminals)
     {
-        forest->Terminals()[index] = label;
+        forest->Terminals()[oldNode] = label;
     }
 
-    forest->Terminals().erase(nodeIndex);
+    forest->Terminals().erase(node);
 
     #ifdef DEBUG_IMAGE_VIEW_GRAPH
     forest->renderImage();

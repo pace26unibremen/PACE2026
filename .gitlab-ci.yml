@@ -39,8 +39,10 @@ graph-representation:
     - ./ForestEqualTests
     - ./ForestSubforestTests
     - ./DeleteEdgeActionTests
+  dependencies:
+    - build-job
 
-# Build stride from source (unchanged)
+# Build stride from source
 build_stride:
   stage: build
   image: rust:1.93

@@ -3,15 +3,16 @@
 #include <cassert>
 
 solver::PairEqualRule::PairEqualRule(const std::shared_ptr<graph::Instance>& instance,
-                                     const std::unordered_map<std::shared_ptr<graph::Forest>, int>& forestToSubtree) :
-        forestToSubtree(forestToSubtree)
+                                     const std::shared_ptr<Context>& context,
+                                     const std::unordered_map<std::shared_ptr<graph::Forest>, graph::Node*>& forestToSubtree) :
+    AbstractRule(instance,context),
+    forestToSubtree(forestToSubtree)
 {
-    this->instance = instance;
     this->changes = std::stack<solver::CollapseSubtreeAction>();
 }
 
 
-void solver::PairEqualRule::apply()
+int solver::PairEqualRule::apply()
 {
     if (this->isApplied)
     {
@@ -24,6 +25,8 @@ void solver::PairEqualRule::apply()
         changes.emplace(subtree, f);
         changes.top().doAction();
     }
+
+    return 0;
 }
 
 void solver::PairEqualRule::unapply()
@@ -43,22 +46,22 @@ void solver::PairEqualRule::unapply()
 
 
 std::shared_ptr<solver::AbstractRule>
-solver::PairEqualRule::isApplicable(const std::shared_ptr<graph::Instance>& instance)
+solver::PairEqualRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,
+                                    const std::shared_ptr<Context>& context)
 {
-    auto forestToSubtree = std::unordered_map<std::shared_ptr<graph::Forest>, int>();
+    auto forestToSubtree = std::unordered_map<std::shared_ptr<graph::Forest>, graph::Node*>();
 
     unsigned int label1 = 0;
     unsigned int label2 = 0;
 
     auto f = instance->at(0);
-    for (const auto& [label, index] : f->LabelToTerminalIndex())
+    for (const auto& [label, node] : f->LabelToTerminal())
     {
-        const auto& t = f->Nodes()[index];
-        if (t.siblingIndex != -1 and f->Terminals().contains(t.siblingIndex))
+        if (node->sibling != nullptr and f->Terminals().contains(node->sibling))
         {
             label1 = label;
-            label2 = f->Nodes()[t.siblingIndex].smallestTerminal();
-            forestToSubtree.emplace(f, t.parentIndex);
+            label2 = node->sibling->smallestTerminal();
+            forestToSubtree.emplace(f, node->parent);
             break;
         }
     }
@@ -72,19 +75,17 @@ solver::PairEqualRule::isApplicable(const std::shared_ptr<graph::Instance>& inst
     for (unsigned int i = 1; i < instance->size(); i++)
     {
         auto fi = instance->at(i);
-        auto t1Index = fi->LabelToTerminalIndex()[label1];
-        auto t2Index = fi->LabelToTerminalIndex()[label2];
-        const auto& t1 = fi->Nodes()[t1Index];
-        const auto& t2 = fi->Nodes()[t2Index];
-        if ((t1.parentIndex == -1) or (t1.parentIndex != t2.parentIndex))
+        auto t1 = fi->LabelToTerminal()[label1];
+        auto t2 = fi->LabelToTerminal()[label2];
+        if ((t1->parent == nullptr) or (t1->parent != t2->parent))
         {
             // we can not apply this rule for label1, label2
             return nullptr;
         }
-        forestToSubtree.emplace(fi, t1.parentIndex);
+        forestToSubtree.emplace(fi, t1->parent);
     }
 
-    return std::dynamic_pointer_cast<AbstractRule>(std::make_shared<PairEqualRule>(instance, forestToSubtree));
+    return std::make_shared<PairEqualRule>(instance, context, forestToSubtree);
 }
 
 std::string solver::PairEqualRule::name() const

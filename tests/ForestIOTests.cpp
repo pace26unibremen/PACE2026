@@ -10,13 +10,13 @@ TEST_CASE("Read and Write single Tree", "[Forest, ForestIO]")
 {
     SECTION("Example 1: Tree with 2 Terminals")
     {
-        auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree");
+        auto t1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_2_simple.tree", 2, 1);
         SECTION("Read")
         {
             INFO("compare number of nodes");
             REQUIRE(t1.Nodes().size() == 3);
             INFO("Check number of trees");
-            REQUIRE(t1.RootIndices().size() == 1);
+            REQUIRE(t1.Roots().size() == 1);
             INFO("Check number of terminals");
             REQUIRE(t1.Terminals().size() == 2);
             INFO("check validity of tree structure");
@@ -45,13 +45,13 @@ TEST_CASE("Read and Write single Tree", "[Forest, ForestIO]")
 
     SECTION("Example 2: Tree with 6 Terminals")
     {
-        auto t2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree");
+        auto t2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example1.tree", 6, 1);
         SECTION("Read")
         {
             INFO("compare number of nodes");
             REQUIRE(t2.Nodes().size() == 11);
             INFO("Check number of trees");
-            REQUIRE(t2.RootIndices().size() == 1);
+            REQUIRE(t2.Roots().size() == 1);
             INFO("Check number of terminals");
             REQUIRE(t2.Terminals().size() == 6);
             INFO("check validity of tree structure");
@@ -80,13 +80,13 @@ TEST_CASE("Read and Write single Tree", "[Forest, ForestIO]")
 
     SECTION("Example 3: Tree with 6 Terminals")
     {
-        auto t3 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example2.tree");
+        auto t3 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example2.tree", 6, 1);
         SECTION("Read")
         {
             INFO("compare number of nodes");
             REQUIRE(t3.Nodes().size() == 11);
             INFO("Check number of trees");
-            REQUIRE(t3.RootIndices().size() == 1);
+            REQUIRE(t3.Roots().size() == 1);
             INFO("Check number of terminals");
             REQUIRE(t3.Terminals().size() == 6);
             INFO("check validity of tree structure");
@@ -118,13 +118,13 @@ TEST_CASE("Read and Write Forest", "[Forest, ForestIO]")
 {
     SECTION("Example 1: Forest with 2 Trees and 2 Terminals")
     {
-        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_2_2_singleVertexTrees.tree",0,2);
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_2_2_singleVertexTrees.tree",2,2);
         SECTION("Read")
         {
             INFO("compare number of nodes");
             REQUIRE(f1.Nodes().size() == 2);
             INFO("Check number of trees");
-            REQUIRE(f1.RootIndices().size() == 2);
+            REQUIRE(f1.Roots().size() == 2);
             INFO("Check number of terminals");
             REQUIRE(f1.Terminals().size() == 2);
             INFO("check validity of tree structure");
@@ -157,13 +157,13 @@ TEST_CASE("Read and Write Forest", "[Forest, ForestIO]")
 
     SECTION("Example 2: Forest with 4 Trees and 6 Terminals")
     {
-        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_4_6_simple.tree",0,4);
+        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_4_6_simple.tree",6,4);
         SECTION("Read")
         {
             INFO("compare number of nodes");
             REQUIRE(f2.Nodes().size() == 8);
             INFO("Check number of trees");
-            REQUIRE(f2.RootIndices().size() == 4);
+            REQUIRE(f2.Roots().size() == 4);
             INFO("Check number of terminals");
             REQUIRE(f2.Terminals().size() == 6);
             INFO("check validity of tree structure");

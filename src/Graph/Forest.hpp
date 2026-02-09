@@ -21,14 +21,14 @@ class Forest
     /// \brief Vector that stores all nodes of the forest.
     std::shared_ptr<std::vector<Node>> nodes;
 
-    /// \brief A map that stores all indices of terminals (in the \c nodes vector) with corresponding terminal labels.
-    std::shared_ptr<std::unordered_map<int, unsigned int>> terminalIndexToLabel;
+    /// \brief A map that stores all pointers to terminals with corresponding terminal labels.
+    std::shared_ptr<std::unordered_map<Node*, unsigned int>> terminalToLabel;
 
-    /// \brief A map that stores all leaf labels with corresponding terminal indices (in the \c nodes vector).
-    std::shared_ptr<std::unordered_map<unsigned int, int>> labelToTerminalIndex;
+    /// \brief A map that stores all leaf labels with corresponding terminal Pointers.
+    std::shared_ptr<std::unordered_map<unsigned int, Node*>> labelToTerminal;
 
-    /// \brief Indices of root nodes in \c nodes vector.
-    std::shared_ptr<std::vector<int>> rootIndices;
+    /// \brief Node pointers to root Nodes.
+    std::shared_ptr<std::vector<Node*>> roots;
 
     /// \brief \b 1. Sorts the children of each node,
     /// such that the left child
@@ -48,24 +48,28 @@ class Forest
 
     /// \brief Constructor.
     Forest(std::shared_ptr<std::vector<Node>> nodes,
-           std::shared_ptr<std::unordered_map<int, unsigned int>> terminalIndexToLabel,
-           std::shared_ptr<std::unordered_map<unsigned int, int>> labelToTerminalIndex,
-           std::shared_ptr<std::vector<int>> rootIndices);
+           std::shared_ptr<std::unordered_map<Node*, unsigned int>> terminalToLabel,
+           std::shared_ptr<std::unordered_map<unsigned int, Node*>> labelToTerminal,
+           std::shared_ptr<std::vector<Node*>> roots);
 
     /// \brief Constructor. Loads forest from a file in newick format.
     /// \param path to file
-    /// \param numberOfTerminals number of leafs (for optimized memory allocation only). \c 0 if unknown.
-    /// \param numberOfTrees number of trees. \c 1 is default.
+    /// \param numberOfTerminals number of leafs.
+    /// \param numberOfTrees number of trees.
     [[maybe_unused]]
-    explicit Forest(const std::filesystem::path& path, int numberOfTerminals = 0, int numberOfTrees = 1);
+    explicit Forest(const std::filesystem::path& path, int numberOfTerminals, int numberOfTrees);
+
+    /// \brief Makes a deep copy of the forest.
+    /// @return The copy
+    Forest copy() const;
 
     // ------------------------------------------------------------- //
     // ---- persistence -------------------------------------------- //
     // ------------------------------------------------------------- //
 
     /// \brief Writes forest to a stream in newick format.
-    /// \param stream
-    void write(std::ostream& out_file) const;
+    /// \param stream the forest gets written to
+    void write(std::ostream& stream) const;
 
     /// \brief Writes forest to a stream in newick format.
     /// \param path to file
@@ -97,59 +101,52 @@ class Forest
 
     /// \brief Reference to terminals map
     /// \property
-    /// \first Terminal indices.
+    /// \first Terminal pointer.
     /// \second Corresponding terminal label.
     [[nodiscard, maybe_unused]]
-    std::unordered_map<int, unsigned int>& Terminals();
+    std::unordered_map<Node*, unsigned int>& Terminals();
 
     /// \brief \c const reference to terminals map
     /// \property
-    /// \first Terminal indices.
+    /// \first Terminal pointer.
     /// \second Corresponding terminal label.
     [[nodiscard, maybe_unused]]
-    const std::unordered_map<int, unsigned int>& Terminals() const;
+    const std::unordered_map<Node*, unsigned int>& Terminals() const;
 
-    /// \brief Reference to label-to-node-index map
+    /// \brief Reference to labelToTerminal map
     /// \property
     /// \first Leaf labels.
-    /// \second Corresponding node index.
+    /// \second Corresponding node pointer.
     [[nodiscard, maybe_unused]]
-    std::unordered_map<unsigned int, int>& LabelToTerminalIndex();
+    std::unordered_map<unsigned int, Node*>& LabelToTerminal();
 
-    /// \brief \c const reference to label-to-node-index map
+    /// \brief \c const reference to labelToTerminal map
     /// \property
     /// \first Leaf labels.
-    /// \second Corresponding node index.
+    /// \second Corresponding node pointer.
     [[nodiscard, maybe_unused]]
-    const std::unordered_map<unsigned int, int>& LabelToTerminalIndex() const;
+    const std::unordered_map<unsigned int, Node*>& LabelToTerminal() const;
 
-    /// \brief Reference index of root node.
+    /// \brief Reference vector of root node pointer.
     /// \property
     [[nodiscard, maybe_unused]]
-    std::vector<int>& RootIndices();
+    std::vector<Node*>& Roots();
 
-    /// \brief \c const reference index of root node.
+    /// \brief \c const reference vector of root node pointer.
     /// \property
     [[nodiscard, maybe_unused]]
-    const std::vector<int>& RootIndices() const;
+    const std::vector<Node*>& Roots() const;
 
-    /// \brief returns the index of the root node in the nodes vector, that has \c node in its subtree
+    /// \brief returns a pointer to the root node, that has \c node in its subtree
     [[nodiscard, maybe_unused]]
-    int rootIndexOf(const Node& node) const;
+    Node* rootOf(const Node& node) const;
 
-    /// \brief returns the index of the root node in the nodes vector, that has \c node in its subtree
+    /// \brief returns a pointer to the root node, that has \c node in its subtree
     [[nodiscard, maybe_unused]]
-    int rootIndexOf(int nodeIndex) const;
+    Node* rootOf(Node* node) const;
 
     /// \brief Returns the maximum common X-Forest of this forest and the input forest.
-    std::vector<int> maximumCommonSubforestRoots(const Forest& other);
-
-    // ------------------------------------------------------------- //
-    // ---- debug -------------------------------------------------- //
-    // ------------------------------------------------------------- //
-
-    /// \brief Writes forest as table to std::clog
-    void print() const;
+    std::vector<Node*> maximumCommonSubforestRoots(const Forest& other);
 
     /// \brief Checks whether the forest representation is valid
     /// and writes flaws to std::clog
@@ -160,11 +157,11 @@ class Forest
     /// \return true if the first tree is a subtree, false otherwise.
     bool isTrueSubtreeOf(const Forest& other) const;
 
-    bool hasIdenticalSubtree(const Forest& other, int thisNodeIdx, int otherNodeIdx);
+    bool hasIdenticalSubtree(Node* thisNodePtr, Node* otherNodePtr);
 
     /// \brief Checks relations between parent and children. Goes deeper recursively.
-    bool checkTriple(int parentIndex, std::unordered_map<int, unsigned int>& leafs, std::set<int>& indices,
-                     unsigned int& lastSmallestTerminal) const;
+    bool checkTriple(Node* parentPtr, std::unordered_map<Node*, unsigned int>& subtreeLeafs, std::set<Node*>& pointers,
+                     unsigned int& smallestTerminal) const;
 
     // ------------------------------------------------------------- //
     // ---- operators ---------------------------------------------- //
@@ -175,18 +172,7 @@ class Forest
     /// \return true if the trees are identical, false otherwise.
     bool operator==(const Forest& other) const;
 
-
-
-
-    // ------------------------------------------------------------- //
-    // ---- copy func ---------------------------------------------- //
-    // ------------------------------------------------------------- //
-    /// \brief Tree copy function that makes a separate copy to the copied tree.
-    /// @return A Copy of the Tree
-    Forest copy();
-
 };
-
 
 }  // namespace graph
 

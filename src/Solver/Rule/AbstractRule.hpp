@@ -2,28 +2,40 @@
 #define PACE2026_ABSTRACT_RULE_HPP
 
 #include "../../Graph/Instance.hpp"
+#include "Context.hpp"
 
 namespace solver
 {
 
 /// \brief A rule changes a problem instance
 /// (generally without changing the solution(-size)).
-/// An instance of a rule holds the specific context what can be changed in the problem instance.
+/// An instance of a rule holds information about the specific part of the problem instance that can be changed.
 class AbstractRule
 {
   protected:
     /// \brief The problem instance to be modified
     std::shared_ptr<graph::Instance> instance;
 
+    /// \brief Context information about the instance and the solver state
+    std::shared_ptr<Context> context;
+
     /// \brief Stores if the rule is already applied
     bool isApplied = false;
 
   public:
+    /// constructor
+    AbstractRule(const std::shared_ptr<graph::Instance>&, const std::shared_ptr<Context>& context);
+
     /// destructor
     virtual ~AbstractRule() = default;
 
     /// \brief applies rule
-    virtual void apply() = 0;
+    /// \returns return code
+    /// - \c 0 default, continue solving
+    /// - \c 1 rule solves the instance
+    /// - \c 2 branch can be cutted
+    /// - \c -1 stop the solver (without valid solution)
+    virtual int apply() = 0;
 
     /// \brief reverts the changes of the rule
     virtual void unapply() = 0;
