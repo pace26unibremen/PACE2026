@@ -39,8 +39,6 @@ graph-representation:
     - ./ForestEqualTests
     - ./ForestSubforestTests
     - ./DeleteEdgeActionTests
-  dependencies:
-    - build-job
 
 # Build stride from source
 build_stride:
