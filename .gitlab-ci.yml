@@ -3,6 +3,7 @@ image: ghcr.io/rikorose/gcc-cmake:gcc-13  # GCC 14+ with CMake 3.28+, C++20 read
 stages:
   - build
   - test
+  - docs
 
 build-job:
   stage: build
@@ -24,11 +25,36 @@ build-job:
 
 graph-representation:
   stage: test
+  dependencies:
+    - build-job
   script:
     - cd build/tests/
     - ./ForestIOTests
     - ./ForestEqualTests
     - ./ForestSubforestTests
     - ./DeleteEdgeActionTests
+
+pages:
+  image: alpine:3.20
+  stage: docs
   dependencies:
-    - build-job
+    # Only generate docs, if all tests passed
+    - graph-representation
+  script:
+    # Install Doxygen + Graphviz
+    - apk add --no-cache doxygen graphviz ttf-freefont py3-pip
+    # Generate docs
+    - doxygen Doxyfile
+    # Move HTML to GitLab Pages 'public/' folder
+    - mkdir -p public
+    - cp -r docs/html/* public/
+  artifacts:
+    paths:
+      - public
+    expire_in: 1 week
+  only:
+    # Publish docs only from master branch and tags
+    - master
+    - tags
+    # TODO: Remove this line, before merging to master
+    - 29-maintenance-document-the-code
