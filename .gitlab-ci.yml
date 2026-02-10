@@ -21,6 +21,7 @@ stages:
   - test
   - release_prep
   - release
+  - docs
 
 # C++ build and tests — build statically with musl
 build-solver:
@@ -84,6 +85,32 @@ graph-representation:
     reports:
       junit: build/tests/*-results.xml  # GitLab merges all matching files
     expire_in: 1 Month
+
+pages:
+  image: alpine:3.20
+  stage: docs
+  dependencies:
+    # Only generate docs, if all tests passed
+    - graph-representation
+  script:
+    # Install Doxygen + Graphviz
+    - apk add --no-cache doxygen graphviz ttf-freefont py3-pip
+    # Generate docs
+    - doxygen Doxyfile
+    # Move HTML to GitLab Pages 'public/' folder
+    - mkdir -p public
+    - cp -r docs/html/* public/
+  artifacts:
+    paths:
+      - public
+    expire_in: 1 week
+  only:
+    # Publish docs only from master branch and tags
+    - master
+    - tags
+    # TODO: Remove this line, before merging to master
+    - 29-maintenance-document-the-code
+
 
 # Prepare version, tag name, and release description (no tag/release created here)
 prepare-release:
