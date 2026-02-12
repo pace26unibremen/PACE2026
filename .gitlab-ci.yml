@@ -61,34 +61,136 @@ run_stride_benchmark:
   dependencies:
     - build-solver
     - build_stride
-  # Cache downloaded instances to speed up subsequent runs, since stride don't need to re-download them if they are already present in the cache
-  cache:
-    key: stride-downloads
-    paths:
-      - .stride-downloads/
-  script:
-    # Install wget and ca-certificates to allow stride to download instances if needed
-    - apt-get update && apt-get install -y wget ca-certificates
-    - cp pace26stride/target/x86_64-unknown-linux-musl/smaller-release/stride .
-    - chmod +x stride
-    - chmod +x build/src/startSolver
-    - export STRIDE_SOLVER="build/src/startSolver"
-    # Set a timeout of 30 minutes for stride operations, which is the official limit for the exact Track
-    - export STRIDE_TIMEOUT=1800
-    # 10 seconds of grace period to wrap up, which is also official limit for the exact Track
-    - export STRIDE_GRACE=10
-    - export STRIDE_DOWNLOADS_PATH=".stride-downloads"
-    - mkdir -p "$STRIDE_DOWNLOADS_PATH"
-    - ./stride download -i res/instances/30leaves.lst
-    - ./stride run -Oo -i res/instances/30leaves.lst
+  before_script:
+    - apt-get update && apt-get install -y openssh-client rsync
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
 
-    # Fail if stride-logs/latest/solvererror directory exists and is non‑empty
+    # Set up SSH key
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+    - chmod 600 ~/.ssh/id_ed25519
+
+    # Set up known_hosts
+    - echo "$HPC_HOST_KEY" >> ~/.ssh/known_hosts
+    - chmod 600 ~/.ssh/known_hosts
+
+    # Create SSH config with host alias
     - |
-      if [ -d "stride-logs/latest/solvererror" ]; then
-        if [ -n "$(ls -A stride-logs/latest/solvererror)" ]; then
-          echo "Error: stride-logs/latest/solvererror is non‑empty, the solver encountered errors."
-          exit 1
-        fi
+      cat > ~/.ssh/config << EOF
+      Host hpc
+          HostName $HPC_HOST
+          User $HPC_USER
+          IdentityFile ~/.ssh/id_ed25519
+          StrictHostKeyChecking yes
+      EOF
+    - chmod 600 ~/.ssh/config
+  script:
+    - ssh hpc "echo 'Connected to HPC!'"
+
+    # 1) Copy binaries, instance list and slurm script to HPC login node
+    - mkdir -p hpc_transfer
+    - cp pace26stride/target/x86_64-unknown-linux-musl/smaller-release/stride hpc_transfer/
+    - cp build/src/startSolver hpc_transfer/
+    - cp res/instances/50leaves.lst hpc_transfer/instances.lst
+    - cp gitlab-ci/slurm/run_stride.slurm hpc_transfer/
+    - tar czf hpc_payload.tgz hpc_transfer
+
+    - ssh hpc "mkdir -p ~/pace-bench"
+    - scp hpc_payload.tgz hpc:~/pace-bench/hpc_payload.tgz
+
+    # 2) Remote: unpack and submit Slurm job
+    - |
+      ssh hpc bash <<'EOF'
+        mkdir -p ~/pace-bench
+        cd ~/pace-bench
+        tar xzf hpc_payload.tgz
+
+        JOB_ID=$(sbatch run_stride.slurm | awk "{print \$4}")
+        echo "$JOB_ID" > last_job.id
+      EOF
+    - |
+      JOB_ID=$(ssh hpc "cat ~/pace-bench/last_job.id")
+      echo "Slurm job submitted, job ID: $JOB_ID"
+    # 3) Wait for job completion on HPC
+    - |
+      ssh hpc bash <<'EOF'
+        cd ~/pace-bench
+        JOB_ID=$(cat last_job.id)
+
+        # pooling loop
+        while true; do
+          STATE=$(sacct -j "$JOB_ID" --format=State --noheader | head -n1 | awk "{print \$1}")
+ 
+          if [[ "$STATE" =~ ^COMPLETED ]]; then
+            echo "Job $JOB_ID completed successfully"
+            exit 0
+          elif [[ "$STATE" =~ ^(FAILED|CANCELLED|TIMEOUT|NODE_FAIL|PREEMPTED|OUT_OF_MEMORY) ]]; then
+            echo "Slurm job $JOB_ID ended with state $STATE"
+            exit 1
+          elif [[ "$STATE" =~ ^(PENDING|CONFIGURING) ]]; then
+            # Show the reason if available
+            REASON=$(squeue -j "$JOB_ID" -h -o "%r" 2>/dev/null || echo "Unknown")
+            echo "Job $JOB_ID still in state $STATE (reason: $REASON) - waiting..."
+            sleep 60
+          elif [[ "$STATE" =~ ^RUNNING ]]; then
+            echo "Job $JOB_ID is running..."
+          
+            # Try to show progress if stride has started producing output
+            SUMMARY_FILE="hpc_transfer/stride-logs/latest/summary.json"
+            INSTANCES_FILE="hpc_transfer/instances.lst"
+            ERROR_DIR="hpc_transfer/stride-logs/latest/solvererror"
+          
+            if [ -f "$SUMMARY_FILE" ] && [ -f "$INSTANCES_FILE" ]; then
+              TOTAL=$(wc -l < "$INSTANCES_FILE" | tr -d ' ')
+              FINISHED=$(grep -c "^{" "$SUMMARY_FILE" 2>/dev/null || echo 0)
+              TIMEOUTS=$(grep -c '"Timeout"' "$SUMMARY_FILE" 2>/dev/null || echo 0)
+              ERRORS=$(grep -c '"Error"' "$SUMMARY_FILE" 2>/dev/null || echo 0)
+              SOLVED=$(grep -c '"Valid"' "$SUMMARY_FILE" 2>/dev/null || echo 0)
+          
+              # Count errors from solvererror directory
+              if [ -d "$ERROR_DIR" ]; then
+                ERRORS=$(find "$ERROR_DIR" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')
+              else
+                ERRORS=0
+              fi
+      
+              if [ "$TOTAL" -gt 0 ]; then
+                PERCENT=$((FINISHED * 100 / TOTAL))
+                echo "  Progress: $FINISHED/$TOTAL instances ($PERCENT%)"
+                echo "  Solved: $SOLVED | Timeouts: $TIMEOUTS | Errors: $ERRORS"
+          
+                # Estimate time remaining (if we have enough data)
+                if [ "$FINISHED" -gt 5 ]; then
+                  ELAPSED=$(sacct -j "$JOB_ID" --format=ElapsedRaw --noheader | head -n1 | awk "{print \$1}")
+                  if [ -n "$ELAPSED" ] && [ "$ELAPSED" -gt 0 ]; then
+                    AVG_TIME=$((ELAPSED / FINISHED))
+                    REMAINING=$((TOTAL - FINISHED))
+                    ETA_SECONDS=$((AVG_TIME * REMAINING))
+                    ETA_HOURS=$((ETA_SECONDS / 3600))
+                    ETA_MINS=$(((ETA_SECONDS % 3600) / 60))
+                    echo "  Estimated time remaining: ${ETA_HOURS}h ${ETA_MINS}m ${ETA_SECONDS} seconds"
+                  fi
+                fi
+              fi
+            else
+              echo "  Waiting for stride to start producing output..."
+            fi
+          
+            sleep 60
+          else
+            echo "Unknown state: $STATE - waiting..."
+            sleep 60
+          fi
+        done
+      EOF
+
+    # 4) Retrieve logs back to GitLab job workspace
+    - mkdir -p stride-logs-hpc
+    - rsync -av hpc:~/pace-bench/hpc_transfer/stride-logs/ stride-logs/
+    - |
+      # If there is a solvererror dir with content, fail via nonzero exit
+      if [ -d "stride-logs/latest/solvererror" ] && [ -n "$(ls -A stride-logs/latest/solvererror)" ]; then
+        echo "Error: solvererror non-empty."
+        exit 1
       fi
   artifacts:
     paths:
