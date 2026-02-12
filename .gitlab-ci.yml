@@ -143,21 +143,14 @@ run_stride_benchmark:
               TOTAL=$(wc -l < "$INSTANCES_FILE" | tr -d ' ')
               FINISHED=$(grep -c "^{" "$SUMMARY_FILE" 2>/dev/null || echo 0)
               TIMEOUTS=$(grep -c '"Timeout"' "$SUMMARY_FILE" 2>/dev/null || echo 0)
-              ERRORS=$(grep -c '"Error"' "$SUMMARY_FILE" 2>/dev/null || echo 0)
+              ERRORS=$(grep -c '"SolverError"' "$SUMMARY_FILE" 2>/dev/null || echo 0)
               SOLVED=$(grep -c '"Valid"' "$SUMMARY_FILE" 2>/dev/null || echo 0)
-          
-              # Count errors from solvererror directory
-              if [ -d "$ERROR_DIR" ]; then
-                ERRORS=$(find "$ERROR_DIR" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')
-              else
-                ERRORS=0
-              fi
-      
+              
               if [ "$TOTAL" -gt 0 ]; then
                 PERCENT=$((FINISHED * 100 / TOTAL))
                 echo "  Progress: $FINISHED/$TOTAL instances ($PERCENT%)"
                 echo "  Solved: $SOLVED | Timeouts: $TIMEOUTS | Errors: $ERRORS"
-          
+                
                 # Estimate time remaining (if we have enough data)
                 if [ "$FINISHED" -gt 5 ]; then
                   ELAPSED=$(sacct -j "$JOB_ID" --format=ElapsedRaw --noheader | head -n1 | awk "{print \$1}")
