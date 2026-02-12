@@ -13,6 +13,7 @@
 #include "Rule/PairUnconnectedBranchingRule.hpp"
 #include "Rule/SingleVertexTreePropagationRule.hpp"
 #include "Rule/DebugAssertFalseRule.hpp"
+#include "Rule/ChainReductionRule.h"
 
 #include <functional>
 #include <stack>
@@ -60,6 +61,7 @@ class BranchingSolver : public AbstractSolver
         solver::PairUnconnectedBranchingRule::isApplicable,
         solver::PairEqualRule::isApplicable,
         solver::PairPathBranchingRule::isApplicable,
+        solver::ChainReductionRule::isApplicable,
         solver::DebugAssertFalseRule::isApplicable
         };
 
