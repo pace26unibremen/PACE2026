@@ -71,11 +71,11 @@ run_stride_benchmark:
     - echo "HPC_HOST - $HPC_HOST"
     - echo "HPC_HOST_KEY - $HPC_HOST_KEY"
 
-    # Write key preserving newlines properly
-    - printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+    # SSH_PRIVATE_KEY is a file path, so copy the file
+    - cp "$SSH_PRIVATE_KEY" ~/.ssh/id_ed25519
     - chmod 600 ~/.ssh/id_ed25519
 
-    # Verify it's correct
+    # Verify key format
     - echo "Key starts:"
     - head -n1 ~/.ssh/id_ed25519
     - echo "Key ends:"
@@ -83,7 +83,7 @@ run_stride_benchmark:
     - echo "Line count:"
     - wc -l ~/.ssh/id_ed25519
 
-    # Set up known_hosts
+      # Set up known_hosts
     - echo "$HPC_HOST_KEY" >> ~/.ssh/known_hosts
     - chmod 600 ~/.ssh/known_hosts
 
