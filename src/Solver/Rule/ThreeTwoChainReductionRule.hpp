@@ -14,11 +14,14 @@ namespace solver
 
         ThreeTwoChainReductionRule(const std::shared_ptr<graph::Instance>& instance,
                                    const std::shared_ptr<Context>& context);
-        int apply();
-        void unapply();
-        std::shared_ptr<solver::AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
+        int apply() override;
+
+        void unapply() override;
+
+        static std::shared_ptr<solver::AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                            const std::shared_ptr<Context>& context);
-        std::string name() const;
+        [[nodiscard]]
+        std::string name() const override;
     };
 
 }  //namespace solver
