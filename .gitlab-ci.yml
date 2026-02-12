@@ -65,25 +65,11 @@ run_stride_benchmark:
     - apt-get update && apt-get install -y openssh-client rsync
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
 
-    # Checking variables
-    - echo "SSH_PRIVATE_KEY - $SSH_PRIVATE_KEY"
-    - echo "HPC_USER - $HPC_USER"
-    - echo "HPC_HOST - $HPC_HOST"
-    - echo "HPC_HOST_KEY - $HPC_HOST_KEY"
-
     # SSH_PRIVATE_KEY is a file path, so copy the file
     - cp "$SSH_PRIVATE_KEY" ~/.ssh/id_ed25519
     - chmod 600 ~/.ssh/id_ed25519
 
-    # Verify key format
-    - echo "Key starts:"
-    - head -n1 ~/.ssh/id_ed25519
-    - echo "Key ends:"
-    - tail -n1 ~/.ssh/id_ed25519
-    - echo "Line count:"
-    - wc -l ~/.ssh/id_ed25519
-
-      # Set up known_hosts
+    # Set up known_hosts
     - echo "$HPC_HOST_KEY" >> ~/.ssh/known_hosts
     - chmod 600 ~/.ssh/known_hosts
 
