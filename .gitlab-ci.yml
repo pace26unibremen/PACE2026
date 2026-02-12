@@ -65,9 +65,13 @@ run_stride_benchmark:
     - apt-get update && apt-get install -y openssh-client rsync
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
 
-    # Set up SSH key
-    - echo "$SSH_PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_ed25519
+    # Decode base64 key - remove any whitespace/newlines first
+    - echo "$SSH_PRIVATE_KEY_BASE64" | tr -d '\n\r\t ' | base64 -d > ~/.ssh/id_ed25519
     - chmod 600 ~/.ssh/id_ed25519
+  
+    # Verify key format
+    - head -n1 ~/.ssh/id_ed25519
+    - tail -n1 ~/.ssh/id_ed25519
 
     # Set up known_hosts
     - echo "$HPC_HOST_KEY" >> ~/.ssh/known_hosts
