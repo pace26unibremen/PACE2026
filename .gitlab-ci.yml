@@ -167,7 +167,10 @@ run_stride_benchmark:
                     ETA_SECONDS=$((AVG_TIME * REMAINING))
                     ETA_HOURS=$((ETA_SECONDS / 3600))
                     ETA_MINS=$(((ETA_SECONDS % 3600) / 60))
-                    echo "  Estimated time remaining: ${ETA_HOURS}h ${ETA_MINS}m ${ETA_SECONDS} seconds"
+                    ELAPSED_HOURS=$((ELAPSED / 3600))
+                    ELAPSED_MINS=$(((ELAPSED % 3600) / 60))
+                    echo "  Elapsed time: ${ELAPSED_HOURS}h ${ELAPSED_MINS}m"
+                    echo "  Estimated time remaining: ${ETA_HOURS}h ${ETA_MINS}m"
                   fi
                 fi
               fi
