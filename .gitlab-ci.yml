@@ -26,9 +26,14 @@ graph-representation:
   stage: test
   script:
     - cd build/tests/
-    - ./ForestIOTests
-    - ./ForestEqualTests
-    - ./ForestSubforestTests
-    - ./DeleteEdgeActionTests
+    - ./ForestIOTests --reporter junit -o ForestIOTests-results.xml
+    - ./ForestEqualTests --reporter junit -o ForestEqualTests-results.xml
+    - ./ForestSubforestTests --reporter junit -o ForestSubforestTests-results.xml
+    - ./DeleteEdgeActionTests --reporter junit -o DeleteEdgeActionTests-results.xml
   dependencies:
     - build-job
+  artifacts:
+    when: always
+    reports:
+      junit: build/tests/*-results.xml  # GitLab merges all matching files
+    expire_in: 1 Month
