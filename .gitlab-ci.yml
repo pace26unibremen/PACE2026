@@ -66,7 +66,7 @@ run_stride_benchmark:
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
 
     # Set up SSH key
-    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+    - echo "$SSH_PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_ed25519
     - chmod 600 ~/.ssh/id_ed25519
 
     # Set up known_hosts
