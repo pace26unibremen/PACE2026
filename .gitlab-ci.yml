@@ -103,7 +103,7 @@ pages:
   artifacts:
     paths:
       - public
-    expire_in: 1 week
+    expire_in: 1 Month
   only:
     # Publish docs only from master branch and tags
     - master
