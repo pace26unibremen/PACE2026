@@ -33,7 +33,11 @@ solver::ThreeTwoChainReductionRule::isApplicable(const std::shared_ptr<graph::In
         {
             if (T1 != T2)
             {
+                //T1
+                for (const auto& terminalT1 : T1->Terminals())
+                {
 
+                }
             }
         }
     }
@@ -41,7 +45,7 @@ solver::ThreeTwoChainReductionRule::isApplicable(const std::shared_ptr<graph::In
 
 
 
-    return std::make_shared<ThreeTwoChainReductionRule>(instance, context);
+   // return std::make_shared<ThreeTwoChainReductionRule>(instance, context);
 }
 
 std::string solver::ThreeTwoChainReductionRule::name() const
