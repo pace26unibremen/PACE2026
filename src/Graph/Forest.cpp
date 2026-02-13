@@ -507,15 +507,10 @@ void Forest::sortChildrenAndCollectTerminals()
 
 std::vector<Node*> Forest::maximumCommonSubforestRoots(const Forest& other)
 {
-    // actually: iterate upward, always checking the sibling for identicality and the parent for the same terminals, deleting seen labels from the ones left to visit
-    // vorinitialisierung von blattknoten; jeder durchlauf kreiert seinen sibling- und elternknoten; dabei sibling nur, wenn nicht besucht? ach nee, das ist was anderes. wenn nichtterminal? wird sowieso rekursiv/iterativ, also abbruchbedingung einfach? hilfsfunktion, die den gesamten sibling-subtree baut und den sibling-index zurückgibt (bei blatt halt nur rückgabe des index) bei leaf-siblings retrieval über label=index?
-    // naur, just steal it from f1: iterate upward from each unvisited leaf, always checking the sibling subtree for identicality, and once a root for the leaf is found, do the label-index relation? should be doable via the parent forests map. make a new nodes vector after scanning the whole parent forest and exclude->reindex
+    // Find and return vector of node pointers (for this tree) corresponding to the root(s) of the maximum common sub-X-forest.
+    // To do this, in both trees simultaneously iterate upward from each pair of leaves with identical label until the checked nodes' subtrees differ
     vector<Node*> newRootPtrs; // pointers of new root nodes in t1
     newRootPtrs.reserve(labelToTerminal->size());
-
-    // maps new forests node index to original forest indices
-    unordered_map<int, int> t1Index;
-    unordered_map<int, int> t2Index;
 
     unordered_set<unsigned int> visitedLeaves;
 
