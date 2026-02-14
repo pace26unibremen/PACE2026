@@ -80,7 +80,7 @@ run_stride_benchmark:
           HostName $HPC_HOST
           User $HPC_USER
           IdentityFile ~/.ssh/id_ed25519
-          StrictHostKeyChecking no
+          StrictHostKeyChecking yes
       EOF
     - chmod 600 ~/.ssh/config
   script:
