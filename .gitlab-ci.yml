@@ -1,22 +1,24 @@
-image: ghcr.io/rikorose/gcc-cmake:gcc-13  # GCC 14+ with CMake 3.28+, C++20 ready
-
 stages:
   - build
   - test
 
-build-job:
+# C++ build and tests — build statically with musl
+build-solver:
   stage: build
+  image: alpine:3.20
   script:
-    - gcc --version && g++ --version && cmake --version  # Verify tools
-    - mkdir build/
-    - cd build/
-    - cmake ..
-    - make -j 4
-    - mkdir install
-    - make DESTDIR=install install
+    - apk add --no-cache cmake ninja clang musl-dev libc++-dev git file
+    - mkdir -p build
+    - cd build
+    # Configure CMake to use clang and link statically
+    - cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXE_LINKER_FLAGS="-static"
+    - ninja
+    # Check that the resulting binary is indeed statically linked
+    - file src/solver
   artifacts:
     expire_in: 1 day
     paths:
+      - build/src/solver
       - build/tests/ForestIOTests
       - build/tests/ForestEqualTests
       - build/tests/ForestSubforestTests
@@ -24,14 +26,17 @@ build-job:
 
 graph-representation:
   stage: test
+  # Use any glibc-based image here; static binary will run anywhere
+  image: ubuntu:24.04
+  dependencies:
+    - build-solver
   script:
     - cd build/tests/
+    - chmod +x ForestIOTests ForestEqualTests ForestSubforestTests DeleteEdgeActionTests
     - ./ForestIOTests --reporter junit -o ForestIOTests-results.xml
     - ./ForestEqualTests --reporter junit -o ForestEqualTests-results.xml
     - ./ForestSubforestTests --reporter junit -o ForestSubforestTests-results.xml
     - ./DeleteEdgeActionTests --reporter junit -o DeleteEdgeActionTests-results.xml
-  dependencies:
-    - build-job
   artifacts:
     when: always
     reports:
