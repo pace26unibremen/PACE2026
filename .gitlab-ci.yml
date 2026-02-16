@@ -14,11 +14,11 @@ build-solver:
     - cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXE_LINKER_FLAGS="-static"
     - ninja
     # Check that the resulting binary is indeed statically linked
-    - file src/startSolver
+    - file src/solver
   artifacts:
     expire_in: 1 day
     paths:
-      - build/src/startSolver
+      - build/src/solver
       - build/tests/ForestIOTests
       - build/tests/ForestEqualTests
       - build/tests/ForestSubforestTests
