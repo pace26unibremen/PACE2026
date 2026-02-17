@@ -78,10 +78,10 @@ while true; do
 
         # Parse summary.json for progress statistics
         # Each line starting with { is a completed instance
-        FINISHED=$(grep -c "^{" "$SUMMARY_FILE" 2>/dev/null || echo 0)
-        TIMEOUTS=$(grep -c '"Timeout"' "$SUMMARY_FILE" 2>/dev/null || echo 0)
-        ERRORS=$(grep -c '"SolverError"' "$SUMMARY_FILE" 2>/dev/null || echo 0)
-        SOLVED=$(grep -c '"Valid"' "$SUMMARY_FILE" 2>/dev/null || echo 0)
+        FINISHED=$(grep -c "^{" "$SUMMARY_FILE" 2>/dev/null)
+        TIMEOUTS=$(grep -c '"Timeout"' "$SUMMARY_FILE" 2>/dev/null)
+        ERRORS=$(grep -c '"SolverError"' "$SUMMARY_FILE" 2>/dev/null)
+        SOLVED=$(grep -c '"Valid"' "$SUMMARY_FILE" 2>/dev/null)
 
         # Validate that TOTAL is a valid number before arithmetic
         if [[ "$TOTAL" =~ ^[0-9]+$ ]] && [ "$TOTAL" -gt 0 ]; then
@@ -91,7 +91,7 @@ while true; do
           # Estimate time remaining (only if we have enough data for a reasonable estimate)
           if [ "$FINISHED" -gt 5 ]; then
             # Get elapsed time in seconds from Slurm
-            ELAPSED=$(sacct -j "$JOB_ID" --format=ElapsedRaw --noheader 2>/dev/null | head -n1 | awk '{print $1}' | tr -d ' \n' | head -c 10)
+            ELAPSED=$(sacct -j "$JOB_ID" --format=ElapsedRaw --noheader 2>/dev/null | head -n1 | awk '{print $1}')
             ELAPSED=${ELAPSED:-0}
 
             # Validate ELAPSED is a valid number
@@ -120,9 +120,8 @@ while true; do
       OUTPUT="$OUTPUT | Waiting for run directory..."
     fi
 
-    # Output progress on a single line (carriage return overwrites previous line)
-    # Strip any newlines and print without trailing newline
-    printf "\r%s" "$(echo "$OUTPUT" | tr -d '\n')"
+    # Output progress on a single line
+    echo "$OUTPUT"
     sleep 60
 
   # Unknown state - shouldn't happen, but handle it gracefully
