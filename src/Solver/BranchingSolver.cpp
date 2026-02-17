@@ -16,6 +16,9 @@ std::vector<solver::isApplicableFn>& solver::BranchingSolver::ActiveRules()
 
 bool solver::BranchingSolver::rollBackBranch()
 {
+    // all rule suggestions can be discarded at the end of a branch
+    applyNext = std::stack<std::shared_ptr<AbstractRule>>();
+
     while (true)
     {
         if (changes.empty())
@@ -41,10 +44,8 @@ bool solver::BranchingSolver::rollBackBranch()
             {
                 branchingRule->unapply();
                 if (debPlugin) debPlugin->onUnapply(rule);
-
-                if (branchingRule->apply() != 0)
-                    throw std::logic_error("BranchingSolver : rollBackBranch : undefined return code rule " + branchingRule->name());
-                if (debPlugin) debPlugin->onApply(rule);
+                /// to enter the next branch we have to apply the branching rule again
+                applyNext.emplace(branchingRule);
                 return false;
             }
         }
@@ -88,8 +89,6 @@ void solver::BranchingSolver::checkSolutionCandidate()
 std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
 {
     if (debPlugin) debPlugin->init(instance);
-
-    auto applyNext = std::stack<std::shared_ptr<AbstractRule>>();
 
     // apply rules repeatedly until a return is triggerd
     while (true)
