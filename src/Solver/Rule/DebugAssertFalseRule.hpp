@@ -21,6 +21,8 @@ class DebugAssertFalseRule : public AbstractRule
 
     void unapply() override;
 
+    /// \brief The DebugAssertFalseRule is always applicable.
+    /// \returns shared_pointer to DebugAssertFalseRule
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                       const std::shared_ptr<Context>& context);
 

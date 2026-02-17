@@ -10,6 +10,8 @@ namespace solver
 {
 
 /// \brief Collapses subtree of a terminal pair if it is a pair in every forest of the instance.
+///
+/// \link https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/PairEqualRule GitLab Doku
 class PairEqualRule : public AbstractRule
 {
   protected:
@@ -36,6 +38,10 @@ class PairEqualRule : public AbstractRule
 
     void unapply() override;
 
+    /// \brief It checks whether the PairEqualRule is applicable and generates an instance of this rule if so.
+    /// This method only considers the PairEqualRule applicable if the first pair found in forest 1
+    /// has a corresponding pair of terminals in each of the other forests.
+    /// \returns shared_pointer to PairEqualRule if rule is applicable, elso null pointer
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                       const std::shared_ptr<Context>& context);
 
