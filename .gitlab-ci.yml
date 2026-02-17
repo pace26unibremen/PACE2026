@@ -135,7 +135,7 @@ run_stride_benchmark:
       ssh hpc bash <<'EOF'
         cd ~/pace-bench
         JOB_ID=$(cat last_job.id)
-
+      
         # Get the specific run directory for this job
         if [ -f "last_run_dir.path" ]; then
           RUN_DIR=$(cat last_run_dir.path)
@@ -150,15 +150,18 @@ run_stride_benchmark:
             sleep 1
           done
         fi
+        echo "Found run directory: ${RUN_DIR} and will monitor job ${JOB_ID}"
         
         # pooling loop
         while true; do
-          STATE=$(sacct -j "$JOB_ID" --format=State --noheader | head -n1 | awk "{print \$1}")
- 
+          STATE=$(sacct -j "$JOB_ID" --format=State --noheader | head -n1 | awk '{print $1}')
+          
           if [[ "$STATE" =~ ^COMPLETED ]]; then
+            echo ""
             echo "Job $JOB_ID completed successfully"
             exit 0
           elif [[ "$STATE" =~ ^(FAILED|CANCELLED|TIMEOUT|NODE_FAIL|PREEMPTED|OUT_OF_MEMORY) ]]; then
+            echo ""
             echo "Slurm job $JOB_ID ended with state $STATE"
             exit 1
           elif [[ "$STATE" =~ ^(PENDING|CONFIGURING) ]]; then
@@ -170,26 +173,28 @@ run_stride_benchmark:
             # Try to show progress if stride has started producing output
             SUMMARY_FILE="${RUN_DIR}/summary.json"
             INSTANCES_FILE="hpc_transfer/instances.lst"
-          
+            
             OUTPUT="Job $JOB_ID is running..."
-
+            
             if [ -f "$SUMMARY_FILE" ] && [ -f "$INSTANCES_FILE" ]; then
-              TOTAL=$(wc -l < "$INSTANCES_FILE" 2>/dev/null | tr -d ' ')
+              TOTAL=$(wc -l < "$INSTANCES_FILE" 2>/dev/null | tr -d ' \n' | head -c 10)
               TOTAL=${TOTAL:-0}
               FINISHED=$(grep -c "^{" "$SUMMARY_FILE" 2>/dev/null || echo 0)
               TIMEOUTS=$(grep -c '"Timeout"' "$SUMMARY_FILE" 2>/dev/null || echo 0)
               ERRORS=$(grep -c '"SolverError"' "$SUMMARY_FILE" 2>/dev/null || echo 0)
               SOLVED=$(grep -c '"Valid"' "$SUMMARY_FILE" 2>/dev/null || echo 0)
               
-              if [ "$TOTAL" -gt 0 ] 2>/dev/null; then
+              # Validate TOTAL is a number
+              if [[ "$TOTAL" =~ ^[0-9]+$ ]] && [ "$TOTAL" -gt 0 ]; then
                 PERCENT=$((FINISHED * 100 / TOTAL))
                 OUTPUT="${OUTPUT} | Progress: ${FINISHED}/${TOTAL} (${PERCENT}%) | Solved: ${SOLVED} | Timeouts: ${TIMEOUTS} | Errors: ${ERRORS}"
                 
                 # Estimate time remaining (if we have enough data)
-                if [ "$FINISHED" -gt 5 ] 2>/dev/null; then
-                  ELAPSED=$(sacct -j "$JOB_ID" --format=ElapsedRaw --noheader 2>/dev/null | head -n1 | awk '{print $1}')
+                if [ "$FINISHED" -gt 5 ]; then
+                  ELAPSED=$(sacct -j "$JOB_ID" --format=ElapsedRaw --noheader 2>/dev/null | head -n1 | awk '{print $1}' | tr -d ' \n' | head -c 10)
                   ELAPSED=${ELAPSED:-0}
-                  if [ "$ELAPSED" -gt 0 ] 2>/dev/null && [ "$FINISHED" -gt 0 ] 2>/dev/null; then
+                  # Validate ELAPSED is a number
+                  if [[ "$ELAPSED" =~ ^[0-9]+$ ]] && [ "$ELAPSED" -gt 0 ] && [ "$FINISHED" -gt 0 ]; then
                     AVG_TIME=$((ELAPSED / FINISHED))
                     REMAINING=$((TOTAL - FINISHED))
                     ETA_SECONDS=$((AVG_TIME * REMAINING))
