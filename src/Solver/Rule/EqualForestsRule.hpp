@@ -9,6 +9,8 @@ namespace solver
 {
 
 /// \brief Removes duplicate forests from instance.
+///
+/// \link https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/EqualForestsRule GitLab Docu
 class EqualForestsRule : public AbstractRule
 {
   protected:
@@ -34,6 +36,8 @@ class EqualForestsRule : public AbstractRule
 
     void unapply() override;
 
+    /// \brief It checks whether the EqualForestsRule is applicable and generates an instance of this rule if so.
+    /// \returns shared_pointer to EqualForestsRule if rule is applicable, elso null pointer
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                       const std::shared_ptr<Context>& context);
 

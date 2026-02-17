@@ -15,6 +15,8 @@ namespace solver
 /// 1. The first terminal is a single vertex tree in the solution. -> cut this terminal
 /// 2. The other terminal is a single vertex tree in the solution. -> cut the other terminal
 /// 3. The two terminals are a pair in the solution. -> cut all subtrees on the path between both terminals
+///
+/// \link https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/PairPathBranchingRule GitLab Doku
 class PairPathBranchingRule : public AbstractBranchingRule
 {
   protected:
@@ -57,6 +59,10 @@ class PairPathBranchingRule : public AbstractBranchingRule
 
     void unapply() override;
 
+    /// \brief It checks whether the PairPathBranchingRule is applicable and generates an instance of this rule if so.
+    /// This method only considers the PairPathBranchingRule applicable if the first pair it finds in forest 1
+    /// has corresponding terminals in another forest with a non-trivial path and are nowhere disconnected.
+    /// \returns shared_pointer to PairPathBranchingRule if rule is applicable, elso null pointer
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                       const std::shared_ptr<Context>& context);
 
