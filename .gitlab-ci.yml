@@ -117,6 +117,15 @@ run_stride_benchmark:
       
         JOB_ID=$(sbatch hpc_transfer/run_stride.slurm | awk '{print $4}')
         echo "$JOB_ID" > last_job.id
+      
+        # Wait a moment for stride to create the run directory
+        sleep 2
+        
+        # Capture the actual run directory (resolve the 'latest' symlink)
+        if [ -L "hpc_transfer/stride-logs/latest" ]; then
+          RUN_DIR=$(readlink -f hpc_transfer/stride-logs/latest)
+          echo "$RUN_DIR" > last_run_dir.path
+        fi
       EOF
     - |
       JOB_ID=$(ssh hpc "cat ~/pace-bench/last_job.id")
@@ -127,6 +136,21 @@ run_stride_benchmark:
         cd ~/pace-bench
         JOB_ID=$(cat last_job.id)
 
+        # Get the specific run directory for this job
+        if [ -f "last_run_dir.path" ]; then
+          RUN_DIR=$(cat last_run_dir.path)
+        else
+          # Fallback: wait for the directory to be created
+          for i in {1..30}; do
+            if [ -L "hpc_transfer/stride-logs/latest" ]; then
+              RUN_DIR=$(readlink -f hpc_transfer/stride-logs/latest)
+              echo "$RUN_DIR" > last_run_dir.path
+              break
+            fi
+            sleep 1
+          done
+        fi
+        
         # pooling loop
         while true; do
           STATE=$(sacct -j "$JOB_ID" --format=State --noheader | head -n1 | awk "{print \$1}")
@@ -144,9 +168,8 @@ run_stride_benchmark:
             sleep 60
           elif [[ "$STATE" =~ ^RUNNING ]]; then
             # Try to show progress if stride has started producing output
-            SUMMARY_FILE="hpc_transfer/stride-logs/latest/summary.json"
+            SUMMARY_FILE="${RUN_DIR}/summary.json"
             INSTANCES_FILE="hpc_transfer/instances.lst"
-            ERROR_DIR="hpc_transfer/stride-logs/latest/solvererror"
           
             OUTPUT="Job $JOB_ID is running..."
 
@@ -183,8 +206,7 @@ run_stride_benchmark:
             fi
       
             echo "$OUTPUT"
-      
-            sleep 5
+            sleep 60
           else
             echo "Unknown state: $STATE - waiting..."
             sleep 60
