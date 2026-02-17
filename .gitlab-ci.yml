@@ -183,7 +183,7 @@ run_stride_benchmark:
               
               if [ "$TOTAL" -gt 0 ] 2>/dev/null; then
                 PERCENT=$((FINISHED * 100 / TOTAL))
-                OUTPUT="$OUTPUT | Progress: $FINISHED/$TOTAL ($PERCENT%) | Solved: $SOLVED | Timeouts: $TIMEOUTS | Errors: $ERRORS"
+                OUTPUT="${OUTPUT} | Progress: ${FINISHED}/${TOTAL} (${PERCENT}%) | Solved: ${SOLVED} | Timeouts: ${TIMEOUTS} | Errors: ${ERRORS}"
                 
                 # Estimate time remaining (if we have enough data)
                 if [ "$FINISHED" -gt 5 ] 2>/dev/null; then
@@ -197,7 +197,7 @@ run_stride_benchmark:
                     ETA_MINS=$(((ETA_SECONDS % 3600) / 60))
                     ELAPSED_HOURS=$((ELAPSED / 3600))
                     ELAPSED_MINS=$(((ELAPSED % 3600) / 60))
-                    OUTPUT="$OUTPUT | Elapsed: ${ELAPSED_HOURS}h ${ELAPSED_MINS}m | ETA: ${ETA_HOURS}h ${ETA_MINS}m"
+                    OUTPUT="${OUTPUT} | Elapsed: ${ELAPSED_HOURS}h ${ELAPSED_MINS}m | ETA: ${ETA_HOURS}h ${ETA_MINS}m"
                   fi
                 fi
               fi
