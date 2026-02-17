@@ -64,46 +64,40 @@ run_stride_benchmark:
   before_script:
     - apt-get update && apt-get install -y openssh-client rsync
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
-
-    # SSH_PRIVATE_KEY is a file path, so copy the file
     - cp "$SSH_PRIVATE_KEY" ~/.ssh/id_ed25519
     - chmod 600 ~/.ssh/id_ed25519
-
-    # Set up known_hosts
     - echo "$HPC_HOST_KEY" >> ~/.ssh/known_hosts
     - chmod 600 ~/.ssh/known_hosts
-
-    # Create SSH config with host alias
     - |
       cat > ~/.ssh/config << EOF
       Host hpc
-          HostName $HPC_HOST
-          User $HPC_USER
-          IdentityFile ~/.ssh/id_ed25519
-          StrictHostKeyChecking yes
+        HostName $HPC_HOST
+        User $HPC_USER
+        IdentityFile ~/.ssh/id_ed25519
+        StrictHostKeyChecking yes
       EOF
     - chmod 600 ~/.ssh/config
-  script:
     - ssh hpc "echo 'Connected to HPC!'"
 
-    # 1) Copy binaries, instance list and slurm script to HPC login node
+  script:
+    # 1) Prepare and copy files to HPC
     - mkdir -p hpc_transfer
     - cp pace26stride/target/x86_64-unknown-linux-musl/smaller-release/stride hpc_transfer/
     - cp build/src/startSolver hpc_transfer/
     - cp res/instances/50leaves.lst hpc_transfer/instances.lst
     - cp gitlab-ci/slurm/run_stride.slurm hpc_transfer/
+    - cp gitlab-ci/bash/*.sh hpc_transfer/
     - tar czf hpc_payload.tgz hpc_transfer
 
     - ssh hpc "mkdir -p ~/pace-bench"
-    - scp hpc_payload.tgz hpc:~/pace-bench/hpc_payload.tgz
+    - scp hpc_payload.tgz hpc:~/pace-bench/
 
-    # 2) Remote: unpack and submit Slurm job
+    # 2) Unpack and prepare, then submit job
     - |
       ssh hpc bash <<'EOF'
-        mkdir -p ~/pace-bench
         cd ~/pace-bench
       
-        # Backup stride-logs if it exists, as we want to keep them over multiple runs
+        # Backup stride-logs if it exists
         if [ -d "hpc_transfer/stride-logs" ]; then
           mv hpc_transfer/stride-logs stride-logs.backup
         fi
@@ -114,132 +108,31 @@ run_stride_benchmark:
         if [ -d "stride-logs.backup" ]; then
           mv stride-logs.backup hpc_transfer/stride-logs
         fi
-        
-        # Record the old 'latest' target before submitting (if it exists)
+      
+        # Record the old 'latest' target before submitting
         OLD_LATEST=""
         if [ -L "hpc_transfer/stride-logs/latest" ]; then
           OLD_LATEST=$(readlink -f hpc_transfer/stride-logs/latest)
           echo "$OLD_LATEST" > old_run_dir.path
         fi
-    
-        JOB_ID=$(sbatch hpc_transfer/run_stride.slurm | awk '{print $4}')
+      
+        # Now submit the job
+        cd hpc_transfer
+        chmod +x *.sh
+        JOB_ID=$(sbatch run_stride.slurm | awk '{print $4}')
+        cd ..
         echo "$JOB_ID" > last_job.id
-
-      EOF
-    - |
-      JOB_ID=$(ssh hpc "cat ~/pace-bench/last_job.id")
-      echo "Slurm job submitted, job ID: $JOB_ID"
-    # 3) Wait for job completion on HPC
-    - |
-      ssh hpc bash <<'EOF'
-        cd ~/pace-bench
-        JOB_ID=$(cat last_job.id)
-      
-        # Load the old directory (if any) to avoid confusion with previous runs
-        OLD_LATEST=""
-        if [ -f "old_run_dir.path" ]; then
-          OLD_LATEST=$(cat old_run_dir.path)
-        fi
-        
-        RUN_DIR=""
-        RUN_DIR_FOUND=false
-        
-        # pooling loop
-        while true; do
-          STATE=$(sacct -j "$JOB_ID" --format=State --noheader | head -n1 | awk '{print $1}')
-          
-          if [[ "$STATE" =~ ^COMPLETED ]]; then
-            echo ""
-            echo "Job $JOB_ID completed successfully"
-            exit 0
-          elif [[ "$STATE" =~ ^(FAILED|CANCELLED|TIMEOUT|NODE_FAIL|PREEMPTED|OUT_OF_MEMORY) ]]; then
-            echo ""
-            echo "Slurm job $JOB_ID ended with state $STATE"
-            exit 1
-          elif [[ "$STATE" =~ ^(PENDING|CONFIGURING) ]]; then
-            # Show the reason if available
-            REASON=$(squeue -j "$JOB_ID" -h -o "%r" 2>/dev/null || echo "Unknown")
-            echo "Job $JOB_ID still in state $STATE (reason: $REASON) - waiting..."
-            sleep 60
-          elif [[ "$STATE" =~ ^RUNNING ]]; then
-            OUTPUT="Job $JOB_ID is running..."
-              
-            # Try to find the run directory if we haven't yet
-            if [ "$RUN_DIR_FOUND" = false ]; then
-              if [ -L "hpc_transfer/stride-logs/latest" ]; then
-                CURRENT_LATEST=$(readlink -f hpc_transfer/stride-logs/latest)
-                # Check if it's different from the old one and actually exists
-                if [ "$CURRENT_LATEST" != "$OLD_LATEST" ] && [ -n "$CURRENT_LATEST" ] && [ -d "$CURRENT_LATEST" ]; then
-                  RUN_DIR="$CURRENT_LATEST"
-                  RUN_DIR_FOUND=true
-                  echo "$RUN_DIR" > last_run_dir.path
-                  echo ""
-                  echo "Detected run directory: $RUN_DIR"
-                fi
-              fi
-            fi
-      
-            # If we have a run directory, try to extract progress info
-            SUMMARY_FILE=""
-            INSTANCES_FILE=""
-      
-            if [ "$RUN_DIR_FOUND" = true ]; then
-              SUMMARY_FILE="${RUN_DIR}/summary.json"
-              INSTANCES_FILE="hpc_transfer/instances.lst"
-            fi
-      
-            if [ -f "$SUMMARY_FILE" ] && [ -f "$INSTANCES_FILE" ]; then
-              TOTAL=$(wc -l < "$INSTANCES_FILE" 2>/dev/null | tr -d ' \n' | head -c 10)
-              TOTAL=${TOTAL:-0}
-              FINISHED=$(grep -c "^{" "$SUMMARY_FILE" 2>/dev/null || echo 0)
-              TIMEOUTS=$(grep -c '"Timeout"' "$SUMMARY_FILE" 2>/dev/null || echo 0)
-              ERRORS=$(grep -c '"SolverError"' "$SUMMARY_FILE" 2>/dev/null || echo 0)
-              SOLVED=$(grep -c '"Valid"' "$SUMMARY_FILE" 2>/dev/null || echo 0)
-              
-              # Validate TOTAL is a number
-              if [[ "$TOTAL" =~ ^[0-9]+$ ]] && [ "$TOTAL" -gt 0 ]; then
-                PERCENT=$((FINISHED * 100 / TOTAL))
-                OUTPUT+=" | Progress: ${FINISHED}/${TOTAL} (${PERCENT}%) | Solved: ${SOLVED} | Timeouts: ${TIMEOUTS} | Errors: ${ERRORS}"
-                
-                # Estimate time remaining (if we have enough data)
-                if [ "$FINISHED" -gt 5 ]; then
-                  ELAPSED=$(sacct -j "$JOB_ID" --format=ElapsedRaw --noheader 2>/dev/null | head -n1 | awk '{print $1}' | tr -d ' \n' | head -c 10)
-                  ELAPSED=${ELAPSED:-0}
-                  # Validate ELAPSED is a number
-                  if [[ "$ELAPSED" =~ ^[0-9]+$ ]] && [ "$ELAPSED" -gt 0 ] && [ "$FINISHED" -gt 0 ]; then
-                    AVG_TIME=$((ELAPSED / FINISHED))
-                    REMAINING=$((TOTAL - FINISHED))
-                    ETA_SECONDS=$((AVG_TIME * REMAINING))
-                    ETA_HOURS=$((ETA_SECONDS / 3600))
-                    ETA_MINS=$(((ETA_SECONDS % 3600) / 60))
-                    ELAPSED_HOURS=$((ELAPSED / 3600))
-                    ELAPSED_MINS=$(((ELAPSED % 3600) / 60))
-                    OUTPUT+=" | Elapsed: ${ELAPSED_HOURS}h ${ELAPSED_MINS}m | ETA: ${ETA_HOURS}h ${ETA_MINS}m"
-                  fi
-                fi
-              fi
-            else 
-              OUTPUT+=" | No progress info yet"
-            fi
-      
-            echo "$OUTPUT"
-            sleep 60
-          else
-            echo "Unknown state: $STATE - waiting..."
-            sleep 60
-          fi
-        done
+        echo "Submitted job $JOB_ID"
       EOF
 
-    # 4) Retrieve logs back to GitLab job workspace
-    - mkdir -p stride-logs-hpc
+    # 3) Monitor job
+    - ssh hpc "bash ~/pace-bench/hpc_transfer/monitor_job.sh"
+
+    # 4) Retrieve and check results
+    - mkdir -p stride-logs
     - rsync -av hpc:~/pace-bench/hpc_transfer/stride-logs/ stride-logs/
-    - |
-      # If there is a solvererror dir with content, fail via nonzero exit
-      if [ -d "stride-logs/latest/solvererror" ] && [ -n "$(ls -A stride-logs/latest/solvererror)" ]; then
-        echo "Error: solvererror non-empty."
-        exit 1
-      fi
+    - bash gitlab-ci/bash/check_errors.sh
+
   artifacts:
     paths:
       - stride-logs/
