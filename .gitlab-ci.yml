@@ -114,18 +114,17 @@ run_stride_benchmark:
         if [ -d "stride-logs.backup" ]; then
           mv stride-logs.backup hpc_transfer/stride-logs
         fi
-      
+        
+        # Record the old 'latest' target before submitting (if it exists)
+        OLD_LATEST=""
+        if [ -L "hpc_transfer/stride-logs/latest" ]; then
+          OLD_LATEST=$(readlink -f hpc_transfer/stride-logs/latest)
+          echo "$OLD_LATEST" > old_run_dir.path
+        fi
+    
         JOB_ID=$(sbatch hpc_transfer/run_stride.slurm | awk '{print $4}')
         echo "$JOB_ID" > last_job.id
-      
-        # Wait a moment for stride to create the run directory
-        sleep 2
-        
-        # Capture the actual run directory (resolve the 'latest' symlink)
-        if [ -L "hpc_transfer/stride-logs/latest" ]; then
-          RUN_DIR=$(readlink -f hpc_transfer/stride-logs/latest)
-          echo "$RUN_DIR" > last_run_dir.path
-        fi
+
       EOF
     - |
       JOB_ID=$(ssh hpc "cat ~/pace-bench/last_job.id")
@@ -136,21 +135,14 @@ run_stride_benchmark:
         cd ~/pace-bench
         JOB_ID=$(cat last_job.id)
       
-        # Get the specific run directory for this job
-        if [ -f "last_run_dir.path" ]; then
-          RUN_DIR=$(cat last_run_dir.path)
-        else
-          # Fallback: wait for the directory to be created
-          for i in {1..30}; do
-            if [ -L "hpc_transfer/stride-logs/latest" ]; then
-              RUN_DIR=$(readlink -f hpc_transfer/stride-logs/latest)
-              echo "$RUN_DIR" > last_run_dir.path
-              break
-            fi
-            sleep 1
-          done
+        # Load the old directory (if any) to avoid confusion with previous runs
+        OLD_LATEST=""
+        if [ -f "old_run_dir.path" ]; then
+          OLD_LATEST=$(cat old_run_dir.path)
         fi
-        echo "Found run directory: ${RUN_DIR} and will monitor job ${JOB_ID}"
+        
+        RUN_DIR=""
+        RUN_DIR_FOUND=false
         
         # pooling loop
         while true; do
@@ -170,12 +162,32 @@ run_stride_benchmark:
             echo "Job $JOB_ID still in state $STATE (reason: $REASON) - waiting..."
             sleep 60
           elif [[ "$STATE" =~ ^RUNNING ]]; then
-            # Try to show progress if stride has started producing output
-            SUMMARY_FILE="${RUN_DIR}/summary.json"
-            INSTANCES_FILE="hpc_transfer/instances.lst"
-            
             OUTPUT="Job $JOB_ID is running..."
-            
+              
+            # Try to find the run directory if we haven't yet
+            if [ "$RUN_DIR_FOUND" = false ]; then
+              if [ -L "hpc_transfer/stride-logs/latest" ]; then
+                CURRENT_LATEST=$(readlink -f hpc_transfer/stride-logs/latest)
+                # Check if it's different from the old one and actually exists
+                if [ "$CURRENT_LATEST" != "$OLD_LATEST" ] && [ -n "$CURRENT_LATEST" ] && [ -d "$CURRENT_LATEST" ]; then
+                  RUN_DIR="$CURRENT_LATEST"
+                  RUN_DIR_FOUND=true
+                  echo "$RUN_DIR" > last_run_dir.path
+                  echo ""
+                  echo "Detected run directory: $RUN_DIR"
+                fi
+              fi
+            fi
+      
+            # If we have a run directory, try to extract progress info
+            SUMMARY_FILE=""
+            INSTANCES_FILE=""
+      
+            if [ "$RUN_DIR_FOUND" = true ]; then
+              SUMMARY_FILE="${RUN_DIR}/summary.json"
+              INSTANCES_FILE="hpc_transfer/instances.lst"
+            fi
+      
             if [ -f "$SUMMARY_FILE" ] && [ -f "$INSTANCES_FILE" ]; then
               TOTAL=$(wc -l < "$INSTANCES_FILE" 2>/dev/null | tr -d ' \n' | head -c 10)
               TOTAL=${TOTAL:-0}
@@ -187,7 +199,7 @@ run_stride_benchmark:
               # Validate TOTAL is a number
               if [[ "$TOTAL" =~ ^[0-9]+$ ]] && [ "$TOTAL" -gt 0 ]; then
                 PERCENT=$((FINISHED * 100 / TOTAL))
-                OUTPUT="${OUTPUT} | Progress: ${FINISHED}/${TOTAL} (${PERCENT}%) | Solved: ${SOLVED} | Timeouts: ${TIMEOUTS} | Errors: ${ERRORS}"
+                OUTPUT+=" | Progress: ${FINISHED}/${TOTAL} (${PERCENT}%) | Solved: ${SOLVED} | Timeouts: ${TIMEOUTS} | Errors: ${ERRORS}"
                 
                 # Estimate time remaining (if we have enough data)
                 if [ "$FINISHED" -gt 5 ]; then
@@ -202,12 +214,12 @@ run_stride_benchmark:
                     ETA_MINS=$(((ETA_SECONDS % 3600) / 60))
                     ELAPSED_HOURS=$((ELAPSED / 3600))
                     ELAPSED_MINS=$(((ELAPSED % 3600) / 60))
-                    OUTPUT="${OUTPUT} | Elapsed: ${ELAPSED_HOURS}h ${ELAPSED_MINS}m | ETA: ${ETA_HOURS}h ${ETA_MINS}m"
+                    OUTPUT+=" | Elapsed: ${ELAPSED_HOURS}h ${ELAPSED_MINS}m | ETA: ${ETA_HOURS}h ${ETA_MINS}m"
                   fi
                 fi
               fi
             else 
-              OUTPUT="$OUTPUT | No progress info yet"
+              OUTPUT+=" | No progress info yet"
             fi
       
             echo "$OUTPUT"
