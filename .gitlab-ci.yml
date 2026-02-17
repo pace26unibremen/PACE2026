@@ -178,7 +178,6 @@ run_stride_benchmark:
                   fi
                 fi
               fi
-            fi
             else 
               OUTPUT="$OUTPUT | No progress info yet"
             fi
