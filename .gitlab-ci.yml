@@ -143,29 +143,30 @@ run_stride_benchmark:
             echo "Job $JOB_ID still in state $STATE (reason: $REASON) - waiting..."
             sleep 60
           elif [[ "$STATE" =~ ^RUNNING ]]; then
-            echo "Job $JOB_ID is running..."
-          
             # Try to show progress if stride has started producing output
             SUMMARY_FILE="hpc_transfer/stride-logs/latest/summary.json"
             INSTANCES_FILE="hpc_transfer/instances.lst"
             ERROR_DIR="hpc_transfer/stride-logs/latest/solvererror"
           
+            OUTPUT="Job $JOB_ID is running..."
+
             if [ -f "$SUMMARY_FILE" ] && [ -f "$INSTANCES_FILE" ]; then
-              TOTAL=$(wc -l < "$INSTANCES_FILE" | tr -d ' ')
+              TOTAL=$(wc -l < "$INSTANCES_FILE" 2>/dev/null | tr -d ' ')
+              TOTAL=${TOTAL:-0}
               FINISHED=$(grep -c "^{" "$SUMMARY_FILE" 2>/dev/null || echo 0)
               TIMEOUTS=$(grep -c '"Timeout"' "$SUMMARY_FILE" 2>/dev/null || echo 0)
               ERRORS=$(grep -c '"SolverError"' "$SUMMARY_FILE" 2>/dev/null || echo 0)
               SOLVED=$(grep -c '"Valid"' "$SUMMARY_FILE" 2>/dev/null || echo 0)
               
-              if [ "$TOTAL" -gt 0 ]; then
+              if [ "$TOTAL" -gt 0 ] 2>/dev/null; then
                 PERCENT=$((FINISHED * 100 / TOTAL))
-                echo "  Progress: $FINISHED/$TOTAL instances ($PERCENT%)"
-                echo "  Solved: $SOLVED | Timeouts: $TIMEOUTS | Errors: $ERRORS"
+                OUTPUT="$OUTPUT | Progress: $FINISHED/$TOTAL ($PERCENT%) | Solved: $SOLVED | Timeouts: $TIMEOUTS | Errors: $ERRORS"
                 
                 # Estimate time remaining (if we have enough data)
-                if [ "$FINISHED" -gt 5 ]; then
-                  ELAPSED=$(sacct -j "$JOB_ID" --format=ElapsedRaw --noheader | head -n1 | awk "{print \$1}")
-                  if [ -n "$ELAPSED" ] && [ "$ELAPSED" -gt 0 ]; then
+                if [ "$FINISHED" -gt 5 ] 2>/dev/null; then
+                  ELAPSED=$(sacct -j "$JOB_ID" --format=ElapsedRaw --noheader 2>/dev/null | head -n1 | awk '{print $1}')
+                  ELAPSED=${ELAPSED:-0}
+                  if [ "$ELAPSED" -gt 0 ] 2>/dev/null && [ "$FINISHED" -gt 0 ] 2>/dev/null; then
                     AVG_TIME=$((ELAPSED / FINISHED))
                     REMAINING=$((TOTAL - FINISHED))
                     ETA_SECONDS=$((AVG_TIME * REMAINING))
@@ -173,16 +174,18 @@ run_stride_benchmark:
                     ETA_MINS=$(((ETA_SECONDS % 3600) / 60))
                     ELAPSED_HOURS=$((ELAPSED / 3600))
                     ELAPSED_MINS=$(((ELAPSED % 3600) / 60))
-                    echo "  Elapsed time: ${ELAPSED_HOURS}h ${ELAPSED_MINS}m"
-                    echo "  Estimated time remaining: ${ETA_HOURS}h ${ETA_MINS}m"
+                    OUTPUT="$OUTPUT | Elapsed: ${ELAPSED_HOURS}h ${ELAPSED_MINS}m | ETA: ${ETA_HOURS}h ${ETA_MINS}m"
                   fi
                 fi
               fi
-            else
-              echo "  Waiting for stride to start producing output..."
             fi
-          
-            sleep 60
+            else 
+              OUTPUT="$OUTPUT | No progress info yet"
+            fi
+      
+            echo "$OUTPUT"
+      
+            sleep 5
           else
             echo "Unknown state: $STATE - waiting..."
             sleep 60
