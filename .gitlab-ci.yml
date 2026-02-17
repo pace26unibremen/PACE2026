@@ -102,9 +102,20 @@ run_stride_benchmark:
       ssh hpc bash <<'EOF'
         mkdir -p ~/pace-bench
         cd ~/pace-bench
+      
+        # Backup stride-logs if it exists, as we want to keep them over multiple runs
+        if [ -d "hpc_transfer/stride-logs" ]; then
+          mv hpc_transfer/stride-logs stride-logs.backup
+        fi
+      
         tar xzf hpc_payload.tgz
-
-        JOB_ID=$(sbatch run_stride.slurm | awk "{print \$4}")
+      
+        # Restore stride-logs
+        if [ -d "stride-logs.backup" ]; then
+          mv stride-logs.backup hpc_transfer/stride-logs
+        fi
+      
+        JOB_ID=$(sbatch hpc_transfer/run_stride.slurm | awk '{print $4}')
         echo "$JOB_ID" > last_job.id
       EOF
     - |
