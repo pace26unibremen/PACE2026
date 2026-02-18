@@ -16,6 +16,9 @@ std::vector<solver::isApplicableFn>& solver::BranchingSolver::ActiveRules()
 
 bool solver::BranchingSolver::rollBackBranch()
 {
+    // all rule suggestions can be discarded at the end of a branch
+    applyNext = std::queue<std::shared_ptr<AbstractRule>>();
+
     while (true)
     {
         if (changes.empty())
@@ -41,10 +44,9 @@ bool solver::BranchingSolver::rollBackBranch()
             {
                 branchingRule->unapply();
                 if (debPlugin) debPlugin->onUnapply(rule);
-
-                if (branchingRule->apply() != 0)
-                    throw std::logic_error("BranchingSolver : rollBackBranch : undefined return code rule " + branchingRule->name());
-                if (debPlugin) debPlugin->onApply(rule);
+                changes.pop();
+                // to enter the next branch we have to apply the branching rule again
+                applyNext.emplace(branchingRule);
                 return false;
             }
         }
@@ -92,48 +94,63 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
     // apply rules repeatedly until a return is triggerd
     while (true)
     {
-        // check the rules for applicability
-        for (const auto& isApplicable : activeRules)
+        std::shared_ptr<AbstractRule> rule = nullptr;
+
+        // check if we have rules in the pipeline
+        if (not applyNext.empty())
         {
-            auto rule = isApplicable(instance, context);
-
-            // if rule was not applicable, try next
-            if (not rule) continue;
-
-            const auto returnCode = rule->apply();
-            if (debPlugin) debPlugin->onApply(rule);
-
-            changes.push(rule);
-            if (std::dynamic_pointer_cast<PairEqualRule>(rule))
+            // take first rule of queue
+            rule = applyNext.front();
+            applyNext.pop();
+        }
+        else
+        {
+            // check the rules for applicability
+            for (const auto& isApplicable : activeRules)
             {
-                temporalChanges.push(rule);
+                rule = isApplicable(instance, context);
+                // take first applicable rule
+                if (rule) break;
             }
+        }
 
-            bool calculationFinished = false;
-            switch (returnCode)
-            {
-                case 0: // default continue calculation
-                    break;
-                case -1: // imidate return
-                    calculationFinished = true;
-                    break;
-                case 1: // found a solution candidate
-                    checkSolutionCandidate();
-                    calculationFinished = rollBackBranch();
-                    break;
-                case 2: // cut branch
-                    calculationFinished = rollBackBranch();
-                    break;
-                default:
-                    throw std::logic_error("BranchingSolver : solve : undefined return code rule " + rule->name());
-            }
+        const auto returnCode = rule->apply();
+        if (debPlugin) debPlugin->onApply(rule);
+        changes.push(rule);
+        if (std::dynamic_pointer_cast<PairEqualRule>(rule))
+        {
+            temporalChanges.push(rule);
+        }
 
-            if (calculationFinished)
-            {
-                if (debPlugin) debPlugin->onEnd();
-                return solution;
-            }
-            break;
+        bool calculationFinished = false;
+        switch (returnCode)
+        {
+            case Continue:
+                break;
+            case ContinueWithRuleSuggestion:
+                for (const auto& r : *rule->NextRuleSuggestion())
+                {
+                    applyNext.emplace(r);
+                }
+                break;
+            case EndBranchWithSolutionCandidate:
+                checkSolutionCandidate();
+                calculationFinished = rollBackBranch();
+                break;
+            case CutBranch:
+                calculationFinished = rollBackBranch();
+                break;
+            case ImidateReturn:
+                calculationFinished = true;
+                break;
+            default:
+                throw std::logic_error("BranchingSolver : solve : undefined return code rule " + rule->name());
+        }
+
+        if (calculationFinished)
+        {
+            if (debPlugin) debPlugin->onEnd();
+            return solution;
         }
     }
 }

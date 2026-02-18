@@ -43,9 +43,8 @@ class PairUnconnectedBranchingRule : public AbstractBranchingRule
         const std::tuple<unsigned int, unsigned int, std::list<std::shared_ptr<graph::Forest>>>& affectedForests);
 
     /// \brief applies rule
-    /// \see AbstractRule::apply
-    /// \returns always return code  \c 0 (default, continue solving)
-    int apply() override;
+    /// \returns always \ref RuleReturnCode::Continue
+    RuleReturnCode apply() override;
 
     void unapply() override;
 

@@ -33,6 +33,10 @@ class PairPathBranchingRule : public AbstractBranchingRule
     /// filled in the apply method and unfilled in the unapply method
     std::stack<DeleteEdgeAction> changes = std::stack<DeleteEdgeAction>();
 
+    /// \brief A list of rules that should be applied next.
+    std::shared_ptr<std::list<std::shared_ptr<AbstractRule>>> nextRuleSuggestion =
+        std::make_shared<std::list<std::shared_ptr<AbstractRule>>>();
+
   public:
     /// \param instance the problem instance
     /// \param context information about the instance and the solver state
@@ -46,14 +50,18 @@ class PairPathBranchingRule : public AbstractBranchingRule
                          std::unordered_map<std::shared_ptr<graph::Forest>, std::list<graph::Node*>>>& cuts);
 
     /// \brief applies rule
-    /// \see AbstractRule::apply
-    /// \returns always return code  \c 0 (default, continue solving)
-    int apply() override;
+    /// \returns two return codes are possible:
+    /// - \ref RuleReturnCode::Continue, on branch 2 and 3
+    /// - \ref RuleReturnCode::ContinueWithRuleSuggestion, on branch 1 (suggests a \ref PairEqualRule)
+    RuleReturnCode apply() override;
 
     void unapply() override;
 
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                       const std::shared_ptr<Context>& context);
+
+
+    std::shared_ptr<std::list<std::shared_ptr<AbstractRule>>> NextRuleSuggestion() override;
 
     [[nodiscard]]
     std::string name() const override;
