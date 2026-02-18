@@ -1,5 +1,7 @@
 #include "PairPathBranchingRule.hpp"
 
+#include "PairEqualRule.hpp"
+
 #include <cassert>
 #include <list>
 
@@ -25,7 +27,7 @@ int solver::PairPathBranchingRule::apply()
 {
     if (this->isApplied)
     {
-        throw std::invalid_argument("PairPathBranchingRule : apply : rule is not applied");
+        throw std::invalid_argument("PairPathBranchingRule : apply : rule is already applied");
     }
     if (this->branch >= 3)
     {
@@ -37,42 +39,58 @@ int solver::PairPathBranchingRule::apply()
     switch (branch)
     {
         case 3:
-            for(const auto& f : *instance)
+        {
+            for (const auto& f : *instance)
             {
                 const auto t1 = f->LabelToTerminal()[label1];
-                if(t1->parent != nullptr)
+                if (t1->parent != nullptr)
                 {
-                    changes.emplace(t1,f);
+                    changes.emplace(t1, f);
                     changes.top().doAction();
                 }
             }
-            break;
+            return 0;
+        }
         case 2:
-            for(const auto& f : *instance)
+        {
+            for (const auto& f : *instance)
             {
                 const auto t2 = f->LabelToTerminal()[label2];
-                if(t2->parent != nullptr)
+                if (t2->parent != nullptr)
                 {
-                    changes.emplace(t2,f);
+                    changes.emplace(t2, f);
                     changes.top().doAction();
                 }
             }
-            break;
+            return 0;
+        }
         case 1:
-            for(const auto& f : *instance)
-            {
-                for(auto pathDel : this->forestToPathDeletions[f])
-                {
-                    changes.emplace(pathDel,f);
-                    changes.top().doAction();
-                }
-            }
-            break;
-        default:
-            assert(false);
-    }
+        {
+            auto pairSubtrees = std::unordered_map<std::shared_ptr<graph::Forest>, graph::Node*>();
 
-    return 0;
+            for (const auto& f : *instance)
+            {
+                for (auto pathDel : this->forestToPathDeletions[f])
+                {
+                    changes.emplace(pathDel, f);
+                    changes.top().doAction();
+
+                }
+                auto parent = f->LabelToTerminal()[label1]->parent;
+                assert(parent == f->LabelToTerminal()[label2]->parent);
+                pairSubtrees.emplace(f,parent);
+            }
+
+            auto nextRule = std::make_shared<solver::PairEqualRule>(instance, context, pairSubtrees);
+            nextRuleSuggestion = std::make_shared<std::list<std::shared_ptr<solver::AbstractRule>>>();
+            nextRuleSuggestion->push_back(nextRule);
+
+            // return code 3 indicates that we have suggestions for next rules
+            return 3;
+        }
+        default:
+            throw std::logic_error("PairPathBranchingRule : apply : undefined branch");
+    }
 }
 
 void solver::PairPathBranchingRule::unapply()
@@ -89,7 +107,6 @@ void solver::PairPathBranchingRule::unapply()
         changes.pop();
     }
 }
-
 
 std::shared_ptr<solver::AbstractRule>
 solver::PairPathBranchingRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,
@@ -174,6 +191,11 @@ solver::PairPathBranchingRule::isApplicable(const std::shared_ptr<graph::Instanc
         return nullptr;
     }
     return std::make_shared<PairPathBranchingRule>(instance, context, c);
+}
+
+std::shared_ptr<std::list<std::shared_ptr<solver::AbstractRule>>> solver::PairPathBranchingRule::NextRuleSuggestion()
+{
+    return nextRuleSuggestion;
 }
 
 std::string solver::PairPathBranchingRule::name() const

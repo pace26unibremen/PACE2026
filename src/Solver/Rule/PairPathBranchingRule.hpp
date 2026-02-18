@@ -33,6 +33,10 @@ class PairPathBranchingRule : public AbstractBranchingRule
     /// filled in the apply method and unfilled in the unapply method
     std::stack<DeleteEdgeAction> changes = std::stack<DeleteEdgeAction>();
 
+    /// \brief A list of rules that should be applied next.
+    std::shared_ptr<std::list<std::shared_ptr<AbstractRule>>> nextRuleSuggestion =
+        std::make_shared<std::list<std::shared_ptr<AbstractRule>>>();
+
   public:
     /// \param instance the problem instance
     /// \param context information about the instance and the solver state
@@ -54,6 +58,9 @@ class PairPathBranchingRule : public AbstractBranchingRule
 
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                       const std::shared_ptr<Context>& context);
+
+
+    std::shared_ptr<std::list<std::shared_ptr<AbstractRule>>> NextRuleSuggestion() override;
 
     [[nodiscard]]
     std::string name() const override;
