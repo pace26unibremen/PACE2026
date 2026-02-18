@@ -17,7 +17,7 @@ std::vector<solver::isApplicableFn>& solver::BranchingSolver::ActiveRules()
 bool solver::BranchingSolver::rollBackBranch()
 {
     // all rule suggestions can be discarded at the end of a branch
-    applyNext = std::stack<std::shared_ptr<AbstractRule>>();
+    applyNext = std::queue<std::shared_ptr<AbstractRule>>();
 
     while (true)
     {
@@ -98,8 +98,8 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
         // check if we have rules in the pipeline
         if (not applyNext.empty())
         {
-            // take top rule of stack
-            rule = applyNext.top();
+            // take first rule of queue
+            rule = applyNext.front();
             applyNext.pop();
         }
         else
@@ -108,7 +108,7 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
             for (const auto& isApplicable : activeRules)
             {
                 rule = isApplicable(instance, context);
-                // if rule is applicable, break
+                // take first applicable rule
                 if (rule) break;
             }
         }
@@ -125,6 +125,12 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
         switch (returnCode)
         {
             case 0: // default continue calculation
+                break;
+            case 3: // continue calculation, but with nextRule suggestions
+                for (const auto& r : *rule->NextRuleSuggestion())
+                {
+                    applyNext.emplace(r);
+                }
                 break;
             case -1: // imidate return
                 calculationFinished = true;
