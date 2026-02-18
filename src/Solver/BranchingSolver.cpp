@@ -44,7 +44,8 @@ bool solver::BranchingSolver::rollBackBranch()
             {
                 branchingRule->unapply();
                 if (debPlugin) debPlugin->onUnapply(rule);
-                /// to enter the next branch we have to apply the branching rule again
+                changes.pop();
+                // to enter the next branch we have to apply the branching rule again
                 applyNext.emplace(branchingRule);
                 return false;
             }
