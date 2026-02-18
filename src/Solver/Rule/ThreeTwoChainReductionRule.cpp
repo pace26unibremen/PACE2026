@@ -36,7 +36,11 @@ solver::ThreeTwoChainReductionRule::isApplicable(const std::shared_ptr<graph::In
                 //T1
                 for (const auto& terminalT1 : T1->Terminals())
                 {
+                    //T2
+                    for(const auto& terminalT2 : T2->Terminals())
+                    {
 
+                    }
                 }
             }
         }
