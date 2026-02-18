@@ -50,9 +50,10 @@ class PairPathBranchingRule : public AbstractBranchingRule
                          std::unordered_map<std::shared_ptr<graph::Forest>, std::list<graph::Node*>>>& cuts);
 
     /// \brief applies rule
-    /// \see AbstractRule::apply
-    /// \returns always return code  \c 0 (default, continue solving)
-    int apply() override;
+    /// \returns two return codes are possible:
+    /// - \ref RuleReturnCode::Continue, on branch 2 and 3
+    /// - \ref RuleReturnCode::ContinueWithRuleSuggestion, on branch 1 (suggests a \ref PairEqualRule)
+    RuleReturnCode apply() override;
 
     void unapply() override;
 

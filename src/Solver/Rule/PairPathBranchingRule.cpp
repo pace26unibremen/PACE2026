@@ -23,7 +23,7 @@ solver::PairPathBranchingRule::PairPathBranchingRule(const std::shared_ptr<graph
         forestToPathDeletions(get<2>(cuts))
 {}
 
-int solver::PairPathBranchingRule::apply()
+solver::RuleReturnCode solver::PairPathBranchingRule::apply()
 {
     if (this->isApplied)
     {
@@ -49,7 +49,7 @@ int solver::PairPathBranchingRule::apply()
                     changes.top().doAction();
                 }
             }
-            return 0;
+            return Continue;
         }
         case 2:
         {
@@ -62,7 +62,7 @@ int solver::PairPathBranchingRule::apply()
                     changes.top().doAction();
                 }
             }
-            return 0;
+            return Continue;
         }
         case 1:
         {
@@ -85,8 +85,7 @@ int solver::PairPathBranchingRule::apply()
             nextRuleSuggestion = std::make_shared<std::list<std::shared_ptr<solver::AbstractRule>>>();
             nextRuleSuggestion->push_back(nextRule);
 
-            // return code 3 indicates that we have suggestions for next rules
-            return 3;
+            return ContinueWithRuleSuggestion;
         }
         default:
             throw std::logic_error("PairPathBranchingRule : apply : undefined branch");

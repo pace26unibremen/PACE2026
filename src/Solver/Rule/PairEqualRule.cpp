@@ -12,11 +12,11 @@ solver::PairEqualRule::PairEqualRule(const std::shared_ptr<graph::Instance>& ins
 }
 
 
-int solver::PairEqualRule::apply()
+solver::RuleReturnCode solver::PairEqualRule::apply()
 {
     if (this->isApplied)
     {
-        throw std::invalid_argument("PairEqualRule : apply : rule is not applied");
+        throw std::invalid_argument("PairEqualRule : apply : rule is already applied");
     }
     isApplied = true;
 
@@ -26,7 +26,7 @@ int solver::PairEqualRule::apply()
         changes.top().doAction();
     }
 
-    return 0;
+    return Continue;
 }
 
 void solver::PairEqualRule::unapply()

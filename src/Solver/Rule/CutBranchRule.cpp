@@ -5,14 +5,14 @@ solver::CutBranchRule::CutBranchRule(const std::shared_ptr<graph::Instance>& ins
     AbstractRule(instance, context)
 {}
 
-int solver::CutBranchRule::apply()
+solver::RuleReturnCode solver::CutBranchRule::apply()
 {
     if (this->isApplied)
     {
-        throw std::invalid_argument("CutBranchRule : apply : rule was already applied");
+        throw std::invalid_argument("CutBranchRule : apply : rule is already applied");
     }
     isApplied = true;
-    return 2;
+    return CutBranch;
 }
 
 void solver::CutBranchRule::unapply()

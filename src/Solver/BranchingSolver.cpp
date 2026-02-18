@@ -125,23 +125,23 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
         bool calculationFinished = false;
         switch (returnCode)
         {
-            case 0: // default continue calculation
+            case Continue:
                 break;
-            case 3: // continue calculation, but with nextRule suggestions
+            case ContinueWithRuleSuggestion:
                 for (const auto& r : *rule->NextRuleSuggestion())
                 {
                     applyNext.emplace(r);
                 }
                 break;
-            case -1: // imidate return
-                calculationFinished = true;
-                break;
-            case 1: // found a solution candidate
+            case EndBranchWithSolutionCandidate:
                 checkSolutionCandidate();
                 calculationFinished = rollBackBranch();
                 break;
-            case 2: // cut branch
+            case CutBranch:
                 calculationFinished = rollBackBranch();
+                break;
+            case ImidateReturn:
+                calculationFinished = true;
                 break;
             default:
                 throw std::logic_error("BranchingSolver : solve : undefined return code rule " + rule->name());
