@@ -78,10 +78,10 @@ while true; do
 
         # Parse summary.json for progress statistics
         # Each line starting with { is a completed instance
-        FINISHED=$(grep -c "^{" "$SUMMARY_FILE" 2>/dev/null)
-        TIMEOUTS=$(grep -c '"Timeout"' "$SUMMARY_FILE" 2>/dev/null)
-        ERRORS=$(grep -c '"SolverError"' "$SUMMARY_FILE" 2>/dev/null)
-        SOLVED=$(grep -c '"Valid"' "$SUMMARY_FILE" 2>/dev/null)
+        FINISHED=$(grep -c "^{" "$SUMMARY_FILE" 2>/dev/null || true)
+        TIMEOUTS=$(grep -c '"Timeout"' "$SUMMARY_FILE" 2>/dev/null || true)
+        ERRORS=$(grep -c '"SolverError"' "$SUMMARY_FILE" 2>/dev/null || true)
+        SOLVED=$(grep -c '"Valid"' "$SUMMARY_FILE" 2>/dev/null || true)
 
         # Validate that TOTAL is a valid number before arithmetic
         if [[ "$TOTAL" =~ ^[0-9]+$ ]] && [ "$TOTAL" -gt 0 ]; then
