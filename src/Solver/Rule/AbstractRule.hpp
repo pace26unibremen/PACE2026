@@ -49,7 +49,7 @@ class AbstractRule
 
     /// \brief A list of rules that should be applied next.
     ///
-    /// If the \ref apply method returns \c 3,
+    /// If the \ref apply method returns \ref RuleReturnCode::ContinueWithRuleSuggestion
     /// this indicates that the list contains items and the solver should adopt them.
     ///
     /// The first element of the list should be applied first, followed by the next element, and so on.
