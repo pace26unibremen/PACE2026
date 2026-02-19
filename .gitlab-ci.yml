@@ -68,5 +68,3 @@ pages:
     # Publish docs only from master branch and tags
     - master
     - tags
-    # TODO: Remove this line, before merging to master
-    - 29-maintenance-document-the-code
