@@ -105,14 +105,14 @@ class Forest
     /// \first Terminal pointer.
     /// \second Corresponding terminal label.
     [[nodiscard, maybe_unused]]
-    std::unordered_map<Node*, unsigned int>& Terminals();
+    std::unordered_map<Node*, unsigned int>& TerminalToLabel();
 
     /// \brief \c const reference to terminals map
     /// \property
     /// \first Terminal pointer.
     /// \second Corresponding terminal label.
     [[nodiscard, maybe_unused]]
-    const std::unordered_map<Node*, unsigned int>& Terminals() const;
+    const std::unordered_map<Node*, unsigned int>& TerminalToLabel() const;
 
     /// \brief Reference to labelToTerminal map
     /// \property

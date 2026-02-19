@@ -57,7 +57,7 @@ solver::PairEqualRule::isApplicable(const std::shared_ptr<graph::Instance>& inst
     auto f = instance->at(0);
     for (const auto& [label, node] : f->LabelToTerminal())
     {
-        if (node->sibling != nullptr and f->Terminals().contains(node->sibling))
+        if (node->sibling != nullptr and f->TerminalToLabel().contains(node->sibling))
         {
             label1 = label;
             label2 = node->sibling->smallestTerminal();

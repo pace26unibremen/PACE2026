@@ -18,7 +18,7 @@ TEST_CASE("Read and Write single Tree", "[Forest, ForestIO]")
             INFO("Check number of trees");
             REQUIRE(t1.Roots().size() == 1);
             INFO("Check number of terminals");
-            REQUIRE(t1.Terminals().size() == 2);
+            REQUIRE(t1.TerminalToLabel().size() == 2);
             INFO("check validity of tree structure");
             REQUIRE(t1.isValid());
         }
@@ -53,7 +53,7 @@ TEST_CASE("Read and Write single Tree", "[Forest, ForestIO]")
             INFO("Check number of trees");
             REQUIRE(t2.Roots().size() == 1);
             INFO("Check number of terminals");
-            REQUIRE(t2.Terminals().size() == 6);
+            REQUIRE(t2.TerminalToLabel().size() == 6);
             INFO("check validity of tree structure");
             REQUIRE(t2.isValid());
         }
@@ -88,7 +88,7 @@ TEST_CASE("Read and Write single Tree", "[Forest, ForestIO]")
             INFO("Check number of trees");
             REQUIRE(t3.Roots().size() == 1);
             INFO("Check number of terminals");
-            REQUIRE(t3.Terminals().size() == 6);
+            REQUIRE(t3.TerminalToLabel().size() == 6);
             INFO("check validity of tree structure");
             REQUIRE(t3.isValid());
         }
@@ -126,7 +126,7 @@ TEST_CASE("Read and Write Forest", "[Forest, ForestIO]")
             INFO("Check number of trees");
             REQUIRE(f1.Roots().size() == 2);
             INFO("Check number of terminals");
-            REQUIRE(f1.Terminals().size() == 2);
+            REQUIRE(f1.TerminalToLabel().size() == 2);
             INFO("check validity of tree structure");
             REQUIRE(f1.isValid());
         }
@@ -165,7 +165,7 @@ TEST_CASE("Read and Write Forest", "[Forest, ForestIO]")
             INFO("Check number of trees");
             REQUIRE(f2.Roots().size() == 4);
             INFO("Check number of terminals");
-            REQUIRE(f2.Terminals().size() == 6);
+            REQUIRE(f2.TerminalToLabel().size() == 6);
             INFO("check validity of tree structure");
             REQUIRE(f2.isValid());
         }

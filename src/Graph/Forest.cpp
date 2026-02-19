@@ -108,12 +108,12 @@ const vector<Node>& Forest::Nodes() const
     return *this->nodes;
 }
 
-std::unordered_map<Node*, unsigned int>& Forest::Terminals()
+std::unordered_map<Node*, unsigned int>& Forest::TerminalToLabel()
 {
     return *this->terminalToLabel;
 }
 
-const std::unordered_map<Node*, unsigned int>& Forest::Terminals() const
+const std::unordered_map<Node*, unsigned int>& Forest::TerminalToLabel() const
 {
     return *this->terminalToLabel;
 }
