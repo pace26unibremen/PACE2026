@@ -9,6 +9,9 @@
 namespace solver
 {
 
+/// \brief This is a plugin for the branching solver
+/// that visualizes how the solver explores the search space as a dot graph.
+/// It also writes all intermediate states of the instance as a dot graph within the calculation.
 class DebugPlugin
 {
     /// \brief stores ids for each state in the current branch
