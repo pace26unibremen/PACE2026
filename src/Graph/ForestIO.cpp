@@ -207,8 +207,6 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
 
 void ForestIO::WriteNewick(const Forest& forest, std::ostream& stream)
 {
-    const auto& terminals = forest.Terminals();
-
     for(Node* current : forest.Roots())
     {
         int down = true; // traversing tree structure downwards
@@ -223,7 +221,7 @@ void ForestIO::WriteNewick(const Forest& forest, std::ostream& stream)
                 }
                 else
                 {
-                    stream << terminals.at(current);
+                    stream << forest.TerminalToLabel().at(current);
                     down = false;
                 }
             }
@@ -283,9 +281,9 @@ void ForestIO::WriteDotSubgraph(const Forest& forest, ostream& stream, std::stri
         auto current = t;
         while (current)
         {
-            if (forest.Terminals().contains(current))
+            if (forest.TerminalToLabel().contains(current))
             {
-                stream << "n" << current << " [label = \"" << forest.Terminals().at(current) << "\\n\\n\\n \"];\n";
+                stream << "n" << current << " [label = \"" << forest.TerminalToLabel().at(current) << "\\n\\n\\n \"];\n";
                 stream << "n" << current << " -> inv_" << &forest << " [style = invis];\n";
             }
 

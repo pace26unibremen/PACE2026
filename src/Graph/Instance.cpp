@@ -59,7 +59,7 @@ void graph::WriteInstance(const std::shared_ptr<Instance>& instance, std::ostrea
     os << "#p " << instance->size() << " ";
     if (not instance->empty())
     {
-        os << instance->at(0)->Terminals().size();
+        os << instance->at(0)->TerminalToLabel().size();
     }
     else
     {
