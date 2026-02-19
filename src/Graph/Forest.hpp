@@ -140,10 +140,6 @@ class Forest
 
     /// \brief returns a pointer to the root node, that has \c node in its subtree
     [[nodiscard, maybe_unused]]
-    Node* rootOf(const Node& node) const;
-
-    /// \brief returns a pointer to the root node, that has \c node in its subtree
-    [[nodiscard, maybe_unused]]
     Node* rootOf(Node* node) const;
 
     /// \brief Returns the maximum common X-Forest of this forest and the input forest.

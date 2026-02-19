@@ -4,7 +4,6 @@
 #include "ForestIO.hpp"
 
 #include <algorithm>
-#include <cassert>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -138,21 +137,16 @@ const std::vector<Node*>& Forest::Roots() const
     return *this->roots;
 }
 
-Node* Forest::rootOf(const Node& node) const
+Node* Forest::rootOf(Node* node) const
 {
     for(auto rootPtr : *roots)
     {
-        if(node.hasSubsetTerminals(rootPtr))
+        if(node->hasSubsetTerminals(rootPtr))
         {
             return rootPtr;
         }
     }
-    assert(false);
-}
-
-Node* Forest::rootOf(Node* node) const
-{
-    return rootOf(*node);
+    throw std::logic_error("Forest : rootOf : no root found");
 }
 
 bool Forest::isValid() const
