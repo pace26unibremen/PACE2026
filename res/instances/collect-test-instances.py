@@ -4,6 +4,12 @@ import sys
 import argparse
 from collections import defaultdict, Counter
 import math
+import matplotlib
+matplotlib.use('Agg')  # Headless (no display needed on HPC/CI)
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import numpy as np
+
 
 # =============================================================================
 # USER VARIABLES - Tune these easily!
@@ -42,34 +48,36 @@ HUGE_LEAVES_MIN (int), HUGE_TIME_MAX (float): Detect fast-solved giants.
 TIME_BUCKETS = {
     'fast1s': 1.0,           # All <1s
     'fast30s': 30.0,         # Sample up to 30s
+    'fast1m': 60.0,          # Sample up to 1min
     'fast5m': 300.0,         # Sample up to 5min
     'fast15m': 900.0,        # Sample up to 15min
 }
 
 # Sampling fractions (for non-all buckets)
 SAMPLE_FRACS = {
-    'fast1s': 1.0,           # All <1s
-    'fast30s': 0.20,         # 20% of 1-30s (slowest)
-    'fast5m': 0.05,          # 5% of 30s-5m (slowest)
-    'fast15m': 0.01,         # 1% of 5-15m (slowest)
+    'fast1s': 1,           # 50% <1s
+    'fast30s': 0.5,         # 5% of 1-30s (slowest)
+    'fast1m': 0.2,          # 1% of 30s-1m (slowest)
+    'fast5m': 0.1,         # 0,5% of 30s-5m (slowest)
+    'fast15m': 0.01,        # 0,1% of 5-15m (slowest)
 }
 
 # Sampling fractions for SLOW categories only (>=15m)
 SLOW_SAMPLE_FRACS = {
-    'fast15m': 0.10,         # 10% of 5-15m (more than before)
-    'slow': 0.20,            # 20% of >15m
+    'fast15m': 0.05,         # 5% of 5-15m
+    'slow': 0.02,            # 2% of >15m
 }
 
 # Hard small instances (<= small_leaves_max)
-SMALL_LEAVES_MAX = 35
+SMALL_LEAVES_MAX = 30
 HARD_SMALL_VALID_N = 10      # Top N slowest Valid <= small_leaves_max
-HARD_SMALL_TIMEOUT_N = 20    # Top N smallest Timeout <= small_leaves_max
+HARD_SMALL_TIMEOUT_N = 10    # Top N smallest Timeout <= small_leaves_max
 
 # Bucket config for larger instances
 BUCKET_START = 50
 BUCKET_FACTOR = 2            # 50,100,200,...
 BUCKET_SIZES = {             # Override per-bucket if needed
-    50: 20,
+    50: 15,
     100: 10,
     200: 5,
     400: 3,
@@ -150,7 +158,10 @@ def sample_slow_categories(categories: dict[str, list[dict]], sample_fracs: dict
 
 def sample_categories(categories: dict[str, list[dict]], sample_fracs: dict[str, float]) -> list[dict]:
     """
-    Sample slowest from categories.
+    Sample slowest from time categories based on fractions.
+    Used for fast buckets (TIME_BUCKETS) via SAMPLE_FRACS.
+    Note: categories['fast_all'] is intentionally excluded here;
+    use directly if you want ALL fast instances instead of sampling.
 
     Args:
         categories (dict[str, list[dict]]): From categorize_by_time.
@@ -267,6 +278,188 @@ def write_lst(selected: list[dict], output_file: str) -> None:
         for d in selected:
             f.write(f"s:{d['s_idigest']}\n")
 
+def print_selection_stats(data: list[dict], selected: list[dict]) -> None:
+    """
+    Print a breakdown of selected instances: counts, time ranges,
+    and timeout share per leaf-size group.
+
+    Args:
+        data (list[dict]): All instances (for context).
+        selected (list[dict]): The filtered selection.
+    """
+    TIMEOUT_WTIME = 1800.0  # Sentinel display value for timeouts
+
+    print("\n" + "=" * 60)
+    print("SELECTION STATISTICS")
+    print("=" * 60)
+
+    total = len(selected)
+    valid = [d for d in selected if d['s_result'] == 'Valid']
+    timeouts = [d for d in selected if d['s_result'] == 'Timeout']
+
+    print(f"Total selected : {total}")
+    print(f"  Valid        : {len(valid)}")
+    print(f"  Timeouts     : {len(timeouts)}")
+
+    # Time distribution of valid ones
+    if valid:
+        wtimes = sorted(d['s_wtime'] for d in valid)
+        print(f"\nValid runtimes (prior run):")
+        print(f"  min    : {wtimes[0]:.3f}s")
+        print(f"  median : {wtimes[len(wtimes)//2]:.3f}s")
+        print(f"  p90    : {wtimes[int(len(wtimes)*0.90)]:.3f}s")
+        print(f"  max    : {wtimes[-1]:.3f}s")
+
+        # DYNAMIC BUCKET COUNTS from TIME_BUCKETS
+        prev_thresh = 0.0
+        bucket_counts = {}
+        for name, thresh in TIME_BUCKETS.items():
+            count = sum(1 for t in wtimes if prev_thresh <= t < thresh)
+            bucket_counts[name] = count
+            print(f"  {name:>8} : {count}")
+            prev_thresh = thresh
+
+        # Slow (> last threshold)
+        slow_count = sum(1 for t in wtimes if t >= prev_thresh)
+        print(f"  slow{'>'+str(prev_thresh)+'s':>5} : {slow_count}")
+
+    # Per-leaf-bucket breakdown
+    buckets = defaultdict(lambda: {'valid': [], 'timeout': 0})
+    leaf_edges = [0, 10, 20, 35, 50, 75, 100, 200, 400, 800, 1600, float('inf')]
+    labels = ['≤10','11-20','21-35','36-50','51-75','76-100',
+              '101-200','201-400','401-800','801-1600','>1600']
+
+    for d in selected:
+        leaves = d['s_num_leaves']
+        for i in range(len(leaf_edges) - 1):
+            if leaf_edges[i] < leaves <= leaf_edges[i+1]:
+                if d['s_result'] == 'Valid':
+                    buckets[labels[i]]['valid'].append(d['s_wtime'])
+                else:
+                    buckets[labels[i]]['timeout'] += 1
+                break
+
+    print(f"\n{'Leaf range':<12} {'Count':>6} {'Timeouts':>9} "
+          f"{'Min(s)':>8} {'Med(s)':>8} {'Max(s)':>8}")
+    print("-" * 60)
+    for label in labels:
+        b = buckets[label]
+        vtimes = sorted(b['valid'])
+        n = len(vtimes) + b['timeout']
+        if n == 0:
+            continue
+        min_t  = f"{vtimes[0]:.2f}"  if vtimes else "TIMEOUT"
+        med_t  = f"{vtimes[len(vtimes)//2]:.2f}" if vtimes else "TIMEOUT"
+        max_t  = f"{vtimes[-1]:.2f}" if vtimes else "TIMEOUT"
+        print(f"{label:<12} {n:>6} {b['timeout']:>9} "
+              f"{min_t:>8} {med_t:>8} {max_t:>8}")
+
+    # ETA prediction
+    if valid:
+        p90_time = wtimes[int(len(wtimes)*0.90)]
+        n_parallel = 16  # Tune to your HPC
+        est_total = (len(valid) * p90_time / n_parallel / 3600)  # hours
+        print(f"\nPREDICTED RUNTIME (p90={p90_time:.0f}s, {n_parallel}p): "
+              f"~{est_total:.1f}h total")
+
+    print("=" * 60)
+
+
+def plot_selection(data: list[dict], selected: list[dict],
+                   output_path: str = "selection_stats.png") -> None:
+    """
+    Log-scale scatter plot: leaves vs prior wtime.
+    Background (grey): all instances. Highlighted (blue/red): selected.
+    Timeouts at sentinel line w/ jitter. Reference lines at 1s/30s/etc.
+
+    Args:
+        data (list[dict]): All instances (background).
+        selected (list[dict]): Filtered selection (highlighted).
+        output_path (str): PNG output.
+    """
+    import matplotlib
+    matplotlib.use('Agg')  # Headless
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as mpatches
+    import numpy as np
+
+    TIMEOUT_SENTINEL = 1850.0   # Y-position for timeout markers
+
+    # Split into groups
+    selected_keys = {d['s_idigest'] for d in selected}
+    bg_valid    = [d for d in data if d['s_result'] == 'Valid'   and d['s_idigest'] not in selected_keys]
+    bg_timeout  = [d for d in data if d['s_result'] == 'Timeout' and d['s_idigest'] not in selected_keys]
+    sel_valid   = [d for d in data if d['s_result'] == 'Valid'   and d['s_idigest'] in selected_keys]
+    sel_timeout = [d for d in data if d['s_result'] == 'Timeout' and d['s_idigest'] in selected_keys]
+
+    fig, ax = plt.subplots(figsize=(14, 8))
+
+    def jitter_points(n: int, scale: float = 0.015) -> np.ndarray:
+        """Vertical jitter for timeout markers."""
+        return np.random.uniform(-scale * TIMEOUT_SENTINEL,
+                                 scale * TIMEOUT_SENTINEL, n) + TIMEOUT_SENTINEL
+
+    # Background instances (grey, faint)
+    if bg_valid:
+        bg_leaves = np.array([d['s_num_leaves'] for d in bg_valid])
+        bg_times  = np.array([d['s_wtime'] for d in bg_valid])
+        ax.scatter(bg_leaves, bg_times, c='#cccccc', s=6, alpha=0.25,
+                   label=f'Valid (not selected, n={len(bg_valid)})', zorder=1)
+
+    if bg_timeout:
+        bg_to_leaves = np.array([d['s_num_leaves'] for d in bg_timeout])
+        bg_to_jitter = jitter_points(len(bg_timeout))
+        ax.scatter(bg_to_leaves, bg_to_jitter, c='#ffaaaa', s=6, alpha=0.25,
+                   marker='x', label=f'Timeout (not selected, n={len(bg_timeout)})', zorder=1)
+
+    # Selected instances (bold colors)
+    if sel_valid:
+        sel_leaves = np.array([d['s_num_leaves'] for d in sel_valid])
+        sel_times  = np.array([d['s_wtime'] for d in sel_valid])
+        ax.scatter(sel_leaves, sel_times, c='#1f77b4', s=35, alpha=0.85,
+                   edgecolors='white', linewidth=0.5,
+                   label=f'Valid selected (n={len(sel_valid)})', zorder=3)
+
+    if sel_timeout:
+        sel_to_leaves = np.array([d['s_num_leaves'] for d in sel_timeout])
+        sel_to_jitter = jitter_points(len(sel_timeout))
+        ax.scatter(sel_to_leaves, sel_to_jitter, c='#d62728', s=40, alpha=0.95,
+                   marker='X', edgecolors='darkred', linewidth=1.0,
+                   label=f'Timeout selected (n={len(sel_timeout)})', zorder=3)
+
+    # Red timeout sentinel line
+    ax.axhline(TIMEOUT_SENTINEL, color='red', linestyle='--', linewidth=1.5,
+               alpha=0.7, zorder=0)
+    ax.text(0.98, TIMEOUT_SENTINEL * 1.02, '30min timeout', color='red',
+            fontsize=10, ha='right', va='bottom', transform=ax.transData)
+
+    # Grey time reference lines
+    for t, label in [(1, '1s'), (30, '30s'), (300, '5m'), (900, '15m')]:
+        ax.axhline(t, color='grey', linestyle=':', linewidth=1.0, alpha=0.4)
+        ax.text(0.02, t * 1.1, label, color='grey', fontsize=9,
+                transform=ax.transData, va='center')
+
+    # Formatting
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_xlabel('Number of leaves (log scale)', fontsize=12, fontweight='bold')
+    ax.set_ylabel('Prior wall-clock time (s, log scale)', fontsize=12, fontweight='bold')
+    ax.set_xlim(1, 20000)
+    ax.set_ylim(0.0005, TIMEOUT_SENTINEL * 1.1)
+
+    title = (f'Stride Test Selection: {len(selected)} instances from {len(data)} total\n'
+             f'Prior: {len([d for d in selected if d["s_result"]=="Valid"])} valid, '
+             f'{len([d for d in selected if d["s_result"]=="Timeout"])} timeouts')
+    ax.set_title(title, fontsize=13, fontweight='bold', pad=20)
+
+    ax.grid(True, which='both', alpha=0.15, linestyle='-', linewidth=0.5)
+    ax.legend(fontsize=10, loc='upper right', framealpha=0.95)
+
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200, bbox_inches='tight', facecolor='white')
+    plt.close()
+    print(f"Plot saved: {output_path}")
+
 def main(summary_file: str, output_file: str) -> None:
     """
     Main workflow.
@@ -282,8 +475,9 @@ def main(summary_file: str, output_file: str) -> None:
     for name, cat in categories.items():
         print(f"  {name}: {len(cat)}")
 
-    fast_selected = categories['fast_all']  # ALL <15m (~4869)
-    slow_sampled = sample_slow_categories(categories, SLOW_SAMPLE_FRACS)  # Sampled slow
+    # Time sampling: SAMPLED fast (per SAMPLE_FRACS) + sampled slow
+    fast_selected = sample_categories(categories, SAMPLE_FRACS)   # NOW USED
+    slow_sampled  = sample_slow_categories(categories, SLOW_SAMPLE_FRACS)
 
     # Hard small
     hard_small = select_hard_small(data, SMALL_LEAVES_MAX, HARD_SMALL_VALID_N, HARD_SMALL_TIMEOUT_N)
@@ -306,6 +500,8 @@ def main(summary_file: str, output_file: str) -> None:
 
     write_lst(selected, output_file)
     print(f"\nSelected {len(selected)} unique -> {output_file}")
+    print_selection_stats(data, selected)
+    plot_selection(data, selected, output_path="selection_stats.png")
 
 
 if __name__ == '__main__':
