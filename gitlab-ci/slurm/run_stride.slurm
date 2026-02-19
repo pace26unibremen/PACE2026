@@ -17,4 +17,4 @@ export STRIDE_DOWNLOADS_PATH=".stride-downloads"
 mkdir -p "$STRIDE_DOWNLOADS_PATH"
 
 ./stride download -i instances.lst
-./stride run -Oo -x trees-nodes-asc -i instances.lst
+./stride run -Oo -x nodes-trees-asc -i instances.lst
