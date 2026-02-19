@@ -29,7 +29,7 @@ solver::RuleReturnCode solver::SingleVertexTreePropagationRule::apply()
         }
     }
 
-    return Continue;
+    return RuleReturnCode::Continue;
 }
 
 void solver::SingleVertexTreePropagationRule::unapply()

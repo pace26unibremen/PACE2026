@@ -56,7 +56,7 @@ solver::RuleReturnCode solver::PairUnconnectedBranchingRule::apply()
             assert(false);
     }
 
-    return Continue;
+    return RuleReturnCode::Continue;
 }
 
 void solver::PairUnconnectedBranchingRule::unapply()

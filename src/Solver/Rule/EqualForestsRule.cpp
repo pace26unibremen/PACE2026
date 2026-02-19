@@ -21,7 +21,7 @@ solver::RuleReturnCode solver::EqualForestsRule::apply()
     std::erase_if(*instance, [&](const std::shared_ptr<graph::Forest>& f) { return toBeRemoved.contains(f); });
 
     // if only one forest left, we have a solution candidate else we have to continue
-    return instance->size() <= 1 ? EndBranchWithSolutionCandidate : Continue;
+    return instance->size() <= 1 ? RuleReturnCode::EndBranchWithSolutionCandidate : RuleReturnCode::Continue;
 }
 
 void solver::EqualForestsRule::unapply()
