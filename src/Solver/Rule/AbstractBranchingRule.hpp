@@ -6,14 +6,15 @@
 namespace solver
 {
 
-/// Abstract base class for branching rules.
+/// \brief Abstract base class for branching rules.
 /// A branching rule defines how multiple branches are generated from the current instance.
 /// When applying the rule, the solver divides the current problem into alternative subproblems (branches)
 /// that are solved independently.
 ///
-/// Technical the branching rules are \c AbstractRules, and they work by repeatedly calling apply and unapply.
-/// An apply opens a new branch and increases the \c branch counter by one.
-/// An unapply revokes the changes from the last apply and returns the instance to its previous state:\n
+/// Technical the branching rules are \ref AbstractRule "AbstractRules",
+/// and they work by repeatedly calling \ref apply and \ref unapply.
+/// An apply opens a new branch and increases the \ref branch counter by one.
+/// An unapply revokes the changes from the last apply and returns the instance to its previous state:
 /// \code
 /// auto rule = XYBranchingRule(...);
 /// // imaginary branch 0
@@ -23,6 +24,7 @@ namespace solver
 /// rule.unapply();
 /// rule.apply();    // enter branch 3
 /// rule.unapply();
+/// \endcode
 class AbstractBranchingRule : public AbstractRule
 {
   protected:

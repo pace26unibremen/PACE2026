@@ -16,7 +16,10 @@ namespace solver
 /// 2. The other terminal is a single vertex tree in the solution. -> cut the other terminal
 /// 3. The two terminals are a pair in the solution. -> cut all subtrees on the path between both terminals
 ///
-/// \link https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/PairPathBranchingRule GitLab Doku
+/// \see
+/// <a href="https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/PairPathBranchingRule">
+/// GitLab Docu
+/// </a>
 class PairPathBranchingRule : public AbstractBranchingRule
 {
   protected:

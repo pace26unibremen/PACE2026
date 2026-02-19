@@ -11,7 +11,10 @@ namespace solver
 
 /// \brief Collapses subtree of a terminal pair if it is a pair in every forest of the instance.
 ///
-/// \link https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/PairEqualRule GitLab Doku
+/// \see
+/// <a href="https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/PairEqualRule">
+/// GitLab Docu
+/// </a>
 class PairEqualRule : public AbstractRule
 {
   protected:

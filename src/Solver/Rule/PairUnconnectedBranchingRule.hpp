@@ -15,7 +15,10 @@ namespace solver
 /// 1. The first terminal is a single vertex tree in the solution. -> cut this terminal
 /// 2. The other terminal is a single vertex tree in the solution. -> cut the other terminal
 ///
-/// \link https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/PairUnconnectedBranchingRule GitLab Doku
+/// \see
+/// <a href="https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/PairUnconnectedBranchingRule">
+/// GitLab Docu
+/// </a>
 class PairUnconnectedBranchingRule : public AbstractBranchingRule
 {
   protected:
