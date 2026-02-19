@@ -84,7 +84,7 @@ run_stride_benchmark:
     - mkdir -p hpc_transfer
     - cp pace26stride/target/x86_64-unknown-linux-musl/smaller-release/stride hpc_transfer/
     - cp build/src/startSolver hpc_transfer/
-    - cp res/instances/50leaves.lst hpc_transfer/instances.lst
+    - cp res/instances/test-subset.lst hpc_transfer/instances.lst
     - cp gitlab-ci/slurm/run_stride.slurm hpc_transfer/
     - cp gitlab-ci/bash/*.sh hpc_transfer/
     - tar czf hpc_payload.tgz hpc_transfer
@@ -130,7 +130,7 @@ run_stride_benchmark:
 
     # 4) Retrieve and check results
     - mkdir -p stride-logs
-    - rsync -av hpc:~/pace-bench/hpc_transfer/stride-logs/ stride-logs/
+    - rsync -avq --include='*/' --include='stride-logs/summary.json' --include='stride-logs/messages.log' --exclude='*' hpc:~/pace-bench/hpc_transfer/stride-logs/ stride-logs/
     - bash gitlab-ci/bash/check_errors.sh
 
   artifacts:
