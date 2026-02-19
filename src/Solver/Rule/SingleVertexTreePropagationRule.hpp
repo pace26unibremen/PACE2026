@@ -12,7 +12,10 @@ namespace solver
 /// \brief If there is terminal which is a single vertex tree in one forest,
 /// the corresponding terminals in the other forests can be safely transformed into single vertex trees as well.
 ///
-/// \link https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/SingleVertexTreePropagationRule GitLab Doku
+/// \see
+/// <a href="https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/SingleVertexTreePropagationRule">
+/// GitLab Docu
+/// </a>
 class SingleVertexTreePropagationRule : public AbstractRule
 {
   protected:

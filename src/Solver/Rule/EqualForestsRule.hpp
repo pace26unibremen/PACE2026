@@ -10,7 +10,10 @@ namespace solver
 
 /// \brief Removes duplicate forests from instance.
 ///
-/// \link https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/EqualForestsRule GitLab Docu
+/// \see
+/// <a href="https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/EqualForestsRule">
+/// GitLab Docu
+/// </a>
 class EqualForestsRule : public AbstractRule
 {
   protected:
