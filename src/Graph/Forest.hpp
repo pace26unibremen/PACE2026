@@ -69,7 +69,7 @@ class Forest
     // ------------------------------------------------------------- //
 
     /// \brief Writes forest to a stream in newick format.
-    /// \param stream the forest gets written to
+    /// \param stream the outstream
     void write(std::ostream& stream) const;
 
     /// \brief Writes forest to a file in newick format.
@@ -78,7 +78,7 @@ class Forest
     void write(const std::string& path) const;
 
     /// \brief Writes forest as .dot graph to a stream.
-    /// \param stream
+    /// \param stream the outstream
     void dot(std::ostream& stream) const;
 
     /// \brief Writes forest as .dot graph to a file.
@@ -91,62 +91,68 @@ class Forest
     // ------------------------------------------------------------- //
 
     /// \brief Reference to nodes vector.
-    /// \property
+    /// \property Nodes
     [[nodiscard, maybe_unused]]
     std::vector<Node>& Nodes();
 
     /// \brief \c const reference to nodes vector.
-    /// \property
+    /// \property Nodes
     [[nodiscard, maybe_unused]]
     const std::vector<Node>& Nodes() const;
 
-    /// \brief Reference to terminals map
-    /// \property
-    /// \first Terminal pointer.
-    /// \second Corresponding terminal label.
+    /// \brief Reference terminals to label map.
+    /// It maps a pointer of a terminal node to its label.
+    /// If the node is associated with more than one label (due to collapsing)
+    /// the map should return the smallest one.
+    /// \property TerminalToLabel.
     [[nodiscard, maybe_unused]]
     std::unordered_map<Node*, unsigned int>& TerminalToLabel();
 
-    /// \brief \c const reference to terminals map
-    /// \property
-    /// \first Terminal pointer.
-    /// \second Corresponding terminal label.
+    /// \brief \c const reference to terminals to label map.
+    /// It maps a pointer of a terminal node to its label.
+    /// If the node is associated with more than one label (due to collapsing)
+    /// the map should return the smallest one.
+    /// \property TerminalToLabel.
     [[nodiscard, maybe_unused]]
     const std::unordered_map<Node*, unsigned int>& TerminalToLabel() const;
 
-    /// \brief Reference to labelToTerminal map
-    /// \property
-    /// \first Leaf labels.
-    /// \second Corresponding node pointer.
+    /// \brief Reference to label to terminal map.
+    /// It maps a label to the associated terminal pointer.
+    /// \property LabelToTerminal.
     [[nodiscard, maybe_unused]]
     std::unordered_map<unsigned int, Node*>& LabelToTerminal();
 
-    /// \brief \c const reference to labelToTerminal map
-    /// \property
-    /// \first Leaf labels.
-    /// \second Corresponding node pointer.
+    /// \brief \c const reference to label to terminal map.
+    /// It maps a label to the associated terminal pointer.
+    /// \property LabelToTerminal.
     [[nodiscard, maybe_unused]]
     const std::unordered_map<unsigned int, Node*>& LabelToTerminal() const;
 
     /// \brief Reference vector of root node pointer.
-    /// \property
+    /// \property Roots
     [[nodiscard, maybe_unused]]
     std::vector<Node*>& Roots();
 
     /// \brief \c const reference vector of root node pointer.
-    /// \property
+    /// \property Roots
     [[nodiscard, maybe_unused]]
     const std::vector<Node*>& Roots() const;
 
     /// \brief returns a pointer to the root node, that has \c node in its subtree
+    /// \param node pointer to node
+    /// \returns pointer to parent
+    /// \throws logic_error if no parent was found
     [[nodiscard, maybe_unused]]
     Node* rootOf(Node* node) const;
 
     /// \brief Returns the maximum common X-Forest of this forest and the input forest.
+    /// \param other the other forest to compare with.
+    /// \returns list of node pointers to the root of the common subtrees in this forest
     std::vector<Node*> maximumCommonSubforestRoots(const Forest& other);
 
     /// \brief Checks whether the forest representation is valid
     /// and writes flaws to std::clog
+    /// \returns true if the forest has a valid representation.
     bool isValid() const;
 
     /// \brief Operator that checks if the first tree is a subtree of the second.
@@ -154,19 +160,30 @@ class Forest
     /// \return true if the first tree is a subtree, false otherwise.
     bool isTrueSubtreeOf(const Forest& other) const;
 
-    bool hasIdenticalSubtree(Node* thisNodePtr, Node* otherNodePtr);
+    /// \brief checks for two nodes whether the underlying subtrees are identical
+    /// \param subtree1 root node of the fist subtree
+    /// \param subtree2 root node of the second subtree
+    /// \returns true if the subtrees are identical.
+    static bool hasIdenticalSubtree(Node* subtree1, Node* subtree2);
 
     /// \brief Checks relations between parent and children. Goes deeper recursively.
-    bool checkTriple(Node* parentPtr, std::unordered_map<Node*, unsigned int>& subtreeLeafs, std::set<Node*>& pointers,
+    /// \param parentPtr
+    /// \param  subtreeLeafs
+    /// \param pointers
+    /// \param smallestTerminal
+    /// \returns
+    bool checkTriple(Node* parentPtr,
+                     std::unordered_map<Node*, unsigned int>& subtreeLeafs,
+                     std::set<Node*>& pointers,
                      unsigned int& smallestTerminal) const;
 
     // ------------------------------------------------------------- //
     // ---- operators ---------------------------------------------- //
     // ------------------------------------------------------------- //
 
-    /// \brief Equality operator that compares two trees for structural equality.
-    /// \param other The tree to compare with.
-    /// \return true if the trees are identical, false otherwise.
+    /// \brief Equality operator that compares two X-forest for structural equality.
+    /// \param other the other forest to compare with.
+    /// \return true if the forests are identical, false otherwise.
     bool operator==(const Forest& other) const;
 
 };

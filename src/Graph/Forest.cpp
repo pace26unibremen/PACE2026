@@ -227,46 +227,44 @@ bool Forest::isTrueSubtreeOf(const Forest& other) const
     return true;
 }
 
-bool Forest::hasIdenticalSubtree(Node* thisNodePtr, Node* otherNodePtr)
+bool Forest::hasIdenticalSubtree(Node* subtree1, Node* subtree2)
 {
-    std::stack<Node*> thisVisitingStack;
-    thisVisitingStack.push(thisNodePtr);
-    std::stack<Node*> otherVisitingStack;
-    otherVisitingStack.push(otherNodePtr);
+    std::stack<Node*> visitingStack_subtree1;
+    visitingStack_subtree1.push(subtree1);
+    std::stack<Node*> visitingStack_subtree2;
+    visitingStack_subtree2.push(subtree2);
 
-    while (not (thisVisitingStack.empty() or otherVisitingStack.empty()))
+    while (not (visitingStack_subtree1.empty() or visitingStack_subtree2.empty()))
     {
-        const auto thisCurrentNodePtr = thisVisitingStack.top();
-        thisVisitingStack.pop();
-        const auto otherCurrentNotePtr = otherVisitingStack.top();
-        otherVisitingStack.pop();
+        const auto currentNode_subtree1 = visitingStack_subtree1.top();
+        visitingStack_subtree1.pop();
+        const auto currentNode_subtree2 = visitingStack_subtree2.top();
+        visitingStack_subtree2.pop();
 
-        if (not thisCurrentNodePtr->hasSameTerminals(otherCurrentNotePtr))
+        if (not currentNode_subtree1->hasSameTerminals(currentNode_subtree2))
         {
             return false;
         }
 
-        if (not (thisCurrentNodePtr->leftChild == nullptr or otherCurrentNotePtr->leftChild == nullptr))
+        if (not (currentNode_subtree1->leftChild == nullptr or currentNode_subtree2->leftChild == nullptr))
         {
             // neither is a leaf node
-            thisVisitingStack.push(thisCurrentNodePtr->rightChild);
-            thisVisitingStack.push(thisCurrentNodePtr->leftChild);
-            otherVisitingStack.push(otherCurrentNotePtr->rightChild);
-            otherVisitingStack.push(otherCurrentNotePtr->leftChild);
+            visitingStack_subtree1.push(currentNode_subtree1->rightChild);
+            visitingStack_subtree1.push(currentNode_subtree1->leftChild);
+            visitingStack_subtree2.push(currentNode_subtree2->rightChild);
+            visitingStack_subtree2.push(currentNode_subtree2->leftChild);
         }
         else
         {
             // one or both are leaves
-            if (not (thisCurrentNodePtr->leftChild == nullptr and otherCurrentNotePtr->rightChild == nullptr))
+            if (not (currentNode_subtree1->leftChild == nullptr and currentNode_subtree2->rightChild == nullptr))
             {
                 // just one is a leaf
                 return false;
             }
         }
-
-
     }
-    if (thisVisitingStack.empty() and otherVisitingStack.empty())
+    if (visitingStack_subtree1.empty() and visitingStack_subtree2.empty())
     {
         return true;
     }
