@@ -5,7 +5,7 @@
 #include "ChainReductionRule.h"
 
 #include "../Action/DeleteNodeActionInChains.h"
-
+#include <iostream>
 #include <algorithm>
 #include <stack>
 
@@ -47,7 +47,7 @@ int solver::ChainReductionRule::apply()
     //For n ≥ 4, let C = (x1, x2, . . . , xn) be a
     //maximal n-chain that is common to T and T' . Then set
     //S = T |X \ {x4, x5, . . . , xn} and S'= T'|X \ {x4, x5, . . . , xn}.
-    for (int index = chainWithTrees.first.size() ; index > 3; index--)
+    for (int index = chainWithTrees.first.size()-1 ; index >= 3; index--)
     {   graph::Node* NodeInChainT1 = chainWithTrees.first.at(index).at(0);
         graph::Node* NodeInChainT2 = chainWithTrees.first.at(index).at(1);
 
@@ -86,9 +86,15 @@ solver::ChainReductionRule::isApplicable(
     std::pair<std::vector<std::vector<graph::Node*>>,std::vector<std::shared_ptr<graph::Forest>>> chainWithTrees;
 
     for (const auto& T1 : *instance)
-    {
+    {   //DEBUG
+        std::cout << "T1:" << std::endl;
+        T1->write(std::cout);
+
         for (const auto& T2 : *instance)
-        {
+        {   //DEBUG
+            std::cout << "T2:" << std::endl;
+            T2->write(std::cout);
+
             if (T1 != T2)
             {
                 //Fetch Leaves - Terminal Index to Label
@@ -98,6 +104,8 @@ solver::ChainReductionRule::isApplicable(
                 //For all Terminals...
                 for (const auto& terminalT1 : termIndexTreeOne)
                 {  //T1
+                    //DEBUG
+                    std::cout << "terminalT1: " << terminalT1.second << std::endl;
 
                     //Determine parent
                     graph::Node* parentT1 = terminalT1.first->parent;
@@ -111,17 +119,21 @@ solver::ChainReductionRule::isApplicable(
                     //Determine x3 for case 2 for chain def in T1
                     graph::Node* parentOfParentT1 = parentT1->parent;
                     graph::Node* siblingOfParentT1 = parentT1->sibling;
-
                     //Case 2 structure check
-                    bool case2SiblingIsOnLeftSideT1;
-                    if (parentOfParentT1->leftChild == siblingOfParentT1)
+
+                    int case2SiblingIsOnLeftSideT1 = -1;
+                    if (parentOfParentT1 != nullptr)
                     {
-                        case2SiblingIsOnLeftSideT1 = true;
+                        if (parentOfParentT1->leftChild == siblingOfParentT1)
+                        {
+                            case2SiblingIsOnLeftSideT1 = 1;
+                        }
+                        else
+                        {
+                            case2SiblingIsOnLeftSideT1= 0;
+                        }
                     }
-                    else
-                    {
-                        case2SiblingIsOnLeftSideT1= false;
-                    }
+
                     if (not chain.empty())
                     {
                         break;
@@ -129,7 +141,7 @@ solver::ChainReductionRule::isApplicable(
 
                     for (const auto& terminalT2 : termIndexTreeTwo)
                     {   //T2
-
+                        std::cout << "terminalT2: " << terminalT2.second << std::endl;
                         //Determine Structure
                         graph::Node* parentT2 = terminalT2.first->parent;
                         graph::Node* siblingT2 = terminalT2.first->sibling;
@@ -141,14 +153,17 @@ solver::ChainReductionRule::isApplicable(
                         graph::Node* siblingOfParentT2 = parentT2->sibling;
 
                         //Case 2 structure check
-                        bool case2SiblingIsOnLeftSideT2;
-                        if (parentOfParentT2->leftChild== siblingOfParentT2)
+                        int case2SiblingIsOnLeftSideT2 = -1;
+                        if (parentOfParentT2 != nullptr)
                         {
-                            case2SiblingIsOnLeftSideT2 = true;
-                        }
-                        else
-                        {
-                           case2SiblingIsOnLeftSideT2= false;
+                            if (parentOfParentT2->leftChild== siblingOfParentT2)
+                            {
+                                case2SiblingIsOnLeftSideT2 = 1;
+                            }
+                            else
+                            {
+                                case2SiblingIsOnLeftSideT2= 0;
+                            }
                         }
 
                         bool case1applied = false;
@@ -172,25 +187,27 @@ solver::ChainReductionRule::isApplicable(
                             graph::Node* case1T1Sibling;
                             graph::Node* case1T2Sibling;
 
-                            //T1 structure check, determining sibling of x3 -> Supposed terminal
-                            if (case1T1Parent->leftChild == chainT1T2.back().front())
+                            if (case1T1Parent != nullptr && case1T2Parent != nullptr)
                             {
-                                case1T1Sibling = case1T1Parent->rightChild;
+                                //T1 structure check, determining sibling of x3 -> Supposed terminal
+                                if (case1T1Parent->leftChild == chainT1T2.back().front())
+                                {
+                                    case1T1Sibling = case1T1Parent->rightChild;
+                                }
+                                else
+                                {
+                                    case1T1Sibling = case1T1Parent->leftChild;
+                                }
+                                //T2 structure c heck
+                                if (case1T2Parent->leftChild == chainT1T2.back().back())
+                                {
+                                    case1T2Sibling = case1T2Parent->rightChild;
+                                }
+                                else
+                                {
+                                    case1T2Sibling = case1T2Parent->leftChild;
+                                }
                             }
-                            else
-                            {
-                                case1T1Sibling = case1T1Parent->leftChild;
-                            }
-                            //T2 structure c heck
-                            if (case1T2Parent->leftChild == chainT1T2.back().back())
-                            {
-                                case1T2Sibling = case1T2Parent->rightChild;
-                            }
-                            else
-                            {
-                               case1T2Sibling = case1T2Parent->leftChild;
-                            }
-
                             //Determine x4,... of chain
                             while (case1check)
                             {   //Sibling is in fact a terminal
@@ -203,28 +220,36 @@ solver::ChainReductionRule::isApplicable(
                                     case1T1Parent = chainT1T2.back().front()->parent;
                                     case1T2Parent = chainT1T2.back().back()->parent;
                                     //T1 structure check
-                                    if (case1T1Parent->leftChild == chainT1T2.back().front())
+                                    if (case1T1Parent != nullptr && case1T2Parent != nullptr)
                                     {
-                                        case1T1Sibling = case1T1Parent->rightChild;
-                                    }
-                                    else
-                                    {
-                                        case1T1Sibling = case1T1Parent->leftChild;
-                                    }
-                                    //T2 structure c heck
-                                    if (case1T2Parent->leftChild == chainT1T2.back().back())
-                                    {
-                                        case1T2Sibling = case1T2Parent->rightChild;
-                                    }
-                                    else
-                                    {
-                                        case1T2Sibling = case1T2Parent->leftChild;
-                                    }
+                                        if (case1T1Parent->leftChild == chainT1T2.back().front())
+                                        {
+                                            case1T1Sibling = case1T1Parent->rightChild;
+                                        }
+                                        else
+                                        {
+                                            case1T1Sibling = case1T1Parent->leftChild;
+                                        }
+                                        //T2 structure c heck
+                                        if (case1T2Parent->leftChild == chainT1T2.back().back())
+                                        {
+                                            case1T2Sibling = case1T2Parent->rightChild;
+                                        }
+                                        else
+                                        {
+                                            case1T2Sibling = case1T2Parent->leftChild;
+                                        }
 
-                                    case1applied = true;
+                                        case1applied = true;
+                                    }
+                                    else
+                                    {
+                                        case1check = false;
+                                    }
                                 }
                                 else case1check = false;
                             }
+
                             if (chainT1T2.size() >= 4)
                             {
                                 chain = chainT1T2;
@@ -239,6 +264,7 @@ solver::ChainReductionRule::isApplicable(
                         //Case 2: or the parent of x2 is the parent of the parent of x1, i.e parent index of sibling is
                         //the same as the index for the parent of the parent on both trees.
                         else if (case2SiblingIsOnLeftSideT1 == case2SiblingIsOnLeftSideT2 &&
+                            case2SiblingIsOnLeftSideT1 != -1 && case2SiblingIsOnLeftSideT2 != -1 &&
                           siblingT1->parent == parentOfParentT1 && siblingT2->parent == parentOfParentT2 &&
                           not case1applied)
                         {
@@ -253,26 +279,28 @@ solver::ChainReductionRule::isApplicable(
 
                             graph::Node* case2T1Sibling;
                             graph::Node* case2T2Sibling;
+                            if (case2T1Parent != nullptr && case2T2Parent != nullptr)
+                            {
+                                //T1 structure check
+                                if ( case2T1Parent->leftChild == chainT1T2.back().front())
+                                {
+                                    case2T1Sibling = case2T1Parent->rightChild;
+                                }
+                                else
+                                {
+                                    case2T1Sibling = case2T1Parent->leftChild;
+                                }
+                                //T2 structure c heck
+                                if (case2T2Parent->leftChild == chainT1T2.back().back())
+                                {
+                                    case2T2Sibling = case2T2Parent->rightChild;
+                                }
+                                else
+                                {
+                                    case2T2Sibling = case2T2Parent->leftChild;
+                                }
 
-                            //T1 structure check
-                            if ( case2T1Parent->leftChild == chainT1T2.back().front())
-                            {
-                                case2T1Sibling = case2T1Parent->rightChild;
                             }
-                            else
-                            {
-                                case2T1Sibling = case2T1Parent->leftChild;
-                            }
-                            //T2 structure c heck
-                            if (case2T2Parent->leftChild == chainT1T2.back().back())
-                            {
-                                case2T2Sibling = case2T2Parent->rightChild;
-                            }
-                            else
-                            {
-                               case2T2Sibling = case2T2Parent->leftChild;
-                            }
-
                             //Chain collection bool
                             bool case2check = true;
 
@@ -287,23 +315,31 @@ solver::ChainReductionRule::isApplicable(
                                     chainT1T2.push_back({case2T1Parent,case2T2Parent});
                                     case2T1Parent = chainT1T2.back().front()->parent;
                                     case2T2Parent = chainT1T2.back().back()->parent;
-                                    //T1 structure check
-                                    if (case2T1Parent->leftChild == chainT1T2.back().front())
+
+                                    if (case2T1Parent != nullptr && case2T2Parent != nullptr)
                                     {
-                                        case2T1Sibling = case2T1Parent->rightChild;
+                                        //T1 structure check
+                                        if (case2T1Parent->leftChild == chainT1T2.back().front())
+                                        {
+                                            case2T1Sibling = case2T1Parent->rightChild;
+                                        }
+                                        else
+                                        {
+                                            case2T1Sibling = case2T1Parent->leftChild;
+                                        }
+                                        //T2 structure c heck
+                                        if (case2T2Parent->leftChild == chainT1T2.back().back())
+                                        {
+                                            case2T2Sibling = case2T1Parent->rightChild;
+                                        }
+                                        else
+                                        {
+                                            case2T2Sibling = case2T2Parent->leftChild;
+                                        }
                                     }
                                     else
                                     {
-                                        case2T1Sibling = case2T1Parent->leftChild;
-                                    }
-                                    //T2 structure c heck
-                                    if (case2T2Parent->leftChild == chainT1T2.back().back())
-                                    {
-                                        case2T2Sibling = case2T1Parent->rightChild;
-                                    }
-                                    else
-                                    {
-                                        case2T2Sibling = case2T2Parent->leftChild;
+                                        case2check = false;
                                     }
                                 }
                                 else case2check = false;

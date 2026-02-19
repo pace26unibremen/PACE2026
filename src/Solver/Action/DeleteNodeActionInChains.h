@@ -26,7 +26,7 @@ class DeleteNodeActionInChains : AbstractAction
         /// \brief The terminal child node, which will be removed alongside the param node
         graph::Node* toBeRemovedChildNode;
 
-      public:;
+      public:
         /// \brief Action that deletes a node out of the forest given according to the chain reduction rule
         /// \param node The node to be removed
         /// \param forest The forest in which the node is to be removed out of
