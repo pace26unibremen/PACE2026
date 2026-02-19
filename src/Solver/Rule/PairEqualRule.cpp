@@ -26,7 +26,7 @@ solver::RuleReturnCode solver::PairEqualRule::apply()
         changes.top().doAction();
     }
 
-    return Continue;
+    return RuleReturnCode::Continue;
 }
 
 void solver::PairEqualRule::unapply()

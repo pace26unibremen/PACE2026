@@ -125,22 +125,22 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
         bool calculationFinished = false;
         switch (returnCode)
         {
-            case Continue:
+            case RuleReturnCode::Continue:
                 break;
-            case ContinueWithRuleSuggestion:
+            case RuleReturnCode::ContinueWithRuleSuggestion:
                 for (const auto& r : *rule->NextRuleSuggestion())
                 {
                     applyNext.emplace(r);
                 }
                 break;
-            case EndBranchWithSolutionCandidate:
+            case RuleReturnCode::EndBranchWithSolutionCandidate:
                 checkSolutionCandidate();
                 calculationFinished = rollBackBranch();
                 break;
-            case CutBranch:
+            case RuleReturnCode::CutBranch:
                 calculationFinished = rollBackBranch();
                 break;
-            case ImidateReturn:
+            case RuleReturnCode::ImidateReturn:
                 calculationFinished = true;
                 break;
             default:

@@ -7,7 +7,7 @@ solver::DebugAssertFalseRule::DebugAssertFalseRule(const std::shared_ptr<graph::
 
 solver::RuleReturnCode solver::DebugAssertFalseRule::apply()
 {
-    return ImidateReturn;
+    return RuleReturnCode::ImidateReturn;
 }
 
 void solver::DebugAssertFalseRule::unapply() {}

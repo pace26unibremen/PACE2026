@@ -49,7 +49,7 @@ solver::RuleReturnCode solver::PairPathBranchingRule::apply()
                     changes.top().doAction();
                 }
             }
-            return Continue;
+            return RuleReturnCode::Continue;
         }
         case 2:
         {
@@ -62,7 +62,7 @@ solver::RuleReturnCode solver::PairPathBranchingRule::apply()
                     changes.top().doAction();
                 }
             }
-            return Continue;
+            return RuleReturnCode::Continue;
         }
         case 1:
         {
@@ -85,7 +85,7 @@ solver::RuleReturnCode solver::PairPathBranchingRule::apply()
             nextRuleSuggestion = std::make_shared<std::list<std::shared_ptr<solver::AbstractRule>>>();
             nextRuleSuggestion->push_back(nextRule);
 
-            return ContinueWithRuleSuggestion;
+            return RuleReturnCode::ContinueWithRuleSuggestion;
         }
         default:
             throw std::logic_error("PairPathBranchingRule : apply : undefined branch");

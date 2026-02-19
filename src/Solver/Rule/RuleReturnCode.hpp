@@ -6,7 +6,7 @@ namespace solver
 
 /// \enum RuleReturnCode
 /// \brief Enum for the return code of the \ref AbstractRule::apply method
-enum RuleReturnCode
+enum class RuleReturnCode
 {
     /// Imidate end the solver and return without solution.
     ImidateReturn,
