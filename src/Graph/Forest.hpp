@@ -61,6 +61,7 @@ class Forest
 
     /// \brief Makes a deep copy of the forest.
     /// @return The copy
+    [[nodiscard]]
     Forest copy() const;
 
     // ------------------------------------------------------------- //
@@ -71,7 +72,7 @@ class Forest
     /// \param stream the forest gets written to
     void write(std::ostream& stream) const;
 
-    /// \brief Writes forest to a stream in newick format.
+    /// \brief Writes forest to a file in newick format.
     /// \param path to file
     [[maybe_unused]]
     void write(const std::string& path) const;
@@ -80,7 +81,7 @@ class Forest
     /// \param stream
     void dot(std::ostream& stream) const;
 
-    /// \brief Writes forest to as .dot graph to a file.
+    /// \brief Writes forest as .dot graph to a file.
     /// \param path to file
     [[maybe_unused]]
     void dot(const std::string& path) const;

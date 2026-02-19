@@ -52,7 +52,7 @@ struct Node
     [[nodiscard]]
     bool hasSubsetTerminals(const Node* other) const;
 
-    /// Checks if a node has a the minimal terminal in its subtree, compared to another node.
+    /// Checks if a node has the minimal terminal in its subtree, compared to another node.
     /// \param other
     /// \return true if \c this has the minimal terminal, else false
     [[nodiscard]]
