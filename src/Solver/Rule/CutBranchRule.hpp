@@ -15,9 +15,8 @@ class CutBranchRule : public  AbstractRule
                   const std::shared_ptr<Context>& context);
 
     /// \brief applies rule
-    /// \see AbstractRule::apply
-    /// \returns always return code \c 2 (branch can be cutted)
-    int apply() override;
+    /// \returns always \ref RuleReturnCode::CutBranch
+    RuleReturnCode apply() override;
 
     void unapply() override;
 

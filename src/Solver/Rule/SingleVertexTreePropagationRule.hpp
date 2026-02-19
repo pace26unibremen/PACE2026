@@ -40,9 +40,8 @@ public:
                                     const std::unordered_set<unsigned int>& labelsToBeReduced);
 
     /// \brief applies rule
-    /// \see AbstractRule::apply
-    /// \returns always return code  \c 0 (default, continue solving)
-    int apply() override;
+    /// \returns always \ref RuleReturnCode::Continue
+    RuleReturnCode apply() override;
 
     void unapply() override;
 

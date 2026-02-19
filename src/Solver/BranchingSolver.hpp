@@ -16,6 +16,7 @@
 
 #include <functional>
 #include <stack>
+#include <queue>
 
 namespace solver
 {
@@ -36,6 +37,9 @@ class BranchingSolver : public AbstractSolver
 
     /// \brief stores all applied rules that have to be revoked to get the final solution
     std::stack<std::shared_ptr<AbstractRule>> temporalChanges = std::stack<std::shared_ptr<AbstractRule>>();
+
+    /// \brief queue of rules, that should be applied next
+    std::queue<std::shared_ptr<AbstractRule>> applyNext = std::queue<std::shared_ptr<AbstractRule>>();
 
     /// \brief Stores the best solution, that the solver found so far.
     std::shared_ptr<graph::Forest> solution = nullptr;

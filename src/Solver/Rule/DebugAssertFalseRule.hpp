@@ -15,9 +15,8 @@ class DebugAssertFalseRule : public AbstractRule
                                   const std::shared_ptr<Context>& context);
 
     /// \brief applies rule
-    /// \see AbstractRule::apply
-    /// \returns always return code  \c -1 (stop the solver)
-    int apply() override;
+    /// \returns always \ref RuleReturnCode::ImidateReturn
+    RuleReturnCode apply() override;
 
     void unapply() override;
 
