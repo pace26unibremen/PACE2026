@@ -130,7 +130,7 @@ run_stride_benchmark:
 
     # 4) Retrieve and check results
     - mkdir -p stride-logs
-    - rsync -avq --include='*/' --include='stride-logs/summary.json' --include='stride-logs/messages.log' --exclude='*' hpc:~/pace-bench/hpc_transfer/stride-logs/ stride-logs/
+    - rsync -avq hpc:~/pace-bench/hpc_transfer/stride-logs/ stride-logs/
     - bash gitlab-ci/bash/check_errors.sh
 
   artifacts:

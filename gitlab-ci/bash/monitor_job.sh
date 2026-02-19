@@ -77,16 +77,20 @@ while true; do
         TOTAL=${TOTAL:-0}
 
         # Parse summary.json for progress statistics
-        # Each line starting with { is a completed instance
         TIMEOUTS=$(grep -c '"Timeout"' "$SUMMARY_FILE" 2>/dev/null || true)
         ERRORS=$(grep -c '"SolverError"' "$SUMMARY_FILE" 2>/dev/null || true)
         SOLVED=$(grep -c '"Valid"' "$SUMMARY_FILE" 2>/dev/null || true)
         FINISHED=$((TIMEOUTS + ERRORS + SOLVED))
 
+        # Extract trees/leaves from LAST line (grep ^{ grabs JSON objects)
+        LAST_LINE=$(grep '^{' "$SUMMARY_FILE" | tail -n1)
+        NUM_TREES=$(echo "$LAST_LINE" | grep -o '"s_num_trees":[0-9]*' | sed 's/.*://' | tr -d ' \n' || true)
+        NUM_LEAVES=$(echo "$LAST_LINE" | grep -o '"s_num_leaves":[0-9]*' | sed 's/.*://' | tr -d ' \n' || true)
+
         # Validate that TOTAL is a valid number before arithmetic
         if [[ "$TOTAL" =~ ^[0-9]+$ ]] && [ "$TOTAL" -gt 0 ]; then
           PERCENT=$((FINISHED * 100 / TOTAL))
-          OUTPUT="${OUTPUT} | Progress: ${FINISHED}/${TOTAL} (${PERCENT}%) | Solved: ${SOLVED} | Timeouts: ${TIMEOUTS} | Errors: ${ERRORS}"
+          OUTPUT="${OUTPUT} | Progress: ${FINISHED}/${TOTAL} (${PERCENT}%) | Solved: ${SOLVED} | Timeouts: ${TIMEOUTS} | Errors: ${ERRORS} | Last Instance Trees: ${NUM_TREES} | Leaves: ${NUM_LEAVES}"
 
           # Estimate time remaining (only if we have enough data for a reasonable estimate)
           if [ "$FINISHED" -gt 5 ]; then
