@@ -44,6 +44,8 @@ class PairEqualRule : public AbstractRule
     /// \brief It checks whether the PairEqualRule is applicable and generates an instance of this rule if so.
     /// This method only considers the PairEqualRule applicable if the first pair found in forest 1
     /// has a corresponding pair of terminals in each of the other forests.
+    /// \param instance on which the rule should be applied
+    /// \param context contains additional information to the instance and the solver state
     /// \returns shared_pointer to PairEqualRule if rule is applicable, elso null pointer
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                       const std::shared_ptr<Context>& context);

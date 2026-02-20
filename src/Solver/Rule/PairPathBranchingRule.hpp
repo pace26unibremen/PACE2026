@@ -18,7 +18,7 @@ namespace solver
 ///
 /// \see
 /// <a href="https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/PairPathBranchingRule">
-/// GitLab Docu
+/// GitLab Documentation
 /// </a>
 class PairPathBranchingRule : public AbstractBranchingRule
 {
@@ -65,6 +65,8 @@ class PairPathBranchingRule : public AbstractBranchingRule
     /// \brief It checks whether the PairPathBranchingRule is applicable and generates an instance of this rule if so.
     /// This method only considers the PairPathBranchingRule applicable if the first pair it finds in forest 1
     /// has corresponding terminals in another forest with a non-trivial path and are nowhere disconnected.
+    /// \param instance on which the rule should be applied
+    /// \param context contains additional information to the instance and the solver state
     /// \returns shared_pointer to PairPathBranchingRule if rule is applicable, elso null pointer
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                       const std::shared_ptr<Context>& context);

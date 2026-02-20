@@ -7,7 +7,7 @@
 namespace solver
 {
 
-/// \brief A base class for solver for the MAF problem
+/// \brief This is the base class for a solver of the MAF problem.
 class AbstractSolver
 {
   protected:

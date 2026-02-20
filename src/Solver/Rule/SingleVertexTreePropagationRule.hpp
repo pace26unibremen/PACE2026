@@ -14,7 +14,7 @@ namespace solver
 ///
 /// \see
 /// <a href="https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/SingleVertexTreePropagationRule">
-/// GitLab Docu
+/// GitLab Documentation
 /// </a>
 class SingleVertexTreePropagationRule : public AbstractRule
 {
@@ -45,7 +45,10 @@ public:
 
     void unapply() override;
 
-    /// \brief It checks whether the SingleVertexTreePropagationRule is applicable and generates an instance of this rule if so.
+    /// \brief It checks whether the SingleVertexTreePropagationRule is applicable
+    /// and generates an instance of this rule if so.
+    /// \param instance on which the rule should be applied
+    /// \param context contains additional information to the instance and the solver state
     /// \returns shared_pointer to SingleVertexTreePropagationRule if rule is applicable, elso null pointer
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                       const std::shared_ptr<Context>& context);
