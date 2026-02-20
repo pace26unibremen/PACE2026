@@ -36,12 +36,28 @@ class Forest
     /// And \b 2. fills \c subtreeTerminals for each node.
     void sortChildrenAndCollectTerminals();
 
+    /// \brief Checks consistency relations in triples of parent and both children
+    /// for all triples in the subtree of parent.
+    /// \param parent the root node of the subtree
+    /// \param subtreeLabels reference to a map that maps nodes to it's leaf in the subtree,
+    /// is filled during recursive descent
+    /// \param nodes reference to a set of all visited nodes, is filled during recursive descent
+    /// \param smallestTerminal reference the smallest, is updated during recursive descent
+    /// \returns true if this triple and all triple in the subtree of parent have valid relations
+    bool checkTriple(Node* parent,
+                     std::unordered_map<Node*, unsigned int>& subtreeLabels,
+                     std::set<Node*>& nodes,
+                     unsigned int& smallestTerminal) const;
+
   public:
+
     #ifdef DEBUG_IMAGE_VIEW_GRAPH
-    // an image of the forest for debug purpose
+    /// \brief a visualization of the forest for debug purpose
     cv::Mat image;
+    /// \brief renders the visualization \ref image.
     void renderImage();
     #endif
+
     // ------------------------------------------------------------- //
     // ---- constructors ------------------------------------------- //
     // ------------------------------------------------------------- //
@@ -165,17 +181,6 @@ class Forest
     /// \param subtree2 root node of the second subtree
     /// \returns true if the subtrees are identical.
     static bool hasIdenticalSubtree(Node* subtree1, Node* subtree2);
-
-    /// \brief Checks relations between parent and children. Goes deeper recursively.
-    /// \param parentPtr
-    /// \param  subtreeLeafs
-    /// \param pointers
-    /// \param smallestTerminal
-    /// \returns
-    bool checkTriple(Node* parentPtr,
-                     std::unordered_map<Node*, unsigned int>& subtreeLeafs,
-                     std::set<Node*>& pointers,
-                     unsigned int& smallestTerminal) const;
 
     // ------------------------------------------------------------- //
     // ---- operators ---------------------------------------------- //
