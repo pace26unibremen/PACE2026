@@ -13,7 +13,8 @@ namespace solver
 ///
 /// \see
 /// <a href="https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/PairEqualRule">
-/// GitLab Docu
+/// GitLab Documentation
+
 /// </a>
 class PairEqualRule : public AbstractRule
 {

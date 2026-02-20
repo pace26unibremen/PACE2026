@@ -12,7 +12,7 @@ namespace solver
 ///
 /// \see
 /// <a href="https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/EqualForestsRule">
-/// GitLab Docu
+/// GitLab Documentation
 /// </a>
 class EqualForestsRule : public AbstractRule
 {

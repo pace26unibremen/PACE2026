@@ -23,7 +23,7 @@ class AbstractSolver
     /// \brief solve the instance
     virtual std::shared_ptr<graph::Forest> solve() = 0;
 
-    /// \brief \c const reference to instance
+    /// \brief reference to instance
     /// \property Instance
     [[nodiscard, maybe_unused]]
     graph::Instance& Instance();

@@ -11,7 +11,7 @@ namespace solver
 /// When applying the rule, the solver divides the current problem into alternative subproblems (branches)
 /// that are solved independently.
 ///
-/// Technical the branching rules are \ref AbstractRule "AbstractRules",
+/// Technically the branching rules are \ref AbstractRule "AbstractRules",
 /// and they work by repeatedly calling \ref apply and \ref unapply.
 /// An apply opens a new branch and increases the \ref branch counter by one.
 /// An unapply revokes the changes from the last apply and returns the instance to its previous state:
