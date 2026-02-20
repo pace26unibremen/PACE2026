@@ -120,9 +120,9 @@ prepare-release:
     - |
       # Get latest merged MR IID targeting master
       MR_IID=$(
-        curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" \
-          "$CI_API_V4_URL/projects/$CI_PROJECT_ID/merge_requests?state=merged&target_branch=master&order_by=created_at&sort=desc&per_page=1" \
-        | jq -r '.[0].iid // empty'
+      curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+        "$CI_API_V4_URL/projects/$CI_PROJECT_ID/repository/commits/$CI_COMMIT_SHA/merge_requests" \
+      | jq -r '.[0].iid // empty'
       )
       if [ -z "$MR_IID" ] || [ "$MR_IID" = "null" ]; then
         echo "Error: No recent merged MR to master found."
