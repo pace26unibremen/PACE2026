@@ -14,6 +14,11 @@ namespace solver
 /// the corresponding terminals aren't connected (are in different trees), we can branch into two cases:\n
 /// 1. The first terminal is a single vertex tree in the solution. -> cut this terminal
 /// 2. The other terminal is a single vertex tree in the solution. -> cut the other terminal
+///
+/// \see
+/// <a href="https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/PairUnconnectedBranchingRule">
+/// GitLab Documentation
+/// </a>
 class PairUnconnectedBranchingRule : public AbstractBranchingRule
 {
   protected:
@@ -48,6 +53,12 @@ class PairUnconnectedBranchingRule : public AbstractBranchingRule
 
     void unapply() override;
 
+    /// \brief It checks whether the PairUnconnectedBranchingRule is applicable and generates an instance of this rule if so.
+    /// This method only considers the PairUnconnectedBranchingRule applicable if the first pair it finds in forest 1
+    /// has corresponding terminals in another forest that are disconnected.
+    /// \param instance on which the rule should be applied
+    /// \param context contains additional information to the instance and the solver state
+    /// \returns shared_pointer to PairUnconnectedBranchingRule if rule is applicable, elso null pointer
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                       const std::shared_ptr<Context>& context);
 

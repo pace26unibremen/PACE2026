@@ -11,6 +11,11 @@ namespace solver
 
 /// \brief If there is terminal which is a single vertex tree in one forest,
 /// the corresponding terminals in the other forests can be safely transformed into single vertex trees as well.
+///
+/// \see
+/// <a href="https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/SingleVertexTreePropagationRule">
+/// GitLab Documentation
+/// </a>
 class SingleVertexTreePropagationRule : public AbstractRule
 {
   protected:
@@ -40,6 +45,11 @@ public:
 
     void unapply() override;
 
+    /// \brief It checks whether the SingleVertexTreePropagationRule is applicable
+    /// and generates an instance of this rule if so.
+    /// \param instance on which the rule should be applied
+    /// \param context contains additional information to the instance and the solver state
+    /// \returns shared_pointer to SingleVertexTreePropagationRule if rule is applicable, elso null pointer
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                       const std::shared_ptr<Context>& context);
 

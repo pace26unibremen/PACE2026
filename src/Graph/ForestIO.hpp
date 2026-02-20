@@ -14,16 +14,28 @@ class ForestIO
   public:
     /// Reads a forest from input stream
     /// \param stream the input stream
-    /// \param numberOfTerminals the number of leafs, set this value for optimal memory allocation
+    /// \param numberOfTerminals the number of leafs
     /// \param numberOfTrees the number of trees in the forest, default is 1
     /// \return a forest
     static Forest ReadNewick(std::istream& stream, int numberOfTerminals = 0, int numberOfTrees = 1);
 
-    static void WriteNewick(const Forest& tree, std::ostream& stream);
+    /// \brief Writes a forest to a stream.
+    /// Writes in newick format.
+    /// \param forest the instance to write
+    /// \param stream the outstream
+    static void WriteNewick(const Forest& forest, std::ostream& stream);
 
-    static void WriteDot(const Forest& tree, std::ostream& stream);
+    /// \brief Writes a forest as dot graph to a stream.
+    /// \param forest the instance to write
+    /// \param stream the outstream
+    static void WriteDot(const Forest& forest, std::ostream& stream);
 
-    static void WriteDotSubgraph(const Forest& tree, std::ostream& stream, std::string subgraphParams = "");
+    /// \brief Writes a forest as dot graph to a stream.
+    /// It does not construct a complete, valid dot file, but rather a subgraph/cluster within a dot file.
+    /// \param forest the instance to write
+    /// \param stream the outstream
+    /// \param subgraphParams additional parameter to configure the subgraph in dot syntax. (e.g. "style=dotted;\n")
+    static void WriteDotSubgraph(const Forest& forest, std::ostream& stream, std::string subgraphParams = "");
 };
 
 }  // namespace graph

@@ -12,7 +12,7 @@ solver::RuleReturnCode solver::CutBranchRule::apply()
         throw std::invalid_argument("CutBranchRule : apply : rule is already applied");
     }
     isApplied = true;
-    return CutBranch;
+    return RuleReturnCode::CutBranch;
 }
 
 void solver::CutBranchRule::unapply()

@@ -49,7 +49,7 @@ solver::RuleReturnCode solver::PairPathBranchingRule::apply()
                     changes.top().doAction();
                 }
             }
-            return Continue;
+            return RuleReturnCode::Continue;
         }
         case 2:
         {
@@ -62,7 +62,7 @@ solver::RuleReturnCode solver::PairPathBranchingRule::apply()
                     changes.top().doAction();
                 }
             }
-            return Continue;
+            return RuleReturnCode::Continue;
         }
         case 1:
         {
@@ -85,7 +85,7 @@ solver::RuleReturnCode solver::PairPathBranchingRule::apply()
             nextRuleSuggestion = std::make_shared<std::list<std::shared_ptr<solver::AbstractRule>>>();
             nextRuleSuggestion->push_back(nextRule);
 
-            return ContinueWithRuleSuggestion;
+            return RuleReturnCode::ContinueWithRuleSuggestion;
         }
         default:
             throw std::logic_error("PairPathBranchingRule : apply : undefined branch");
@@ -118,7 +118,7 @@ solver::PairPathBranchingRule::isApplicable(const std::shared_ptr<graph::Instanc
     auto f = instance->at(0);
     for (const auto& [label, node] : f->LabelToTerminal())
     {
-        if (node->sibling != nullptr and f->Terminals().contains(node->sibling))
+        if (node->sibling != nullptr and f->TerminalToLabel().contains(node->sibling))
         {
             get<0>(c) = label;
             get<1>(c) = node->sibling->smallestTerminal();

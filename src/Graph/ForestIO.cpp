@@ -205,11 +205,9 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
     return {nodes, terminalToLabel, labelToTerminal, roots};
 }
 
-void ForestIO::WriteNewick(const Forest& tree, std::ostream& stream)
+void ForestIO::WriteNewick(const Forest& forest, std::ostream& stream)
 {
-    const auto& terminals = tree.Terminals();
-
-    for(Node* current : tree.Roots())
+    for(Node* current : forest.Roots())
     {
         int down = true; // traversing tree structure downwards
         while (true)
@@ -223,7 +221,7 @@ void ForestIO::WriteNewick(const Forest& tree, std::ostream& stream)
                 }
                 else
                 {
-                    stream << terminals.at(current);
+                    stream << forest.TerminalToLabel().at(current);
                     down = false;
                 }
             }
@@ -247,7 +245,7 @@ void ForestIO::WriteNewick(const Forest& tree, std::ostream& stream)
     }
 }
 
-void ForestIO::WriteDot(const Forest& tree, ostream& stream)
+void ForestIO::WriteDot(const Forest& forest, ostream& stream)
 {
     stream << "digraph Tree {\n"
            << "splines = false\n\n";
@@ -264,7 +262,7 @@ void ForestIO::WriteDot(const Forest& tree, ostream& stream)
         "   labelloc = t];\n"
         "edge [arrowhead = none];\n\n";
 
-    WriteDotSubgraph(tree, stream, subgraphParams);
+    WriteDotSubgraph(forest, stream, subgraphParams);
 
     stream << "}" << endl;
 }
@@ -283,9 +281,9 @@ void ForestIO::WriteDotSubgraph(const Forest& forest, ostream& stream, std::stri
         auto current = t;
         while (current)
         {
-            if (forest.Terminals().contains(current))
+            if (forest.TerminalToLabel().contains(current))
             {
-                stream << "n" << current << " [label = \"" << forest.Terminals().at(current) << "\\n\\n\\n \"];\n";
+                stream << "n" << current << " [label = \"" << forest.TerminalToLabel().at(current) << "\\n\\n\\n \"];\n";
                 stream << "n" << current << " -> inv_" << &forest << " [style = invis];\n";
             }
 
