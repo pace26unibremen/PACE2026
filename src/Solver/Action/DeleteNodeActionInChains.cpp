@@ -1,8 +1,11 @@
 //
 // Created by kaufm on 25.01.2026.
 //
-
 #include "DeleteNodeActionInChains.h"
+
+#include <iostream>
+
+#include <pstl/execution_defs.h>
 using namespace graph;
 using namespace solver;
 
@@ -34,12 +37,13 @@ solver::DeleteNodeActionInChains::DeleteNodeActionInChains(graph::Node* node, co
 
 void solver::DeleteNodeActionInChains::doAction()
 {
+    std::cout << "Node to be deleted :" << std::addressof(node) << std::endl;
     std::vector<Node> nodes = forest->Nodes();
     std::unordered_map<graph::Node*,unsigned int> terminals= forest->Terminals();
     std::unordered_map<unsigned int, graph::Node*> labels = forest->LabelToTerminal();
 
     graph::Node* parent = node.parent;
-
+    std::cout << "Parent node to be deleted :" << std::addressof(parent) << std::endl;
     //Remove Child terminal from node
     //Done because removing child node first is easier.
 
@@ -67,8 +71,8 @@ void solver::DeleteNodeActionInChains::doAction()
     {
         if (label.second == toBeRemovedChildNode)
         {
-            //
             labels.erase(label.first);
+            break;
         }
     }
 
