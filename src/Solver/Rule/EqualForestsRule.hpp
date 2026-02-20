@@ -40,6 +40,8 @@ class EqualForestsRule : public AbstractRule
     void unapply() override;
 
     /// \brief It checks whether the EqualForestsRule is applicable and generates an instance of this rule if so.
+    /// \param instance on which the rule should be applied
+    /// \param context contains additional information to the instance and the solver state
     /// \returns shared_pointer to EqualForestsRule if rule is applicable, elso null pointer
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                       const std::shared_ptr<Context>& context);

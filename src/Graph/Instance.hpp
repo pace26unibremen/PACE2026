@@ -5,8 +5,8 @@
 
 namespace graph
 {
-    /// @typedef Instance
-    /// @brief An instance of the MAF Problem is a vector of forests.
+    /// \typedef Instance
+    /// \brief An instance of the MAF Problem is a vector of forests.
     using Instance = std::vector<std::shared_ptr<Forest>>;
 
     /// \brief Reads an instance from a file.

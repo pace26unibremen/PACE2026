@@ -17,7 +17,7 @@ namespace solver
 ///
 /// \see
 /// <a href="https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/PairUnconnectedBranchingRule">
-/// GitLab Docu
+/// GitLab Documentation
 /// </a>
 class PairUnconnectedBranchingRule : public AbstractBranchingRule
 {
@@ -56,6 +56,8 @@ class PairUnconnectedBranchingRule : public AbstractBranchingRule
     /// \brief It checks whether the PairUnconnectedBranchingRule is applicable and generates an instance of this rule if so.
     /// This method only considers the PairUnconnectedBranchingRule applicable if the first pair it finds in forest 1
     /// has corresponding terminals in another forest that are disconnected.
+    /// \param instance on which the rule should be applied
+    /// \param context contains additional information to the instance and the solver state
     /// \returns shared_pointer to PairUnconnectedBranchingRule if rule is applicable, elso null pointer
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                       const std::shared_ptr<Context>& context);
