@@ -5,16 +5,28 @@
 #ifndef PACE2026_THREETWOCHAINREDUCTIONRULE_HPP
 #define PACE2026_THREETWOCHAINREDUCTIONRULE_HPP
 #include "AbstractRule.hpp"
+#include <vector>
+#include <stack>
+#include "..\Action\AbstractAction.hpp"
+
 
 namespace solver
 {
 
     class ThreeTwoChainReductionRule : public AbstractRule
     {
+    protected:
+        std::pair<std::vector<std::vector<graph::Node*>>, std::vector<std::shared_ptr<graph::Forest>>> chainInTree;
+
+        std::stack<solver::AbstractAction> changes;
+
+    public:
 
         ThreeTwoChainReductionRule(const std::shared_ptr<graph::Instance>& instance,
-                                   const std::shared_ptr<Context>& context);
-        int apply() override;
+                                 const std::shared_ptr<Context>& context,
+                                 const std::pair<std::vector<std::vector<graph::Node*>>,
+                                                 std::vector<std::shared_ptr<graph::Forest>>>& chainInTree);
+         int apply() override;
 
         void unapply() override;
 
