@@ -1,6 +1,26 @@
+workflow:
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never  # Skip all pipelines triggered by tags
+    - when: always
+
+# Shared anchor for reuse
+.release-rules: &release-rules
+  rules:
+    # Only run on master
+    - if: '$CI_COMMIT_BRANCH != "master"'
+      when: never
+    # Only run on merge commits
+    - if: '$CI_COMMIT_MESSAGE !~ /See merge request/'
+      when: never
+    # Need to invert, as separate rules use or logic
+    - when: on_success
+
 stages:
   - build
   - test
+  - release_prep
+  - release
 
 # C++ build and tests — build statically with musl
 build-solver:
@@ -14,15 +34,37 @@ build-solver:
     - cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXE_LINKER_FLAGS="-static"
     - ninja
     # Check that the resulting binary is indeed statically linked
-    - file src/solver
+    - |
+      FILE_OUT=$(file src/solver)
+      echo "$FILE_OUT"
+      if ! echo "$FILE_OUT" | grep -q 'statically linked'; then
+        echo "src/solver is not statically linked" >&2
+        exit 1
+      fi
   artifacts:
-    expire_in: 1 day
+    expire_in: never
     paths:
       - build/src/solver
       - build/tests/ForestIOTests
       - build/tests/ForestEqualTests
       - build/tests/ForestSubforestTests
       - build/tests/DeleteEdgeActionTests
+
+build-solver-windows:
+  stage: build
+  image: alpine:3.20
+  <<: *release-rules
+  script:
+    - apk add --no-cache cmake ninja mingw-w64-gcc git file
+    - mkdir -p build-win
+    - cd build-win
+    - cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ -DCMAKE_FIND_ROOT_PATH=/usr/x86_64-w64-mingw32 -DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++ -Wl,--enable-auto-import"
+    - ninja
+    - file src/solver.exe  # Should show PE32+ executable (static)
+  artifacts:
+    expire_in: never
+    paths:
+      - build-win/src/solver.exe
 
 graph-representation:
   stage: test
@@ -42,3 +84,150 @@ graph-representation:
     reports:
       junit: build/tests/*-results.xml  # GitLab merges all matching files
     expire_in: 1 Month
+
+# Prepare version, tag name, and release description (no tag/release created here)
+prepare-release:
+  stage: release_prep
+  image: ubuntu:24.04
+  <<: *release-rules
+  before_script:
+    - apt-get update && apt-get install -y curl jq git
+  script:
+    - |
+      # Get latest merged MR IID targeting master
+      MR_IID=$(
+        curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+          "$CI_API_V4_URL/projects/$CI_PROJECT_ID/merge_requests?state=merged&target_branch=master&order_by=created_at&sort=desc&per_page=1" \
+        | jq -r '.[0].iid // empty'
+      )
+      if [ -z "$MR_IID" ] || [ "$MR_IID" = "null" ]; then
+        echo "Error: No recent merged MR to master found."
+        exit 1
+      fi
+      echo "MR IID: $MR_IID"
+    - |
+      # Get MR labels and decide bump type
+      MR_DATA=$(
+        curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+          "$CI_API_V4_URL/projects/$CI_PROJECT_ID/merge_requests/$MR_IID"
+      )
+      echo "All labels:"
+      echo "$MR_DATA" | jq -r '.labels[]'
+      LABELS=$(echo "$MR_DATA" | jq -r '[.labels[] | select(test("^[Tt]ype::"))] | join(", ")')
+      if [[ "$LABELS" =~ [Tt]ype::[Ff]eature ]]; then
+        BUMP="minor"
+      elif [[ "$LABELS" =~ [Tt]ype::(bug|[Mm]aintenance) ]]; then
+        BUMP="patch"
+      else
+        echo "Error: No valid type:: label: $LABELS"
+        exit 1
+      fi
+      echo "Labels: $LABELS → Bump: $BUMP"
+    - |
+      # Current version from latest vX.Y.Z tag
+      LATEST_TAG=$(git tag --list 'v[0-9]*' --sort=-version:refname | head -n1)
+      if [ -z "$LATEST_TAG" ]; then
+        CURRENT_VERSION="0.0.0"
+      else
+        CURRENT_VERSION="${LATEST_TAG#v}"
+      fi
+      if ! [[ $CURRENT_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+        echo "Error: Invalid semver $LATEST_TAG (manual major? Use vMAJOR.0.0)"
+        exit 1
+      fi
+      MAJOR="${BASH_REMATCH[1]}"
+      MINOR="${BASH_REMATCH[2]}"
+      PATCH="${BASH_REMATCH[3]}"
+      echo "Current: v$CURRENT_VERSION"
+    - |
+      # Compute new version
+      if [ "$BUMP" = "minor" ]; then
+        NEW_VERSION="$MAJOR.$((MINOR + 1)).0"
+      else
+        NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+      fi
+      TAG="v$NEW_VERSION"
+      echo "New version (tag): $TAG"
+    - |
+      # Get issue from MR (parse "Closes #123" in description)
+      ISSUE_IID=$(echo "$MR_DATA" | grep -o 'Closes #[0-9]\+' | head -1 | sed 's/Closes #//')
+      if [ -n "$ISSUE_IID" ]; then
+        ISSUE_DATA=$(
+          curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+            "$CI_API_V4_URL/projects/$CI_PROJECT_ID/issues/$ISSUE_IID"
+        )
+        ISSUE_TITLE=$(echo "$ISSUE_DATA" | jq -r '.title')
+        DESC=$(
+          echo "$ISSUE_DATA" \
+          | jq -r '.description // empty' \
+          | head -n15 \
+          | sed 's/^/  /'
+        )
+        DESC_FULL="${DESC}
+        
+        ... (see more at $CI_PROJECT_URL/-/issues/$ISSUE_IID)"
+        TITLE="$ISSUE_TITLE"
+      else
+        TITLE=$(echo "$MR_DATA" | jq -r '.title')
+        DESC_FULL="No linked issue. See MR $CI_PROJECT_URL/-/merge_requests/$MR_IID"
+      fi
+      echo "Title: $TITLE"
+      echo "Desc preview:"
+      echo "$DESC_FULL"
+    - |
+      # Compose release description
+      RELEASE_DESC="**MR!$MR_IID: $TITLE**  $DESC_FULL"
+      echo "Release description (single line with \\n escapes):"
+      echo "$RELEASE_DESC"
+    - |
+      # Write dotenv file for next job (used by release keyword)
+      {
+        printf 'TAG=%s\n' "$TAG"
+      } > release.env
+      echo "Wrote release.env with TAG"
+    - |
+      # Write full description as Markdown artifact
+      cat > release-description.md << EOF
+      
+      This release was automatically generated from
+      
+      # MR!$MR_IID: $TITLE
+
+      $DESC_FULL
+
+      ---
+      
+      [Full MR]($CI_PROJECT_URL/-/merge_requests/$MR_IID)  
+      [Full issue #$ISSUE_IID (if linked)]($CI_PROJECT_URL/-/issues/$ISSUE_IID)
+      EOF
+  artifacts:
+    reports:
+      dotenv: release.env
+    paths:
+      - release-description.md
+    expire_in: 1 hour
+
+# Actual release job using the GitLab release keyword + official image
+release-job:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  needs:
+    - job: prepare-release
+      artifacts: true
+  <<: *release-rules
+  script:
+    - echo "Creating GitLab release for tag $TAG"
+  release:
+    tag_name: '$TAG'
+    ref: '$CI_COMMIT_SHA'
+    tag_message: 'Release $TAG'
+    name: 'Release $TAG'
+    description: release-description.md  # Points to the file
+    assets:
+      links:
+        - name: 'solver (Linux x86_64 static binary)'
+          url: '$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_REF_SLUG/raw/build/src/solver?job=build-solver'
+          link_type: 'package'
+        - name: 'solver (Windows x86_64 static binary)'
+          url: '$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_REF_SLUG/raw/build-win/src/solver.exe?job=build-solver-windows'
+          link_type: 'package'
