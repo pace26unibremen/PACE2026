@@ -1,5 +1,7 @@
 #include "BranchingSolver.hpp"
 
+#include "Rule/SubtreeReductionRule.hpp"
+
 solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>& instance)
     : AbstractSolver(instance)
 {}
@@ -90,6 +92,16 @@ void solver::BranchingSolver::checkSolutionCandidate()
 std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
 {
     if (debPlugin) debPlugin->init(instance);
+
+    // Try to apply the subtree reduction before starting the main solving process
+    auto subtreeReduction = solver::SubtreeReductionRule::isApplicable(instance, context);
+    if (subtreeReduction)
+    {
+        subtreeReduction->apply();
+        if (debPlugin) debPlugin->onApply(subtreeReduction);
+        changes.push(subtreeReduction);
+        temporalChanges.push(subtreeReduction);
+    }
 
     // apply rules repeatedly until a return is triggerd
     while (true)
