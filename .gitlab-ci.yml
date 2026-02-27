@@ -16,6 +16,21 @@ workflow:
     # Need to invert, as separate rules use or logic
     - when: on_success
 
+# All test jobs share the same configuration
+.test-base:
+  stage: test
+  image: ubuntu:24.04
+  dependencies:
+    - build-solver
+  before_script:
+    - cd build/tests/
+  artifacts:
+    when: always
+    reports:
+      junit: build/tests/*-results.xml
+    expire_in: 1 Month
+
+
 stages:
   - build
   - test
@@ -69,52 +84,27 @@ build-solver-windows:
       - build-win/src/solver.exe
 
 test-graph-representation:
-  stage: test
-  # Use any glibc-based image here; static binary will run anywhere
-  image: ubuntu:24.04
-  dependencies:
-    - build-solver
-  script:
-    - cd build/tests/
+  extends: .test-base
+  before_script:
     - chmod +x ForestIOTests ForestEqualTests ForestSubforestTests
+  script:
     - ./ForestIOTests --reporter junit -o ForestIOTests-results.xml
     - ./ForestEqualTests --reporter junit -o ForestEqualTests-results.xml
     - ./ForestSubforestTests --reporter junit -o ForestSubforestTests-results.xml
-  artifacts:
-    when: always
-    reports:
-      junit: build/tests/*-results.xml  # GitLab merges all matching files
-    expire_in: 1 Month
 
 test-actions:
-  stage: test
-  image: ubuntu:24.04
-  dependencies:
-    - build-solver
-  script:
-    - cd build/tests/
+  extends: .test-base
+  before_script:
     - chmod +x DeleteEdgeActionTests
+  script:
     - ./DeleteEdgeActionTests --reporter junit -o DeleteEdgeActionTests-results.xml
-  artifacts:
-    when: always
-    reports:
-      junit: build/tests/*-results.xml  # GitLab merges all matching files
-    expire_in: 1 Month
 
 test-branching-solver:
-  stage: test
-  image: ubuntu:24.04
-  dependencies:
-    - build-solver
-  script:
-    - cd build/tests/
+  extends: .test-base
+  before_script:
     - chmod +x BranchingSolverSimpleTests
+  script:
     - ./BranchingSolverSimpleTests --reporter junit -o BranchingSolverSimpleTests-results.xml
-  artifacts:
-    when: always
-    reports:
-      junit: build/tests/*-results.xml  # GitLab merges all matching files
-    expire_in: 1 Month
 
 pages:
   image: alpine:3.20
