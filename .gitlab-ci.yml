@@ -22,8 +22,6 @@ workflow:
   image: ubuntu:24.04
   dependencies:
     - build-solver
-  before_script:
-    - cd build/tests/
   artifacts:
     when: always
     reports:
@@ -86,6 +84,7 @@ build-solver-windows:
 test-graph-representation:
   extends: .test-base
   before_script:
+    - cd build/tests/
     - chmod +x ForestIOTests ForestEqualTests ForestSubforestTests
   script:
     - ./ForestIOTests --reporter junit -o ForestIOTests-results.xml
@@ -95,6 +94,7 @@ test-graph-representation:
 test-actions:
   extends: .test-base
   before_script:
+    - cd build/tests/
     - chmod +x DeleteEdgeActionTests
   script:
     - ./DeleteEdgeActionTests --reporter junit -o DeleteEdgeActionTests-results.xml
@@ -102,6 +102,7 @@ test-actions:
 test-branching-solver:
   extends: .test-base
   before_script:
+    - cd build/tests/
     - chmod +x BranchingSolverSimpleTests
   script:
     - ./BranchingSolverSimpleTests --reporter junit -o BranchingSolverSimpleTests-results.xml
