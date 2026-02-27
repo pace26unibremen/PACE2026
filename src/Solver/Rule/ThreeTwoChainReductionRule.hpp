@@ -16,17 +16,15 @@ namespace solver
     class ThreeTwoChainReductionRule : public AbstractRule
     {
     protected:
-        std::pair<std::vector<std::vector<graph::Node*>>, std::vector<std::shared_ptr<graph::Forest>>> chainInTree;
+        std::pair<std::vector<unsigned int>,std::vector<std::shared_ptr<graph::Forest>>> twoChain;
 
         std::stack<solver::AbstractAction> changes;
 
     public:
-
-        ThreeTwoChainReductionRule(const std::shared_ptr<graph::Instance>& instance,
-                                 const std::shared_ptr<Context>& context,
-                                 const std::pair<std::vector<std::vector<graph::Node*>>,
-                                                 std::vector<std::shared_ptr<graph::Forest>>>& chainInTree);
-         int apply() override;
+      ThreeTwoChainReductionRule(
+          const std::shared_ptr<graph::Instance>& instance, const std::shared_ptr<Context>& context,
+          const std::pair<std::vector<unsigned int>, std::vector<std::shared_ptr<graph::Forest>>>& twoChain);
+      int apply() override;
 
         void unapply() override;
 
