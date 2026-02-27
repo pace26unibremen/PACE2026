@@ -31,3 +31,8 @@ add_executable(DeleteEdgeActionTests DeleteEdgeActionTests.cpp)
 target_link_libraries(DeleteEdgeActionTests PRIVATE Solver Graph Catch2::Catch2WithMain)
 add_test(NAME DeleteEdgeActionTests COMMAND $<TARGET_FILE:DeleteEdgeActionTests>)
 target_compile_definitions(DeleteEdgeActionTests PRIVATE TEST_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/res/tests/")
+
+add_executable(BranchingSolverSimpleTests BranchingSolverSimpleTests.cpp)
+target_link_libraries(BranchingSolverSimpleTests PRIVATE Solver Graph Catch2::Catch2WithMain)
+add_test(NAME BranchingSolverSimpleTests COMMAND $<TARGET_FILE:BranchingSolverSimpleTests>)
+target_compile_definitions(BranchingSolverSimpleTests PRIVATE RES_DIR="${CMAKE_SOURCE_DIR}/res/")
