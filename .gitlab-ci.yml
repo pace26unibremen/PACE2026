@@ -250,8 +250,8 @@ release-job:
     assets:
       links:
         - name: 'solver (Linux x86_64 static binary)'
-          url: '$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_REF_SLUG/raw/build/src/solver?job=build-solver'
+          url: '$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_SHA/raw/build/src/solver?job=build-solver'
           link_type: 'package'
         - name: 'solver (Windows x86_64 static binary)'
-          url: '$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_REF_SLUG/raw/build-win/src/solver.exe?job=build-solver-windows'
+          url: '$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_SHA/raw/build-win/src/solver.exe?job=build-solver-windows'
           link_type: 'package'
