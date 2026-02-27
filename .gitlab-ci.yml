@@ -50,6 +50,7 @@ build-solver:
       - build/tests/ForestEqualTests
       - build/tests/ForestSubforestTests
       - build/tests/DeleteEdgeActionTests
+      - build/tests/BranchingSolverSimpleTests
 
 build-solver-windows:
   stage: build
@@ -67,7 +68,7 @@ build-solver-windows:
     paths:
       - build-win/src/solver.exe
 
-graph-representation:
+test-graph-representation:
   stage: test
   # Use any glibc-based image here; static binary will run anywhere
   image: ubuntu:24.04
@@ -75,11 +76,40 @@ graph-representation:
     - build-solver
   script:
     - cd build/tests/
-    - chmod +x ForestIOTests ForestEqualTests ForestSubforestTests DeleteEdgeActionTests
+    - chmod +x ForestIOTests ForestEqualTests ForestSubforestTests
     - ./ForestIOTests --reporter junit -o ForestIOTests-results.xml
     - ./ForestEqualTests --reporter junit -o ForestEqualTests-results.xml
     - ./ForestSubforestTests --reporter junit -o ForestSubforestTests-results.xml
+  artifacts:
+    when: always
+    reports:
+      junit: build/tests/*-results.xml  # GitLab merges all matching files
+    expire_in: 1 Month
+
+test-actions:
+  stage: test
+  image: ubuntu:24.04
+  dependencies:
+    - build-solver
+  script:
+    - cd build/tests/
+    - chmod +x DeleteEdgeActionTests
     - ./DeleteEdgeActionTests --reporter junit -o DeleteEdgeActionTests-results.xml
+  artifacts:
+    when: always
+    reports:
+      junit: build/tests/*-results.xml  # GitLab merges all matching files
+    expire_in: 1 Month
+
+test-branching-solver:
+  stage: test
+  image: ubuntu:24.04
+  dependencies:
+    - build-solver
+  script:
+    - cd build/tests/
+    - chmod +x BranchingSolverSimpleTests
+    - ./BranchingSolverSimpleTests --reporter junit -o BranchingSolverSimpleTests-results.xml
   artifacts:
     when: always
     reports:
@@ -91,7 +121,9 @@ pages:
   stage: docs
   dependencies:
     # Only generate docs, if all tests passed
-    - graph-representation
+    - test-actions
+    - test-graph-representation
+    - test-branching-solver
   script:
     # Install Doxygen + Graphviz
     - apk add --no-cache doxygen graphviz ttf-freefont py3-pip
