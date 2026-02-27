@@ -38,7 +38,7 @@ void solver::SubtreeReductionRule::unapply()
 {
     if (not this->isApplied)
     {
-        throw std::invalid_argument("PairEqualRule : unapply : rule is not applied");
+        throw std::invalid_argument("SubtreeReductionRule: unapply : rule is not applied");
     }
     isApplied = false;
 
@@ -57,9 +57,9 @@ solver::SubtreeReductionRule::isApplicable(const std::shared_ptr<graph::Instance
 
     auto labels = instance->at(0)->LabelToTerminal();
 
-    /// a set of all visited notes over all forests, that where part of identical subtrees
+    /// a set of all visited nodes over all forests, that where part of identical subtrees
     auto seenNodes_identical = std::unordered_set<graph::Node*>();
-    /// a set of all visited notes over all forests, that wherend part of identical subtrees
+    /// a set of all visited nodes over all forests, that weren't part of identical subtrees
     auto seenNodes_diff = std::unordered_set<graph::Node*>();
 
     // this function adds recursively all ancestors of the nodes to the seenNodes_diff set
@@ -132,7 +132,7 @@ solver::SubtreeReductionRule::isApplicable(const std::shared_ptr<graph::Instance
         {
             // This case:
             // Each node in current is not actual root, so we have siblings.
-            // Each sibling is root of some subtree that also accrues in each other forest
+            // Each sibling is root of some subtree that also occurs in each other forest
             // and is therefore an identical subtrees, and it follows that the siblings are 'seen'.
             //
             // But we have no guarantee that the subtrees under the siblings are the same,
@@ -141,7 +141,7 @@ solver::SubtreeReductionRule::isApplicable(const std::shared_ptr<graph::Instance
             if (std::all_of(currentSubtree.begin(), currentSubtree.end(),
             [&compareSibling](const graph::Node* n){return compareSibling->hasSameTerminals(n->sibling);}))
             {
-                // If all siblings have the same subtree terminals (and therefor identical subtrees)
+                // If all siblings have the same subtree terminals (and therefore identical subtrees)
                 // then their parents are also identical subtrees.
                 if (not seenNodes_identical.contains(currentSubtree[0]->parent))
                 {

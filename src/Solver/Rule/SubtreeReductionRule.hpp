@@ -11,7 +11,7 @@ namespace solver
 
 /// \brief Collapses all subtrees that are identical in every forest of the instance.
 ///
-/// \see similar to \ref PairEqualRule, which just collapses simple subtrees. See therefor
+/// \see similar to \ref PairEqualRule, which just collapses simple subtrees. See therefore
 /// <a href="https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/EqualForestsRule">
 /// GitLab Documentation
 /// </a>
@@ -46,7 +46,7 @@ class SubtreeReductionRule : public AbstractRule
     /// in every forest. The constructed rule collapses all identical subtrees.
     /// \param instance on which the rule should be applied
     /// \param context contains additional information to the instance and the solver state
-    /// \returns shared_pointer to SubtreeReductionRule if rule is applicable, elso null pointer
+    /// \returns shared_pointer to SubtreeReductionRule if rule is applicable, else null pointer
     /// \note This method assumes that all forests of the instance were subject to the same collapsing actions.
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                       const std::shared_ptr<Context>& context);
