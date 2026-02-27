@@ -7,10 +7,10 @@
 solver::ThreeTwoChainReductionRule::ThreeTwoChainReductionRule(
     const std::shared_ptr<graph::Instance>& instance,
     const std::shared_ptr<Context>& context,
-    const std::pair<std::vector<std::vector<graph::Node*>>,std::vector<std::shared_ptr<graph::Forest>>>& chainInTree) :
+    const std::pair<std::vector<unsigned int>,std::vector<std::shared_ptr<graph::Forest>>>& twoChain) :
         AbstractRule(instance, context)
 {
-    this->chainInTree = chainInTree;
+    this->twoChain = twoChain;
     changes = std::stack<solver::AbstractAction>{};
 }
 
@@ -21,6 +21,7 @@ int solver::ThreeTwoChainReductionRule::apply()
         throw std::invalid_argument("ThreeTwoChainReductionRule : apply : rule was already applied");
     }
     isApplied = true;
+
 
     return 0;
 }
@@ -41,10 +42,7 @@ std::shared_ptr<solver::AbstractRule>
 solver::ThreeTwoChainReductionRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                  const std::shared_ptr<Context>& context)
 {
-    std::vector<std::vector<graph::Node*>> chainT1;
-    std::vector<std::vector<graph::Node*>> chainT2;
-    std::vector<std::shared_ptr<graph::Forest>> Trees;
-    std::pair<std::vector<std::vector<graph::Node*>>,std::vector<std::shared_ptr<graph::Forest>>> chainInTree;
+
 
     for (const auto& T1 : *instance)
     {
@@ -65,20 +63,175 @@ solver::ThreeTwoChainReductionRule::isApplicable(const std::shared_ptr<graph::In
                 {
                     //Find a 3-Pendant chain
 
-                    //T2: T' in def
-                    for(const auto& terminalT2 : T2->Terminals())
+                    //Anti Single Vertex Check:
+                    if (terminalT1.first->parent != nullptr)
                     {
+                        //Structure check: Sibling of terminal is also connected to parent as well as also terminal->
+                        //pendant.
 
+                        //Case1: x1 and x2 share parent, Sibling of Parent, x3, and Parent share Parent too
+                        if (terminalT1.first->sibling != nullptr &&
+                            terminalT1.first->sibling->parent == terminalT1.first->parent &&
+                            terminalT1.first->parent->sibling != nullptr &&
+                            terminalT1.first->parent->parent == terminalT1.first->parent->sibling->parent &&
+                            T1->Terminals().contains(terminalT1.first->sibling) &&
+                            T1->Terminals().contains(terminalT1.first->parent->sibling))
+                        {
+                            //x1,x2,x3 known: x1 Term, x2 sibling, x3 parent
+                            std::vector<unsigned int> chainInT1Ints = {terminalT1.second,
+                                T1->Terminals().at(terminalT1.first->sibling),
+                                T1->Terminals().at(terminalT1.first->parent->sibling)};
+
+                            //If (xi , x3) is a pendant 2-chain in T' with xi ∈ {x1, x2}
+                            //Case 1: Sharing same parent. | Currently assuming that labels are shared...
+                            //Case 1.1: x1 and x3 in T2 share Parent
+                            if(T2->LabelToTerminal().at(chainInT1Ints.front())->parent ==
+                                T2->LabelToTerminal().at(chainInT1Ints.back())->parent)
+                            {
+                                std::vector<unsigned int> chainLabels = {terminalT1.second,
+                                    T1->Terminals().at(terminalT1.first->parent->sibling)};
+
+                                std::vector<std::shared_ptr<graph::Forest>> forestList = {T1,T2};
+
+                                std::pair<std::vector<unsigned int>, std::vector<std::shared_ptr<graph::Forest>>>
+                                    twoChain = {chainLabels, forestList};
+
+                                return std::make_shared<ThreeTwoChainReductionRule>(instance, context,twoChain);
+
+                            }
+                            //Case 1.2: x2 and x3 in T2 share Parent
+                            if (T2->LabelToTerminal().at(chainInT1Ints.at(1))->parent ==
+                                T2->LabelToTerminal().at(chainInT1Ints.back())->parent)
+                            {
+                                std::vector<unsigned int> chainLabels = {
+                                    T1->Terminals().at(terminalT1.first->sibling),
+                                    T1->Terminals().at(terminalT1.first->parent->sibling)};
+
+                                std::vector<std::shared_ptr<graph::Forest>> forestList = {T1, T2};
+
+                                std::pair<std::vector<unsigned int>, std::vector<std::shared_ptr<graph::Forest>>>
+                                    twoChain = {chainLabels, forestList};
+
+                                return std::make_shared<ThreeTwoChainReductionRule>(instance, context, twoChain);
+                            }
+                            //Case 2.1: x1 parent and x3 share Parent
+                            if (T2->LabelToTerminal().at(chainInT1Ints.front())->parent != nullptr &&
+                                     T2->LabelToTerminal().at(chainInT1Ints.front())->parent->parent ==
+                                         T2->LabelToTerminal().at(chainInT1Ints.back())->parent)
+                            {
+                                std::vector<unsigned int> chainLabels = {terminalT1.second,
+                                    T1->Terminals().at(terminalT1.first->parent->sibling)};
+
+                                std::vector<std::shared_ptr<graph::Forest>> forestList = {T1,T2};
+
+                                std::pair<std::vector<unsigned int>, std::vector<std::shared_ptr<graph::Forest>>>
+                                    twoChain = {chainLabels, forestList};
+
+                                return std::make_shared<ThreeTwoChainReductionRule>(instance, context,twoChain);
+                            }
+                            //Case 2.2: x2 Parent and x3 share Parent
+                            if (T2->LabelToTerminal().at(chainInT1Ints.at(1))->parent != nullptr &&
+                                     T2->LabelToTerminal().at(chainInT1Ints.at(1))->parent->parent ==
+                                         T2->LabelToTerminal().at(chainInT1Ints.back())->parent)
+                            {
+                                std::vector<unsigned int> chainLabels = {
+                                    T1->Terminals().at(terminalT1.first->sibling),
+                                    T1->Terminals().at(terminalT1.first->parent->sibling)};
+
+                                std::vector<std::shared_ptr<graph::Forest>> forestList = {T1, T2};
+                                std::pair<std::vector<unsigned int>, std::vector<std::shared_ptr<graph::Forest>>>
+                                    twoChain = {chainLabels, forestList};
+
+                                return std::make_shared<ThreeTwoChainReductionRule>(instance, context, twoChain);
+                            }
+                        }
+
+                        //Case 2: parent of X1 and x2 share parent, parent of x2 and x3 share parent.
+                        else if ( terminalT1.first->parent->parent != nullptr &&
+                            terminalT1.first->parent->sibling != nullptr &&
+                            terminalT1.first->parent->sibling->parent == terminalT1.first->parent->parent &&
+                            terminalT1.first->parent->parent->parent != nullptr &&
+                            terminalT1.first->parent->parent->sibling != nullptr &&
+                            terminalT1.first->parent->parent->sibling->parent ==
+                            terminalT1.first->parent->parent->parent &&
+                            T1->Terminals().contains(terminalT1.first->parent->sibling) &&
+                            T1->Terminals().contains(terminalT1.first->parent->parent->sibling)
+                            )
+                        {
+                            std::vector<unsigned int> chainInT1Ints = {terminalT1.second,
+                                T1->Terminals().at(terminalT1.first->parent->sibling),
+                                T1->Terminals().at(terminalT1.first->parent->parent->sibling)};
+
+                            //If (xi , x3) is a pendant 2-chain in T' with xi ∈ {x1, x2}
+                            //Case 1: Sharing same parent. | Currently assuming that labels are shared...
+                            //Case 1.1: x1 and x3 in T2 share Parent
+                            if(T2->LabelToTerminal().at(chainInT1Ints.front())->parent ==
+                                T2->LabelToTerminal().at(chainInT1Ints.back())->parent)
+                            {
+                                std::vector<unsigned int> chainLabels = {terminalT1.second,
+                                    T1->Terminals().at(terminalT1.first->parent->sibling)};
+
+                                std::vector<std::shared_ptr<graph::Forest>> forestList = {T1,T2};
+
+                                std::pair<std::vector<unsigned int>, std::vector<std::shared_ptr<graph::Forest>>>
+                                    twoChain = {chainLabels, forestList};
+
+                                return std::make_shared<ThreeTwoChainReductionRule>(instance, context,twoChain);
+
+                            }
+                            //Case 1.2: x2 and x3 in T2 share Parent
+                            if (T2->LabelToTerminal().at(chainInT1Ints.at(1))->parent ==
+                                T2->LabelToTerminal().at(chainInT1Ints.back())->parent)
+                            {
+                                std::vector<unsigned int> chainLabels = {
+                                    T1->Terminals().at(terminalT1.first->sibling),
+                                    T1->Terminals().at(terminalT1.first->parent->sibling)};
+
+                                std::vector<std::shared_ptr<graph::Forest>> forestList = {T1, T2};
+
+                                std::pair<std::vector<unsigned int>, std::vector<std::shared_ptr<graph::Forest>>>
+                                    twoChain = {chainLabels, forestList};
+
+                                return std::make_shared<ThreeTwoChainReductionRule>(instance, context, twoChain);
+                            }
+                            //Case 2.1: x1 parent and x3 share Parent
+                            if (T2->LabelToTerminal().at(chainInT1Ints.front())->parent != nullptr &&
+                                     T2->LabelToTerminal().at(chainInT1Ints.front())->parent->parent ==
+                                         T2->LabelToTerminal().at(chainInT1Ints.back())->parent)
+                            {
+                                std::vector<unsigned int> chainLabels = {terminalT1.second,
+                                    T1->Terminals().at(terminalT1.first->parent->sibling)};
+
+                                std::vector<std::shared_ptr<graph::Forest>> forestList = {T1,T2};
+
+                                std::pair<std::vector<unsigned int>, std::vector<std::shared_ptr<graph::Forest>>>
+                                    twoChain = {chainLabels, forestList};
+
+                                return std::make_shared<ThreeTwoChainReductionRule>(instance, context,twoChain);
+                            }
+                            //Case 2.2: x2 Parent and x3 share Parent
+                            if (T2->LabelToTerminal().at(chainInT1Ints.at(1))->parent != nullptr &&
+                                     T2->LabelToTerminal().at(chainInT1Ints.at(1))->parent->parent ==
+                                         T2->LabelToTerminal().at(chainInT1Ints.back())->parent)
+                            {
+                                std::vector<unsigned int> chainLabels = {
+                                    T1->Terminals().at(terminalT1.first->sibling),
+                                    T1->Terminals().at(terminalT1.first->parent->sibling)};
+
+                                std::vector<std::shared_ptr<graph::Forest>> forestList = {T1, T2};
+
+                                std::pair<std::vector<unsigned int>, std::vector<std::shared_ptr<graph::Forest>>>
+                                    twoChain = {chainLabels, forestList};
+
+                                return std::make_shared<ThreeTwoChainReductionRule>(instance, context, twoChain);
+                            }
+                        }
                     }
                 }
             }
         }
     }
-
-
-
-
-   return std::make_shared<ThreeTwoChainReductionRule>(instance, context,chainInTree);
+    return nullptr;
 }
 
 std::string solver::ThreeTwoChainReductionRule::name() const
