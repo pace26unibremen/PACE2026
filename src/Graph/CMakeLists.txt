@@ -1,7 +1,10 @@
 file (GLOB graph_source *.cpp)
 file (GLOB graph_header *.hpp)
 
-add_library(Graph ${graph_source})
+add_library(Graph ${graph_source}
+        PartialForest.cpp
+        PartialForest.h
+)
 
 if (DEBUG_IMAGE_VIEW_GRAPH)
     MESSAGE("-- DEBUG_IMAGE_VIEW_GRAPH is on")
