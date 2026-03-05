@@ -4,6 +4,8 @@
 
 #include "ThreeTwoChainReductionRule.hpp"
 
+#include <iostream>
+
 solver::ThreeTwoChainReductionRule::ThreeTwoChainReductionRule(
     const std::shared_ptr<graph::Instance>& instance,
     const std::shared_ptr<Context>& context,
@@ -11,7 +13,16 @@ solver::ThreeTwoChainReductionRule::ThreeTwoChainReductionRule(
         AbstractRule(instance, context)
 {
     this->nodeAndTrees = nodeAndTrees;
-    this->nodeLabel = nodeAndTrees.second.front()->Terminals().at(nodeAndTrees.first);
+    std::cout << "Terminal.at 1" << std::endl;
+    for (const auto& terminal : nodeAndTrees.second.front()->Terminals())
+    {
+        if (terminal.first == nodeAndTrees.first)
+        {
+            this->nodeLabel = terminal.second;
+            break;
+        }
+    }
+    //this->nodeLabel = nodeAndTrees.second.front()->Terminals().at(nodeAndTrees.first);
     changes = std::stack<solver::AbstractAction>{};
 }
 
@@ -130,9 +141,11 @@ solver::ThreeTwoChainReductionRule::isApplicable(const std::shared_ptr<graph::In
                             T1->Terminals().contains(terminalT1.first->parent->sibling))
                         {
                             //x1,x2,x3 known: x1 Term, x2 sibling, x3 parent
+                            std::cout << "Terminal.at 2" << std::endl;
                             std::vector<unsigned int> chainInT1Ints = {terminalT1.second,
                                 T1->Terminals().at(terminalT1.first->sibling),
                                 T1->Terminals().at(terminalT1.first->parent->sibling)};
+                            std::cout << "Terminal.at 3" << std::endl;
 
                             //If (xi , x3) is a pendant 2-chain in T' with xi ∈ {x1, x2}
                             //Case 1: Sharing same parent. | Currently assuming that labels are shared...
@@ -204,6 +217,7 @@ solver::ThreeTwoChainReductionRule::isApplicable(const std::shared_ptr<graph::In
                             T1->Terminals().contains(terminalT1.first->parent->parent->sibling)
                             )
                         {
+                            std::cout << "Terminal.at 4" << std::endl;
                             std::vector<unsigned int> chainInT1Ints = {terminalT1.second,
                                 T1->Terminals().at(terminalT1.first->parent->sibling),
                                 T1->Terminals().at(terminalT1.first->parent->parent->sibling)};
