@@ -36,10 +36,29 @@ int solver::ThreeTwoChainReductionRule::apply()
         {
             parent->rightChild = nullptr;
         }
+
         //Delete out of element lists
-        tree->Nodes().erase(std::vector<graph::Node>::const_iterator(node));
-        tree->LabelToTerminal().erase(tree->Terminals().at(node));
+        for (int index=0; index < tree->Nodes().size() ; index++)
+        {   //
+            graph::Node* currentNode = &tree->Nodes().at(index);
+            if (currentNode == node)
+            {
+                tree->Nodes().erase(tree->Nodes().begin()+index-1);
+                break;
+            }
+        }
+
+        for (const auto& terminal : tree->Terminals())
+        {
+            if (terminal.first == node)
+            {
+                tree->Terminals().erase(terminal.first);
+                break;
+            }
+        }
+
         tree->Terminals().erase(node);
+
         //Da node Terminal ist -> Keine Kinder, Keine Wiederverknüpfung.
     }
 
