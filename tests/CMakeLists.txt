@@ -36,3 +36,8 @@ add_executable(ChainReductionTests ChainReductionTests.cpp)
 target_link_libraries(ChainReductionTests PRIVATE Solver Graph Catch2::Catch2WithMain)
 add_test(NAME ChainReductionTests COMMAND $<TARGET_FILE:ChainReductionTests>)
 target_compile_definitions(ChainReductionTests PRIVATE TEST_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/res/tests/")
+
+add_executable(ThreeTwoChainReductionTest ThreeTwoChainReductionTest.cpp)
+target_link_libraries(ThreeTwoChainReductionTest PRIVATE Solver Graph Catch2::Catch2WithMain)
+add_test(NAME ThreeTwoChainReductionTest COMMAND $<TARGET_FILE:ThreeTwoChainReductionTest>)
+target_compile_definitions(ThreeTwoChainReductionTest PRIVATE TEST_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/res/tests/")
