@@ -46,7 +46,7 @@ class ClusterReduction : public AbstractRule
     /// \param context contains additional information to the instance and the solver state
     /// \returns shared_pointer to ClusterReduction iff cluster points exist, null otherwise.
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
-                                                      const std::shared_ptr<Context>& context)
+                                                      const std::shared_ptr<Context>& context);
 
 
 

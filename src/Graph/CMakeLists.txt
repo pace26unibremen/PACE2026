@@ -2,9 +2,18 @@ file (GLOB graph_source *.cpp)
 file (GLOB graph_header *.hpp)
 
 add_library(Graph ${graph_source}
-        PartialForest.cpp
-        PartialForest.h
-)
+        LabelTwinRelation.cpp
+        LabelTwinRelation.hpp
+        InteriorTwinRelation.cpp
+        InteriorTwinRelation.hpp
+        LeastCommonAncestor.cpp
+        LeastCommonAncestor.hpp
+        ClusterPointGenerator.cpp
+        ClusterPointGenerator.hpp
+        ClusterInstance.cpp
+        ClusterInstance.hpp
+        RecursiveClusterer.cpp
+        RecursiveClusterer.hpp)
 
 if (DEBUG_IMAGE_VIEW_GRAPH)
     MESSAGE("-- DEBUG_IMAGE_VIEW_GRAPH is on")
