@@ -5,9 +5,6 @@
 #include "ReferenceClusterSolver.hpp"
 
 #include "../Graph/ClusterInstance.hpp"
-#include "../Graph/ClusterPointGenerator.hpp"
-#include "../Graph/InteriorTwinRelation.hpp"
-#include "../Graph/LabelTwinRelation.hpp"
 #include "../Graph/RecursiveClusterer.hpp"
 #include "BranchingSolver.hpp"
 
@@ -33,10 +30,10 @@ std::shared_ptr<graph::Forest> solver::ReferenceClusterSolver::solve()
 
         for (graph::ClusterInstance& clusterInstance : *clusterInstances)
         {
-            for (const auto& jesus : *clusterInstance.getInstances())
+            for (const auto& lowestCurrentInstance : *clusterInstance.getInstances())
             {
                 clusterInstance.decouple();
-                auto subSolver = solver::TrivialSolver(jesus);
+                auto subSolver = solver::TrivialSolver(lowestCurrentInstance);
                 subSolver.solve();
                 clusterInstance.couple();
             }
@@ -53,10 +50,10 @@ std::shared_ptr<graph::Forest> solver::ReferenceClusterSolver::solve()
 
 
     auto finalSolver = solver::BranchingSolver(instance);
-    finalSolver.solve();
+    return finalSolver.solve();
 
 
-    return std::make_shared<graph::Forest>(instance->at(0)->copy());
+    //return std::make_shared<graph::Forest>(instance->at(0)->copy());
 }
 
 

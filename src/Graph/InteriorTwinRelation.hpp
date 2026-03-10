@@ -11,7 +11,6 @@
 namespace graph
 {
 
-
 class InteriorTwinRelation
 {
 
