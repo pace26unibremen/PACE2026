@@ -40,13 +40,22 @@ class ClusterInstance
 
 
   public:
+    /// \brief This is the constructor of a ClusterInstance.
+    /// \param instance The instance we want to partition into smaller/cluster trees.
+    /// \param twinRelation The Twin-Map to get the equivalence class of a node to discern where to split each forest
+    /// of the instance.
+    /// \param clusterPoints The cluster points of the instance we want to split up.
     ClusterInstance(const std::shared_ptr<graph::Instance>& instance, graph::InteriorTwinRelation* twinRelation, std::vector<graph::Node*>* clusterPoints);
 
+    /// \brief This function separates a cluster forest from their parent/outer tree.
+    void couple();
+    /// \brief This function reconnects a cluster forest to their parent/outer tree. When decoupling, one must ensure
+    /// to couple again in the future lest disaster will ensure.
+    void decouple();
 
-   void couple();
-
-   void decouple();
-
+    /// \brief This function returns a shared pointer to the vector of cluster instances that have been generated
+    /// by splitting up each instance using the clusterPoints and the twinRelation.
+    /// \note This vector represents the cluster partitions.
    std::shared_ptr<std::vector<std::shared_ptr<graph::Instance>>> getInstances() const;
 
 

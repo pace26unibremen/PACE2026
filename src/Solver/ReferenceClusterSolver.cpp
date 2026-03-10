@@ -57,14 +57,5 @@ std::shared_ptr<graph::Forest> solver::ReferenceClusterSolver::solve()
 }
 
 
-void solver::ReferenceClusterSolver::getAllNodePointersOfAForest(graph::Node* node, std::set<graph::Node*>* set) {
-    set->insert(node);
 
-    if (node->leftChild)
-        getAllNodePointersOfAForest(node->leftChild, set);
-
-    if (node->rightChild)
-        getAllNodePointersOfAForest(node->rightChild, set);
-
-}
 
