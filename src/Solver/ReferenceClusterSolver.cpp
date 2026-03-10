@@ -26,7 +26,7 @@ std::shared_ptr<graph::Forest> solver::ReferenceClusterSolver::solve()
     auto instanceStack = clusterStack.instanceStack;
 
 
-    /*
+
     while (!instanceStack.empty())
     {
         auto clusterInstances = instanceStack.top();
@@ -49,7 +49,7 @@ std::shared_ptr<graph::Forest> solver::ReferenceClusterSolver::solve()
 
     }
 
-     */
+
 
 
     auto finalSolver = solver::BranchingSolver(instance);
