@@ -106,8 +106,6 @@ TEST_CASE("RootTwinEquivalence")
 {
     SECTION("Check if the twins of the roots are the other roots. .")
     {
-        int labelMismatches = 0;
-
         std::shared_ptr<graph::Instance>  instance = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_100_11_stressTest.tree");
         
         graph::InteriorTwinRelation interiorTwins = graph::InteriorTwinRelation(instance);
@@ -118,11 +116,16 @@ TEST_CASE("RootTwinEquivalence")
         for (auto forest : *instance){
 
             auto root = forest->Roots().front();
-            testSet.insert(root);
-
             for (const auto& twinOfRoot : interiorTwins.nodeToTwins[root])
             {
                 testSet.insert(twinOfRoot);
+
+
+                for (auto twinOfTwin : interiorTwins.nodeToTwins[twinOfRoot])
+                {
+                    testSet.insert(twinOfTwin);
+                }
+
             }
 
 
