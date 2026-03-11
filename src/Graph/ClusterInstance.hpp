@@ -56,7 +56,7 @@ class ClusterInstance
     /// \brief This function returns a shared pointer to the vector of cluster instances that have been generated
     /// by splitting up each instance using the clusterPoints and the twinRelation.
     /// \note This vector represents the cluster partitions.
-   std::shared_ptr<std::vector<std::shared_ptr<graph::Instance>>> getInstances() const;
+   std::shared_ptr<std::vector<std::shared_ptr<graph::Instance>>> getVectorOfInstances() const;
 
 
 };

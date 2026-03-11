@@ -26,7 +26,7 @@ RecursiveClusterer::RecursiveClusterer(const std::shared_ptr<graph::Instance>& i
 
 
     instanceVector->push_back(clusterInstance);
-    if (not instanceVector->empty() and not clusterInstance.getInstances()->empty())
+    if (not instanceVector->empty() and not clusterInstance.getVectorOfInstances()->empty())
     {
         instanceStack.push(instanceVector);
         recurseClusters(instanceVector);
@@ -37,6 +37,7 @@ RecursiveClusterer::RecursiveClusterer(const std::shared_ptr<graph::Instance>& i
 void RecursiveClusterer::recurseClusters(const std::shared_ptr<std::vector<graph::ClusterInstance>>& clusterInstances)
 {
 
+    static int recursions = 0; recursions += 1; std::cout << "rec : " << recursions << std::endl;
 
     std::vector<graph::ClusterInstance> recursedInstances = std::vector<graph::ClusterInstance>();
 
@@ -45,23 +46,24 @@ void RecursiveClusterer::recurseClusters(const std::shared_ptr<std::vector<graph
         clusterInstance.decouple();
 
 
-        for (const std::shared_ptr<std::vector<std::shared_ptr<Forest>>>& clusterForest : *clusterInstance.getInstances())
-        {
 
+        for (const std::shared_ptr<graph::Instance>& clusterForest : *clusterInstance.getVectorOfInstances())
+        {
             graph::InteriorTwinRelation interiorTwins = graph::InteriorTwinRelation(clusterForest);
             graph::ClusterPointGenerator generator = graph::ClusterPointGenerator(clusterForest, &interiorTwins);
             std::vector<graph::Node*> clusterPoints = generator.clusterPoints;
             graph::ClusterInstance newestClusterInstance = graph::ClusterInstance(clusterForest, &interiorTwins, &clusterPoints);
 
-            if (not newestClusterInstance.getInstances()->empty())
+            newestClusterInstance.decouple();
+
+            if (not newestClusterInstance.getVectorOfInstances()->empty())
             {
                 recursedInstances.push_back(newestClusterInstance);
             }
-
-
         }
 
-        clusterInstance.couple();
+
+
 
     }
 

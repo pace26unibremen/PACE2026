@@ -22,18 +22,27 @@ ClusterInstance::ClusterInstance(const std::shared_ptr<graph::Instance>& instanc
         bool failureDueToOtherClusterPoints = false;
         std::shared_ptr<graph::Instance> clusterInstance = std::make_shared<graph::Instance>(Instance());
 
-        failureDueToOtherClusterPoints = generateClusterForest(&clusterInstance, &rootToForest, clusterPoint);
-        if (failureDueToOtherClusterPoints) return;
+        //failureDueToOtherClusterPoints =
+            generateClusterForest(&clusterInstance, &rootToForest, clusterPoint);
 
         auto twins = twinRelation->nodeToTwins[clusterPoint];
         for (auto twin : twins)
         {
-            failureDueToOtherClusterPoints = generateClusterForest(&clusterInstance, &rootToForest, twin);
-            if (failureDueToOtherClusterPoints) return;
+            //failureDueToOtherClusterPoints =
+                generateClusterForest(&clusterInstance, &rootToForest, twin);
         }
 
         clusterInstances->push_back(clusterInstance);
+
+        static int cgen = 0; cgen += 1; std::cout << "Successfull ClusterInstance : " << cgen << std::endl;
+
+        return;
+
     }
+
+
+
+
 
 
 
@@ -112,12 +121,6 @@ bool ClusterInstance::generateClusterForest(std::shared_ptr<graph::Instance>* cl
 {
     Node* forestRootPointer = getClustersRoot(node);
 
-
-    if (not rootToForest->contains(forestRootPointer))
-    {
-        return true;
-    }
-
     const std::shared_ptr<Forest>& primeForest = rootToForest->at(forestRootPointer);
 
     auto shallowCopyNodes = std::make_shared<std::vector<Node>>(primeForest->Nodes());
@@ -144,7 +147,7 @@ bool ClusterInstance::generateClusterForest(std::shared_ptr<graph::Instance>* cl
 
 }
 
-std::shared_ptr<std::vector<std::shared_ptr<graph::Instance>>> ClusterInstance::getInstances() const
+std::shared_ptr<std::vector<std::shared_ptr<graph::Instance>>> ClusterInstance::getVectorOfInstances() const
 {
     return clusterInstances;
 }

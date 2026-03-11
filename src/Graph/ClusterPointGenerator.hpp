@@ -16,12 +16,18 @@ class ClusterPointGenerator
 {
   private:
     graph::InteriorTwinRelation* twinRelation;
+    std::unordered_map<graph::Node*, std::shared_ptr<Forest>> rootToForest = std::unordered_map<graph::Node*, std::shared_ptr<Forest>> ();
+
 
     void generateClusterPoints(graph::Node* node);
 
     int checkHeightOfNode(graph::Node* node);
 
     bool trueEquivalenceClass(graph::Node* node);
+
+    bool leafEquivalent(graph::Node* node);
+
+
 
   public:
     /// \brief This is the constructor of the ClusterPointGenerator.

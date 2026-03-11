@@ -22,6 +22,7 @@ std::shared_ptr<graph::Forest> solver::ReferenceClusterSolver::solve()
 
     auto instanceStack = clusterStack.instanceStack;
 
+    std::cout << "Recursive Cluster Size: " << instanceStack.size() << std::endl;
 
 
     while (!instanceStack.empty())
@@ -30,11 +31,11 @@ std::shared_ptr<graph::Forest> solver::ReferenceClusterSolver::solve()
 
         for (graph::ClusterInstance& clusterInstance : *clusterInstances)
         {
-            for (const auto& lowestCurrentInstance : *clusterInstance.getInstances())
+            for (const auto& lowestCurrentInstance : *clusterInstance.getVectorOfInstances())
             {
                 clusterInstance.decouple();
                 auto subSolver = solver::TrivialSolver(lowestCurrentInstance);
-                subSolver.solve();
+                //subSolver.solve();
                 clusterInstance.couple();
             }
 
@@ -50,10 +51,10 @@ std::shared_ptr<graph::Forest> solver::ReferenceClusterSolver::solve()
 
 
     auto finalSolver = solver::BranchingSolver(instance);
-    return finalSolver.solve();
+    //return finalSolver.solve();
 
 
-    //return std::make_shared<graph::Forest>(instance->at(0)->copy());
+    return std::make_shared<graph::Forest>(instance->at(0)->copy());
 }
 
 

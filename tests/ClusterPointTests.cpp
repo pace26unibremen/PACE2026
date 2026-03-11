@@ -159,7 +159,7 @@ TEST_CASE("RootTwinEquivalence")
 {
     SECTION("Check if the twins of the roots are the other roots. .")
     {
-        std::shared_ptr<graph::Instance>  instance = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_100_11_stressTest.tree");
+        std::shared_ptr<graph::Instance>  instance = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_2_200_tripleCluster.tree");
         
         graph::InteriorTwinRelation interiorTwins = graph::InteriorTwinRelation(instance);
         graph::ClusterPointGenerator generator = graph::ClusterPointGenerator(instance, &interiorTwins);
@@ -178,7 +178,7 @@ TEST_CASE("RecursiveClusterI")
 {
     SECTION("Tests on recursive clustering.")
     {
-        std::shared_ptr<graph::Instance>  instance = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_100_11_stressTest.tree");
+        std::shared_ptr<graph::Instance>  instance = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_2_200_tripleCluster.tree");
 
         graph::InteriorTwinRelation interiorTwins = graph::InteriorTwinRelation(instance);
         graph::ClusterPointGenerator generator = graph::ClusterPointGenerator(instance, &interiorTwins);
@@ -200,32 +200,41 @@ TEST_CASE("RecursiveClusterI")
 
             for (graph::ClusterInstance& clusterInstance : *clusterInstances)
             {
-                for (const auto& lowestCurrentInstance : *clusterInstance.getInstances())
+                for (const auto& lowestCurrentInstance : *clusterInstance.getVectorOfInstances())
                 {
-                    clusterInstance.decouple();
 
-                    auto x = clusterInstance.getInstances();
+                    std::shared_ptr<
+                        std::vector<std::shared_ptr<graph::Instance>>
+                        > vectorOfInstances = clusterInstance.getVectorOfInstances();
 
-                    for (auto subInstance : *x)
+                    for (auto subInstance : *vectorOfInstances)
                     {
-                        graph::InteriorTwinRelation interiorTwinsCluster = graph::InteriorTwinRelation(instance);
-                        graph::ClusterPointGenerator generatorCluster = graph::ClusterPointGenerator(instance, &interiorTwins);
+
+                        clusterInstance.decouple();
+
+
+                        graph::InteriorTwinRelation interiorTwinsCluster = graph::InteriorTwinRelation(subInstance);
+                        graph::ClusterPointGenerator generatorCluster = graph::ClusterPointGenerator(subInstance, &interiorTwins);
 
                         labelMismatches  += labelMismatchTestFunction(&subInstance, &interiorTwinsCluster, &generatorCluster);
                         size_t rootClassSize = rootIsClusterPoint(&subInstance, &interiorTwinsCluster, &generatorCluster);
 
                         if (rootClassSize != subInstance->size()) rootClusterClassErrors += 1;
 
+
+                        clusterInstance.couple();
+
                     }
 
 
-                    //clusterInstance.couple();
                 }
 
             }
             instanceStack.pop();
         }
 
+        if (rootClusterClassErrors != 0) std::cerr << "We've " << rootClusterClassErrors << " mismatching roots of clusters." << std::endl;
+        if (labelMismatches != 0) std::cerr << "We've " << labelMismatches << " mismatching labels of clusters." << std::endl;
 
         bool success = (rootClusterClassErrors == 0) and (labelMismatches == 0);
 
@@ -241,5 +250,3 @@ TEST_CASE("RecursiveClusterI")
 // Or: Can a cluster of one run be a subset of another cluster within the same run of generating cluster points?
 // This may be done by iterating through each cluster point and the corresponding twin trees, though the take will
 // likely take ages to compute, whereas this property (whether it hold or not) may have important semantic implication.
-// From what I understand from the LCA Method to generate Cluster Points this may hold true, and beyond that we'd not
-// even need to recurse because it generates all possible cluster points in one iteration.
