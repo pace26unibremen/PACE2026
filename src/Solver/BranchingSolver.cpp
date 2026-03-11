@@ -108,6 +108,10 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
             {
                 temporalChanges.push(rule);
             }
+            if (std::dynamic_pointer_cast<ChainReductionRule>(rule))
+            {
+                temporalChanges.push(rule);
+            }
 
             bool calculationFinished = false;
             switch (returnCode)

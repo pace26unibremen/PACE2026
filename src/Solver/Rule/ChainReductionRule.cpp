@@ -93,13 +93,13 @@ solver::ChainReductionRule::isApplicable(
 
     for (const auto& T1 : *instance)
     {   //DEBUG
-        std::cout << "T1:" << std::endl;
-        T1->write(std::cout);
+        //std::cout << "T1:" << std::endl;
+        //T1->write(std::cout);
 
         for (const auto& T2 : *instance)
         {   //DEBUG
-            std::cout << "T2:" << std::endl;
-            T2->write(std::cout);
+            //std::cout << "T2:" << std::endl;
+            //T2->write(std::cout);
 
             if (T1 != T2)
             {
@@ -111,7 +111,7 @@ solver::ChainReductionRule::isApplicable(
                 for (const auto& terminalT1 : termIndexTreeOne)
                 {  //T1
                     //DEBUG
-                    std::cout << "terminalT1: " << terminalT1.second << std::endl;
+                    //std::cout << "terminalT1: " << terminalT1.second << std::endl;
 
                     //Determine parent
                     graph::Node* parentT1 = terminalT1.first->parent;
@@ -149,7 +149,7 @@ solver::ChainReductionRule::isApplicable(
 
                         for (const auto& terminalT2 : termIndexTreeTwo)
                         {   //T2
-                                std::cout << "terminalT2: " << terminalT2.second << std::endl;
+                            //std::cout << "terminalT2: " << terminalT2.second << std::endl;
                             //Determine Structure
                             graph::Node* parentT2 = terminalT2.first->parent;
                             graph::Node* siblingT2 = terminalT2.first->sibling;

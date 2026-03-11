@@ -18,4 +18,12 @@ TEST_CASE("Reduce Chain - Tree 1", "[Forest, DeleteNodeActionInChains, AbstractA
         REQUIRE(rule);
         rule->apply();
     }
+
+    SECTION("Section 2")
+    {
+        auto i = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_2_8_mirrored_chain.tree");
+        auto solver = BranchingSolver(i);
+        solver.solve();
+
+    }
 }
