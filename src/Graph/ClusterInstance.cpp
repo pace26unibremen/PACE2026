@@ -115,7 +115,7 @@ bool ClusterInstance::generateClusterForest(std::shared_ptr<graph::Instance>* cl
 
     if (not rootToForest->contains(forestRootPointer))
     {
-        return false;
+        return true;
     }
 
     const std::shared_ptr<Forest>& primeForest = rootToForest->at(forestRootPointer);
@@ -140,7 +140,7 @@ bool ClusterInstance::generateClusterForest(std::shared_ptr<graph::Instance>* cl
 
     clusterInstance->get()->push_back(clusterForestPointer);
 
-    return true;
+    return false;
 
 }
 

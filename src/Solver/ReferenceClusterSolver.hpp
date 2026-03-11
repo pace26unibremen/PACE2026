@@ -28,8 +28,6 @@ class ReferenceClusterSolver : public solver::AbstractSolver
     ~ReferenceClusterSolver() override = default;
 
     std::shared_ptr<graph::Forest> solve() override;
-
-
 };
 
 

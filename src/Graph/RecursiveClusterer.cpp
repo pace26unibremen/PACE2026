@@ -24,8 +24,9 @@ RecursiveClusterer::RecursiveClusterer(const std::shared_ptr<graph::Instance>& i
 
     auto instanceVector = std::make_shared<std::vector<graph::ClusterInstance>>(std::vector<graph::ClusterInstance>());
 
+
     instanceVector->push_back(clusterInstance);
-    if (not instanceVector->empty())
+    if (not instanceVector->empty() and not clusterInstance.getInstances()->empty())
     {
         instanceStack.push(instanceVector);
         recurseClusters(instanceVector);
@@ -52,8 +53,10 @@ void RecursiveClusterer::recurseClusters(const std::shared_ptr<std::vector<graph
             std::vector<graph::Node*> clusterPoints = generator.clusterPoints;
             graph::ClusterInstance newestClusterInstance = graph::ClusterInstance(clusterForest, &interiorTwins, &clusterPoints);
 
-
-            recursedInstances.push_back(newestClusterInstance);
+            if (not newestClusterInstance.getInstances()->empty())
+            {
+                recursedInstances.push_back(newestClusterInstance);
+            }
 
 
         }
