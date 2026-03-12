@@ -95,7 +95,7 @@ int solver::ChainReductionRule::apply()
             if (&node == bottomT1)
             {
                 graph::Node* bottomNodeinT1 = &node;
-                bottomNodeinT1->parent = nullptr;
+                bottomNodeinT1->parent = &chainTopCutoffT1;
                 chainBottomCutoffT1 = *bottomNodeinT1;
             }
 
@@ -119,11 +119,19 @@ int solver::ChainReductionRule::apply()
             {
                 if (node.leftChild == topT1)
                 {
-                    node.leftChild = nullptr;
+                    node.leftChild = &chainBottomCutoffT1;
                 }
                 else if (node.rightChild == topT1)
                 {
-                    node.rightChild = nullptr;
+                    node.rightChild = &chainBottomCutoffT1;
+                }
+                if (changes[0] == nullptr)
+                {
+                    chainTopCutoffT1 = node;
+                }
+                else
+                {
+                    chainTopCutoffT1 = *changes[0];
                 }
             }
 
@@ -131,7 +139,6 @@ int solver::ChainReductionRule::apply()
             if (&node == topT1)
             {
                 graph::Node* topNodeinT1 = &node;
-                chainTopCutoffT1 = *topNodeinT1;
                 changes[0] = (topNodeinT1->parent);
                 topNodeinT1->parent = nullptr;
             }
@@ -144,7 +151,7 @@ int solver::ChainReductionRule::apply()
             if (&node == bottomT2)
             {
                 graph::Node* bottomNodeinT2 = &node;
-                bottomNodeinT2->parent = nullptr;
+                bottomNodeinT2->parent = &chainBottomCutoffT2;
                 chainBottomCutoffT2 = *bottomNodeinT2;
             }
             //Remove x4's parent connection to x3
@@ -166,18 +173,25 @@ int solver::ChainReductionRule::apply()
             {
                 if (node.leftChild == topT2)
                 {
-                    node.leftChild = nullptr;
+                    node.leftChild = &chainBottomCutoffT2;
                 }
                 else if (node.rightChild == topT2)
                 {
-                    node.rightChild = nullptr;
+                    node.rightChild = &chainBottomCutoffT2;
+                }
+                if (changes[1] == nullptr)
+                {
+                    chainTopCutoffT2 = node;
+                }
+                else
+                {
+                    chainTopCutoffT2 = *changes[1];
                 }
             }
             //Remove xn's connection to his parent
             if (&node == topT2)
             {
                 graph::Node* topNodeinT2 = &node;
-                chainTopCutoffT2 = *topNodeinT2;
                 changes[1] = (topNodeinT2->parent);
                 topNodeinT2->parent = nullptr;
             }
