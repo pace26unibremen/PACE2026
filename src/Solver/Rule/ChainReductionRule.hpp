@@ -26,7 +26,7 @@ namespace solver
         /// \param context information about the instance and the solver state
         /// \return The first chain between the two forests
         ChainReductionRule(const std::shared_ptr<graph::Instance>& instance,
-        const std::pair<std::vector<std::vector<graph::Node*>>,std::vector<std::shared_ptr<graph::Forest>>>
+        std::pair<std::vector<std::vector<graph::Node*>>,std::vector<std::shared_ptr<graph::Forest>>>
         chainWithTrees,
         const std::shared_ptr<Context>& context);
 
