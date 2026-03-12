@@ -35,9 +35,8 @@ ClusterInstance::ClusterInstance(const std::shared_ptr<graph::Instance>& instanc
 
         clusterInstances->push_back(clusterInstance);
 
-        static int cgen = 0; cgen += 1; std::cout << "Successfull ClusterInstance : " << cgen << std::endl;
+        //static int cgen = 0; cgen += 1; std::cout << "Successfull ClusterInstance : " << cgen << std::endl;
 
-        return;
 
     }
 
