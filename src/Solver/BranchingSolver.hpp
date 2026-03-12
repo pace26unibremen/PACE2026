@@ -3,21 +3,20 @@
 
 #include "AbstractSolver.hpp"
 #include "DebugPlugin.hpp"
-
-#include "Rule/Context.hpp"
 #include "Rule/AbstractRule.hpp"
+#include "Rule/ChainReductionRule.hpp"
+#include "Rule/Context.hpp"
 #include "Rule/CutBranchRule.hpp"
+#include "Rule/DebugAssertFalseRule.hpp"
 #include "Rule/EqualForestsRule.hpp"
 #include "Rule/PairEqualRule.hpp"
 #include "Rule/PairPathBranchingRule.hpp"
 #include "Rule/PairUnconnectedBranchingRule.hpp"
 #include "Rule/SingleVertexTreePropagationRule.hpp"
-#include "Rule/DebugAssertFalseRule.hpp"
-#include "Rule/ChainReductionRule.h"
 
 #include <functional>
-#include <stack>
 #include <queue>
+#include <stack>
 
 namespace solver
 {

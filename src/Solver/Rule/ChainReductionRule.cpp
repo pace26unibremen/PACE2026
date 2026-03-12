@@ -2,11 +2,12 @@
 // Created by Andre on 11.12.2025.
 //
 
-#include "ChainReductionRule.h"
+#include "ChainReductionRule.hpp"
 
-#include "../Action/DeleteNodeActionInChains.h"
-#include <iostream>
+#include "../Action/DeleteNodeActionInChains.hpp"
+
 #include <algorithm>
+#include <iostream>
 #include <stack>
 
 solver::ChainReductionRule::ChainReductionRule(

@@ -4,11 +4,12 @@
 
 #ifndef PACE2026_CHAINREDUCTIONRULE_H
 #define PACE2026_CHAINREDUCTIONRULE_H
-#include "AbstractRule.hpp"
-#include "../Action/DeleteNodeActionInChains.h"
 #include "../Action/DeleteEdgeAction.hpp"
-#include <vector>
+#include "../Action/DeleteNodeActionInChains.hpp"
+#include "AbstractRule.hpp"
+
 #include <stack>
+#include <vector>
 
 namespace solver
 {
