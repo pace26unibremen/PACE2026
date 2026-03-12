@@ -37,7 +37,7 @@ namespace solver
         static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                       const std::shared_ptr<Context>& context);
 
-        std::string name() const;
+        std::string name() const override;
     };
 
 
