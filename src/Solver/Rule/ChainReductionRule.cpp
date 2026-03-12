@@ -29,42 +29,6 @@ solver::ChainReductionRule::ChainReductionRule(
 //and, for each i ∈ {3, 4, . . . , n},
 //the parent of xi is the parent of the parent of xi−1.
 
-
-// int solver::ChainReductionRule::apply()
-// {
-//     if (this->isApplied)
-//     {
-//         throw std::invalid_argument("ChainReductionRule : apply : rule was already applied");
-//     }
-//     isApplied = true;
-//
-//     //Check for if the return of isApplicable is within the rule confines.
-//     if (chainWithTrees.second.size() == 2 && chainWithTrees.first.size() > 4)
-//     {
-//         //Fetch Nodes
-//         std::vector<graph::Node> treeOneNodes = chainWithTrees.second.front()->Nodes();
-//         std::vector<graph::Node> treeTwoNodes = chainWithTrees.second.back()->Nodes();
-//
-//         //x4+
-//         //For n ≥ 4, let C = (x1, x2, . . . , xn) be a
-//         //maximal n-chain that is common to T and T' . Then set
-//         //S = T |X \ {x4, x5, . . . , xn} and S'= T'|X \ {x4, x5, . . . , xn}.
-//         for (int index = chainWithTrees.first.size()-1 ; index >= 3; index--)
-//         {   graph::Node* NodeInChainT1 = chainWithTrees.first.at(index).at(0);
-//             graph::Node* NodeInChainT2 = chainWithTrees.first.at(index).at(1);
-//
-//             changes.emplace(NodeInChainT1,chainWithTrees.second.front());
-//             changes.top().doAction();
-//             changes.emplace(NodeInChainT2,chainWithTrees.second.back());
-//             changes.top().doAction();
-//         }
-//
-//         return 0;
-//     }
-//     return 0;
-// }
-
-//Above removes elements out of trees, this below only sidelines the to be removed portion into a separate lane
 solver::RuleReturnCode solver::ChainReductionRule::apply()
 {
     if (this->isApplied)
@@ -201,73 +165,6 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
     return RuleReturnCode::Continue;
 }
 
-
-//         //Deattach x3's parent from parent of x4
-//         bottomT1->parent = topT1->parent;
-//         bottomT2->parent = topT2->parent;
-//
-//         //Deattach x4's edge to x3
-//         if (chainWithTrees.first[4].front()->leftChild == chainWithTrees.first[3].front())
-//         {
-//             chainWithTrees.first[4].front()->leftChild = nullptr;
-//         }
-//         else
-//         {
-//             chainWithTrees.first[4].front()->leftChild = nullptr;
-//         }
-//
-//         if (chainWithTrees.first[4].back()->leftChild == chainWithTrees.first[3].back())
-//         {
-//             chainWithTrees.first[4].back()->leftChild = nullptr;
-//         }
-//         else
-//         {
-//             chainWithTrees.first[4].back()->leftChild = nullptr;
-//         }
-//
-//
-//         //Deattach topT1's parent from topT1 onto bottomT11
-//         if (topT1->parent->leftChild == topT1 && topT2->parent->leftChild == topT2)
-//         {
-//             topT1->parent->leftChild = bottomT1;
-//             topT2->parent->leftChild = bottomT2;
-//             changes.emplace_back(topT1->parent);
-//             changes.emplace_back(topT2->parent);
-//
-//             topT1->parent = nullptr;
-//             topT2->parent = nullptr;
-//         }
-//         else
-//         {
-//             topT1->parent->rightChild = bottomT1;
-//             topT2->parent->rightChild = bottomT2;
-//             changes.emplace_back(topT1->parent);
-//             changes.emplace_back(topT2->parent);
-//             topT1->parent = nullptr;
-//             topT2->parent = nullptr;
-//         }
-//         std::cout << "Apply Rule used" << std::endl;
-//         return 0;
-//     }
-//
-//     return 0;
-// }
-
-// void solver::ChainReductionRule::unapply()
-// {
-//     if (not this->isApplied)
-//     {
-//         throw std::invalid_argument("ChainReductionRule : unapply : rule is not applied");
-//     }
-//     isApplied = false;
-//
-//     while (not changes.empty())
-//     {
-//         changes.top().undoAction();
-//         changes.pop();
-//     }
-// }
-//Removed to fit the now commented in apply
 void solver::ChainReductionRule::unapply()
 {
     if (not this->isApplied)
@@ -369,46 +266,6 @@ void solver::ChainReductionRule::unapply()
             }
         }
     }
-
-    // //Reattach x3's parent to x4 on both trees
-    // chainWithTrees.first[3].front()->parent = chainWithTrees.first[4].front();
-    // chainWithTrees.first[3].back()->parent = chainWithTrees.first[4].back();
-    //
-    // //Reattach x4-x3 connection
-    // if (chainWithTrees.first[4].front()->leftChild == nullptr && chainWithTrees.first[4].back()->leftChild == nullptr)
-    // {
-    //     chainWithTrees.first[4].front()->leftChild = chainWithTrees.first[3].front();
-    //     chainWithTrees.first[4].back()->leftChild = chainWithTrees.first[3].back();
-    // }
-    // else if (chainWithTrees.first[4].front()->rightChild == nullptr && chainWithTrees.first[4].back()->rightChild == nullptr)
-    // {
-    //     chainWithTrees.first[4].front()->rightChild = chainWithTrees.first[3].front();
-    //     chainWithTrees.first[4].back()->rightChild = chainWithTrees.first[3].back();
-    // }
-    //
-    // //Reattach xn's parent to xn
-    // if (chainWithTrees.first[chainWithTrees.first.size()-1].front()->parent == nullptr &&
-    //     chainWithTrees.first[chainWithTrees.first.size()-1].back()->parent == nullptr)
-    // {
-    //
-    //     if (changes[0]->leftChild == nullptr && changes[1]->rightChild == nullptr)
-    //     {
-    //         chainWithTrees.first[chainWithTrees.first.size()-1].front()->parent = changes[0];
-    //         changes[0]->leftChild = chainWithTrees.first[chainWithTrees.first.size()-1].front();
-    //         chainWithTrees.first[chainWithTrees.first.size()-1].back()->parent = changes[1];
-    //         changes[1]->leftChild = chainWithTrees.first[chainWithTrees.first.size()-1].back();
-    //         changes.clear();
-    //
-    //     }
-    //     else
-    //     {
-    //         chainWithTrees.first[chainWithTrees.first.size()-1].front()->parent = changes[0];
-    //         changes[0]->rightChild = chainWithTrees.first[chainWithTrees.first.size()-1].front();
-    //         chainWithTrees.first[chainWithTrees.first.size()-1].back()->parent = changes[1];
-    //         changes[1]->rightChild = chainWithTrees.first[chainWithTrees.first.size()-1].back();
-    //         changes.clear();
-    //     }
-    // }
 }
 
 
@@ -512,8 +369,6 @@ solver::ChainReductionRule::isApplicable(
                                 bool case1applied = false;
 
                                 //Case 1: if the parent of x1 coincides with the parent of x2
-                                //siblingT2 != nullptr && siblingT1 != nullptr &&
-                                //(siblingT1->parent == parentT1) && (siblingT2->parent == parentT2
                                 if (terminalT1.first->parent->leftChild != nullptr
                                     && terminalT1.first->parent->rightChild != nullptr
                                     && T1->TerminalToLabel().contains(terminalT1.first->parent->leftChild)

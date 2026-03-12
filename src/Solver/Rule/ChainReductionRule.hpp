@@ -7,6 +7,11 @@
 
 namespace solver
 {
+    /// \brief This Rule removes a portion of the tree if a certain pattern of terminals and their parent nodes occours
+    /// \see
+    /// <a href="https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/ChainReductionRule">
+    /// GitLab Documentation
+    /// </a>
     class ChainReductionRule : public AbstractRule
     {
     protected:
