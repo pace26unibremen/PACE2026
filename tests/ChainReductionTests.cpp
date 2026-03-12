@@ -1,9 +1,12 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "../src/Graph/Forest.hpp"
+#include "../src/Graph/ForestIO.hpp"
 #include "../src/Graph/Instance.hpp"
 #include "../src/Solver/Action/DeleteNodeActionInChains.h"
 #include "../src/Solver/BranchingSolver.hpp"
+
+#include <iostream>
 
 using namespace graph;
 using namespace std;
@@ -22,8 +25,13 @@ TEST_CASE("Reduce Chain - Tree 1", "[Forest, DeleteNodeActionInChains, AbstractA
     SECTION("Section 2")
     {
         auto i = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_2_8_mirrored_chain.tree");
+        for(auto forest : *i)
+        {
+            forest->write(cout);
+        }
         auto solver = BranchingSolver(i);
-        solver.solve();
-
+        auto e = solver.solve();
+        std::cout << "Forests after solver" << std::endl;
+        e->write(cout);
     }
 }

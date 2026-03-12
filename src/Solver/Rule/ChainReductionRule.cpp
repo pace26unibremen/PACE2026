@@ -18,7 +18,7 @@ solver::ChainReductionRule::ChainReductionRule(
     //Copying of the Trees maybe irrelevant when doing this without const params. Not sure.
     this->chainWithTrees = chainWithTrees;
     changes = std::vector<graph::Node*>();
-
+    changes = {nullptr,nullptr};
 }
 
 //Chain def:Let T be a rooted phylogenetic X-tree, and let C =
@@ -66,7 +66,7 @@ solver::ChainReductionRule::ChainReductionRule(
 //     return 0;
 // }
 
-//Above removes elements out of trees, this below only sidelines the to be removed portion into a seperate lane
+//Above removes elements out of trees, this below only sidelines the to be removed portion into a separate lane
 int solver::ChainReductionRule::apply()
 {
     if (this->isApplied)
@@ -74,7 +74,7 @@ int solver::ChainReductionRule::apply()
         throw std::invalid_argument("ChainReductionRule : apply : rule was already applied");
     }
     isApplied = true;
-    std::cout << chainWithTrees.first.size() << std::endl;
+
     if (chainWithTrees.second.size() == 2 && chainWithTrees.first.size() > 4)
     {
         //Acquire the notes required
@@ -83,57 +83,161 @@ int solver::ChainReductionRule::apply()
         graph::Node* topT1 = chainWithTrees.first[chainWithTrees.first.size()-1].front();
         graph::Node* topT2 = chainWithTrees.first[chainWithTrees.first.size()-1].back();
 
-        //Deattach x3's parent from parent of x4
-        bottomT1->parent = topT1->parent;
-        bottomT2->parent = topT2->parent;
+        graph::Node chainBottomCutoffT1;
+        graph::Node chainBottomCutoffT2;
+        graph::Node chainTopCutoffT1;
+        graph::Node chainTopCutoffT2;
 
-        //Deattach x4's edge to x3
-        if (chainWithTrees.first[4].front()->leftChild == chainWithTrees.first[3].front())
+        //T1
+        for (auto& node : chainWithTrees.second.front()->Nodes())
         {
-            chainWithTrees.first[4].front()->leftChild = nullptr;
+            //Remove x3's parent connection to x4
+            if (&node == bottomT1)
+            {
+                graph::Node* bottomNodeinT1 = &node;
+                bottomNodeinT1->parent = nullptr;
+                chainBottomCutoffT1 = *bottomNodeinT1;
+            }
+
+            //Remove x4's parent connection to x3
+            if (&node == bottomT1->parent)
+            {
+                if (node.leftChild == bottomT1)
+                {
+                    node.leftChild = nullptr;
+                }
+                else if (node.rightChild == bottomT1)
+                {
+                    node.rightChild = nullptr;
+                }
+            }
+
+            //Exclusive argument, if left then changes[0] is nullptr, if right then topT1->parent is nullptr;
+            //Remove xn's parent connction to the last chain element
+            if (&node == topT1->parent || &node == changes[0])
+
+            {
+                if (node.leftChild == topT1)
+                {
+                    node.leftChild = nullptr;
+                }
+                else if (node.rightChild == topT1)
+                {
+                    node.rightChild = nullptr;
+                }
+            }
+
+            //Remove xn's parent connection to his parent
+            if (&node == topT1)
+            {
+                graph::Node* topNodeinT1 = &node;
+                chainTopCutoffT1 = *topNodeinT1;
+                changes[0] = (topNodeinT1->parent);
+                topNodeinT1->parent = nullptr;
+            }
         }
-        else
+
+        //T2
+        for (auto& node : chainWithTrees.second.back()->Nodes())
         {
-            chainWithTrees.first[4].front()->leftChild = nullptr;
+            //Remove x3's parent connection to x4
+            if (&node == bottomT2)
+            {
+                graph::Node* bottomNodeinT2 = &node;
+                bottomNodeinT2->parent = nullptr;
+                chainBottomCutoffT2 = *bottomNodeinT2;
+            }
+            //Remove x4's parent connection to x3
+            if (&node == bottomT2->parent)
+            {
+                if (node.leftChild == bottomT2)
+                {
+                    node.leftChild = nullptr;
+                }
+                else if (node.rightChild == bottomT2)
+                {
+                    node.rightChild = nullptr;
+                }
+            }
+
+            //Exclusive argument, if left then changes[0] is nullptr, if right then topT1->parent is nullptr;
+            //Remove xn's parent connction to the last chain element
+            if (&node == topT2->parent || &node == changes[1])
+            {
+                if (node.leftChild == topT2)
+                {
+                    node.leftChild = nullptr;
+                }
+                else if (node.rightChild == topT2)
+                {
+                    node.rightChild = nullptr;
+                }
+            }
+            //Remove xn's connection to his parent
+            if (&node == topT2)
+            {
+                graph::Node* topNodeinT2 = &node;
+                chainTopCutoffT2 = *topNodeinT2;
+                changes[1] = (topNodeinT2->parent);
+                topNodeinT2->parent = nullptr;
+            }
         }
 
-        if (chainWithTrees.first[4].back()->leftChild == chainWithTrees.first[3].back())
-        {
-            chainWithTrees.first[4].back()->leftChild = nullptr;
-        }
-        else
-        {
-            chainWithTrees.first[4].back()->leftChild = nullptr;
-        }
-
-
-        //Deattach topT1's parent from topT1 onto bottomT11
-        if (topT1->parent->leftChild == topT1 && topT2->parent->leftChild == topT2)
-        {
-            topT1->parent->leftChild = bottomT1;
-            topT2->parent->leftChild = bottomT2;
-            changes.emplace_back(topT1->parent);
-            changes.emplace_back(topT2->parent);
-
-            topT1->parent = nullptr;
-            topT2->parent = nullptr;
-        }
-        else
-        {
-            topT1->parent->rightChild = bottomT1;
-            topT2->parent->rightChild = bottomT2;
-            changes.emplace_back(topT1->parent);
-            changes.emplace_back(topT2->parent);
-            topT1->parent = nullptr;
-            topT2->parent = nullptr;
-        }
-
-
-        return 0;
     }
-
     return 0;
 }
+
+
+//         //Deattach x3's parent from parent of x4
+//         bottomT1->parent = topT1->parent;
+//         bottomT2->parent = topT2->parent;
+//
+//         //Deattach x4's edge to x3
+//         if (chainWithTrees.first[4].front()->leftChild == chainWithTrees.first[3].front())
+//         {
+//             chainWithTrees.first[4].front()->leftChild = nullptr;
+//         }
+//         else
+//         {
+//             chainWithTrees.first[4].front()->leftChild = nullptr;
+//         }
+//
+//         if (chainWithTrees.first[4].back()->leftChild == chainWithTrees.first[3].back())
+//         {
+//             chainWithTrees.first[4].back()->leftChild = nullptr;
+//         }
+//         else
+//         {
+//             chainWithTrees.first[4].back()->leftChild = nullptr;
+//         }
+//
+//
+//         //Deattach topT1's parent from topT1 onto bottomT11
+//         if (topT1->parent->leftChild == topT1 && topT2->parent->leftChild == topT2)
+//         {
+//             topT1->parent->leftChild = bottomT1;
+//             topT2->parent->leftChild = bottomT2;
+//             changes.emplace_back(topT1->parent);
+//             changes.emplace_back(topT2->parent);
+//
+//             topT1->parent = nullptr;
+//             topT2->parent = nullptr;
+//         }
+//         else
+//         {
+//             topT1->parent->rightChild = bottomT1;
+//             topT2->parent->rightChild = bottomT2;
+//             changes.emplace_back(topT1->parent);
+//             changes.emplace_back(topT2->parent);
+//             topT1->parent = nullptr;
+//             topT2->parent = nullptr;
+//         }
+//         std::cout << "Apply Rule used" << std::endl;
+//         return 0;
+//     }
+//
+//     return 0;
+// }
 
 // void solver::ChainReductionRule::unapply()
 // {
@@ -158,45 +262,139 @@ void solver::ChainReductionRule::unapply()
     }
     isApplied = false;
 
-    //Reattach x3's parent to x4 on both trees
-    chainWithTrees.first[3].front()->parent = chainWithTrees.first[4].front();
-    chainWithTrees.first[3].back()->parent = chainWithTrees.first[4].back();
+    //Find nodes that belong to chain
+    graph::Node* bottomT1 = chainWithTrees.first[3].front();
+    graph::Node* bottomT2 = chainWithTrees.first[3].back();
+    graph::Node* topT1 = chainWithTrees.first[chainWithTrees.first.size()-1].front();
+    graph::Node* topT2 = chainWithTrees.first[chainWithTrees.first.size()-1].back();
 
-    //Reattach x4-x3 connection
-    if (chainWithTrees.first[4].front()->leftChild == nullptr && chainWithTrees.first[4].back()->leftChild == nullptr)
+    //x3 to x4 and x4 to x3 for T1
+    for (auto& node : chainWithTrees.second.front()->Nodes())
     {
-        chainWithTrees.first[4].front()->leftChild = chainWithTrees.first[3].front();
-        chainWithTrees.first[4].back()->leftChild = chainWithTrees.first[3].back();
-    }
-    else if (chainWithTrees.first[4].front()->rightChild == nullptr && chainWithTrees.first[4].back()->rightChild == nullptr)
-    {
-        chainWithTrees.first[4].front()->rightChild = chainWithTrees.first[3].front();
-        chainWithTrees.first[4].back()->rightChild = chainWithTrees.first[3].back();
-    }
-
-    //Reattach xn's parent to xn
-    if (chainWithTrees.first[chainWithTrees.first.size()-1].front()->parent == nullptr &&
-        chainWithTrees.first[chainWithTrees.first.size()-1].back()->parent == nullptr)
-    {
-
-        if (changes[0]->leftChild == nullptr && changes[1]->rightChild == nullptr)
+        if(&node == bottomT1)
         {
-            chainWithTrees.first[chainWithTrees.first.size()-1].front()->parent = changes[0];
-            changes[0]->leftChild = chainWithTrees.first[chainWithTrees.first.size()-1].front();
-            chainWithTrees.first[chainWithTrees.first.size()-1].back()->parent = changes[1];
-            changes[1]->leftChild = chainWithTrees.first[chainWithTrees.first.size()-1].back();
-            changes.clear();
-
+            for (auto& node2 : chainWithTrees.second.front()->Nodes())
+            {
+                if (&node2 == chainWithTrees.first[4].front())
+                {
+                    node.parent = &node2;
+                    if (node2.leftChild == nullptr)
+                    {
+                        node2.leftChild = &node;
+                        break;
+                    }
+                    if (node2.rightChild == nullptr)
+                    {
+                        node2.rightChild = &node;
+                        break;
+                    }
+                }
+            }
         }
-        else
+        //Top node of chain connected to his parent again
+        if ( &node == changes[0])
         {
-            chainWithTrees.first[chainWithTrees.first.size()-1].front()->parent = changes[0];
-            changes[0]->rightChild = chainWithTrees.first[chainWithTrees.first.size()-1].front();
-            chainWithTrees.first[chainWithTrees.first.size()-1].back()->parent = changes[1];
-            changes[1]->rightChild = chainWithTrees.first[chainWithTrees.first.size()-1].back();
-            changes.clear();
+            for (auto& node2 : chainWithTrees.second.front()->Nodes())
+            {
+                node.parent = &node2;
+                if (node2.leftChild == nullptr)
+                {
+                    node2.leftChild = &node;
+                    changes[0] = nullptr;
+                    break;
+                }
+                if (node2.rightChild == nullptr)
+                {
+                    node2.rightChild = &node;
+                    changes[0] = nullptr;
+                    break;
+                }
+            }
         }
     }
+    //T2, both x3<->x4 and top chain <-> his parent
+    for (auto& node : chainWithTrees.second.back()->Nodes())
+    {
+        if(&node == bottomT2)
+        {
+            for (auto& node2 : chainWithTrees.second.back()->Nodes())
+            {
+                if (&node2 == chainWithTrees.first[4].back())
+                {
+                    node.parent = &node2;
+                    if (node2.leftChild == nullptr)
+                    {
+                        node2.leftChild = &node;
+                        break;
+                    }
+                    if (node2.rightChild == nullptr)
+                    {
+                        node2.rightChild = &node;
+                        break;
+                    }
+                }
+            }
+        }
+        if ( &node == changes[1])
+        {
+            for (auto& node2 : chainWithTrees.second.back()->Nodes())
+            {
+                node.parent = &node2;
+                if (node2.leftChild == nullptr)
+                {
+                    node2.leftChild = &node;
+                    changes[1] = nullptr;
+                    break;
+                }
+                if (node2.rightChild == nullptr)
+                {
+                    node2.rightChild = &node;
+                    changes[1] = nullptr;
+                    break;
+                }
+            }
+        }
+    }
+
+    // //Reattach x3's parent to x4 on both trees
+    // chainWithTrees.first[3].front()->parent = chainWithTrees.first[4].front();
+    // chainWithTrees.first[3].back()->parent = chainWithTrees.first[4].back();
+    //
+    // //Reattach x4-x3 connection
+    // if (chainWithTrees.first[4].front()->leftChild == nullptr && chainWithTrees.first[4].back()->leftChild == nullptr)
+    // {
+    //     chainWithTrees.first[4].front()->leftChild = chainWithTrees.first[3].front();
+    //     chainWithTrees.first[4].back()->leftChild = chainWithTrees.first[3].back();
+    // }
+    // else if (chainWithTrees.first[4].front()->rightChild == nullptr && chainWithTrees.first[4].back()->rightChild == nullptr)
+    // {
+    //     chainWithTrees.first[4].front()->rightChild = chainWithTrees.first[3].front();
+    //     chainWithTrees.first[4].back()->rightChild = chainWithTrees.first[3].back();
+    // }
+    //
+    // //Reattach xn's parent to xn
+    // if (chainWithTrees.first[chainWithTrees.first.size()-1].front()->parent == nullptr &&
+    //     chainWithTrees.first[chainWithTrees.first.size()-1].back()->parent == nullptr)
+    // {
+    //
+    //     if (changes[0]->leftChild == nullptr && changes[1]->rightChild == nullptr)
+    //     {
+    //         chainWithTrees.first[chainWithTrees.first.size()-1].front()->parent = changes[0];
+    //         changes[0]->leftChild = chainWithTrees.first[chainWithTrees.first.size()-1].front();
+    //         chainWithTrees.first[chainWithTrees.first.size()-1].back()->parent = changes[1];
+    //         changes[1]->leftChild = chainWithTrees.first[chainWithTrees.first.size()-1].back();
+    //         changes.clear();
+    //
+    //     }
+    //     else
+    //     {
+    //         chainWithTrees.first[chainWithTrees.first.size()-1].front()->parent = changes[0];
+    //         changes[0]->rightChild = chainWithTrees.first[chainWithTrees.first.size()-1].front();
+    //         chainWithTrees.first[chainWithTrees.first.size()-1].back()->parent = changes[1];
+    //         changes[1]->rightChild = chainWithTrees.first[chainWithTrees.first.size()-1].back();
+    //         changes.clear();
+    //     }
+    // }
 }
 
 
@@ -212,17 +410,17 @@ solver::ChainReductionRule::isApplicable(
 
     for (const auto& T1 : *instance)
     {   //DEBUG
-        std::cout << "T1:" << std::endl;
+        //std::cout << "T1:" << std::endl;
         //T1->write(std::cout);
 
         for (const auto& T2 : *instance)
         {   //DEBUG
-            std::cout << "T2:" << std::endl;
+            //std::cout << "T2:" << std::endl;
             //T2->write(std::cout);
 
             if (T1 != T2)
             {
-                std::cout << "equal check" << std::endl;
+                //std::cout << "equal check" << std::endl;
                 //Fetch Leaves - Terminal Index to Label
                 std::unordered_map<graph::Node*,unsigned int> termIndexTreeOne = T1->Terminals();
                 std::unordered_map<graph::Node*,unsigned int> termIndexTreeTwo = T2->Terminals();
@@ -312,7 +510,7 @@ solver::ChainReductionRule::isApplicable(
                                     && T2->Terminals().contains(terminalT2.first->parent->rightChild)
                                 )
                                 {
-                                    std::cout << "case 1" << std::endl;
+                                    //std::cout << "case 1" << std::endl;
                                     //Chain for both trees, x1-x3
                                     std::vector<std::vector<graph::Node*>> chainT1T2 = {{terminalT1.first,terminalT2.first},
                                         {siblingT1,siblingT2},{parentT1,parentT2}};
@@ -351,7 +549,7 @@ solver::ChainReductionRule::isApplicable(
                                     }
                                     //Determine x4,... of chain
                                     while (case1check)
-                                    {   std::cout << chainT1T2.size() << std::endl;
+                                    {   //std::cout << chainT1T2.size() << std::endl;
                                         //Sibling is in fact a terminal and is not attached to root
                                         if (case1T1Sibling != nullptr && case1T2Sibling != nullptr
                                            && case1T1Parent != nullptr && case1T2Parent != nullptr
@@ -417,7 +615,7 @@ solver::ChainReductionRule::isApplicable(
                                   siblingT1->parent == parentOfParentT1 && siblingT2->parent == parentOfParentT2 &&
                                   not case1applied)
                                 {
-                                    std::cout << "case 2" << std::endl;
+                                    //std::cout << "case 2" << std::endl;
                                     //Chain for both trees, x1-x3
                                     //Technically parent of x1 is ignored but, well, it gets carried in-between x1 and x3 so w/e lol
 
@@ -458,7 +656,7 @@ solver::ChainReductionRule::isApplicable(
                                     //Determine x4,... of chain
                                     while (case2check)
                                     {
-                                        std::cout << chainT1T2.size() << std::endl;
+                                        //std::cout << chainT1T2.size() << std::endl;
                                         //Siblings exist
                                         if (case2T1Sibling != nullptr && case2T2Sibling != nullptr
                                             && case2T1Parent != nullptr && case2T2Parent != nullptr
