@@ -4,7 +4,7 @@ solver::SingleVertexTreePropagationRule::SingleVertexTreePropagationRule(
     const std::shared_ptr<graph::Instance>& instance,
     const std::shared_ptr<Context>& context,
     const std::unordered_set<unsigned int>& labelsToBeReduced) :
-        AbstractRule(instance, context),
+        AbstractRule(instance, context, false),
         labelsToBeReduced(labelsToBeReduced)
 {}
 
