@@ -1,7 +1,5 @@
 #ifndef PACE2026_CHAINREDUCTIONRULE_H
 #define PACE2026_CHAINREDUCTIONRULE_H
-#include "../Action/DeleteEdgeAction.hpp"
-#include "../Action/DeleteNodeActionInChains.hpp"
 #include "AbstractRule.hpp"
 #include <vector>
 
