@@ -18,7 +18,6 @@ int main(int, char**)
             auto instance = ReadInstance(string(RES_DIR) + "tiny/tiny"+i+ ".nw");
             auto solver = solver::BranchingSolver(instance);
             solver.ActiveRules() = {
-                solver::ChainReductionRule::isApplicable,
                 solver::CutBranchRule::isApplicable,
                 solver::EqualForestsRule::isApplicable,
                 solver::SingleVertexTreePropagationRule::isApplicable,
