@@ -6,7 +6,7 @@
 
 #include <cmath>
 #include "iostream"
-namespace graph
+namespace cluster
 {
 
 LeastCommonAncestor::LeastCommonAncestor(std::shared_ptr<graph::Forest>& forestPointer)

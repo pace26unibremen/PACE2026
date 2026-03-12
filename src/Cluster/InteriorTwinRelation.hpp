@@ -5,10 +5,10 @@
 #ifndef PACE2026_INTERIORTWINRELATION_HPP
 #define PACE2026_INTERIORTWINRELATION_HPP
 
-#include "Instance.hpp"
+#include "../Graph/Instance.hpp"
 #include "LeastCommonAncestor.hpp"
 
-namespace graph
+namespace cluster
 {
 
 class InteriorTwinRelation
@@ -16,12 +16,12 @@ class InteriorTwinRelation
 
   private:
     std::vector<graph::Node*> roots;
-    std::vector<std::shared_ptr<graph::LeastCommonAncestor>> LCAs;
+    std::vector<std::shared_ptr<cluster::LeastCommonAncestor>> LCAs;
 
     std::unordered_map<graph::Node*, graph::Node*> nodeToTwinBuffer = std::unordered_map<graph::Node*, graph::Node*>();
 
 
-    void generateInteriorTwinRelation(graph::Node *givenNode, std::shared_ptr<graph::LeastCommonAncestor> homeLCA , std::shared_ptr<graph::LeastCommonAncestor> foreignLCA);
+    void generateInteriorTwinRelation(graph::Node *givenNode, const std::shared_ptr<cluster::LeastCommonAncestor>& homeLCA , const std::shared_ptr<cluster::LeastCommonAncestor>& foreignLCA);
 
     void initializeTwinVectors(graph::Node* root);
 

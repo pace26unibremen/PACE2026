@@ -2,8 +2,8 @@
 // Created by user on 3/7/26.
 //
 
-#include "../Graph/InteriorTwinRelation.hpp"
-#include "../Graph/LabelTwinRelation.hpp"
+#include "../Cluster/InteriorTwinRelation.hpp"
+#include "../Cluster/LabelTwinRelation.hpp"
 #include "AbstractSolver.hpp"
 
 #ifndef PACE2026_REFERENCECLUSTERSOLVER_HPP

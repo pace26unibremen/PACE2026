@@ -6,7 +6,7 @@
 #define PACE2026_CLUSTERPOINTGENERATOR_HPP
 
 #include "InteriorTwinRelation.hpp"
-namespace graph {
+namespace cluster {
 
 
 
@@ -15,8 +15,8 @@ namespace graph {
 class ClusterPointGenerator
 {
   private:
-    graph::InteriorTwinRelation* twinRelation;
-    std::unordered_map<graph::Node*, std::shared_ptr<Forest>> rootToForest = std::unordered_map<graph::Node*, std::shared_ptr<Forest>> ();
+    cluster::InteriorTwinRelation* twinRelation;
+    std::unordered_map<graph::Node*, std::shared_ptr<graph::Forest>> rootToForest = std::unordered_map<graph::Node*, std::shared_ptr<graph::Forest>> ();
 
 
     void generateClusterPoints(graph::Node* node);
@@ -35,7 +35,9 @@ class ClusterPointGenerator
     /// \param twinRelation The table that links each note to their corresponding twins.
     /// \note A node is a cluster point iff they're: not the root, not a leaf, have both children
     /// & are in a true equivalence class.
-    ClusterPointGenerator(const std::shared_ptr<graph::Instance>& instance, graph::InteriorTwinRelation* twinRelation);
+    ClusterPointGenerator(const std::shared_ptr<graph::Instance>& instance, cluster::InteriorTwinRelation* twinRelation);
+
+    static ClusterPointGenerator wrappedConstructor(const std::shared_ptr<graph::Instance>& instance);
 
     /// \brief This is the vector that contains the cluster points of a given instance. All of the points within
     /// this vector are from the front-tree of the instance and in order to use them one must fetch the twins of a node

@@ -4,7 +4,7 @@
 
 #include "LabelTwinRelation.hpp"
 
-namespace graph
+namespace cluster
 {
 LabelTwinRelation::LabelTwinRelation(const std::shared_ptr<graph::Instance>& instance)
 {

@@ -9,14 +9,14 @@
 
 #include <iostream>
 
-namespace graph
+namespace cluster
 {
 
 
 InteriorTwinRelation::InteriorTwinRelation(const std::shared_ptr<graph::Instance>& instance) {
 
 
-    graph::LabelTwinRelation labelTwins = graph::LabelTwinRelation(instance);
+    cluster::LabelTwinRelation labelTwins = cluster::LabelTwinRelation(instance);
 
     auto map = labelTwins.getTwins();
 
@@ -37,7 +37,7 @@ InteriorTwinRelation::InteriorTwinRelation(const std::shared_ptr<graph::Instance
 
 
     roots = std::vector<graph::Node*>();
-    LCAs = std::vector<std::shared_ptr<graph::LeastCommonAncestor>>();
+    LCAs = std::vector<std::shared_ptr<cluster::LeastCommonAncestor>>();
 
 
     for (auto& forest : *instance)
@@ -45,7 +45,7 @@ InteriorTwinRelation::InteriorTwinRelation(const std::shared_ptr<graph::Instance
         auto firstRoot = forest->Roots().front();
         roots.push_back(firstRoot);
 
-        auto LCA = std::make_shared<graph::LeastCommonAncestor>(graph::LeastCommonAncestor((forest)));
+        auto LCA = std::make_shared<cluster::LeastCommonAncestor>(cluster::LeastCommonAncestor((forest)));
         LCAs.push_back(LCA);
     }
 
@@ -68,7 +68,9 @@ InteriorTwinRelation::InteriorTwinRelation(const std::shared_ptr<graph::Instance
 }
 
 
-void InteriorTwinRelation::generateInteriorTwinRelation(graph::Node *givenNode, std::shared_ptr<graph::LeastCommonAncestor> homeLCA, std::shared_ptr<graph::LeastCommonAncestor> foreignLCA) {
+void InteriorTwinRelation::generateInteriorTwinRelation(graph::Node *givenNode,
+                                                        const std::shared_ptr<cluster::LeastCommonAncestor>& homeLCA,
+                                                        const std::shared_ptr<cluster::LeastCommonAncestor>& foreignLCA) {
     if (roots.size() != LCAs.size())
     {
         std::cerr << "Something has gone fatally wrong within generateInteriorTwinRelation" << std::endl;

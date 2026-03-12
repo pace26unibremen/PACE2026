@@ -3,15 +3,16 @@
 //
 
 #include "ClusterInstance.hpp"
+
 #include "InteriorTwinRelation.hpp"
 #include "iostream"
-namespace graph
+namespace cluster
 {
 
-ClusterInstance::ClusterInstance(const std::shared_ptr<graph::Instance>& instance, graph::InteriorTwinRelation* twinRelation, std::vector<graph::Node*>* clusterPoints)
+ClusterInstance::ClusterInstance(const std::shared_ptr<graph::Instance>& instance, cluster::InteriorTwinRelation* twinRelation, std::vector<graph::Node*>* clusterPoints)
 {
 
-    std::unordered_map<graph::Node*, std::shared_ptr<Forest>> rootToForest = std::unordered_map<graph::Node*, std::shared_ptr<Forest>> ();
+    std::unordered_map<graph::Node*, std::shared_ptr<graph::Forest>> rootToForest = std::unordered_map<graph::Node*, std::shared_ptr<graph::Forest>> ();
 
     for (const auto& forest : *instance)
         rootToForest[forest->Roots().front()] = forest;
@@ -20,7 +21,7 @@ ClusterInstance::ClusterInstance(const std::shared_ptr<graph::Instance>& instanc
     for (auto clusterPoint : *clusterPoints)
     {
         bool failureDueToOtherClusterPoints = false;
-        std::shared_ptr<graph::Instance> clusterInstance = std::make_shared<graph::Instance>(Instance());
+        std::shared_ptr<graph::Instance> clusterInstance = std::make_shared<graph::Instance>(graph::Instance());
 
         //failureDueToOtherClusterPoints =
             generateClusterForest(&clusterInstance, &rootToForest, clusterPoint);
@@ -116,28 +117,28 @@ graph::Node* ClusterInstance::getClustersRoot(graph::Node* node)
     return bufferNode;
 }
 
-bool ClusterInstance::generateClusterForest(std::shared_ptr<graph::Instance>* clusterInstance, std::unordered_map<graph::Node*, std::shared_ptr<Forest>>* rootToForest,
+bool ClusterInstance::generateClusterForest(std::shared_ptr<graph::Instance>* clusterInstance, std::unordered_map<graph::Node*, std::shared_ptr<graph::Forest>>* rootToForest,
                                               graph::Node* node)
 {
-    Node* forestRootPointer = getClustersRoot(node);
+    graph::Node* forestRootPointer = getClustersRoot(node);
 
-    const std::shared_ptr<Forest>& primeForest = rootToForest->at(forestRootPointer);
+    const std::shared_ptr<graph::Forest>& primeForest = rootToForest->at(forestRootPointer);
 
-    auto shallowCopyNodes = std::make_shared<std::vector<Node>>(primeForest->Nodes());
-    auto shallowCopyTerminalToLabel = std::make_shared<std::unordered_map<Node*, unsigned int>>(primeForest->TerminalToLabel());
-    auto shallowCopyLabelToTerminal = std::make_shared<std::unordered_map<unsigned int, Node*>>(primeForest->LabelToTerminal());
-    auto newRootVector = std::make_shared<std::vector<Node*>>();
+    auto shallowCopyNodes = std::make_shared<std::vector<graph::Node>>(primeForest->Nodes());
+    auto shallowCopyTerminalToLabel = std::make_shared<std::unordered_map<graph::Node*, unsigned int>>(primeForest->TerminalToLabel());
+    auto shallowCopyLabelToTerminal = std::make_shared<std::unordered_map<unsigned int, graph::Node*>>(primeForest->LabelToTerminal());
+    auto newRootVector = std::make_shared<std::vector<graph::Node*>>();
 
     newRootVector->push_back(node);
-    Forest primePartialForest = Forest(shallowCopyNodes, shallowCopyTerminalToLabel, shallowCopyLabelToTerminal, newRootVector);
+    graph::Forest primePartialForest = graph::Forest(shallowCopyNodes, shallowCopyTerminalToLabel, shallowCopyLabelToTerminal, newRootVector);
 
-    auto syntheticRoot = std::make_shared<Node>(Node());
+    auto syntheticRoot = std::make_shared<graph::Node>(graph::Node());
 
-    auto clusterForestPointer = std::make_shared<Forest>(primePartialForest);
+    auto clusterForestPointer = std::make_shared<graph::Forest>(primePartialForest);
 
-    graph::ExtendedForestData extendedForestData = ExtendedForestData(node, node->parent, syntheticRoot);
+    cluster::ExtendedForestData extendedForestData = ExtendedForestData(node, node->parent, syntheticRoot);
 
-    auto clusterForestDataPointer = std::make_shared<graph::ExtendedForestData>(extendedForestData);
+    auto clusterForestDataPointer = std::make_shared<cluster::ExtendedForestData>(extendedForestData);
 
     forestToClusteringData.emplace(clusterForestPointer,clusterForestDataPointer);
 

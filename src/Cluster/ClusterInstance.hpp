@@ -5,19 +5,19 @@
 #ifndef PACE2026_CLUSTERINSTANCE_HPP
 #define PACE2026_CLUSTERINSTANCE_HPP
 
-#include "Instance.hpp"
+#include "../Graph/Instance.hpp"
+#include "../Graph/Node.hpp"
 #include "InteriorTwinRelation.hpp"
-#include "Node.hpp"
 
-namespace graph
+namespace cluster
 
 {
 
 struct ExtendedForestData
 {
-    Node* clusterNode;
-    Node* originalParent;
-    std::shared_ptr<Node> syntheticParent;
+    graph::Node* clusterNode;
+    graph::Node* originalParent;
+    std::shared_ptr<graph::Node> syntheticParent;
 
 };
 
@@ -27,9 +27,9 @@ class ClusterInstance
   private:
     static graph::Node* getClustersRoot(graph::Node* node);
 
-    bool generateClusterForest(std::shared_ptr<graph::Instance>* clusterInstance, std::unordered_map<graph::Node*, std::shared_ptr<Forest>>* rootToForest, graph::Node* node);
+    bool generateClusterForest(std::shared_ptr<graph::Instance>* clusterInstance, std::unordered_map<graph::Node*, std::shared_ptr<graph::Forest>>* rootToForest, graph::Node* node);
 
-    std::unordered_map<std::shared_ptr<Forest>, std::shared_ptr<ExtendedForestData>> forestToClusteringData =  std::unordered_map<std::shared_ptr<Forest>, std::shared_ptr<ExtendedForestData>>();
+    std::unordered_map<std::shared_ptr<graph::Forest>, std::shared_ptr<ExtendedForestData>> forestToClusteringData =  std::unordered_map<std::shared_ptr<graph::Forest>, std::shared_ptr<ExtendedForestData>>();
 
     // I'm sane and I can be trusted with C++.
     std::shared_ptr<std::vector<std::shared_ptr<graph::Instance>>> clusterInstances
@@ -45,8 +45,9 @@ class ClusterInstance
     /// \param twinRelation The Twin-Map to get the equivalence class of a node to discern where to split each forest
     /// of the instance.
     /// \param clusterPoints The cluster points of the instance we want to split up.
-    ClusterInstance(const std::shared_ptr<graph::Instance>& instance, graph::InteriorTwinRelation* twinRelation, std::vector<graph::Node*>* clusterPoints);
+    ClusterInstance(const std::shared_ptr<graph::Instance>& instance, cluster::InteriorTwinRelation* twinRelation, std::vector<graph::Node*>* clusterPoints);
 
+    static ClusterInstance wrappedConstructor(const std::shared_ptr<graph::Instance>& instance);
     /// \brief This function separates a cluster forest from their parent/outer tree.
     void couple();
     /// \brief This function reconnects a cluster forest to their parent/outer tree. When decoupling, one must ensure

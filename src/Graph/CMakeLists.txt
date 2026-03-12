@@ -1,19 +1,7 @@
 file (GLOB graph_source *.cpp)
 file (GLOB graph_header *.hpp)
 
-add_library(Graph ${graph_source}
-        LabelTwinRelation.cpp
-        LabelTwinRelation.hpp
-        InteriorTwinRelation.cpp
-        InteriorTwinRelation.hpp
-        LeastCommonAncestor.cpp
-        LeastCommonAncestor.hpp
-        ClusterPointGenerator.cpp
-        ClusterPointGenerator.hpp
-        ClusterInstance.cpp
-        ClusterInstance.hpp
-        RecursiveClusterer.cpp
-        RecursiveClusterer.hpp)
+add_library(Graph ${graph_source})
 
 if (DEBUG_IMAGE_VIEW_GRAPH)
     MESSAGE("-- DEBUG_IMAGE_VIEW_GRAPH is on")

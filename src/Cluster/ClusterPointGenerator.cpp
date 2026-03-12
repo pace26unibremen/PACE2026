@@ -6,7 +6,7 @@
 #include "functional"
 #include "iostream"
 
-namespace graph
+namespace cluster
 {
 
 void ClusterPointGenerator::generateClusterPoints(graph::Node* node) {
@@ -37,12 +37,10 @@ void ClusterPointGenerator::generateClusterPoints(graph::Node* node) {
 }
 
 
-ClusterPointGenerator::ClusterPointGenerator(const std::shared_ptr<graph::Instance>& instance, graph::InteriorTwinRelation* twinRelation) {
+ClusterPointGenerator::ClusterPointGenerator(const std::shared_ptr<graph::Instance>& instance, cluster::InteriorTwinRelation* twinRelation) {
     this->twinRelation = twinRelation;
 
-    static int cgen = 0; cgen += 1; std::cout << "ClusterPointGenerations : " << cgen << std::endl;
-
-    for (const std::shared_ptr<Forest>& forest : *instance)
+    for (const std::shared_ptr<graph::Forest>& forest : *instance)
     {
         rootToForest[forest->Roots().front()] = forest;
 
@@ -69,12 +67,12 @@ int ClusterPointGenerator::checkHeightOfNode(graph::Node* node)
 }
 bool ClusterPointGenerator::trueEquivalenceClass(graph::Node* node)
 {
-    std::set<Node*> checkSet = std::set<graph::Node*>();
+    std::set<graph::Node*> checkSet = std::set<graph::Node*>();
 
     auto classOfTwins = twinRelation->nodeToTwins[node];
 
 
-    std::set<Node*> checkSet1 = std::set<Node*>();
+    std::set<graph::Node*> checkSet1 = std::set<graph::Node*>();
     checkSet1.insert(node);
     for (const auto& item : classOfTwins)
     {

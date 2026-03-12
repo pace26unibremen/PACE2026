@@ -4,19 +4,16 @@
 #include <catch2/benchmark/catch_benchmark.hpp>
 #include <catch2/catch_test_macros.hpp>
 
-#include "../src/Graph/ClusterPointGenerator.hpp"
+#include "../src/Cluster/ClusterPointGenerator.hpp"
+#include "../src/Cluster/InteriorTwinRelation.hpp"
+#include "../src/Cluster/RecursiveClusterer.hpp"
 #include "../src/Graph/Forest.hpp"
 #include "../src/Graph/Instance.hpp"
-#include "../src/Graph/InteriorTwinRelation.hpp"
-#include "../src/Graph/RecursiveClusterer.hpp"
 #include "functional"
 #include "iostream"
 
-
-
-
-int labelMismatchTestFunction(std::shared_ptr<graph::Instance>*  instance, graph::InteriorTwinRelation* interiorTwins,
-                              graph::ClusterPointGenerator* generator)
+int labelMismatchTestFunction(std::shared_ptr<graph::Instance>*  instance, cluster::InteriorTwinRelation* interiorTwins,
+                              cluster::ClusterPointGenerator* generator)
 {
     int labelMismatches = 0;
 
@@ -90,8 +87,8 @@ int labelMismatchTestFunction(std::shared_ptr<graph::Instance>*  instance, graph
     return labelMismatches;
 }
 
-size_t rootIsClusterPoint(std::shared_ptr<graph::Instance>*  instance, graph::InteriorTwinRelation* interiorTwins,
-                              graph::ClusterPointGenerator* generator)
+size_t rootIsClusterPoint(std::shared_ptr<graph::Instance>*  instance, cluster::InteriorTwinRelation* interiorTwins,
+                          cluster::ClusterPointGenerator* generator)
 {
     std::vector<graph::Node*> clusterPoints = generator->clusterPoints;
 
@@ -138,8 +135,8 @@ TEST_CASE("ClusterLabelEquivalence")
 
 
         std::shared_ptr<graph::Instance>  instance = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_100_11_stressTest.tree");
-        graph::InteriorTwinRelation interiorTwins = graph::InteriorTwinRelation(instance);
-        graph::ClusterPointGenerator generator = graph::ClusterPointGenerator(instance, &interiorTwins);
+        cluster::InteriorTwinRelation interiorTwins = cluster::InteriorTwinRelation(instance);
+        cluster::ClusterPointGenerator generator = cluster::ClusterPointGenerator(instance, &interiorTwins);
 
         int labelMismatches = labelMismatchTestFunction(&instance, &interiorTwins, &generator);
 
@@ -161,8 +158,8 @@ TEST_CASE("RootTwinEquivalence")
     {
         std::shared_ptr<graph::Instance>  instance = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_2_200_tripleCluster.tree");
         
-        graph::InteriorTwinRelation interiorTwins = graph::InteriorTwinRelation(instance);
-        graph::ClusterPointGenerator generator = graph::ClusterPointGenerator(instance, &interiorTwins);
+        cluster::InteriorTwinRelation interiorTwins = cluster::InteriorTwinRelation(instance);
+        cluster::ClusterPointGenerator generator = cluster::ClusterPointGenerator(instance, &interiorTwins);
 
         size_t rootClassSize = rootIsClusterPoint(&instance, &interiorTwins, &generator);
 
@@ -180,8 +177,8 @@ TEST_CASE("RecursiveClusterI")
     {
         std::shared_ptr<graph::Instance>  instance = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_2_200_tripleCluster.tree");
 
-        graph::InteriorTwinRelation interiorTwins = graph::InteriorTwinRelation(instance);
-        graph::ClusterPointGenerator generator = graph::ClusterPointGenerator(instance, &interiorTwins);
+        cluster::InteriorTwinRelation interiorTwins = cluster::InteriorTwinRelation(instance);
+        cluster::ClusterPointGenerator generator = cluster::ClusterPointGenerator(instance, &interiorTwins);
         std::vector<graph::Node*> clusterPoints = generator.clusterPoints;
 
         int labelMismatches = 0;
@@ -191,14 +188,14 @@ TEST_CASE("RecursiveClusterI")
         if  (rootIsClusterPoint(&instance, &interiorTwins, &generator) != instance->size()) rootClusterClassErrors += 1;
 
 
-        auto recursiveClusterer = graph::RecursiveClusterer(instance);
+        auto recursiveClusterer = cluster::RecursiveClusterer(instance);
         auto instanceStack = recursiveClusterer.instanceStack;
 
         while (!instanceStack.empty())
         {
             auto clusterInstances = instanceStack.top();
 
-            for (graph::ClusterInstance& clusterInstance : *clusterInstances)
+            for (cluster::ClusterInstance& clusterInstance : *clusterInstances)
             {
                 for (const auto& lowestCurrentInstance : *clusterInstance.getVectorOfInstances())
                 {
@@ -213,8 +210,8 @@ TEST_CASE("RecursiveClusterI")
                         clusterInstance.decouple();
 
 
-                        graph::InteriorTwinRelation interiorTwinsCluster = graph::InteriorTwinRelation(subInstance);
-                        graph::ClusterPointGenerator generatorCluster = graph::ClusterPointGenerator(subInstance, &interiorTwins);
+                        cluster::InteriorTwinRelation interiorTwinsCluster = cluster::InteriorTwinRelation(subInstance);
+                        cluster::ClusterPointGenerator generatorCluster = cluster::ClusterPointGenerator(subInstance, &interiorTwins);
 
                         labelMismatches  += labelMismatchTestFunction(&subInstance, &interiorTwinsCluster, &generatorCluster);
                         size_t rootClassSize = rootIsClusterPoint(&subInstance, &interiorTwinsCluster, &generatorCluster);

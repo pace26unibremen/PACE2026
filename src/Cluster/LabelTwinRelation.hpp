@@ -5,10 +5,9 @@
 #ifndef PACE2026_LABELTWINRELATION_HPP
 #define PACE2026_LABELTWINRELATION_HPP
 
-#include "Instance.hpp"
+#include "../Graph/Instance.hpp"
 
-
-namespace graph
+namespace cluster
 {
 
 /// \brief This class provides generation and access to a table that links each leaf twin.

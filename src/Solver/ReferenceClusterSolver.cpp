@@ -4,12 +4,12 @@
 
 #include "ReferenceClusterSolver.hpp"
 
-#include "../Graph/ClusterInstance.hpp"
-#include "../Graph/RecursiveClusterer.hpp"
+#include "../Cluster/ClusterInstance.hpp"
+#include "../Cluster/RecursiveClusterer.hpp"
 #include "BranchingSolver.hpp"
+#include "TrivialSolver.hpp"
 
 #include <iostream>
-#include "TrivialSolver.hpp"
 
 solver::ReferenceClusterSolver::ReferenceClusterSolver(const std::shared_ptr<graph::Instance>& instance) :
         AbstractSolver(instance)
@@ -17,7 +17,7 @@ solver::ReferenceClusterSolver::ReferenceClusterSolver(const std::shared_ptr<gra
 std::shared_ptr<graph::Forest> solver::ReferenceClusterSolver::solve()
 {
 
-    graph::RecursiveClusterer clusterStack = graph::RecursiveClusterer(instance);
+    cluster::RecursiveClusterer clusterStack = cluster::RecursiveClusterer(instance);
 
 
     auto instanceStack = clusterStack.instanceStack;
@@ -29,7 +29,7 @@ std::shared_ptr<graph::Forest> solver::ReferenceClusterSolver::solve()
     {
         auto clusterInstances = instanceStack.top();
 
-        for (graph::ClusterInstance& clusterInstance : *clusterInstances)
+        for (cluster::ClusterInstance& clusterInstance : *clusterInstances)
         {
             for (const auto& lowestCurrentInstance : *clusterInstance.getVectorOfInstances())
             {

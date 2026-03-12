@@ -5,10 +5,10 @@
 #ifndef PACE2026_RECURSIVECLUSTERER_HPP
 #define PACE2026_RECURSIVECLUSTERER_HPP
 
-#include "Instance.hpp"
-#include "stack"
+#include "../Graph/Instance.hpp"
 #include "ClusterInstance.hpp"
-namespace graph
+#include "stack"
+namespace cluster
 {
 
 
@@ -18,7 +18,7 @@ class RecursiveClusterer
 {
 
 
-    void recurseClusters(const std::shared_ptr<std::vector<graph::ClusterInstance>>& clusterInstance);
+    void recurseClusters(const std::shared_ptr<std::vector<cluster::ClusterInstance>>& clusterInstance);
 
   public:
     /// \brief This is a stack that holds all the cluster instances.
@@ -26,7 +26,7 @@ class RecursiveClusterer
     /// "youngest generation", the newest instances that have been generated through the recursive clusterer.
     /// This may be beneficial for book-keeping and merging of the clusters, reducing it solely to a primitive coupling,
     /// although this is merely speculation.
-    std::stack<std::shared_ptr<std::vector<graph::ClusterInstance>>> instanceStack = std::stack<std::shared_ptr<std::vector<graph::ClusterInstance>>>();
+    std::stack<std::shared_ptr<std::vector<cluster::ClusterInstance>>> instanceStack = std::stack<std::shared_ptr<std::vector<cluster::ClusterInstance>>>();
 
     /// \brief The constructor of the RecursiveClusterer.
     /// \param instance The instance we want to cluster, whereas the clusters of the instance will be
