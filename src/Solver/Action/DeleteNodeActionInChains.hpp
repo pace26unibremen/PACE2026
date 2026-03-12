@@ -1,7 +1,3 @@
-//
-// Created by kaufm on 25.01.2026.
-//
-
 #ifndef PACE2026_DELETENODEACTION_H
 #define PACE2026_DELETENODEACTION_H
 

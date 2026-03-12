@@ -1,11 +1,6 @@
-//
-// Created by kaufm on 25.01.2026.
-//
 #include "DeleteNodeActionInChains.hpp"
-
 #include <iostream>
 
-#include <pstl/execution_defs.h>
 using namespace graph;
 using namespace solver;
 

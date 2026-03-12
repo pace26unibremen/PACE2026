@@ -1,14 +1,8 @@
-//
-// Created by kaufm on 11.12.2025.
-//
-
 #ifndef PACE2026_CHAINREDUCTIONRULE_H
 #define PACE2026_CHAINREDUCTIONRULE_H
 #include "../Action/DeleteEdgeAction.hpp"
 #include "../Action/DeleteNodeActionInChains.hpp"
 #include "AbstractRule.hpp"
-
-#include <stack>
 #include <vector>
 
 namespace solver

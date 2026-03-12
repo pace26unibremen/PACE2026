@@ -5,10 +5,8 @@
 #include "ChainReductionRule.hpp"
 
 #include "../Action/DeleteNodeActionInChains.hpp"
-
 #include <algorithm>
 #include <iostream>
-#include <stack>
 
 solver::ChainReductionRule::ChainReductionRule(
     const std::shared_ptr<graph::Instance>& instance,
@@ -18,7 +16,6 @@ solver::ChainReductionRule::ChainReductionRule(
 {
     //Copying of the Trees maybe irrelevant when doing this without const params. Not sure.
     this->chainWithTrees = chainWithTrees;
-    changes = std::vector<graph::Node*>();
     changes = {nullptr,nullptr};
 }
 
