@@ -9,6 +9,11 @@ namespace solver
 {
 
 /// \brief Removes duplicate forests from instance.
+///
+/// \see
+/// <a href="https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/EqualForestsRule">
+/// GitLab Documentation
+/// </a>
 class EqualForestsRule : public AbstractRule
 {
   protected:
@@ -27,14 +32,17 @@ class EqualForestsRule : public AbstractRule
                      const std::unordered_set<std::shared_ptr<graph::Forest>>& toBeRemoved);
 
     /// \brief applies rule
-    /// \see AbstractRule::apply
     /// \returns two return codes are possible:
-    /// - return code \c 1 (rule solves the instance), if instance now contains only one forests
-    /// - return code \c 0 (default, continue solving), if instance still contains multiple forests
-    int apply() override;
+    /// - \ref RuleReturnCode::EndBranchWithSolutionCandidate, if instance now contains only one forests
+    /// - \ref RuleReturnCode::Continue, if instance still contains multiple forests
+    RuleReturnCode apply() override;
 
     void unapply() override;
 
+    /// \brief It checks whether the EqualForestsRule is applicable and generates an instance of this rule if so.
+    /// \param instance on which the rule should be applied
+    /// \param context contains additional information to the instance and the solver state
+    /// \returns shared_pointer to EqualForestsRule if rule is applicable, elso null pointer
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                       const std::shared_ptr<Context>& context);
 

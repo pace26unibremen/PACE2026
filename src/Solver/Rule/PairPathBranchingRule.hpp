@@ -15,6 +15,11 @@ namespace solver
 /// 1. The first terminal is a single vertex tree in the solution. -> cut this terminal
 /// 2. The other terminal is a single vertex tree in the solution. -> cut the other terminal
 /// 3. The two terminals are a pair in the solution. -> cut all subtrees on the path between both terminals
+///
+/// \see
+/// <a href="https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/PairPathBranchingRule">
+/// GitLab Documentation
+/// </a>
 class PairPathBranchingRule : public AbstractBranchingRule
 {
   protected:
@@ -33,6 +38,10 @@ class PairPathBranchingRule : public AbstractBranchingRule
     /// filled in the apply method and unfilled in the unapply method
     std::stack<DeleteEdgeAction> changes = std::stack<DeleteEdgeAction>();
 
+    /// \brief A list of rules that should be applied next.
+    std::shared_ptr<std::list<std::shared_ptr<AbstractRule>>> nextRuleSuggestion =
+        std::make_shared<std::list<std::shared_ptr<AbstractRule>>>();
+
   public:
     /// \param instance the problem instance
     /// \param context information about the instance and the solver state
@@ -46,14 +55,24 @@ class PairPathBranchingRule : public AbstractBranchingRule
                          std::unordered_map<std::shared_ptr<graph::Forest>, std::list<graph::Node*>>>& cuts);
 
     /// \brief applies rule
-    /// \see AbstractRule::apply
-    /// \returns always return code  \c 0 (default, continue solving)
-    int apply() override;
+    /// \returns two return codes are possible:
+    /// - \ref RuleReturnCode::Continue, on branch 2 and 3
+    /// - \ref RuleReturnCode::ContinueWithRuleSuggestion, on branch 1 (suggests a \ref PairEqualRule)
+    RuleReturnCode apply() override;
 
     void unapply() override;
 
+    /// \brief It checks whether the PairPathBranchingRule is applicable and generates an instance of this rule if so.
+    /// This method only considers the PairPathBranchingRule applicable if the first pair it finds in forest 1
+    /// has corresponding terminals in another forest with a non-trivial path and are nowhere disconnected.
+    /// \param instance on which the rule should be applied
+    /// \param context contains additional information to the instance and the solver state
+    /// \returns shared_pointer to PairPathBranchingRule if rule is applicable, elso null pointer
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                       const std::shared_ptr<Context>& context);
+
+
+    std::shared_ptr<std::list<std::shared_ptr<AbstractRule>>> NextRuleSuggestion() override;
 
     [[nodiscard]]
     std::string name() const override;

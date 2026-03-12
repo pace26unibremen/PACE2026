@@ -28,7 +28,7 @@ void solver::DebugPlugin::writeStateNode()
     {
         overviewFile << f->Roots().size() << " ";
     }
-    overviewFile << "\"];\n";
+    overviewFile << "\"];" << std::endl;
 }
 
 void solver::DebugPlugin::writeRuleNode(const std::shared_ptr<AbstractRule>& rule)
@@ -48,12 +48,12 @@ void solver::DebugPlugin::writeRuleNode(const std::shared_ptr<AbstractRule>& rul
                          << " [label=" << branchId << ", style=\"filled,dotted,rounded\", "
                                                       "fillcolor=darkorange, width=0.9, height=0.25, fixedsize=true];\n";
         }
-        overviewFile << "}\n;";
+        overviewFile << "};" << std::endl;
     }
     else
     {
         overviewFile << "rule_" << stateIDs.top()
-        << R"( [style="filled,rounded", fillcolor=orange, width=3.5, label=")" << rule->name() << "\"]\n";
+        << R"( [style="filled,rounded", fillcolor=orange, width=3.5, label=")" << rule->name() << "\"]" << std::endl;
     }
 }
 

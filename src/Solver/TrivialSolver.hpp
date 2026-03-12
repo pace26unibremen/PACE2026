@@ -6,7 +6,7 @@
 namespace solver
 {
 
-/// /brief A Solver that returns the Leaf-Set as agreement forest
+/// \brief A Solver that returns the terminals as agreement forest
 class TrivialSolver : AbstractSolver
 {
   public:

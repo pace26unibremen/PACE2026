@@ -5,9 +5,9 @@ solver::DebugAssertFalseRule::DebugAssertFalseRule(const std::shared_ptr<graph::
     AbstractRule(instance, context)
 {}
 
-int solver::DebugAssertFalseRule::apply()
+solver::RuleReturnCode solver::DebugAssertFalseRule::apply()
 {
-    return -1;
+    return RuleReturnCode::ImidateReturn;
 }
 
 void solver::DebugAssertFalseRule::unapply() {}

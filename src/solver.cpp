@@ -20,7 +20,6 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-
     auto t0 = std::clock();
     auto i = graph::ReadInstance(infile);
     auto solver = solver::BranchingSolver(i);
