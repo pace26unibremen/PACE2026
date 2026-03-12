@@ -3,7 +3,6 @@
 #include "../src/Graph/Forest.hpp"
 #include "../src/Graph/ForestIO.hpp"
 #include "../src/Graph/Instance.hpp"
-#include "../src/Solver/Action/DeleteNodeActionInChains.h"
 #include "../src/Solver/BranchingSolver.hpp"
 
 #include <iostream>
