@@ -19,7 +19,7 @@ namespace solver
         std::pair<std::vector<std::vector<graph::Node*>>,std::vector<std::shared_ptr<graph::Forest>>> chainWithTrees;
 
         /// \brief Amount of changes done
-        std::stack<solver::DeleteNodeActionInChains> changes;
+        std::vector<graph::Node*> changes;
 
     public:
         /// \brief Chain Reduction Rule implementation that identifies the first chain out of the two forests given
