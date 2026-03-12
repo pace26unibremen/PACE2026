@@ -152,5 +152,10 @@ bool ClusterPointGenerator::leafEquivalent(graph::Node* node)
 
 
 }
+ClusterPointGenerator ClusterPointGenerator::wrappedConstructor(const std::shared_ptr<graph::Instance>& instance)
+{
+    auto temporaryTable = cluster::InteriorTwinRelation(instance);
+    return ClusterPointGenerator(instance, &temporaryTable);
+}
 
 }

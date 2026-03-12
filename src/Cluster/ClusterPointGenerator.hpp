@@ -37,6 +37,10 @@ class ClusterPointGenerator
     /// & are in a true equivalence class.
     ClusterPointGenerator(const std::shared_ptr<graph::Instance>& instance, cluster::InteriorTwinRelation* twinRelation);
 
+    /// \brief This static function returns an instance of the ClusterPointGenerator without the hassle of having to
+    /// generate the Twin-Table object first. The table will be generated internally and discarded after usage, which
+    /// has to be kept in mind when using this function. (Potential time and memory cost!)
+    /// \note Access to Cluster Point vector through public member access.
     static ClusterPointGenerator wrappedConstructor(const std::shared_ptr<graph::Instance>& instance);
 
     /// \brief This is the vector that contains the cluster points of a given instance. All of the points within
