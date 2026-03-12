@@ -67,7 +67,7 @@ solver::ChainReductionRule::ChainReductionRule(
 // }
 
 //Above removes elements out of trees, this below only sidelines the to be removed portion into a separate lane
-int solver::ChainReductionRule::apply()
+solver::RuleReturnCode solver::ChainReductionRule::apply()
 {
     if (this->isApplied)
     {
@@ -151,7 +151,7 @@ int solver::ChainReductionRule::apply()
             if (&node == bottomT2)
             {
                 graph::Node* bottomNodeinT2 = &node;
-                bottomNodeinT2->parent = &chainBottomCutoffT2;
+                bottomNodeinT2->parent = &chainTopCutoffT2;
                 chainBottomCutoffT2 = *bottomNodeinT2;
             }
             //Remove x4's parent connection to x3
@@ -198,7 +198,7 @@ int solver::ChainReductionRule::apply()
         }
 
     }
-    return 0;
+    return RuleReturnCode::Continue;
 }
 
 
@@ -436,8 +436,8 @@ solver::ChainReductionRule::isApplicable(
             {
                 //std::cout << "equal check" << std::endl;
                 //Fetch Leaves - Terminal Index to Label
-                std::unordered_map<graph::Node*,unsigned int> termIndexTreeOne = T1->Terminals();
-                std::unordered_map<graph::Node*,unsigned int> termIndexTreeTwo = T2->Terminals();
+                std::unordered_map<graph::Node*,unsigned int> termIndexTreeOne = T1->TerminalToLabel();
+                std::unordered_map<graph::Node*,unsigned int> termIndexTreeTwo = T2->TerminalToLabel();
 
                 //For all Terminals...
                 for (const auto& terminalT1 : termIndexTreeOne)
@@ -516,12 +516,12 @@ solver::ChainReductionRule::isApplicable(
                                 //(siblingT1->parent == parentT1) && (siblingT2->parent == parentT2
                                 if (terminalT1.first->parent->leftChild != nullptr
                                     && terminalT1.first->parent->rightChild != nullptr
-                                    && T1->Terminals().contains(terminalT1.first->parent->leftChild)
-                                    && T1->Terminals().contains(terminalT1.first->parent->rightChild)
+                                    && T1->TerminalToLabel().contains(terminalT1.first->parent->leftChild)
+                                    && T1->TerminalToLabel().contains(terminalT1.first->parent->rightChild)
                                     && terminalT2.first->parent->leftChild != nullptr
                                     && terminalT2.first->parent->rightChild != nullptr
-                                    && T2->Terminals().contains(terminalT2.first->parent->leftChild)
-                                    && T2->Terminals().contains(terminalT2.first->parent->rightChild)
+                                    && T2->TerminalToLabel().contains(terminalT2.first->parent->leftChild)
+                                    && T2->TerminalToLabel().contains(terminalT2.first->parent->rightChild)
                                 )
                                 {
                                     //std::cout << "case 1" << std::endl;

@@ -33,7 +33,7 @@ namespace solver
         const std::shared_ptr<Context>& context);
 
         /// \brief Apply the Chain Reduction rule onto the two Trees
-        int apply() override;
+        RuleReturnCode apply() override;
 
         /// \brief Restore the original state before the application of the chain reduction rule
         void unapply() override;
