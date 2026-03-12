@@ -39,7 +39,7 @@ void solver::DeleteNodeActionInChains::doAction()
 {
     std::cout << "Node to be deleted :" << std::addressof(node) << std::endl;
     std::vector<Node> nodes = forest->Nodes();
-    std::unordered_map<graph::Node*,unsigned int> terminals= forest->Terminals();
+    std::unordered_map<graph::Node*,unsigned int> terminals= forest->TerminalToLabel();
     std::unordered_map<unsigned int, graph::Node*> labels = forest->LabelToTerminal();
 
     graph::Node* parent = node.parent;
