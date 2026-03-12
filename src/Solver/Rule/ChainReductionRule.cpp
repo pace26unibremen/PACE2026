@@ -198,6 +198,8 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
         }
 
     }
+    std::cout << "Applied" << std::endl;
+    std::cout << chainWithTrees.first.size() << std::endl;
     return RuleReturnCode::Continue;
 }
 

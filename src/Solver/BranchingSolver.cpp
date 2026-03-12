@@ -124,10 +124,10 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
                 // take first applicable rule
                 if (rule) break;
             }
-            if (std::dynamic_pointer_cast<ChainReductionRule>(rule))
-            {
-                temporalChanges.push(rule);
-            }
+            // if (std::dynamic_pointer_cast<ChainReductionRule>(rule))
+            // {
+            //     temporalChanges.push(rule);
+            // }
 
             const auto returnCode = rule->apply();
             if (debPlugin) debPlugin->onApply(rule);
