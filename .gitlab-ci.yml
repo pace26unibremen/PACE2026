@@ -332,16 +332,16 @@ variables:
     # 1) Prepare and copy files to HPC
     - mkdir -p hpc_transfer
     # Prepare .env file for Stride with all necessary variables
-    - |
-      cat > hpc_transfer/.env <<EOF
-        STRIDE_SOLVER="./startSolver"
-        STRIDE_TIMEOUT=$STRIDE_TIMEOUT
-        STRIDE_GRACE=$STRIDE_GRACE
-        STRIDE_DOWNLOADS_PATH=".stride-downloads"
-        STRIDE_INSTANCE_ORDER="nodes-trees-asc"
-        STRIDE_RUN_NAME="$STRIDE_RUN_NAME"
-        STRIDE_OPTIMAL=true
-      EOF
+#    - |
+#      cat > hpc_transfer/.env <<EOF
+#        STRIDE_SOLVER="./startSolver"
+#        STRIDE_TIMEOUT=$STRIDE_TIMEOUT
+#        STRIDE_GRACE=$STRIDE_GRACE
+#        STRIDE_DOWNLOADS_PATH=".stride-downloads"
+#        STRIDE_INSTANCE_ORDER="nodes-trees-asc"
+#        STRIDE_RUN_NAME="$STRIDE_RUN_NAME"
+#        STRIDE_OPTIMAL=true
+#      EOF
     - cp pace26stride/target/x86_64-unknown-linux-musl/smaller-release/stride hpc_transfer/
     - cp build/src/startSolver hpc_transfer/
     - cp res/instances/"$INSTANCES_LST" hpc_transfer/instances.lst
