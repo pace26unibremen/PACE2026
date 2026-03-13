@@ -297,7 +297,14 @@ build_stride:
     paths:
       - pace26stride/target/x86_64-unknown-linux-musl/smaller-release/stride
 
-run_stride_benchmark:
+variables:
+  INSTANCES_LST: "all.lst"  # Or full
+  SLURM_SCRIPT: "quick_run.slurm"
+  STRIDE_TIMEOUT: 1800
+  STRIDE_GRACE: 10
+  STRIDE_RUN_NAME: "${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}"
+
+.run_stride_benchmark_template:
   stage: benchmark
   image: ubuntu:24.04
   dependencies:
@@ -324,10 +331,22 @@ run_stride_benchmark:
   script:
     # 1) Prepare and copy files to HPC
     - mkdir -p hpc_transfer
+    # Prepare .env file for Stride with all necessary variables
+    - |
+      cat > hpc_transfer/.env << ENV
+      STRIDE_SOLVER="./startSolver"
+      STRIDE_TIMEOUT=$STRIDE_TIMEOUT
+      STRIDE_GRACE=$STRIDE_GRACE
+      STRIDE_DOWNLOADS_PATH=".stride-downloads"
+      STRIDE_INSTANCE_ORDER="nodes-trees-asc"
+      STRIDE_RUN_NAME="$STRIDE_RUN_NAME"
+      STRIDE_OPTIMAL=true
+      # Add any/all from --help
+      ENV
     - cp pace26stride/target/x86_64-unknown-linux-musl/smaller-release/stride hpc_transfer/
     - cp build/src/startSolver hpc_transfer/
-    - cp res/instances/test-subset.lst hpc_transfer/instances.lst
-    - cp gitlab-ci/slurm/run_stride.slurm hpc_transfer/
+    - cp res/instances/"$INSTANCES_LST" hpc_transfer/instances.lst
+    - cp gitlab-ci/slurm/"$SLURM_SCRIPT"  hpc_transfer/
     - cp gitlab-ci/bash/*.sh hpc_transfer/
     - tar czf hpc_payload.tgz hpc_transfer
 
@@ -336,7 +355,7 @@ run_stride_benchmark:
 
     # 2) Unpack and prepare, then submit job
     - |
-      ssh hpc bash <<'EOF'
+      ssh hpc bash <<EOF
         cd ~/pace-bench
       
         # Backup stride-logs if it exists
@@ -361,7 +380,7 @@ run_stride_benchmark:
         # Now submit the job
         cd hpc_transfer
         chmod +x *.sh
-        JOB_ID=$(sbatch run_stride.slurm | awk '{print $4}')
+        JOB_ID=$(sbatch $SLURM_SCRIPT | awk '{print $4}')
         cd ..
         echo "$JOB_ID" > last_job.id
         echo "Submitted job $JOB_ID"
@@ -381,3 +400,39 @@ run_stride_benchmark:
     paths:
       - stride-logs/
     expire_in: 1 Month
+
+# Quick: every commit
+run_quick_benchmark:
+  extends: .run_stride_benchmark_template
+  variables:
+    INSTANCES_LST: "all.lst"
+    SLURM_SCRIPT: "quick_run.slurm"
+    STRIDE_TIMEOUT: 120
+    STRIDE_GRACE: 5
+    STRIDE_RUN_NAME: "${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}"
+  rules:
+    # Skip if this is a release pipeline (merge into main)
+    - if: '$CI_COMMIT_BRANCH == "main" && $CI_COMMIT_MESSAGE =~ /Merge request|See merge request/'
+      when: never
+    # Run on all other pipelines (branches, MRs, direct main pushes)
+    - when: on_success
+
+run_full_benchmark:
+  extends: .run_stride_benchmark_template
+  variables:
+    INSTANCES_LST: "all.lst"
+    SLURM_SCRIPT: "release_run.slurm"
+    STRIDE_TIMEOUT: 900
+    STRIDE_GRACE: 10
+    STRIDE_RUN_NAME: "${CI_COMMIT_TAG}_full"
+  rules: *release-rules
+
+run_exact-track_benchmark:
+  extends: .run_stride_benchmark_template
+  variables:
+    INSTANCES_LST: "pace26_exact_pub.lst"
+    SLURM_SCRIPT: "release_run.slurm"
+    STRIDE_TIMEOUT: 1800
+    STRIDE_GRACE: 10
+    STRIDE_RUN_NAME: "${CI_COMMIT_TAG}_exact"
+  rules: *release-rules
