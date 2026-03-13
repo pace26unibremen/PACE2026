@@ -37,7 +37,7 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
     }
     isApplied = true;
 
-    if (chainWithTrees.second.size() == 2 && chainWithTrees.first.size() > 4)
+    if (chainWithTrees.second.size() == 2 && chainWithTrees.first.size() >= 4)
     {
         //Acquire the notes required
         graph::Node* bottomT1 = chainWithTrees.first[3].front();
@@ -266,6 +266,7 @@ void solver::ChainReductionRule::unapply()
             }
         }
     }
+    std::cout << "Unapplied" << std::endl;
 }
 
 

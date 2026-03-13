@@ -67,6 +67,7 @@ class BranchingSolver : public AbstractSolver
         solver::SingleVertexTreePropagationRule::isApplicable,
         solver::PairUnconnectedBranchingRule::isApplicable,
         solver::PairEqualRule::isApplicable,
+        solver::ChainReductionRule::isApplicable,
         solver::PairPathBranchingRule::isApplicable,
         solver::DebugAssertFalseRule::isApplicable
         };
