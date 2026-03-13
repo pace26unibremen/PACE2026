@@ -333,15 +333,15 @@ variables:
     - mkdir -p hpc_transfer
     # Prepare .env file for Stride with all necessary variables
     - |
-      cat > hpc_transfer/.env << ENV
-      STRIDE_SOLVER="./startSolver"
-      STRIDE_TIMEOUT=$STRIDE_TIMEOUT
-      STRIDE_GRACE=$STRIDE_GRACE
-      STRIDE_DOWNLOADS_PATH=".stride-downloads"
-      STRIDE_INSTANCE_ORDER="nodes-trees-asc"
-      STRIDE_RUN_NAME="$STRIDE_RUN_NAME"
-      STRIDE_OPTIMAL=true
-      ENV
+      cat > hpc_transfer/.env <<EOF
+        STRIDE_SOLVER="./startSolver"
+        STRIDE_TIMEOUT=$STRIDE_TIMEOUT
+        STRIDE_GRACE=$STRIDE_GRACE
+        STRIDE_DOWNLOADS_PATH=".stride-downloads"
+        STRIDE_INSTANCE_ORDER="nodes-trees-asc"
+        STRIDE_RUN_NAME="$STRIDE_RUN_NAME"
+        STRIDE_OPTIMAL=true
+      EOF
     - cp pace26stride/target/x86_64-unknown-linux-musl/smaller-release/stride hpc_transfer/
     - cp build/src/startSolver hpc_transfer/
     - cp res/instances/"$INSTANCES_LST" hpc_transfer/instances.lst
@@ -351,6 +351,8 @@ variables:
 
     - ssh hpc "mkdir -p ~/pace-bench"
     - scp hpc_payload.tgz hpc:~/pace-bench/
+
+    - ssh hpc "which sbatch || (echo 'Error: sbatch not found on HPC' >&2; exit 1)"
 
     # 2) Unpack and prepare, then submit job
     - |
@@ -380,7 +382,7 @@ variables:
         cd hpc_transfer
         chmod +x *.sh
         chmod +x *.slurm
-        JOB_ID=$(/usr/bin/sbatch run_stride.slurm | awk '{print $4}')
+        JOB_ID=$(sbatch run_stride.slurm | awk '{print $4}')
         cd ..
         echo "$JOB_ID" > last_job.id
         echo "Submitted job $JOB_ID"
