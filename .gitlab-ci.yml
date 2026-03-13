@@ -411,10 +411,10 @@ run_quick_benchmark:
     STRIDE_GRACE: 5
     STRIDE_RUN_NAME: "${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}"
   rules:
-    # Skip if this is a release pipeline (merge into main)
-    - if: '$CI_COMMIT_BRANCH == "main" && $CI_COMMIT_MESSAGE =~ /Merge request|See merge request/'
+    # Skip if this is a release pipeline (merge into master)
+    - if: '$CI_COMMIT_BRANCH == "master" && $CI_COMMIT_MESSAGE =~ /Merge request|See merge request/'
       when: never
-    # Run on all other pipelines (branches, MRs, direct main pushes)
+    # Run on all other pipelines (branches, MRs, direct master pushes)
     - when: on_success
 
 run_full_benchmark:
