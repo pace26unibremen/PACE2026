@@ -297,19 +297,18 @@ build_stride:
     paths:
       - pace26stride/target/x86_64-unknown-linux-musl/smaller-release/stride
 
-variables:
-  INSTANCES_LST: "all.lst"  # Or full
-  SLURM_SCRIPT: "quick_run.slurm"
-  STRIDE_TIMEOUT: 1800
-  STRIDE_GRACE: 10
-  STRIDE_RUN_NAME: "${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}"
-
 .run_stride_benchmark_template:
   stage: benchmark
   image: ubuntu:24.04
   dependencies:
     - build-solver
     - build_stride
+  variables:
+    INSTANCES_LST: "all.lst"  # Or full
+    SLURM_SCRIPT: "quick_run.slurm"
+    STRIDE_TIMEOUT: 1800
+    STRIDE_GRACE: 10
+    STRIDE_RUN_NAME: "${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}"
   before_script:
     - apt-get update && apt-get install -y openssh-client rsync
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
@@ -332,16 +331,16 @@ variables:
     # 1) Prepare and copy files to HPC
     - mkdir -p hpc_transfer
     # Prepare .env file for Stride with all necessary variables
-#    - |
-#      cat > hpc_transfer/.env <<EOF
-#        STRIDE_SOLVER="./startSolver"
-#        STRIDE_TIMEOUT=$STRIDE_TIMEOUT
-#        STRIDE_GRACE=$STRIDE_GRACE
-#        STRIDE_DOWNLOADS_PATH=".stride-downloads"
-#        STRIDE_INSTANCE_ORDER="nodes-trees-asc"
-#        STRIDE_RUN_NAME="$STRIDE_RUN_NAME"
-#        STRIDE_OPTIMAL=true
-#      EOF
+    #- |
+    #  cat > hpc_transfer/.env << EOF
+    #    STRIDE_SOLVER="./startSolver"
+    #    STRIDE_TIMEOUT=$STRIDE_TIMEOUT
+    #    STRIDE_GRACE=$STRIDE_GRACE
+    #    STRIDE_DOWNLOADS_PATH=".stride-downloads"
+    #    STRIDE_INSTANCE_ORDER="nodes-trees-asc"
+    #    STRIDE_RUN_NAME="$STRIDE_RUN_NAME"
+    #    STRIDE_OPTIMAL=true
+    #  EOF
     - cp pace26stride/target/x86_64-unknown-linux-musl/smaller-release/stride hpc_transfer/
     - cp build/src/startSolver hpc_transfer/
     - cp res/instances/"$INSTANCES_LST" hpc_transfer/instances.lst
@@ -351,8 +350,6 @@ variables:
 
     - ssh hpc "mkdir -p ~/pace-bench"
     - scp hpc_payload.tgz hpc:~/pace-bench/
-
-    - ssh hpc "which sbatch || (echo 'Error: sbatch not found on HPC' >&2; exit 1)"
 
     # 2) Unpack and prepare, then submit job
     - |
@@ -405,13 +402,13 @@ variables:
 
 # Quick: every commit
 run_quick_benchmark:
-  extends: .run_stride_benchmark_template
   variables:
     INSTANCES_LST: "all.lst"
     SLURM_SCRIPT: "quick_run.slurm"
     STRIDE_TIMEOUT: 120
     STRIDE_GRACE: 5
     STRIDE_RUN_NAME: "${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}"
+  extends: .run_stride_benchmark_template
   rules:
     # Skip if this is a release pipeline (merge into master)
     - if: '$CI_COMMIT_BRANCH == "master" && $CI_COMMIT_MESSAGE =~ /Merge request|See merge request/'
@@ -420,21 +417,21 @@ run_quick_benchmark:
     - when: on_success
 
 run_full_benchmark:
-  extends: .run_stride_benchmark_template
   variables:
     INSTANCES_LST: "all.lst"
     SLURM_SCRIPT: "release_run.slurm"
     STRIDE_TIMEOUT: 900
     STRIDE_GRACE: 10
     STRIDE_RUN_NAME: "${CI_COMMIT_TAG}_full"
+  extends: .run_stride_benchmark_template
   <<: *release-rules
 
 run_exact-track_benchmark:
-  extends: .run_stride_benchmark_template
   variables:
     INSTANCES_LST: "pace26_exact_pub.lst"
     SLURM_SCRIPT: "release_run.slurm"
     STRIDE_TIMEOUT: 1800
     STRIDE_GRACE: 10
     STRIDE_RUN_NAME: "${CI_COMMIT_TAG}_exact"
+  extends: .run_stride_benchmark_template
   <<: *release-rules
