@@ -130,7 +130,9 @@ run_stride_benchmark:
 
     # 4) Retrieve and check results
     - mkdir -p stride-logs
-    - rsync -avq hpc:~/pace-bench/hpc_transfer/stride-logs/ stride-logs/
+    - rsync -avq --relative 'pace:~/pace-bench/hpc_transfer/stride-logs/./*/summary.json' stride-logs/
+    # Copy error logs if they exist; ignore if they don't (e.g. if the job succeeded without errors)
+    - rsync -avq --relative -ignore-missing-args 'pace:~/pace-bench/hpc_transfer/stride-logs/./*/solvererror' stride-logs/
     - bash gitlab-ci/bash/check_errors.sh
 
   artifacts:
