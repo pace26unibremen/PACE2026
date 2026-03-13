@@ -3,6 +3,9 @@
 
 #include "../../Graph/Instance.hpp"
 #include "Context.hpp"
+#include "RuleReturnCode.hpp"
+
+#include <list>
 
 namespace solver
 {
@@ -30,12 +33,8 @@ class AbstractRule
     virtual ~AbstractRule() = default;
 
     /// \brief applies rule
-    /// \returns return code
-    /// - \c 0 default, continue solving
-    /// - \c 1 rule solves the instance
-    /// - \c 2 branch can be cutted
-    /// - \c -1 stop the solver (without valid solution)
-    virtual int apply() = 0;
+    /// \returns a return code, see \ref RuleReturnCode
+    virtual RuleReturnCode apply() = 0;
 
     /// \brief reverts the changes of the rule
     virtual void unapply() = 0;
@@ -47,6 +46,14 @@ class AbstractRule
     /// \brief name of the rule
     [[nodiscard]]
     virtual std::string name() const = 0;
+
+    /// \brief A list of rules that should be applied next.
+    ///
+    /// If the \ref apply method returns \ref RuleReturnCode::ContinueWithRuleSuggestion
+    /// this indicates that the list contains items and the solver should adopt them.
+    ///
+    /// The first element of the list should be applied first, followed by the next element, and so on.
+    virtual std::shared_ptr<std::list<std::shared_ptr<AbstractRule>>> NextRuleSuggestion();
 };
 
 } // namespace solver

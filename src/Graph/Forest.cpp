@@ -4,10 +4,10 @@
 #include "ForestIO.hpp"
 
 #include <algorithm>
-#include <cassert>
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <ranges>
 #include <stack>
 #include <unordered_set>
 #include <utility>
@@ -108,12 +108,12 @@ const vector<Node>& Forest::Nodes() const
     return *this->nodes;
 }
 
-std::unordered_map<Node*, unsigned int>& Forest::Terminals()
+std::unordered_map<Node*, unsigned int>& Forest::TerminalToLabel()
 {
     return *this->terminalToLabel;
 }
 
-const std::unordered_map<Node*, unsigned int>& Forest::Terminals() const
+const std::unordered_map<Node*, unsigned int>& Forest::TerminalToLabel() const
 {
     return *this->terminalToLabel;
 }
@@ -138,21 +138,16 @@ const std::vector<Node*>& Forest::Roots() const
     return *this->roots;
 }
 
-Node* Forest::rootOf(const Node& node) const
+Node* Forest::rootOf(Node* node) const
 {
     for(auto rootPtr : *roots)
     {
-        if(node.hasSubsetTerminals(rootPtr))
+        if(node->hasSubsetTerminals(rootPtr))
         {
             return rootPtr;
         }
     }
-    assert(false);
-}
-
-Node* Forest::rootOf(Node* node) const
-{
-    return rootOf(*node);
+    throw std::logic_error("Forest : rootOf : no root found");
 }
 
 bool Forest::isValid() const
@@ -233,195 +228,212 @@ bool Forest::isTrueSubtreeOf(const Forest& other) const
     return true;
 }
 
-bool Forest::hasIdenticalSubtree(Node* thisNodePtr, Node* otherNodePtr)
+bool Forest::hasIdenticalSubtree(Node* subtree1, Node* subtree2)
 {
-    std::stack<Node*> thisVisitingStack;
-    thisVisitingStack.push(thisNodePtr);
-    std::stack<Node*> otherVisitingStack;
-    otherVisitingStack.push(otherNodePtr);
+    std::stack<Node*> visitingStack_subtree1;
+    visitingStack_subtree1.push(subtree1);
+    std::stack<Node*> visitingStack_subtree2;
+    visitingStack_subtree2.push(subtree2);
 
-    while (not (thisVisitingStack.empty() or otherVisitingStack.empty()))
+    while (not (visitingStack_subtree1.empty() or visitingStack_subtree2.empty()))
     {
-        const auto thisCurrentNodePtr = thisVisitingStack.top();
-        thisVisitingStack.pop();
-        const auto otherCurrentNotePtr = otherVisitingStack.top();
-        otherVisitingStack.pop();
+        const auto currentNode_subtree1 = visitingStack_subtree1.top();
+        visitingStack_subtree1.pop();
+        const auto currentNode_subtree2 = visitingStack_subtree2.top();
+        visitingStack_subtree2.pop();
 
-        if (not thisCurrentNodePtr->hasSameTerminals(otherCurrentNotePtr))
+        if (not currentNode_subtree1->hasSameTerminals(currentNode_subtree2))
         {
             return false;
         }
 
-        if (not (thisCurrentNodePtr->leftChild == nullptr or otherCurrentNotePtr->leftChild == nullptr))
+        if (not (currentNode_subtree1->leftChild == nullptr or currentNode_subtree2->leftChild == nullptr))
         {
             // neither is a leaf node
-            thisVisitingStack.push(thisCurrentNodePtr->rightChild);
-            thisVisitingStack.push(thisCurrentNodePtr->leftChild);
-            otherVisitingStack.push(otherCurrentNotePtr->rightChild);
-            otherVisitingStack.push(otherCurrentNotePtr->leftChild);
+            visitingStack_subtree1.push(currentNode_subtree1->rightChild);
+            visitingStack_subtree1.push(currentNode_subtree1->leftChild);
+            visitingStack_subtree2.push(currentNode_subtree2->rightChild);
+            visitingStack_subtree2.push(currentNode_subtree2->leftChild);
         }
         else
         {
             // one or both are leaves
-            if (not (thisCurrentNodePtr->leftChild == nullptr and otherCurrentNotePtr->rightChild == nullptr))
+            if (not (currentNode_subtree1->leftChild == nullptr and currentNode_subtree2->rightChild == nullptr))
             {
                 // just one is a leaf
                 return false;
             }
         }
-
-
     }
-    if (thisVisitingStack.empty() and otherVisitingStack.empty())
+    if (visitingStack_subtree1.empty() and visitingStack_subtree2.empty())
     {
         return true;
     }
     return false;
 }
 
-bool Forest::checkTriple(Node* parentPtr, std::unordered_map<Node*, unsigned int>& subtreeLeafs, set<Node*>& pointers, unsigned int& smallestTerminal) const
+bool Forest::checkTriple(
+    Node* parent,
+    std::unordered_map<Node*, unsigned int>& subtreeLabels,
+    set<Node*>& nodes,
+    unsigned int& smallestTerminal) const
 {
     bool tripleValid = true;
-    const auto node = parentPtr;
-    // Check pointers
-    if (!pointers.insert(parentPtr).second)
+    const auto& left = parent->leftChild;
+    const auto& right = parent->rightChild;
+
+    // check if node was already visited
+    if (!nodes.insert(parent).second)
     {
         std::clog << "Forest: checkTriple: Node appears second time in tree:\n"
-                         "   Pointer (" << parentPtr << ") \n"
+                         "   Pointer (" << parent << ") \n"
                          "   Who is the original?"<< endl;
         tripleValid = false;
     }
-    // Check Leaf
-    if (node->leftChild == nullptr && node->rightChild == nullptr)
+
+    // check the different cases for which children exist
+    if (left == nullptr && right == nullptr)
     {
-        if (terminalToLabel->contains(parentPtr))
-        { // Add to found leafs
-            unsigned int label = terminalToLabel->at(parentPtr);
-            // Check label -> ptr
-            if (labelToTerminal->at(label) != parentPtr)
+        // case parent is a terminal
+        if (terminalToLabel->contains(parent))
+        {
+            unsigned int label = terminalToLabel->at(parent);
+            // check 'label -> parent' fits to 'parent -> label'
+            if (labelToTerminal->at(label) != parent)
             {
                 std::clog << "Forest: checkTriple: label to terminal incorrect:\n"
-                         "   Node (" << parentPtr << ") -> Label ("<< label <<")\n"
+                         "   Node (" << parent << ") -> Label ("<< label <<")\n"
                          "   Label ("<< label <<") -> Node (" << labelToTerminal->at(label) << ")\n"
                          "   Is this unrequited love?"<< endl;
                 tripleValid = false;
             }
-            // Save smallest terminal in tree
+
+            // update the smallest terminal in tree
             if (label < smallestTerminal)
             {
                 smallestTerminal = label;
             }
-            subtreeLeafs.emplace(parentPtr, label);
+
+            // update
+            subtreeLabels.emplace(parent, label);
         } else
         {
+            // parent has no children, but is not a terminal
             std::clog << "Forest: checkTriple: Leaf has no label:\n"
-                         "   Node (" << parentPtr << ") \n"
+                         "   Node (" << parent << ") \n"
                          "   Maybe he can sign with Sony?"<< endl;
             tripleValid = false;
         }
     }
-    else // Has children
+    else if (left != nullptr && right != nullptr)
     {
-        //Balance
-        if ((node->leftChild == nullptr && node->rightChild != nullptr)||(node->leftChild != nullptr && node->rightChild == nullptr))
-        {
-            std::clog << "Forest: checkTriple: unbalanced Tree:\n"
-                         "   parent (" << parentPtr << ") -> (" << node->leftChild <<") , (" << node->rightChild <<") \n"
-                         "   Parent needs to get active and produce another child."<< endl;
-            tripleValid = false;
-        }
-        const auto fstChildNodePtr = node->leftChild;
-        const auto sndChildNodePtr = node->rightChild;
+        // case parent is an inner node
+        // for clang
+
         // Order
-        if (!fstChildNodePtr->hasSmallestTerminal(sndChildNodePtr))
+        if (right->hasSmallestTerminal(left))
         {
             std::clog << "Forest: checkTriple: unordered Tree:\n"
-                         "   parent (" << parentPtr << ") -> (" << node->leftChild <<") , (" << node->rightChild <<") \n"
+                         "   parent (" << parent << ") -> (" << parent->leftChild <<") , (" << parent->rightChild <<") \n"
                          "   Commander Cody, the time has come. Execute Order 66."<< endl;
             tripleValid = false;
         }
-        // First child
-        // Check parent
-        if (fstChildNodePtr->parent != parentPtr)
+        // left child
+        //cCheck parent
+        if (left->parent != parent)
         {
-            std::clog << "Forest: checkTriple: first child forgot his parent:\n"
+            std::clog << "Forest: checkTriple: left child forgot his parent:\n"
                          "   parent ("
-                      << parentPtr << ") -> (" << node->leftChild
+                      << parent << ") -> (" << left
                       << ") child\n"
                          "   parent ("
-                      << fstChildNodePtr->parent << ") <- (" << node->leftChild
-                      << ") child\n"
-                         "   Why bother raising them if they forget about you?"
-                      << endl;
-            tripleValid = false;
-        }
-        // Check sibling
-        if (fstChildNodePtr->sibling != node->rightChild)
-        {
-            std::clog << "Forest: checkTriple: first child forgot his sibling:\n"
-                         "   parent ("
-                      << parentPtr << ") -> (" << node->leftChild << " and " << node->rightChild
-                      << ") children\n"
-                         "   first child ("
-                      << node->leftChild << ") -> (" << fstChildNodePtr->sibling
-                      << ") sibling"
-                         "   Maybe they had a fight?"
-                      << endl;
-            tripleValid = false;
-        }
-        // Second child
-        // Check parent
-        if (sndChildNodePtr->parent != parentPtr)
-        {
-            std::clog << "Forest: checkTriple: second child forgot his parent:\n"
-                         "   parent ("
-                      << parentPtr << ") -> (" << node->rightChild
-                      << ") child\n"
-                         "   parent ("
-                      << sndChildNodePtr->parent << ") <- (" << node->rightChild
+                      << left->parent << ") <- (" << left
                       << ") child\n"
                          "   Why bother raising them if they forget about you?"
                       << endl;
             tripleValid = false;
         }
-        // Check sibling
-        if (sndChildNodePtr->sibling != node->leftChild)
+        // check sibling
+        if (left->sibling != right)
         {
-            std::clog << "Forest: checkTriple: second child forgot his sibling:\n"
+            std::clog << "Forest: checkTriple: left child forgot his sibling:\n"
                          "   parent ("
-                      << parentPtr << ") -> (" << node->leftChild << " and " << node->rightChild
+                      << parent << ") -> (" << left << " and " << right
                       << ") children\n"
                          "   first child ("
-                      << node->rightChild << ") -> (" << sndChildNodePtr->sibling
+                      << left << ") -> (" << left->sibling
                       << ") sibling"
                          "   Maybe they had a fight?"
                       << endl;
             tripleValid = false;
         }
+        // right child
+        // check parent
+        if (right->parent != parent)
+        {
+            std::clog << "Forest: checkTriple: right child forgot his parent:\n"
+                         "   parent ("
+                      << parent << ") -> (" << right
+                      << ") child\n"
+                         "   parent ("
+                      << right->parent << ") <- (" << right
+                      << ") child\n"
+                         "   Why bother raising them if they forget about you?"
+                      << endl;
+            tripleValid = false;
+        }
+        // check sibling
+        if (right->sibling != left)
+        {
+            std::clog << "Forest: checkTriple: right child forgot his sibling:\n"
+                         "   parent ("
+                      << parent << ") -> (" << left << " and " << right
+                      << ") children\n"
+                         "   first child ("
+                      << right << ") -> (" << right->sibling
+                      << ") sibling"
+                         "   Maybe they had a fight?"
+                      << endl;
+            tripleValid = false;
+        }
+
         // Recursive call with children
-        std::unordered_map<Node*, unsigned int> leftLeafs;
-        std::unordered_map<Node*, unsigned int> rightLeafs;
-        tripleValid &= checkTriple(node->leftChild, leftLeafs, pointers,smallestTerminal) && checkTriple(node->rightChild, rightLeafs, pointers,smallestTerminal);
-        leftLeafs.merge(rightLeafs);
-        subtreeLeafs = leftLeafs; // Collect leafs of subtree
+        std::unordered_map<Node*, unsigned int> leftLabels;
+        std::unordered_map<Node*, unsigned int> rightLabels;
+        tripleValid &= checkTriple(left, leftLabels, nodes,smallestTerminal) &&
+                       checkTriple(right, rightLabels, nodes,smallestTerminal);
+        leftLabels.merge(rightLabels);
+        // collect labels of subtree
+
+        // overwriting subtree labels reference
+        // (there could be stuff from another part of tree, because it's a reference ...
+        // the reference behavior is only used at the initial call not within the recursion)
+        subtreeLabels = leftLabels;
+    }
+    else
+    {
+        // case parent has only one child
+        std::clog << "Forest: checkTriple: unbalanced Tree:\n"
+                     "   parent (" << parent << ") -> (" << parent->leftChild <<") , (" << parent->rightChild <<") \n"
+                     "   Parent needs to get active and produce another child."<< endl;
+        tripleValid = false;
+        // for the sake of completeness, we should also check the subtree of the one child ...
     }
 
 
     // Convert found leafs into uint vector to compare
-    vector <uint64_t> foundTerminals = {0};
-    // Resize if leafs > 64
-    foundTerminals.resize((subtreeLeafs.size() + 63) / 64, 0);
-    for( auto it = subtreeLeafs.begin(); it != subtreeLeafs.end(); ++it ) {
-        const unsigned int label = it->second;
-        const uint64_t one = 1;
-        foundTerminals[(label - 1) / 64]+= (one<<(label - 1) % 64);
+    auto foundTerminals = std::vector<uint64_t>((subtreeLabels.size() + 63) / 64);
+    for (const auto& label : subtreeLabels | views::values)
+    {
+        constexpr uint64_t one = 1;
+        foundTerminals[(label - 1) / 64] += (one<<(label - 1) % 64);
     }
 
     // Compare found terminals with terminals saved in node
-    if (foundTerminals != node->subtreeTerminals)
+    if (foundTerminals != parent->subtreeTerminals)
     {
         std::clog << "Forest: checkTriple: subtreeTerminals list is incorrect:\n"
-                        "   at pointer (" << parentPtr << ") \n"
+                        "   at pointer (" << parent << ") \n"
                         "   Maybe you should fix that? ;)"<< endl;
         tripleValid = false;
     }
@@ -507,15 +519,10 @@ void Forest::sortChildrenAndCollectTerminals()
 
 std::vector<Node*> Forest::maximumCommonSubforestRoots(const Forest& other)
 {
-    // actually: iterate upward, always checking the sibling for identicality and the parent for the same terminals, deleting seen labels from the ones left to visit
-    // vorinitialisierung von blattknoten; jeder durchlauf kreiert seinen sibling- und elternknoten; dabei sibling nur, wenn nicht besucht? ach nee, das ist was anderes. wenn nichtterminal? wird sowieso rekursiv/iterativ, also abbruchbedingung einfach? hilfsfunktion, die den gesamten sibling-subtree baut und den sibling-index zurückgibt (bei blatt halt nur rückgabe des index) bei leaf-siblings retrieval über label=index?
-    // naur, just steal it from f1: iterate upward from each unvisited leaf, always checking the sibling subtree for identicality, and once a root for the leaf is found, do the label-index relation? should be doable via the parent forests map. make a new nodes vector after scanning the whole parent forest and exclude->reindex
+    // Find and return vector of node pointers (for this tree) corresponding to the root(s) of the maximum common sub-X-forest.
+    // To do this, in both trees simultaneously iterate upward from each pair of leaves with identical label until the checked nodes' subtrees differ
     vector<Node*> newRootPtrs; // pointers of new root nodes in t1
     newRootPtrs.reserve(labelToTerminal->size());
-
-    // maps new forests node index to original forest indices
-    unordered_map<int, int> t1Index;
-    unordered_map<int, int> t2Index;
 
     unordered_set<unsigned int> visitedLeaves;
 

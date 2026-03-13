@@ -7,12 +7,15 @@
 namespace solver
 {
 
+/// \brief This is the base class for a solver of the MAF problem.
 class AbstractSolver
 {
   protected:
     /// \brief the instance to solve
     std::shared_ptr<graph::Instance> instance;
 
+    /// \brief constructor
+    /// \param instance to solve
     AbstractSolver(const std::shared_ptr<graph::Instance>& instance) : instance(instance) {};
   public:
     virtual ~AbstractSolver() = default;
@@ -20,11 +23,13 @@ class AbstractSolver
     /// \brief solve the instance
     virtual std::shared_ptr<graph::Forest> solve() = 0;
 
-    /// \brief \c const reference to instance
+    /// \brief reference to instance
+    /// \property Instance
     [[nodiscard, maybe_unused]]
     graph::Instance& Instance();
 
     /// \brief \c const reference to instance
+    /// \property Instance
     [[nodiscard, maybe_unused]]
     const graph::Instance& Instance() const;
 };

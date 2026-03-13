@@ -8,11 +8,11 @@ solver::SingleVertexTreePropagationRule::SingleVertexTreePropagationRule(
         labelsToBeReduced(labelsToBeReduced)
 {}
 
-int solver::SingleVertexTreePropagationRule::apply()
+solver::RuleReturnCode solver::SingleVertexTreePropagationRule::apply()
 {
     if (this->isApplied)
     {
-        throw std::invalid_argument("SingleVertexTreePropagationRule : apply : rule was already applied");
+        throw std::invalid_argument("SingleVertexTreePropagationRule : apply : rule is already applied");
     }
     isApplied = true;
 
@@ -29,7 +29,7 @@ int solver::SingleVertexTreePropagationRule::apply()
         }
     }
 
-    return 0;
+    return RuleReturnCode::Continue;
 }
 
 void solver::SingleVertexTreePropagationRule::unapply()

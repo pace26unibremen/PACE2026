@@ -12,11 +12,11 @@ solver::PairEqualRule::PairEqualRule(const std::shared_ptr<graph::Instance>& ins
 }
 
 
-int solver::PairEqualRule::apply()
+solver::RuleReturnCode solver::PairEqualRule::apply()
 {
     if (this->isApplied)
     {
-        throw std::invalid_argument("PairEqualRule : apply : rule is not applied");
+        throw std::invalid_argument("PairEqualRule : apply : rule is already applied");
     }
     isApplied = true;
 
@@ -26,7 +26,7 @@ int solver::PairEqualRule::apply()
         changes.top().doAction();
     }
 
-    return 0;
+    return RuleReturnCode::Continue;
 }
 
 void solver::PairEqualRule::unapply()
@@ -57,7 +57,7 @@ solver::PairEqualRule::isApplicable(const std::shared_ptr<graph::Instance>& inst
     auto f = instance->at(0);
     for (const auto& [label, node] : f->LabelToTerminal())
     {
-        if (node->sibling != nullptr and f->Terminals().contains(node->sibling))
+        if (node->sibling != nullptr and f->TerminalToLabel().contains(node->sibling))
         {
             label1 = label;
             label2 = node->sibling->smallestTerminal();
