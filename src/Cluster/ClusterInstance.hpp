@@ -7,7 +7,7 @@
 
 #include "../Graph/Instance.hpp"
 #include "../Graph/Node.hpp"
-#include "InteriorTwinRelation.hpp"
+#include "TwinRelation.hpp"
 
 namespace cluster
 
@@ -45,7 +45,7 @@ class ClusterInstance
     /// \param twinRelation The Twin-Map to get the equivalence class of a node to discern where to split each forest
     /// of the instance.
     /// \param clusterPoints The cluster points of the instance we want to split up.
-    ClusterInstance(const std::shared_ptr<graph::Instance>& instance, cluster::InteriorTwinRelation* twinRelation, std::vector<graph::Node*>* clusterPoints);
+    ClusterInstance(const std::shared_ptr<graph::Instance>& instance, cluster::TwinRelation* twinRelation, std::vector<graph::Node*>* clusterPoints);
 
     static ClusterInstance wrappedConstructor(const std::shared_ptr<graph::Instance>& instance);
     /// \brief This function separates a cluster forest from their parent/outer tree.

@@ -14,7 +14,7 @@ namespace cluster
 RecursiveClusterer::RecursiveClusterer(const std::shared_ptr<graph::Instance>& instance) {
 
 
-    cluster::InteriorTwinRelation interiorTwins = cluster::InteriorTwinRelation(instance);
+    cluster::TwinRelation interiorTwins = cluster::TwinRelation(instance);
     cluster::ClusterPointGenerator generator = cluster::ClusterPointGenerator(instance, &interiorTwins);
     std::vector<graph::Node*> clusterPoints = generator.clusterPoints;
     cluster::ClusterInstance clusterInstance = cluster::ClusterInstance(instance, &interiorTwins, &clusterPoints);
@@ -46,7 +46,7 @@ void RecursiveClusterer::recurseClusters(const std::shared_ptr<std::vector<clust
 
         for (const std::shared_ptr<graph::Instance>& clusterForest : *clusterInstance.getVectorOfInstances())
         {
-            cluster::InteriorTwinRelation interiorTwins = cluster::InteriorTwinRelation(clusterForest);
+            cluster::TwinRelation interiorTwins = cluster::TwinRelation(clusterForest);
             cluster::ClusterPointGenerator generator = cluster::ClusterPointGenerator(clusterForest, &interiorTwins);
             std::vector<graph::Node*> clusterPoints = generator.clusterPoints;
             cluster::ClusterInstance newestClusterInstance = cluster::ClusterInstance(clusterForest, &interiorTwins, &clusterPoints);

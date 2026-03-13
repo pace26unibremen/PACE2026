@@ -4,12 +4,12 @@
 
 #include "ClusterInstance.hpp"
 
-#include "InteriorTwinRelation.hpp"
+#include "TwinRelation.hpp"
 #include "iostream"
 namespace cluster
 {
 
-ClusterInstance::ClusterInstance(const std::shared_ptr<graph::Instance>& instance, cluster::InteriorTwinRelation* twinRelation, std::vector<graph::Node*>* clusterPoints)
+ClusterInstance::ClusterInstance(const std::shared_ptr<graph::Instance>& instance, cluster::TwinRelation* twinRelation, std::vector<graph::Node*>* clusterPoints)
 {
 
     std::unordered_map<graph::Node*, std::shared_ptr<graph::Forest>> rootToForest = std::unordered_map<graph::Node*, std::shared_ptr<graph::Forest>> ();

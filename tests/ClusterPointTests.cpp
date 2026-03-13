@@ -5,14 +5,14 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "../src/Cluster/ClusterPointGenerator.hpp"
-#include "../src/Cluster/InteriorTwinRelation.hpp"
 #include "../src/Cluster/RecursiveClusterer.hpp"
+#include "../src/Cluster/TwinRelation.hpp"
 #include "../src/Graph/Forest.hpp"
 #include "../src/Graph/Instance.hpp"
 #include "functional"
 #include "iostream"
 
-int labelMismatchTestFunction(std::shared_ptr<graph::Instance>*  instance, cluster::InteriorTwinRelation* interiorTwins,
+int labelMismatchTestFunction(std::shared_ptr<graph::Instance>*  instance, cluster::TwinRelation* interiorTwins,
                               cluster::ClusterPointGenerator* generator)
 {
     int labelMismatches = 0;
@@ -87,7 +87,7 @@ int labelMismatchTestFunction(std::shared_ptr<graph::Instance>*  instance, clust
     return labelMismatches;
 }
 
-size_t rootIsClusterPoint(std::shared_ptr<graph::Instance>*  instance, cluster::InteriorTwinRelation* interiorTwins,
+size_t rootIsClusterPoint(std::shared_ptr<graph::Instance>*  instance, cluster::TwinRelation* interiorTwins,
                           cluster::ClusterPointGenerator* generator)
 {
     std::vector<graph::Node*> clusterPoints = generator->clusterPoints;
@@ -135,7 +135,7 @@ TEST_CASE("ClusterLabelEquivalence")
 
 
         std::shared_ptr<graph::Instance>  instance = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_100_11_stressTest.tree");
-        cluster::InteriorTwinRelation interiorTwins = cluster::InteriorTwinRelation(instance);
+        cluster::TwinRelation interiorTwins = cluster::TwinRelation(instance);
         cluster::ClusterPointGenerator generator = cluster::ClusterPointGenerator(instance, &interiorTwins);
 
         int labelMismatches = labelMismatchTestFunction(&instance, &interiorTwins, &generator);
@@ -158,7 +158,7 @@ TEST_CASE("RootTwinEquivalence")
     {
         std::shared_ptr<graph::Instance>  instance = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_2_200_tripleCluster.tree");
         
-        cluster::InteriorTwinRelation interiorTwins = cluster::InteriorTwinRelation(instance);
+        cluster::TwinRelation interiorTwins = cluster::TwinRelation(instance);
         cluster::ClusterPointGenerator generator = cluster::ClusterPointGenerator(instance, &interiorTwins);
 
         size_t rootClassSize = rootIsClusterPoint(&instance, &interiorTwins, &generator);
@@ -177,7 +177,7 @@ TEST_CASE("RecursiveClusterI")
     {
         std::shared_ptr<graph::Instance>  instance = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_2_200_tripleCluster.tree");
 
-        cluster::InteriorTwinRelation interiorTwins = cluster::InteriorTwinRelation(instance);
+        cluster::TwinRelation interiorTwins = cluster::TwinRelation(instance);
         cluster::ClusterPointGenerator generator = cluster::ClusterPointGenerator(instance, &interiorTwins);
         std::vector<graph::Node*> clusterPoints = generator.clusterPoints;
 
@@ -210,7 +210,7 @@ TEST_CASE("RecursiveClusterI")
                         clusterInstance.decouple();
 
 
-                        cluster::InteriorTwinRelation interiorTwinsCluster = cluster::InteriorTwinRelation(subInstance);
+                        cluster::TwinRelation interiorTwinsCluster = cluster::TwinRelation(subInstance);
                         cluster::ClusterPointGenerator generatorCluster = cluster::ClusterPointGenerator(subInstance, &interiorTwins);
 
                         labelMismatches  += labelMismatchTestFunction(&subInstance, &interiorTwinsCluster, &generatorCluster);

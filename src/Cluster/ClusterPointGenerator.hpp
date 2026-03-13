@@ -5,7 +5,7 @@
 #ifndef PACE2026_CLUSTERPOINTGENERATOR_HPP
 #define PACE2026_CLUSTERPOINTGENERATOR_HPP
 
-#include "InteriorTwinRelation.hpp"
+#include "TwinRelation.hpp"
 namespace cluster {
 
 
@@ -15,13 +15,13 @@ namespace cluster {
 class ClusterPointGenerator
 {
   private:
-    cluster::InteriorTwinRelation* twinRelation;
+    cluster::TwinRelation* twinRelation;
     std::unordered_map<graph::Node*, std::shared_ptr<graph::Forest>> rootToForest = std::unordered_map<graph::Node*, std::shared_ptr<graph::Forest>> ();
 
 
     void generateClusterPoints(graph::Node* node);
 
-    int checkHeightOfNode(graph::Node* node);
+    static int checkHeightOfNode(graph::Node* node);
 
     bool trueEquivalenceClass(graph::Node* node);
 
@@ -35,7 +35,7 @@ class ClusterPointGenerator
     /// \param twinRelation The table that links each note to their corresponding twins.
     /// \note A node is a cluster point iff they're: not the root, not a leaf, have both children
     /// & are in a true equivalence class.
-    ClusterPointGenerator(const std::shared_ptr<graph::Instance>& instance, cluster::InteriorTwinRelation* twinRelation);
+    ClusterPointGenerator(const std::shared_ptr<graph::Instance>& instance, cluster::TwinRelation* twinRelation);
 
     /// \brief This static function returns an instance of the ClusterPointGenerator without the hassle of having to
     /// generate the Twin-Table object first. The table will be generated internally and discarded after usage, which

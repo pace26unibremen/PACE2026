@@ -3,158 +3,96 @@
 //
 
 #include "ClusterPointGenerator.hpp"
-#include "functional"
-#include "iostream"
 
 namespace cluster
 {
 
 void ClusterPointGenerator::generateClusterPoints(graph::Node* node) {
-
+    // Recurse
     if (node->leftChild) generateClusterPoints(node->leftChild);
     if (node->rightChild) generateClusterPoints(node->rightChild);
-
-
+    // Root / Non-Forking / Child Check
     if (node->parent == nullptr) return;
     if (node->leftChild == nullptr or node->rightChild == nullptr) return;
-    int nodeHeight = checkHeightOfNode(node);
     // We're very strict about potential cluster points having the same depth within the trees.
     // Actually, doing this may save a lot of comparisons later.
+    int nodeHeight = checkHeightOfNode(node);
     for (const auto& twin : twinRelation->nodeToTwins[node])
         if (nodeHeight != checkHeightOfNode(twin)) return;
+    // Heavy Invariant Checks (Same Leaf Set for class / True Twin Class)
+    if (not leafEquivalent(node)) return;
+    if (not trueEquivalenceClass(node)) return;
 
-    if (not trueEquivalenceClass(node) or not leafEquivalent(node)) return;
-
-
-
-
-
-
+    // No dealbreakers => Cluster Point.
     clusterPoints.push_back(node);
-
-
-
 }
 
 
-ClusterPointGenerator::ClusterPointGenerator(const std::shared_ptr<graph::Instance>& instance, cluster::InteriorTwinRelation* twinRelation) {
+ClusterPointGenerator::ClusterPointGenerator(const std::shared_ptr<graph::Instance>& instance, cluster::TwinRelation* twinRelation) {
     this->twinRelation = twinRelation;
 
     for (const std::shared_ptr<graph::Forest>& forest : *instance)
-    {
         rootToForest[forest->Roots().front()] = forest;
 
-    }
-
-
-
     generateClusterPoints(instance->front()->Roots().front());
-
-
 }
+
+
 int ClusterPointGenerator::checkHeightOfNode(graph::Node* node)
 {
     int distanceToRoot = 0;
     graph::Node* bufferNode = node;
 
-    while (bufferNode->parent != nullptr)
-    {
+    while ((bufferNode = bufferNode->parent) != nullptr)
         distanceToRoot += 1;
-        bufferNode = bufferNode->parent;
-    }
 
     return distanceToRoot;
 }
+
+
 bool ClusterPointGenerator::trueEquivalenceClass(graph::Node* node)
 {
-    std::set<graph::Node*> checkSet = std::set<graph::Node*>();
+    // Generate the reference set: The cluster point node and its twins.
+    std::set<graph::Node*> referenceSet = std::set<graph::Node*>();
+    referenceSet.insert(node);
+    auto setOfTwins = twinRelation->nodeToTwins[node];
+    for (const auto& twin : setOfTwins) referenceSet.insert(twin);
 
-    auto classOfTwins = twinRelation->nodeToTwins[node];
+    // Generate comparison set: The union of the twins of the twins, for each twin of the cluster point.
+    std::set<graph::Node*> comparisonSet = std::set<graph::Node*>();
+    comparisonSet.insert(node);
 
-
-    std::set<graph::Node*> checkSet1 = std::set<graph::Node*>();
-    checkSet1.insert(node);
-    for (const auto& item : classOfTwins)
+    for (const auto& twin : setOfTwins)
     {
-        checkSet1.insert(item);
+        comparisonSet.insert(twin);
+        for (const auto& twinOfTwin : twinRelation->nodeToTwins[twin])
+            comparisonSet.insert(twinOfTwin);
     }
 
-    checkSet.insert(node);
-
-    for (const auto& twin : classOfTwins)
-    {
-        checkSet.insert(twin);
-
-        auto classOfTwinsOfTwins = twinRelation->nodeToTwins[twin];
-
-        for (const auto& twinOfTwin : classOfTwinsOfTwins)
-        {
-            checkSet.insert(twinOfTwin);
-        }
-    }
-
-    bool sameSet = checkSet == checkSet1;
-
-
-
-    return sameSet;
-    //return checkSet.size() == twinRelation->nodeToTwins[node].size()+keyCompensator;
-
-
-
-
+    return referenceSet == comparisonSet;
 }
+
+
 bool ClusterPointGenerator::leafEquivalent(graph::Node* node)
 {
-
-    std::function<void(std::set<unsigned int>*, graph::Node*, std::shared_ptr<graph::Forest> forest)> fetchLabels =
-        [&](std::set<unsigned int>* set, graph::Node* node, const std::shared_ptr<graph::Forest>& forest) -> void {
-
-        if (node->leftChild == nullptr && node->rightChild == nullptr)
-            set->insert(forest->TerminalToLabel().at(node));
-
-        if (node->leftChild) fetchLabels(set, node->leftChild, forest);
-        if (node->rightChild) fetchLabels(set, node->rightChild, forest);
-    };
-
-
-    std::function<std::shared_ptr<graph::Forest>(graph::Node*)> getForestOfNode = [&](graph::Node* node) -> std::shared_ptr<graph::Forest>{
-        graph::Node* buffer = node;
-
-        while (buffer->parent != nullptr)
-        {
-            buffer = buffer->parent;
-        }
-        return rootToForest[buffer];
-
-    };
-
-
-    std::set<unsigned int> referenceSet = std::set<unsigned int>();
-
-    auto forest = getForestOfNode(node);
-    if (forest == nullptr) return false;
-    fetchLabels(&referenceSet, node, forest);
+    bool isClass = true;
 
     auto classOfTwins = twinRelation->nodeToTwins[node];
-
-
-    for (graph::Node* twin : classOfTwins)
+    for (const auto& twin : classOfTwins)
     {
-        std::set<unsigned int> comparatorSet = std::set<unsigned int>();
-        auto twinForest(getForestOfNode(twin));
-        if (twinForest == nullptr) return false;
-        fetchLabels(&comparatorSet, twin, twinForest);
-        if (referenceSet != comparatorSet) return false;
+        isClass &= node->hasSameTerminals(twin);
+
+        for (const auto& twinOfTwin : twinRelation->nodeToTwins[twin])
+            isClass &= node->hasSameTerminals(twinOfTwin);
     }
 
-    return true;
-
-
+    return isClass;
 }
+
+
 ClusterPointGenerator ClusterPointGenerator::wrappedConstructor(const std::shared_ptr<graph::Instance>& instance)
 {
-    auto temporaryTable = cluster::InteriorTwinRelation(instance);
+    auto temporaryTable = cluster::TwinRelation(instance);
     return ClusterPointGenerator(instance, &temporaryTable);
 }
 

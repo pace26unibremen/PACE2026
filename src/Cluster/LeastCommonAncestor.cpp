@@ -14,20 +14,13 @@ LeastCommonAncestor::LeastCommonAncestor(std::shared_ptr<graph::Forest>& forestP
     forest = forestPointer;
     graph::Node* rootNode = forest->Roots().front();
 
-    initializePreorderNumbers(rootNode);
     generatePreorderNumbers(rootNode, 0);
 
     eulerTour(rootNode, 0);
     precomputeRangeMinimumQuery();
 }
 
-void LeastCommonAncestor::initializePreorderNumbers(graph::Node* node)
-{
 
-    nodesToPreorderNumber.emplace(node, uninitializedSlot);
-    if (auto leftChild = node->leftChild)     initializePreorderNumbers(leftChild);
-    if (auto rightChild = node->rightChild)         initializePreorderNumbers(rightChild);
-}
 
 
 int LeastCommonAncestor::generatePreorderNumbers(graph::Node* node, int preorderNumber)
@@ -97,6 +90,7 @@ void LeastCommonAncestor::precomputeRangeMinimumQuery()
 
 int LeastCommonAncestor::computeRangeMinimumQuery(unsigned long i, unsigned long j)
 {
+    // This scurrilous construction is a remnant of the reimplementation of rSPR. It will be changed in the future.
 
     if (i == j)
         return preorderNumbers[i];
@@ -127,7 +121,7 @@ int LeastCommonAncestor::computeRangeMinimumQuery(unsigned long i, unsigned long
     }
 
     if (rmq1 < rmq2)
-        return rmq2;
+        return rmq1;
 
     return rmq2;
 }
@@ -137,7 +131,6 @@ graph::Node* LeastCommonAncestor::getLeastCommonAncestor(int preorderNumberA, in
 {
     int preorderA = preorderToInternalPreorder[preorderNumberA];
     int preorderB = preorderToInternalPreorder[preorderNumberB];
-
 
 
     int leastCommonAncestorIndex;
@@ -153,9 +146,37 @@ graph::Node* LeastCommonAncestor::getLeastCommonAncestor(int preorderNumberA, in
 
     return preorderToNode[leastCommonAncestorIndex];
 }
+
+
 std::unordered_map<graph::Node*, int>* LeastCommonAncestor::getNodesToPreorderNumber()
 {
     return &nodesToPreorderNumber;
 }
+
+
+graph::Node* LeastCommonAncestor::getLeastCommonAncestor(graph::Node* firstNode, graph::Node* secondNode)
+{
+
+    if (not nodesToPreorderNumber.contains(firstNode) or not nodesToPreorderNumber.contains(secondNode))
+        throw std::invalid_argument("One of the nodes is not contained within this structure. "
+                                    "Did you accidentally pass a node from another tree?");
+
+
+    int preorderA = nodesToPreorderNumber[firstNode];
+    int preorderB = nodesToPreorderNumber[secondNode];
+
+
+    int leastCommonAncestorIndex;
+
+    if (preorderA <= preorderB)
+    {
+        leastCommonAncestorIndex = computeRangeMinimumQuery(firstOccurences[preorderA], firstOccurences[preorderB]);
+    }
+    else
+    {
+        leastCommonAncestorIndex = computeRangeMinimumQuery(firstOccurences[preorderB], firstOccurences[preorderA]);
+    }
+
+    return preorderToNode[leastCommonAncestorIndex];}
 
 }

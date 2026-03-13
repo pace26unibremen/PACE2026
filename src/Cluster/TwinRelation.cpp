@@ -2,39 +2,17 @@
 // Created by user on 3/7/26.
 //
 
-#include "InteriorTwinRelation.hpp"
+#include "TwinRelation.hpp"
 
-#include "LabelTwinRelation.hpp"
 #include "LeastCommonAncestor.hpp"
 
-#include <iostream>
 
 namespace cluster
 {
 
+TwinRelation::TwinRelation(const std::shared_ptr<graph::Instance>& instance) {
 
-InteriorTwinRelation::InteriorTwinRelation(const std::shared_ptr<graph::Instance>& instance) {
-
-
-    cluster::LabelTwinRelation labelTwins = cluster::LabelTwinRelation(instance);
-
-    auto map = labelTwins.getTwins();
-
-    for (const auto& pair : *map)
-    {
-        auto node = pair.first;
-        auto list = pair.second;
-
-        for (const auto& item : list)
-        {
-            if (node == item) continue;
-            nodeToTwins[node].insert(item);
-        }
-
-
-    }
-
-
+    initializeLeafTable(instance);
 
     roots = std::vector<graph::Node*>();
     LCAs = std::vector<std::shared_ptr<cluster::LeastCommonAncestor>>();
@@ -49,9 +27,7 @@ InteriorTwinRelation::InteriorTwinRelation(const std::shared_ptr<graph::Instance
         LCAs.push_back(LCA);
     }
 
-    // This may have accidentally escalated the algorithms run time from linear to n^2 but if you can see whats going
-    // on here with your inner eye it's pretty fucking beautiful.
-    // This will likely be optimized back into linear time.
+    // This likely escalates runtime from linear to square. However, this is likely to be unavoidable.
 
     for (int i = 0; i < roots.size(); ++i)
     {
@@ -68,15 +44,15 @@ InteriorTwinRelation::InteriorTwinRelation(const std::shared_ptr<graph::Instance
 }
 
 
-void InteriorTwinRelation::generateInteriorTwinRelation(graph::Node *givenNode,
+void TwinRelation::generateInteriorTwinRelation(graph::Node *givenNode,
                                                         const std::shared_ptr<cluster::LeastCommonAncestor>& homeLCA,
                                                         const std::shared_ptr<cluster::LeastCommonAncestor>& foreignLCA) {
     if (roots.size() != LCAs.size())
     {
-        std::cerr << "Something has gone fatally wrong within generateInteriorTwinRelation" << std::endl;
-        return;
+        throw std::runtime_error("The size of the Roots and the LCAs is different, implying initializing error."
+                                 "Is this run from within a reduction rule?.");
     }
-
+    // This scurrilous construction is a remnant of the reimplementation of rSPR. It will be changed in the future.
     std::vector<graph::Node*> children = std::vector<graph::Node*>();
 
     if (auto child = givenNode->leftChild) children.push_back(child);
@@ -87,7 +63,6 @@ void InteriorTwinRelation::generateInteriorTwinRelation(graph::Node *givenNode,
     unsigned int index = 0;
 
     generateInteriorTwinRelation(children.at(index), homeLCA, foreignLCA);
-
 
     nodeToTwinBuffer[givenNode] = nodeToTwinBuffer[children.at(index)];
 
@@ -102,34 +77,43 @@ void InteriorTwinRelation::generateInteriorTwinRelation(graph::Node *givenNode,
             );
         nodeToTwinBuffer[givenNode] = twin;
     }
-
-
-
-
 }
-void InteriorTwinRelation::initializeTwinVectors(graph::Node* root) {
-    if (auto leftChild = root->leftChild)
-    {
-        std::vector<graph::Node*> twinListLeft = std::vector<graph::Node*>();
-        //nodeToTwins.emplace(leftChild,twinListLeft);
-        initializeTwinVectors(leftChild);
-    }
-
-    if (auto rightChild = root->rightChild)
-    {
-        std::vector<graph::Node*> twinListRight = std::vector<graph::Node*>();
-        //nodeToTwins.emplace(rightChild,twinListRight);
-        initializeTwinVectors(rightChild);
-    }
 
 
-}
-void InteriorTwinRelation::fuseTwinBufferToSets() {
+
+
+
+void TwinRelation::fuseTwinBufferToSets() {
     for (const auto& pair : nodeToTwinBuffer)
-    {
         nodeToTwins[pair.first].insert(pair.second);
-    }
+
     nodeToTwinBuffer.clear();
 }
+
+void TwinRelation::initializeLeafTable(const std::shared_ptr<graph::Instance>& instance) {
+
+    std::unordered_map<unsigned int, graph::Node*> labelToTerminal = instance->front()->LabelToTerminal();
+    for (const auto keyValue : labelToTerminal )
+    {
+        auto label = keyValue.first;
+
+        // This the object that holds all Node Pointers for a given Taxa.
+        std::set<graph::Node*> allNodesFromLabel = std::set<graph::Node*>();
+
+        // For a given label we collect all the nodes that represent it.
+        for (const auto &forest : *instance)
+            allNodesFromLabel.insert(forest->LabelToTerminal().at(label));
+
+
+        for (auto key : allNodesFromLabel)
+        {
+            std::set<graph::Node*> allOtherNodes = allNodesFromLabel;
+            allOtherNodes.erase(key);
+            nodeToTwins[key] = allOtherNodes;
+        }
+
+    }
+}
+
 
 }

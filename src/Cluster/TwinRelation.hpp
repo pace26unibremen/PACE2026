@@ -2,8 +2,8 @@
 // Created by user on 3/7/26.
 //
 
-#ifndef PACE2026_INTERIORTWINRELATION_HPP
-#define PACE2026_INTERIORTWINRELATION_HPP
+#ifndef PACE2026_TWINRELATION_HPP
+#define PACE2026_TWINRELATION_HPP
 
 #include "../Graph/Instance.hpp"
 #include "LeastCommonAncestor.hpp"
@@ -11,7 +11,9 @@
 namespace cluster
 {
 
-class InteriorTwinRelation
+/// \brief This class generates a look up table that links each node to their twins. It is necessary for quick cluster
+/// point generation.
+class TwinRelation
 {
 
   private:
@@ -23,7 +25,8 @@ class InteriorTwinRelation
 
     void generateInteriorTwinRelation(graph::Node *givenNode, const std::shared_ptr<cluster::LeastCommonAncestor>& homeLCA , const std::shared_ptr<cluster::LeastCommonAncestor>& foreignLCA);
 
-    void initializeTwinVectors(graph::Node* root);
+
+    void initializeLeafTable(const std::shared_ptr<graph::Instance>& instance);
 
     void fuseTwinBufferToSets();
 
@@ -32,7 +35,7 @@ class InteriorTwinRelation
     /// \brief Returns a pointer to a map which maps each node to their twins.
     /// This list also encompasses the twins. Be careful, the size of a leaf-twin set is larger than an interior node
     /// twin set.
-    explicit InteriorTwinRelation(const std::shared_ptr<graph::Instance>& instance);
+    explicit TwinRelation(const std::shared_ptr<graph::Instance>& instance);
 
     /// \brief Map that maps each node of the entire instance to their corresponding twins. You should be enormously
     /// careful when using this map, because not all entries are true equivalence classes.
@@ -44,4 +47,4 @@ class InteriorTwinRelation
 
 }
 
-#endif  //PACE2026_INTERIORTWINRELATION_HPP
+#endif  //PACE2026_TWINRELATION_HPP
