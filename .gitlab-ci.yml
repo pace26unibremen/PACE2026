@@ -425,7 +425,7 @@ run_full_benchmark:
     STRIDE_TIMEOUT: 900
     STRIDE_GRACE: 10
     STRIDE_RUN_NAME: "${CI_COMMIT_TAG}_full"
-  rules: *release-rules
+  <<: *release-rules
 
 run_exact-track_benchmark:
   extends: .run_stride_benchmark_template
@@ -435,4 +435,4 @@ run_exact-track_benchmark:
     STRIDE_TIMEOUT: 1800
     STRIDE_GRACE: 10
     STRIDE_RUN_NAME: "${CI_COMMIT_TAG}_exact"
-  rules: *release-rules
+  <<: *release-rules
