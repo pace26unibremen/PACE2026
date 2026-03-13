@@ -380,7 +380,7 @@ variables:
         cd hpc_transfer
         chmod +x *.sh
         chmod +x *.slurm
-        JOB_ID=$(sbatch run_stride.slurm | awk '{print $4}')
+        JOB_ID=$(/usr/bin/sbatch run_stride.slurm | awk '{print $4}')
         cd ..
         echo "$JOB_ID" > last_job.id
         echo "Submitted job $JOB_ID"
