@@ -341,12 +341,11 @@ variables:
       STRIDE_INSTANCE_ORDER="nodes-trees-asc"
       STRIDE_RUN_NAME="$STRIDE_RUN_NAME"
       STRIDE_OPTIMAL=true
-      # Add any/all from --help
       ENV
     - cp pace26stride/target/x86_64-unknown-linux-musl/smaller-release/stride hpc_transfer/
     - cp build/src/startSolver hpc_transfer/
     - cp res/instances/"$INSTANCES_LST" hpc_transfer/instances.lst
-    - cp gitlab-ci/slurm/"$SLURM_SCRIPT"  hpc_transfer/
+    - cp gitlab-ci/slurm/"$SLURM_SCRIPT"  hpc_transfer/run_stride.slurm
     - cp gitlab-ci/bash/*.sh hpc_transfer/
     - tar czf hpc_payload.tgz hpc_transfer
 
@@ -380,7 +379,8 @@ variables:
         # Now submit the job
         cd hpc_transfer
         chmod +x *.sh
-        JOB_ID=$(sbatch $SLURM_SCRIPT | awk '{print $4}')
+        chmod +x *.slurm
+        JOB_ID=$(sbatch run_stride.slurm | awk '{print $4}')
         cd ..
         echo "$JOB_ID" > last_job.id
         echo "Submitted job $JOB_ID"
