@@ -4,8 +4,8 @@
 #include <catch2/benchmark/catch_benchmark.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include "../src/Cluster/ClusterInstance.hpp"
 #include "../src/Cluster/ClusterPointGenerator.hpp"
-#include "../src/Cluster/RecursiveClusterer.hpp"
 #include "../src/Cluster/TwinRelation.hpp"
 #include "../src/Graph/Forest.hpp"
 #include "../src/Graph/Instance.hpp"
@@ -181,6 +181,9 @@ TEST_CASE("RecursiveClusterI")
         cluster::ClusterPointGenerator generator = cluster::ClusterPointGenerator(instance, &interiorTwins);
         std::vector<graph::Node*> clusterPoints = generator.clusterPoints;
 
+        cluster::ClusterInstance clusterInstance = cluster::ClusterInstance(instance, &interiorTwins, &clusterPoints);
+
+
         int labelMismatches = 0;
         int rootClusterClassErrors = 0;
 
@@ -188,47 +191,23 @@ TEST_CASE("RecursiveClusterI")
         if  (rootIsClusterPoint(&instance, &interiorTwins, &generator) != instance->size()) rootClusterClassErrors += 1;
 
 
-        auto recursiveClusterer = cluster::RecursiveClusterer(instance);
-        auto instanceStack = recursiveClusterer.instanceStack;
 
-        while (!instanceStack.empty())
+        for (std::shared_ptr<std::vector<std::shared_ptr<graph::Forest>>> subInstance : *clusterInstance.getVectorOfInstances())
         {
-            auto clusterInstances = instanceStack.top();
+            // The test SEGFAULTS when you don't properly decouple and do stuff so I think it's working lmfao
+                clusterInstance.decouple();
+                cluster::TwinRelation interiorTwinsCluster = cluster::TwinRelation(subInstance);
+                cluster::ClusterPointGenerator generatorCluster = cluster::ClusterPointGenerator(subInstance, &interiorTwins);
 
-            for (cluster::ClusterInstance& clusterInstance : *clusterInstances)
-            {
-                for (const auto& lowestCurrentInstance : *clusterInstance.getVectorOfInstances())
-                {
+                labelMismatches  += labelMismatchTestFunction(&subInstance, &interiorTwinsCluster, &generatorCluster);
+                size_t rootClassSize = rootIsClusterPoint(&subInstance, &interiorTwinsCluster, &generatorCluster);
 
-                    std::shared_ptr<
-                        std::vector<std::shared_ptr<graph::Instance>>
-                        > vectorOfInstances = clusterInstance.getVectorOfInstances();
+                if (rootClassSize != subInstance->size()) rootClusterClassErrors += 1;
 
-                    for (auto subInstance : *vectorOfInstances)
-                    {
+                clusterInstance.couple();
 
-                        clusterInstance.decouple();
-
-
-                        cluster::TwinRelation interiorTwinsCluster = cluster::TwinRelation(subInstance);
-                        cluster::ClusterPointGenerator generatorCluster = cluster::ClusterPointGenerator(subInstance, &interiorTwins);
-
-                        labelMismatches  += labelMismatchTestFunction(&subInstance, &interiorTwinsCluster, &generatorCluster);
-                        size_t rootClassSize = rootIsClusterPoint(&subInstance, &interiorTwinsCluster, &generatorCluster);
-
-                        if (rootClassSize != subInstance->size()) rootClusterClassErrors += 1;
-
-
-                        clusterInstance.couple();
-
-                    }
-
-
-                }
-
-            }
-            instanceStack.pop();
         }
+
 
         if (rootClusterClassErrors != 0) std::cerr << "We've " << rootClusterClassErrors << " mismatching roots of clusters." << std::endl;
         if (labelMismatches != 0) std::cerr << "We've " << labelMismatches << " mismatching labels of clusters." << std::endl;
