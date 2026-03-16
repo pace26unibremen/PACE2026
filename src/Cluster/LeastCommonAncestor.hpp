@@ -27,8 +27,8 @@ class LeastCommonAncestor
       std::vector<int> levelOfEulerTours;
       std::vector<int> firstOccurences;
 
-      std::unordered_map<int,int> preorderToInternalPreorder = std::unordered_map<int,int>();
-      std::vector<graph::Node *> preorderToNode;
+      std::vector<int> preorderToInternalPreorder = std::vector<int>();
+      std::vector<graph::Node*> preorderToNode;
       std::vector<std::vector<int> > RangeMinimumQuery;
 
       int generatePreorderNumbers(graph::Node* node, int preorderNumber);

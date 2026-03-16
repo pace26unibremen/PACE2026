@@ -247,3 +247,116 @@ TEST_CASE("RecursiveClusterI")
 // Or: Can a cluster of one run be a subset of another cluster within the same run of generating cluster points?
 // This may be done by iterating through each cluster point and the corresponding twin trees, though the take will
 // likely take ages to compute, whereas this property (whether it hold or not) may have important semantic implication.
+
+
+// Test Question: Let A and B be nodes: Does LCA(A,B) = LCA(B,A) hold true?
+TEST_CASE("LeastCommonAncestorSymmetry")
+{
+    SECTION("Check if the fetching of LCA Nodes is symmmetric.")
+    {
+
+        std::function<graph::Node*(graph::Node*, graph::Node*)> naiveLCA =
+            [&](graph::Node* nodeA, graph::Node* nodeB) -> graph::Node* {
+
+            std::set<graph::Node*> traversedPoints = std::set<graph::Node*>();
+
+            if (nodeA == nullptr || nodeB == nullptr)
+                return nullptr;
+            
+            if (nodeA == nodeB)
+            {
+                return nodeA;
+            }
+
+            traversedPoints.insert(nodeA);
+            traversedPoints.insert(nodeB);
+
+            graph::Node* bufferA = nodeA;
+            graph::Node* bufferB = nodeB;
+            
+            int i = 0;
+            while (++i < 50000)
+            {
+                if (bufferA->parent && (bufferA = bufferA->parent) != nullptr)
+                {
+                    if (not traversedPoints.contains(bufferA))
+                        traversedPoints.insert(bufferA);     
+                    else return bufferA;
+                }
+                
+                if (bufferB->parent && (bufferB = bufferB->parent) != nullptr)
+                {
+                    if (not traversedPoints.contains(bufferB))
+                        traversedPoints.insert(bufferB);
+                    else return bufferB;
+                }
+            }
+
+            return nullptr;
+
+        };
+
+        std::function<void(std::set<graph::Node*>*, graph::Node*)> fetchNodePointerSet =
+            [&](std::set<graph::Node*>* set, graph::Node* node) -> void {
+
+            if (node)
+                set->insert(node);
+
+            if (node->leftChild) fetchNodePointerSet(set, node->leftChild);
+            if (node->rightChild) fetchNodePointerSet(set, node->rightChild);
+        };
+
+
+
+
+        std::shared_ptr<graph::Instance>  instance = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_100_11_stressTest.tree");
+
+        bool isValid = true;
+
+
+        for (std::shared_ptr<graph::Forest> forest :  *instance)
+        {
+            std::set<graph::Node*> allNodesOfForest = std::set<graph::Node*>();
+            fetchNodePointerSet(&allNodesOfForest, forest->Roots().front());
+
+            cluster::LeastCommonAncestor LCA = cluster::LeastCommonAncestor(forest);
+
+
+            for (const auto& outerNodeLoop : allNodesOfForest)
+            {
+
+                for (const auto& innerNodeLoop : allNodesOfForest)
+                {
+                    //if (outerNodeLoop == innerNodeLoop) continue;
+
+                    graph::Node* naive = naiveLCA(outerNodeLoop, innerNodeLoop);
+                    
+                    if (naive == nullptr)
+                    {
+                        isValid = false;
+                        goto exit;
+                    }
+                    
+                    graph::Node* firstLCA = LCA.getLeastCommonAncestor(outerNodeLoop, innerNodeLoop);
+                    graph::Node* secondLCA = LCA.getLeastCommonAncestor(innerNodeLoop, outerNodeLoop);
+
+                    isValid &= ((firstLCA == secondLCA) && (firstLCA == naive));
+                    if (not isValid)
+                        goto exit;
+                }
+
+            }
+
+
+
+
+        }
+
+        exit:
+
+
+        REQUIRE(isValid);
+    }
+
+
+}

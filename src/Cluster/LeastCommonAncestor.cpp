@@ -27,13 +27,12 @@ int LeastCommonAncestor::generatePreorderNumbers(graph::Node* node, int preorder
 {
     nodesToPreorderNumber[node] = preorderNumber;
 
-    int current = preorderNumber;
-
+    int current = preorderNumber+1;
     if (node->leftChild)
-        current = generatePreorderNumbers(node->leftChild, current + 1);
+        current = generatePreorderNumbers(node->leftChild, current);
 
     if (node->rightChild)
-        current = generatePreorderNumbers(node->rightChild, current + 1);
+        current = generatePreorderNumbers(node->rightChild, current);
 
     return current;
 }
@@ -41,12 +40,13 @@ int LeastCommonAncestor::generatePreorderNumbers(graph::Node* node, int preorder
 void LeastCommonAncestor::eulerTour(graph::Node* node, int depth)
 {
 
-    int preorderNumber = preorderToNode.size(), eulerNumber = preorderNumbers.size();
+    int preorderNumber = preorderToNode.size();
+    int eulerNumber = preorderNumbers.size();
 
     preorderToNode.push_back(node);
 
-    //if ( preorderToInternalPreorder.size() <= nodesToPreorderNumber[node])
-    //    preorderToInternalPreorder.resize(nodesToPreorderNumber[node] + 1, uninitializedSlot);
+    if ( preorderToInternalPreorder.size() <= nodesToPreorderNumber[node])
+        preorderToInternalPreorder.resize(nodesToPreorderNumber[node] + 1, -1);
 
     preorderToInternalPreorder[nodesToPreorderNumber.at(node)] = preorderNumber;
 
@@ -70,13 +70,16 @@ void LeastCommonAncestor::eulerTour(graph::Node* node, int depth)
         levelOfEulerTours.push_back(depth);
         preorderNumbers.push_back(preorderNumber);
     }
+
+
+
 }
 
 void LeastCommonAncestor::precomputeRangeMinimumQuery()
 {
     RangeMinimumQuery.push_back(preorderNumbers);
 
-    for (unsigned long length = 2; length <= preorderNumbers.size(); length *= 2)
+    for (unsigned long length = 1; length < preorderNumbers.size(); length *= 2)
     {
         std::vector<int> buffer = std::vector<int>();
 
@@ -99,7 +102,7 @@ int LeastCommonAncestor::computeRangeMinimumQuery(unsigned long i, unsigned long
 
     if (length <= 0)
     {
-        length = 0;
+        length = -1;
     }
     else
     {
@@ -107,17 +110,17 @@ int LeastCommonAncestor::computeRangeMinimumQuery(unsigned long i, unsigned long
     }
 
 
-    int rmq1 = RangeMinimumQuery[length][i];
+    int rmq1 = RangeMinimumQuery[length+1][i];
 
     int rmq2;
 
     if (length >= 0)
     {
-        rmq2 = RangeMinimumQuery[length][j - (1 << (length))];
+        rmq2 = RangeMinimumQuery[length+1][j - (1 << (length))];
     }
     else
     {
-        rmq2 = RangeMinimumQuery[length][j];
+        rmq2 = RangeMinimumQuery[length+1][j];
     }
 
     if (rmq1 < rmq2)
@@ -127,10 +130,10 @@ int LeastCommonAncestor::computeRangeMinimumQuery(unsigned long i, unsigned long
 }
 
 
-graph::Node* LeastCommonAncestor::getLeastCommonAncestor(int preorderNumberA, int preorderNumberB)
+graph::Node* LeastCommonAncestor::getLeastCommonAncestor(int externalPreorderNumberA, int externalPreorderNumberB)
 {
-    int preorderA = preorderToInternalPreorder[preorderNumberA];
-    int preorderB = preorderToInternalPreorder[preorderNumberB];
+    int preorderA = preorderToInternalPreorder[externalPreorderNumberA];
+    int preorderB = preorderToInternalPreorder[externalPreorderNumberB];
 
 
     int leastCommonAncestorIndex;
@@ -162,9 +165,12 @@ graph::Node* LeastCommonAncestor::getLeastCommonAncestor(graph::Node* firstNode,
                                     "Did you accidentally pass a node from another tree?");
 
 
-    int preorderA = nodesToPreorderNumber[firstNode];
-    int preorderB = nodesToPreorderNumber[secondNode];
+    int preorderA = preorderToInternalPreorder[nodesToPreorderNumber[firstNode]];
+    int preorderB = preorderToInternalPreorder[nodesToPreorderNumber[secondNode]];
 
+
+    int preorderAP = nodesToPreorderNumber[firstNode];
+    int preorderBP = nodesToPreorderNumber[secondNode];
 
     int leastCommonAncestorIndex;
 
@@ -177,6 +183,8 @@ graph::Node* LeastCommonAncestor::getLeastCommonAncestor(graph::Node* firstNode,
         leastCommonAncestorIndex = computeRangeMinimumQuery(firstOccurences[preorderB], firstOccurences[preorderA]);
     }
 
-    return preorderToNode[leastCommonAncestorIndex];}
+    return preorderToNode[leastCommonAncestorIndex];
+
+}
 
 }
