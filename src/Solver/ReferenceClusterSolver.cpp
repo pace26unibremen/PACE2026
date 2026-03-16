@@ -5,26 +5,33 @@
 #include "ReferenceClusterSolver.hpp"
 
 #include "../Cluster/ClusterInstance.hpp"
-#include "../Cluster/RecursiveClusterer.hpp"
+#include "../Cluster/ClusterPointGenerator.hpp"
 #include "BranchingSolver.hpp"
 #include "TrivialSolver.hpp"
 
 #include <iostream>
 
 solver::ReferenceClusterSolver::ReferenceClusterSolver(const std::shared_ptr<graph::Instance>& instance) :
-        AbstractSolver(instance)
-{}
+        AbstractSolver(instance){}
+
 std::shared_ptr<graph::Forest> solver::ReferenceClusterSolver::solve()
 {
 
-    cluster::RecursiveClusterer clusterStack = cluster::RecursiveClusterer(instance);
+
+    cluster::TwinRelation interiorTwins = cluster::TwinRelation(instance);
+    cluster::ClusterPointGenerator generator = cluster::ClusterPointGenerator(instance, &interiorTwins);
+    std::vector<graph::Node*> clusterPoints = generator.clusterPoints;
+    std::cout << "Num of Cluster Points: " << clusterPoints.size() << std::endl;
+    cluster::ClusterInstance clusterInstance = cluster::ClusterInstance(instance, &interiorTwins, &clusterPoints);
 
 
-    auto instanceStack = clusterStack.instanceStack;
+    // Here lie the ominous clusters.
+    auto instanceVector = clusterInstance.getVectorOfInstances();
 
-    std::cout << "Recursive Cluster Size: " << instanceStack.size() << std::endl;
+    std::cout << "Recursive Cluster Size: " << instanceVector->size() << std::endl;
 
 
+    /*
     while (!instanceStack.empty())
     {
         auto clusterInstances = instanceStack.top();
@@ -45,12 +52,12 @@ std::shared_ptr<graph::Forest> solver::ReferenceClusterSolver::solve()
         instanceStack.pop();
 
 
-    }
+    }*/
 
 
 
 
-    auto finalSolver = solver::BranchingSolver(instance);
+    //auto finalSolver = solver::BranchingSolver(instance);
     //return finalSolver.solve();
 
 

@@ -134,7 +134,7 @@ TEST_CASE("ClusterLabelEquivalence")
     {
 
 
-        std::shared_ptr<graph::Instance>  instance = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_100_11_stressTest.tree");
+        std::shared_ptr<graph::Instance>  instance = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_2_200_tripleCluster.tree");
         cluster::TwinRelation interiorTwins = cluster::TwinRelation(instance);
         cluster::ClusterPointGenerator generator = cluster::ClusterPointGenerator(instance, &interiorTwins);
 
@@ -249,10 +249,12 @@ TEST_CASE("RecursiveClusterI")
 // likely take ages to compute, whereas this property (whether it hold or not) may have important semantic implication.
 
 
-// Test Question: Let A and B be nodes: Does LCA(A,B) = LCA(B,A) hold true?
-TEST_CASE("LeastCommonAncestorSymmetry")
+// Test Question: Let A and B be nodes: Does
+// Forall Forests, Forall A, Forall B : LCA(A,B) = LCA(B,A) = naiveLCA(A,B) = naiveLCA(B,A)
+// hold true?
+TEST_CASE("LeastCommonAncestorCorrectness")
 {
-    SECTION("Check if the fetching of LCA Nodes is symmmetric.")
+    SECTION("Check if the fetching of LCA Nodes is symmmetric and the same result to a naive implementation.")
     {
 
         std::function<graph::Node*(graph::Node*, graph::Node*)> naiveLCA =
@@ -327,10 +329,10 @@ TEST_CASE("LeastCommonAncestorSymmetry")
 
                 for (const auto& innerNodeLoop : allNodesOfForest)
                 {
-                    //if (outerNodeLoop == innerNodeLoop) continue;
 
                     graph::Node* naive = naiveLCA(outerNodeLoop, innerNodeLoop);
-                    
+                    graph::Node* naivePrime = naiveLCA(innerNodeLoop, outerNodeLoop);
+
                     if (naive == nullptr)
                     {
                         isValid = false;
@@ -340,7 +342,7 @@ TEST_CASE("LeastCommonAncestorSymmetry")
                     graph::Node* firstLCA = LCA.getLeastCommonAncestor(outerNodeLoop, innerNodeLoop);
                     graph::Node* secondLCA = LCA.getLeastCommonAncestor(innerNodeLoop, outerNodeLoop);
 
-                    isValid &= ((firstLCA == secondLCA) && (firstLCA == naive));
+                    isValid &= ((firstLCA == secondLCA) && (firstLCA == naive) && (naive == naivePrime));
                     if (not isValid)
                         goto exit;
                 }

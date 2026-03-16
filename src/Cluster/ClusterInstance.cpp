@@ -17,25 +17,19 @@ ClusterInstance::ClusterInstance(const std::shared_ptr<graph::Instance>& instanc
     for (const auto& forest : *instance)
         rootToForest[forest->Roots().front()] = forest;
 
-
+    // Generate an actual instance for each cluster point.
     for (auto clusterPoint : *clusterPoints)
     {
-        bool failureDueToOtherClusterPoints = false;
         std::shared_ptr<graph::Instance> clusterInstance = std::make_shared<graph::Instance>(graph::Instance());
 
-        //failureDueToOtherClusterPoints =
-            generateClusterForest(&clusterInstance, &rootToForest, clusterPoint);
+        generateClusterForest(&clusterInstance, &rootToForest, clusterPoint);
 
-        auto twins = twinRelation->nodeToTwins[clusterPoint];
-        for (auto twin : twins)
-        {
-            //failureDueToOtherClusterPoints =
-                generateClusterForest(&clusterInstance, &rootToForest, twin);
-        }
+        for (auto twin : twinRelation->nodeToTwins[clusterPoint])
+            generateClusterForest(&clusterInstance, &rootToForest, twin);
+
 
         clusterInstances->push_back(clusterInstance);
 
-        //static int cgen = 0; cgen += 1; std::cout << "Successfull ClusterInstance : " << cgen << std::endl;
 
 
     }
@@ -116,10 +110,15 @@ graph::Node* ClusterInstance::getClustersRoot(graph::Node* node)
     return bufferNode;
 }
 
+// This is quite awful, but then again I'm not gonna invest any further into that as of right now not even knowing
+// whether this class will make it to the final solver architecture..
 bool ClusterInstance::generateClusterForest(std::shared_ptr<graph::Instance>* clusterInstance, std::unordered_map<graph::Node*, std::shared_ptr<graph::Forest>>* rootToForest,
                                               graph::Node* node)
 {
     graph::Node* forestRootPointer = getClustersRoot(node);
+
+    if (forestRootPointer == nullptr)
+        throw std::logic_error("The apparent root of a cluster forest is null.");
 
     const std::shared_ptr<graph::Forest>& primeForest = rootToForest->at(forestRootPointer);
 
@@ -131,11 +130,11 @@ bool ClusterInstance::generateClusterForest(std::shared_ptr<graph::Instance>* cl
     newRootVector->push_back(node);
     graph::Forest primePartialForest = graph::Forest(shallowCopyNodes, shallowCopyTerminalToLabel, shallowCopyLabelToTerminal, newRootVector);
 
-    auto syntheticRoot = std::make_shared<graph::Node>(graph::Node());
+    auto syntheticLeaf = std::make_shared<graph::Node>(graph::Node());
 
     auto clusterForestPointer = std::make_shared<graph::Forest>(primePartialForest);
 
-    cluster::ExtendedForestData extendedForestData = ExtendedForestData(node, node->parent, syntheticRoot);
+    cluster::ExtendedForestData extendedForestData = ExtendedForestData(node, node->parent, syntheticLeaf);
 
     auto clusterForestDataPointer = std::make_shared<cluster::ExtendedForestData>(extendedForestData);
 

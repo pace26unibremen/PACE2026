@@ -17,18 +17,16 @@ class TwinRelation
 {
 
   private:
-    std::vector<graph::Node*> roots;
     std::vector<std::shared_ptr<cluster::LeastCommonAncestor>> LCAs;
 
     std::unordered_map<graph::Node*, graph::Node*> nodeToTwinBuffer = std::unordered_map<graph::Node*, graph::Node*>();
 
 
-    void generateInteriorTwinRelation(graph::Node *givenNode, const std::shared_ptr<cluster::LeastCommonAncestor>& homeLCA , const std::shared_ptr<cluster::LeastCommonAncestor>& foreignLCA);
-
-
-    void initializeLeafTable(const std::shared_ptr<graph::Instance>& instance);
+    void generateInteriorTwinRelation(graph::Node *givenNode , const std::shared_ptr<cluster::LeastCommonAncestor>& foreignLCA);
 
     void fuseTwinBufferToSets();
+
+    void prepareLeafTwins(const std::shared_ptr<graph::Forest>& homeForest, const std::shared_ptr<graph::Forest>& foreignForest);
 
 
   public:
@@ -42,6 +40,9 @@ class TwinRelation
     /// \note A true equivalence class (the intersection of a node with all the twins and the twins of the twins being
     /// the twins of the node) is also a cluster point. Not all nodes are in a true equivalence class.
     /// Also, the term "true equivalence class" is made up.
+    // I am fully aware of the performance implications of a map mapping nodes to sets and the performance implications
+    // of the set in general. Shall this cause issues confirmed through profiling we'll implement an arena that handles
+    // bulk allocation. Additionally, an instance of this table should theoretically cost around 1 to 2 MB of RAM? (extreme overestimation)
     std::unordered_map<graph::Node*, std::set<graph::Node*>> nodeToTwins = std::unordered_map<graph::Node*, std::set<graph::Node*>>();
 };
 

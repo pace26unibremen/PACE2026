@@ -7,6 +7,8 @@
 namespace cluster
 {
 
+// This does not generate the same amount of Cluster Points as rSPR.
+// The engaged code reviewer may take a look at rSPR and tell me what's wrong (or right?) :)
 void ClusterPointGenerator::generateClusterPoints(graph::Node* node) {
     // Recurse
     if (node->leftChild) generateClusterPoints(node->leftChild);
@@ -20,7 +22,7 @@ void ClusterPointGenerator::generateClusterPoints(graph::Node* node) {
     for (const auto& twin : twinRelation->nodeToTwins[node])
         if (nodeHeight != checkHeightOfNode(twin)) return;
     // Heavy Invariant Checks (Same Leaf Set for class / True Twin Class)
-    if (not leafEquivalent(node)) return;
+    if (not leafEquivalent(node)) return; // We may want to remove this later!
     if (not trueEquivalenceClass(node)) return;
 
     // No dealbreakers => Cluster Point.
@@ -37,7 +39,7 @@ ClusterPointGenerator::ClusterPointGenerator(const std::shared_ptr<graph::Instan
     generateClusterPoints(instance->front()->Roots().front());
 }
 
-
+// This must be called after checking if the parent of the node really isn't null. (See constructor)
 int ClusterPointGenerator::checkHeightOfNode(graph::Node* node)
 {
     int distanceToRoot = 0;
@@ -75,18 +77,18 @@ bool ClusterPointGenerator::trueEquivalenceClass(graph::Node* node)
 
 bool ClusterPointGenerator::leafEquivalent(graph::Node* node)
 {
-    bool isClass = true;
+    bool isLeafEquivalent = true;
 
     auto classOfTwins = twinRelation->nodeToTwins[node];
     for (const auto& twin : classOfTwins)
     {
-        isClass &= node->hasSameTerminals(twin);
+        isLeafEquivalent &= node->hasSameTerminals(twin);
 
         for (const auto& twinOfTwin : twinRelation->nodeToTwins[twin])
-            isClass &= node->hasSameTerminals(twinOfTwin);
+            isLeafEquivalent &= node->hasSameTerminals(twinOfTwin);
     }
 
-    return isClass;
+    return isLeafEquivalent;
 }
 
 

@@ -12,30 +12,28 @@ namespace cluster
 
 TwinRelation::TwinRelation(const std::shared_ptr<graph::Instance>& instance) {
 
-    initializeLeafTable(instance);
-
-    roots = std::vector<graph::Node*>();
     LCAs = std::vector<std::shared_ptr<cluster::LeastCommonAncestor>>();
 
-
+    // We generate an LCA for each forest and for convenience
     for (auto& forest : *instance)
     {
-        auto firstRoot = forest->Roots().front();
-        roots.push_back(firstRoot);
-
         auto LCA = std::make_shared<cluster::LeastCommonAncestor>(cluster::LeastCommonAncestor((forest)));
         LCAs.push_back(LCA);
     }
 
     // This likely escalates runtime from linear to square. However, this is likely to be unavoidable.
 
-    for (int i = 0; i < roots.size(); ++i)
+    for (int homeForestIndex = 0; homeForestIndex < instance->size(); ++homeForestIndex)
     {
 
-        for (int j = 0; j < LCAs.size(); ++j)
+        for (int foreignForestIndex = 0; foreignForestIndex < LCAs.size(); ++foreignForestIndex)
         {
-            if (i == j) continue;
-            generateInteriorTwinRelation(roots.at(i), LCAs.at(i) , LCAs.at(j));
+            if (homeForestIndex == foreignForestIndex) continue;
+            // Syncs leafs in the Twin-Buffer first.
+            prepareLeafTwins(instance->at(homeForestIndex), instance->at(foreignForestIndex));
+            //Syncs interior twins up to the root.
+            generateInteriorTwinRelation(instance->at(homeForestIndex)->Roots().front(), LCAs.at(foreignForestIndex));
+            // Flushes Twin-Buffer and merges it to the big table.
             fuseTwinBufferToSets();
         }
     }
@@ -43,46 +41,39 @@ TwinRelation::TwinRelation(const std::shared_ptr<graph::Instance>& instance) {
 
 }
 
-
+// Man, I don't know. We don't achieve as many cluster points as rSPR, though rSPR is quite scuffed in that regard.
 void TwinRelation::generateInteriorTwinRelation(graph::Node *givenNode,
-                                                        const std::shared_ptr<cluster::LeastCommonAncestor>& homeLCA,
                                                         const std::shared_ptr<cluster::LeastCommonAncestor>& foreignLCA) {
-    if (roots.size() != LCAs.size())
+
+
+    if (givenNode -> leftChild == nullptr && givenNode -> rightChild == nullptr)
     {
-        throw std::runtime_error("The size of the Roots and the LCAs is different, implying initializing error."
-                                 "Is this run from within a reduction rule?.");
+        if (not nodeToTwinBuffer.contains(givenNode))
+            throw std::logic_error("The leaf twins are not properly initialized.");
+        return;
     }
-    // This scurrilous construction is a remnant of the reimplementation of rSPR. It will be changed in the future.
-    std::vector<graph::Node*> children = std::vector<graph::Node*>();
 
-    if (auto child = givenNode->leftChild) children.push_back(child);
-    if (auto child = givenNode->rightChild) children.push_back(child);
-
-    if (children.empty()) return;
-
-    unsigned int index = 0;
-
-    generateInteriorTwinRelation(children.at(index), homeLCA, foreignLCA);
-
-    nodeToTwinBuffer[givenNode] = nodeToTwinBuffer[children.at(index)];
-
-    index += 1;
-
-    if (index < children.size())
+    // Apparently what happens from now on is a mystical magical left-fold.
+    if (auto leftChild = givenNode->leftChild)
     {
-        generateInteriorTwinRelation(children.at(index), homeLCA, foreignLCA);
+        generateInteriorTwinRelation(leftChild, foreignLCA);
+        nodeToTwinBuffer[givenNode] = nodeToTwinBuffer[leftChild];
+    }
+
+    if (auto rightChild = givenNode->rightChild)
+    {
+        generateInteriorTwinRelation(rightChild, foreignLCA);
+
         graph::Node* twin = foreignLCA->getLeastCommonAncestor(
-            homeLCA->getNodesToPreorderNumber()->at(givenNode),
-            homeLCA->getNodesToPreorderNumber()->at(children.at(index))
-            );
+            nodeToTwinBuffer[givenNode],
+            nodeToTwinBuffer[rightChild]
+        );
         nodeToTwinBuffer[givenNode] = twin;
     }
 }
 
 
-
-
-
+// Takes the elements of the TwinBuffer (1:1) and fuses them to the "big table" (1:[InstanceSize])
 void TwinRelation::fuseTwinBufferToSets() {
     for (const auto& pair : nodeToTwinBuffer)
         nodeToTwins[pair.first].insert(pair.second);
@@ -90,30 +81,13 @@ void TwinRelation::fuseTwinBufferToSets() {
     nodeToTwinBuffer.clear();
 }
 
-void TwinRelation::initializeLeafTable(const std::shared_ptr<graph::Instance>& instance) {
 
-    std::unordered_map<unsigned int, graph::Node*> labelToTerminal = instance->front()->LabelToTerminal();
-    for (const auto keyValue : labelToTerminal )
-    {
-        auto label = keyValue.first;
+// This functions existence is being justified because its name provides what actually happens here.
+void TwinRelation::prepareLeafTwins(const std::shared_ptr<graph::Forest>& homeForest,
+                                    const std::shared_ptr<graph::Forest>& foreignForest) {
 
-        // This the object that holds all Node Pointers for a given Taxa.
-        std::set<graph::Node*> allNodesFromLabel = std::set<graph::Node*>();
-
-        // For a given label we collect all the nodes that represent it.
-        for (const auto &forest : *instance)
-            allNodesFromLabel.insert(forest->LabelToTerminal().at(label));
-
-
-        for (auto key : allNodesFromLabel)
-        {
-            std::set<graph::Node*> allOtherNodes = allNodesFromLabel;
-            allOtherNodes.erase(key);
-            nodeToTwins[key] = allOtherNodes;
-        }
-
-    }
+    for (const auto& [label, node] : homeForest->LabelToTerminal())
+        nodeToTwinBuffer[homeForest->LabelToTerminal()[label]] = foreignForest->LabelToTerminal()[label];
 }
-
 
 }

@@ -11,8 +11,7 @@ namespace cluster
 
 LeastCommonAncestor::LeastCommonAncestor(std::shared_ptr<graph::Forest>& forestPointer)
 {
-    forest = forestPointer;
-    graph::Node* rootNode = forest->Roots().front();
+    graph::Node* rootNode = forestPointer->Roots().front();
 
     generatePreorderNumbers(rootNode, 0);
 
@@ -130,31 +129,6 @@ int LeastCommonAncestor::computeRangeMinimumQuery(unsigned long i, unsigned long
 }
 
 
-graph::Node* LeastCommonAncestor::getLeastCommonAncestor(int externalPreorderNumberA, int externalPreorderNumberB)
-{
-    int preorderA = preorderToInternalPreorder[externalPreorderNumberA];
-    int preorderB = preorderToInternalPreorder[externalPreorderNumberB];
-
-
-    int leastCommonAncestorIndex;
-
-    if (preorderA <= preorderB)
-    {
-        leastCommonAncestorIndex = computeRangeMinimumQuery(firstOccurences[preorderA], firstOccurences[preorderB]);
-    }
-    else
-    {
-        leastCommonAncestorIndex = computeRangeMinimumQuery(firstOccurences[preorderB], firstOccurences[preorderA]);
-    }
-
-    return preorderToNode[leastCommonAncestorIndex];
-}
-
-
-std::unordered_map<graph::Node*, int>* LeastCommonAncestor::getNodesToPreorderNumber()
-{
-    return &nodesToPreorderNumber;
-}
 
 
 graph::Node* LeastCommonAncestor::getLeastCommonAncestor(graph::Node* firstNode, graph::Node* secondNode)
@@ -167,10 +141,6 @@ graph::Node* LeastCommonAncestor::getLeastCommonAncestor(graph::Node* firstNode,
 
     int preorderA = preorderToInternalPreorder[nodesToPreorderNumber[firstNode]];
     int preorderB = preorderToInternalPreorder[nodesToPreorderNumber[secondNode]];
-
-
-    int preorderAP = nodesToPreorderNumber[firstNode];
-    int preorderBP = nodesToPreorderNumber[secondNode];
 
     int leastCommonAncestorIndex;
 
