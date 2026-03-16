@@ -25,7 +25,7 @@ class AbstractRule
     /// \brief Stores if the rule is already applied
     bool isApplied = false;
 
-    /// \brief It indicates if the rule is a reduction,  which is a rule that must be rolled back
+    /// \brief It indicates if the rule is a reduction, which is a rule that must be rolled back
     /// to transform the found solution to the solution of the original instance.
     const bool isReduction;
 

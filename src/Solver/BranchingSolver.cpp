@@ -65,7 +65,7 @@ void solver::BranchingSolver::checkSolutionCandidate()
         // write out the solution
         solution = std::make_shared<graph::Forest>(instance->at(0)->copy());
 
-        // un-unapply all reduction rules again to restore state of the solver
+        // apply all reduction rules again to restore state of the solver
         for (const auto& reductionRule : appliedRules
             | std::views::filter([](const std::shared_ptr<AbstractRule>& r){ return r->IsReduction();}))
         {

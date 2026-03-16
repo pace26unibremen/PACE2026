@@ -11,7 +11,7 @@
 solver::SubtreeReductionRule::SubtreeReductionRule(const std::shared_ptr<graph::Instance>& instance,
                                                    const std::shared_ptr<Context>& context,
                                                    const std::unordered_map<std::shared_ptr<graph::Forest>,
-                                                   std::list<graph::Node*>>& forestToSubtrees) :
+                                                                            std::list<graph::Node*>>& forestToSubtrees) :
         AbstractRule(instance,context, true),
         forestToSubtrees(forestToSubtrees)
 {}
