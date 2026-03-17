@@ -4,8 +4,9 @@
 
 solver::PairEqualRule::PairEqualRule(const std::shared_ptr<graph::Instance>& instance,
                                      const std::shared_ptr<Context>& context,
-                                     const std::unordered_map<std::shared_ptr<graph::Forest>, graph::Node*>& forestToSubtree) :
-    AbstractRule(instance,context),
+                                     const std::unordered_map<std::shared_ptr<graph::Forest>,
+                                     graph::Node*>& forestToSubtree) :
+    AbstractRule(instance,context, true),
     forestToSubtree(forestToSubtree)
 {
     this->changes = std::stack<solver::CollapseSubtreeAction>();
