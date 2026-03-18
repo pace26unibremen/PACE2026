@@ -8,7 +8,7 @@
 #include "iostream"
 namespace cluster
 {
-
+// This design apparently is standard procedure (LCA through Euler Tour, RMQ & Sparse Table)
 LeastCommonAncestor::LeastCommonAncestor(std::shared_ptr<graph::Forest>& forestPointer)
 {
     graph::Node* rootNode = forestPointer->Roots().front();
@@ -144,7 +144,7 @@ graph::Node* LeastCommonAncestor::getLeastCommonAncestor(graph::Node* firstNode,
 
     int leastCommonAncestorIndex;
 
-    if (preorderA <= preorderB)
+    if (preorderA <= preorderB) // This if / else actually defines LCA(A,B) = LCA(B,A)
     {
         leastCommonAncestorIndex = computeRangeMinimumQuery(firstOccurences[preorderA], firstOccurences[preorderB]);
     }

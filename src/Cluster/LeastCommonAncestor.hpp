@@ -49,7 +49,7 @@ class LeastCommonAncestor
 
 
     /// \brief This function returns a node pointer to a least common ancestor of two given nodes.
-    /// The two given nodes MUST be from the forest which created the LCA object this operation is used upon.
+    /// The two given nodes MUST be from the forest which created the LCA object.
     /// \note This operates in constant time O(1).
     /// \return Least Common Ancestor
     graph::Node* getLeastCommonAncestor(graph::Node* firstNode, graph::Node* secondNode);

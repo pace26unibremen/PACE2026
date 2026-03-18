@@ -31,8 +31,6 @@ class TwinRelation
 
   public:
     /// \brief Returns a pointer to a map which maps each node to their twins.
-    /// This list also encompasses the twins. Be careful, the size of a leaf-twin set is larger than an interior node
-    /// twin set.
     explicit TwinRelation(const std::shared_ptr<graph::Instance>& instance);
 
     /// \brief Map that maps each node of the entire instance to their corresponding twins. You should be enormously
