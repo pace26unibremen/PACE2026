@@ -56,9 +56,9 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
             //Remove x3's parent connection to x4
             if (&node == bottomT1)
             {
-                graph::Node* bottomNodeinT1 = &node;
-                bottomNodeinT1->parent = &chainTopCutoffT1;
-                chainBottomCutoffT1 = *bottomNodeinT1;
+                graph::Node* bottomNodeInT1 = &node;
+                bottomNodeInT1->parent = &chainTopCutoffT1;
+                chainBottomCutoffT1 = *bottomNodeInT1;
             }
 
             //Remove x4's parent connection to x3
@@ -112,9 +112,9 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
             //Remove x3's parent connection to x4
             if (&node == bottomT2)
             {
-                graph::Node* bottomNodeinT2 = &node;
-                bottomNodeinT2->parent = &chainTopCutoffT2;
-                chainBottomCutoffT2 = *bottomNodeinT2;
+                graph::Node* bottomNodeInT2 = &node;
+                bottomNodeInT2->parent = &chainTopCutoffT2;
+                chainBottomCutoffT2 = *bottomNodeInT2;
             }
             //Remove x4's parent connection to x3
             if (&node == bottomT2->parent)
@@ -160,8 +160,6 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
         }
 
     }
-    std::cout << "Applied" << std::endl;
-    std::cout << chainWithTrees.first.size() << std::endl;
     return RuleReturnCode::Continue;
 }
 
@@ -266,7 +264,7 @@ void solver::ChainReductionRule::unapply()
             }
         }
     }
-    std::cout << "Unapplied" << std::endl;
+
 }
 
 
