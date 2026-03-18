@@ -17,8 +17,11 @@ TEST_CASE("Reduce Chain - Tree 1", "[Forest, DeleteNodeActionInChains, AbstractA
     {
         auto i = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_2_8_mirrored_chain.tree");
         auto rule = ChainReductionRule::isApplicable(i,std::make_shared<Context>());
-        REQUIRE(rule);
+        INFO("Apply ChainReductionRule on Tree");
         rule->apply();
+        REQUIRE(rule);
+        REQUIRE(rule->IsApplied());
+
     }
 
     SECTION("Section 2")
@@ -28,9 +31,18 @@ TEST_CASE("Reduce Chain - Tree 1", "[Forest, DeleteNodeActionInChains, AbstractA
         {
             forest->write(cout);
         }
-        auto solver = BranchingSolver(i);
-        auto e = solver.solve();
-        std::cout << "Forests after solver" << std::endl;
-        e->write(cout);
+        INFO("Section 2 - Check for Changes after apply");
+        auto rule = ChainReductionRule::isApplicable(i,std::make_shared<Context>());
+        REQUIRE(rule);
+        rule->apply();
+        REQUIRE(rule->IsApplied());
+        for(auto forest : *i)
+        {
+            forest->write(cout);
+        }
+        // auto solver = BranchingSolver(i);
+        // auto e = solver.solve();
+        // std::cout << "Forests after solver" << std::endl;
+        // e->write(cout);
     }
 }
