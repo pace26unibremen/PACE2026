@@ -75,9 +75,19 @@ void solver::BranchingSolver::checkSolutionCandidate()
     }
 }
 
-std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
+void solver::BranchingSolver::unapplyReductions()
 {
-    if (debPlugin) debPlugin->init(instance);
+    // unapply all reduction rules to get solution for the original instance
+    for (const auto& reductionRule : appliedRules | std::views::reverse
+        | std::views::filter([](const std::shared_ptr<AbstractRule>& r){ return r->IsReduction();}))
+    {
+        reductionRule->unapply();
+        if (configuration->debPlugin) configuration->debPlugin->onTempUnapply(reductionRule, false);
+    }
+}
+
+bool solver::BranchingSolver::solve()
+{
     if (configuration->debPlugin) configuration->debPlugin->init(instance);
 
     // Try to apply the subtree reduction before starting the main solving process
@@ -85,7 +95,7 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
     if (subtreeReduction)
     {
         subtreeReduction->apply();
-        if (debPlugin) debPlugin->onApply(subtreeReduction);
+        if (configuration->debPlugin) configuration->debPlugin->onApply(subtreeReduction);
         appliedRules.push_back(subtreeReduction);
     }
 
@@ -145,6 +155,7 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
         {
             if (debPlugin) debPlugin->onEnd();
             return solution;
+                return true;
         }
     }
 }
