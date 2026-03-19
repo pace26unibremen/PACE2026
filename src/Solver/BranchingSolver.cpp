@@ -138,9 +138,16 @@ bool solver::BranchingSolver::solve()
                 }
                 break;
             case RuleReturnCode::EndBranchWithSolutionCandidate:
-                checkSolutionCandidate();
-                calculationFinished = rollBackBranch();
-                break;
+                if (configuration->boundedDephtSearch)
+                {
+                    return true;
+                }
+                else
+                {
+                    checkSolutionCandidate();
+                    calculationFinished = rollBackBranch();
+                    break;
+                }
             case RuleReturnCode::CutBranch:
                 calculationFinished = rollBackBranch();
                 break;
@@ -153,9 +160,16 @@ bool solver::BranchingSolver::solve()
 
         if (calculationFinished)
         {
-            if (debPlugin) debPlugin->onEnd();
-            return solution;
+            if (configuration->boundedDephtSearch)
+            {
+                context->maxSolutionSize++;
+            }
+            else
+            {
+                if (configuration->debPlugin) configuration->debPlugin->onEnd();
+                *instance = {solution};
                 return true;
+            }
         }
     }
 }
