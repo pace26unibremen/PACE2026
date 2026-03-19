@@ -6,16 +6,16 @@
 
 solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>& instance)
     : AbstractSolver(instance)
-{}
-
-std::shared_ptr<solver::DebugPlugin>& solver::BranchingSolver::DebPlugin()
 {
-    return debPlugin;
+    this->context->branchingSolverConfiguration = this->configuration;
 }
 
-std::vector<solver::isApplicableFn>& solver::BranchingSolver::ActiveRules()
+solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>& instance,
+                                         const std::shared_ptr<solver::BranchingSolverConfiguration>& configuration) :
+    AbstractSolver(instance),
+    configuration(configuration)
 {
-    return activeRules;
+    this->context->branchingSolverConfiguration = this->configuration;
 }
 
 bool solver::BranchingSolver::rollBackBranch()
@@ -32,7 +32,7 @@ bool solver::BranchingSolver::rollBackBranch()
 
         auto rule = appliedRules.back();
         rule->unapply();
-        if (debPlugin) debPlugin->onUnapply(rule);
+        if (configuration->debPlugin) configuration->debPlugin->onUnapply(rule);
         appliedRules.pop_back();
 
         if (auto branchingRule = std::dynamic_pointer_cast<AbstractBranchingRule>(rule))
@@ -59,7 +59,7 @@ void solver::BranchingSolver::checkSolutionCandidate()
             | std::views::filter([](const std::shared_ptr<AbstractRule>& r){ return r->IsReduction();}))
         {
             reductionRule->unapply();
-            if (debPlugin) debPlugin->onTempUnapply(reductionRule, false);
+            if (configuration->debPlugin) configuration->debPlugin->onTempUnapply(reductionRule, false);
         }
 
         // write out the solution
@@ -70,7 +70,7 @@ void solver::BranchingSolver::checkSolutionCandidate()
             | std::views::filter([](const std::shared_ptr<AbstractRule>& r){ return r->IsReduction();}))
         {
             reductionRule->apply();
-            if (debPlugin) debPlugin->onTempApply(reductionRule);
+            if (configuration->debPlugin) configuration->debPlugin->onTempApply(reductionRule);
         }
     }
 }
@@ -78,6 +78,7 @@ void solver::BranchingSolver::checkSolutionCandidate()
 std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
 {
     if (debPlugin) debPlugin->init(instance);
+    if (configuration->debPlugin) configuration->debPlugin->init(instance);
 
     // Try to apply the subtree reduction before starting the main solving process
     auto subtreeReduction = solver::SubtreeReductionRule::isApplicable(instance, context);
@@ -103,7 +104,7 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
         else
         {
             // check the rules for applicability
-            for (const auto& isApplicable : activeRules)
+            for (const auto& isApplicable : configuration->activeRules)
             {
                 rule = isApplicable(instance, context);
                 // take first applicable rule
@@ -112,7 +113,7 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
         }
 
         const auto returnCode = rule->apply();
-        if (debPlugin) debPlugin->onApply(rule);
+        if (configuration->debPlugin) configuration->debPlugin->onApply(rule);
         appliedRules.push_back(rule);
 
         bool calculationFinished = false;
