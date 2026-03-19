@@ -1,6 +1,8 @@
 #ifndef PACE2026_CONTEXT_HPP
 #define PACE2026_CONTEXT_HPP
 
+#include <memory>
+
 namespace solver
 {
 
