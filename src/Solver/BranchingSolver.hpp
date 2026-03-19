@@ -3,6 +3,7 @@
 
 #include "AbstractSolver.hpp"
 #include "DebugPlugin.hpp"
+#include "Context.hpp"
 
 #include "Rule/Context.hpp"
 #include "Rule/AbstractRule.hpp"
