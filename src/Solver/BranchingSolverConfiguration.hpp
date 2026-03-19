@@ -26,10 +26,10 @@ using isApplicableFn = std::function<std::shared_ptr<AbstractRule>(const std::sh
 /// \brief A struct that holds all configuration information and options for the \ref BranchingSolver.
 struct BranchingSolverConfiguration
 {
-    /// \brief If the solver should perform a bounded depth search.
-    /// I.g. The solver searches only for solutions that are better or equal to a parameter.
+    /// \brief Whether the solver should perform a bounded depth search.
+    /// I.e. the solver searches only for solutions that are equal to or better than a given parameter.
     /// If the solver doesn't find any suitable solution, it increases the parameter.
-    /// The corresponding parameter is stores in the context.
+    /// The corresponding parameter is stored in the \ref Context as \ref Context::maxSolutionSize.
     bool boundedDephtSearch = true;
 
     /// \brief vector of the isApplicable function of rules.
