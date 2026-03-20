@@ -1,7 +1,4 @@
 #include "ChainReductionRule.hpp"
-
-#include "../Action/DeleteNodeActionInChains.hpp"
-
 #include <algorithm>
 #include <iostream>
 #include <unordered_map>
