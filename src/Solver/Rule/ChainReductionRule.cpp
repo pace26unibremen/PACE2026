@@ -93,6 +93,10 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
         {
             bottomChainT2->rightChild = nullptr;
         }
+        auto e = bottomChainT1->rightChild;
+        std::cout << chainWithTrees.second.front()->TerminalToLabel().at(e) << std::endl;
+        e = bottomChainT1->leftChild;
+        std::cout << chainWithTrees.second.front()->TerminalToLabel().at(e) << std::endl;
 
         //Remove edge between xn and its parent and update parent accordingly with x3 being it's new child.
         topChainT1->parent = nullptr;
@@ -249,10 +253,8 @@ void solver::ChainReductionRule::unapply()
     isApplied = false;
 
     //Find nodes that belong to chain
-    graph::Node* bottomT1 = chainWithTrees.first[1].front();
-    graph::Node* bottomT2 = chainWithTrees.first[1].back();
-    graph::Node* topT1 = chainWithTrees.first[chainWithTrees.first.size()-1].front();
-    graph::Node* topT2 = chainWithTrees.first[chainWithTrees.first.size()-1].back();
+    graph::Node* bottomT1 = chainWithTrees.first[0].front();
+    graph::Node* bottomT2 = chainWithTrees.first[0].back();
 
     //x3 to x4 and x4 to x3 for T1
     for (auto& node : chainWithTrees.second.front()->Nodes())
@@ -261,7 +263,7 @@ void solver::ChainReductionRule::unapply()
         {
             for (auto& node2 : chainWithTrees.second.front()->Nodes())
             {
-                if (&node2 == chainWithTrees.first[2].front())
+                if (&node2 == chainWithTrees.first[1].front())
                 {
                     node.parent = &node2;
                     if (node2.leftChild == nullptr)
@@ -305,7 +307,7 @@ void solver::ChainReductionRule::unapply()
         {
             for (auto& node2 : chainWithTrees.second.back()->Nodes())
             {
-                if (&node2 == chainWithTrees.first[2].back())
+                if (&node2 == chainWithTrees.first[1].back())
                 {
                     node.parent = &node2;
                     if (node2.leftChild == nullptr)
@@ -353,111 +355,121 @@ solver::ChainReductionRule::isApplicable(
     std::vector<std::shared_ptr<graph::Forest>> chainTrees;
     std::pair<std::vector<std::vector<graph::Node*>>,std::vector<std::shared_ptr<graph::Forest>>> chainWithTrees;
 
-    for (const auto& T1 : *instance)
-    {   //DEBUG
-        //std::cout << "T1:" << std::endl;
-        //T1->write(std::cout);
+    if (instance->size() == 2 && instance->front() != instance->back())
+    {
+        std::shared_ptr<graph::Forest> T1 = instance->front();
+        std::shared_ptr<graph::Forest> T2 = instance->back();
 
-        for (const auto& T2 : *instance)
-        {   //DEBUG
-            //std::cout << "T2:" << std::endl;
-            //T2->write(std::cout);
 
-            if (T1 != T2)
+        //std::cout << "equal check" << std::endl;
+        //Fetch Leaves - Terminal Index to Label
+        std::unordered_map<graph::Node*,unsigned int> termIndexTreeOne = T1->TerminalToLabel();
+        std::unordered_map<graph::Node*,unsigned int> termIndexTreeTwo = T2->TerminalToLabel();
+
+        //For all Terminals...
+        for (const auto& terminalT1 : termIndexTreeOne)
+        {   //T1
+            //DEBUG
+            //std::cout << "terminalT1: " << terminalT1.second << std::endl;
+
+            //Determine parent
+            graph::Node* parentT1 = terminalT1.first->parent;
+
+            // -> x1, x2 for case 1 for chain def known for T1
+
+            //anti single vertex check for terminalT1
+            if (parentT1 != nullptr )
             {
-                //std::cout << "equal check" << std::endl;
-                //Fetch Leaves - Terminal Index to Label
-                std::unordered_map<graph::Node*,unsigned int> termIndexTreeOne = T1->TerminalToLabel();
-                std::unordered_map<graph::Node*,unsigned int> termIndexTreeTwo = T2->TerminalToLabel();
+                //Determine x3 and x2 for case 1 for chain in T1
+                graph::Node* parentOfParentT1 = parentT1->parent;
+                graph::Node* siblingOfParentT1 = parentT1->sibling;
 
-                //For all Terminals...
-                for (const auto& terminalT1 : termIndexTreeOne)
-                {  //T1
-                    //DEBUG
-                    //std::cout << "terminalT1: " << terminalT1.second << std::endl;
+                if (not chain.empty())
+                {
+                    break;
+                }
 
-                    //Determine parent
-                    graph::Node* parentT1 = terminalT1.first->parent;
+                for (const auto& terminalT2 : termIndexTreeTwo)
+                {   //T2
+                    //std::cout << "terminalT2: " << terminalT2.second << std::endl;
+                    //Determine Structure
+                    graph::Node* parentT2 = terminalT2.first->parent;
 
-                    //Determine if sibling exists
-                    graph::Node* siblingT1 = terminalT1.first->sibling;
+                    // -> x1,x2,x3 for case 1 known for T2
 
-                    // -> x1, x2 for case 1 for chain def known for T1
-
-                    //anti single vertex check for terminalT1
-                    if (parentT1 != nullptr )
+                    //Anti single vertex check for terminalT2
+                    if (parentT2 != nullptr)
                     {
-                        //Determine x3 and x2 for case 1 for chain in T1
-                        graph::Node* parentOfParentT1 = parentT1->parent;
-                        graph::Node* siblingOfParentT1 = parentT1->sibling;
+                        //Determine x3 for case 2 for chain def in T2
+                        graph::Node* parentOfParentT2 = parentT2->parent;
 
-                        //Case 2 structure check
-                        int case2SiblingIsOnLeftSideT1 = -1;
-
-                        if (parentOfParentT1 != nullptr)
+                        //Case 1: if the parent of x1 coincides with the parent of x2
+                        if (terminalT1.first->parent->leftChild != nullptr
+                        && terminalT1.first->parent->rightChild != nullptr
+                        && T1->TerminalToLabel().contains(terminalT1.first->parent->leftChild)
+                        && T1->TerminalToLabel().contains(terminalT1.first->parent->rightChild)
+                        && terminalT2.first->parent->leftChild != nullptr
+                        && terminalT2.first->parent->rightChild != nullptr
+                        && T2->TerminalToLabel().contains(terminalT2.first->parent->leftChild)
+                        && T2->TerminalToLabel().contains(terminalT2.first->parent->rightChild)
+                        )
                         {
-                            if (parentOfParentT1->leftChild == siblingOfParentT1)
+                            //std::cout << "case 1" << std::endl;
+                            //Chain for both trees, x1-x3
+                            std::vector<std::vector<graph::Node*>> chainT1T2 = {{parentT1,parentT2}};
+
+                            //Chain collection bool
+                            bool case1check = true;
+
+                            //Determine x4 for T1, T2
+                            graph::Node* case1T1Parent = parentT1;
+                            graph::Node* case1T2Parent = parentT2;
+
+                            //Determine Sibling of x3
+                            graph::Node* case1T1Sibling;
+                            graph::Node* case1T2Sibling;
+
+                            //T1 structure check, determining sibling of x3 -> Supposed terminal
+                            if (case1T1Parent->leftChild == chainT1T2.back().front())
                             {
-                                case2SiblingIsOnLeftSideT1 = 1;
+                                case1T1Sibling = case1T1Parent->rightChild;
                             }
                             else
                             {
-                                case2SiblingIsOnLeftSideT1= 0;
+                                case1T1Sibling = case1T1Parent->leftChild;
                             }
-                        }
-
-                        if (not chain.empty())
-                        {
-                            break;
-                        }
-
-                        for (const auto& terminalT2 : termIndexTreeTwo)
-                        {   //T2
-                            //std::cout << "terminalT2: " << terminalT2.second << std::endl;
-                            //Determine Structure
-                            graph::Node* parentT2 = terminalT2.first->parent;
-                            graph::Node* siblingT2 = terminalT2.first->sibling;
-
-                            // -> x1,x2,x3 for case 1 known for T2
-
-                            //Anti single vertex check for terminalT2
-                            if (parentT2 != nullptr)
+                            //T2 structure c heck
+                            if (case1T2Parent->leftChild == chainT1T2.back().back())
                             {
-                                //Determine x3 for case 2 for chain def in T2
-                                graph::Node* parentOfParentT2 = parentT2->parent;
-                                graph::Node* siblingOfParentT2 = parentT2->sibling;
+                                case1T2Sibling = case1T2Parent->rightChild;
+                            }
+                            else
+                            {
+                                case1T2Sibling = case1T2Parent->leftChild;
+                            }
 
-                                bool case1applied = false;
-
-                                //Case 1: if the parent of x1 coincides with the parent of x2
-                                if (terminalT1.first->parent->leftChild != nullptr
-                                    && terminalT1.first->parent->rightChild != nullptr
-                                    && T1->TerminalToLabel().contains(terminalT1.first->parent->leftChild)
-                                    && T1->TerminalToLabel().contains(terminalT1.first->parent->rightChild)
-                                    && terminalT2.first->parent->leftChild != nullptr
-                                    && terminalT2.first->parent->rightChild != nullptr
-                                    && T2->TerminalToLabel().contains(terminalT2.first->parent->leftChild)
-                                    && T2->TerminalToLabel().contains(terminalT2.first->parent->rightChild)
+                            //Determine x4,... of chain
+                            while (case1check)
+                            {   //std::cout << chainT1T2.size() << std::endl;
+                                //Sibling is in fact a terminal and is not attached to root
+                                if (case1T1Sibling != nullptr && case1T2Sibling != nullptr
+                                && case1T1Parent != nullptr && case1T2Parent != nullptr
+                                && case1T1Sibling->leftChild == nullptr && case1T1Sibling->rightChild == nullptr
+                                && case1T2Sibling->leftChild == nullptr && case1T2Sibling->rightChild == nullptr
+                                && std::find(T1->Roots().begin(), T1->Roots().end(), case1T1Parent)
+                                == T1->Roots().end()
+                                && std::find(T2->Roots().begin(), T2->Roots().end(), case1T2Parent)
+                                == T2->Roots().end()
+                                && case1T1Parent != *T1->Roots().end()
+                                && case1T2Parent != *T2->Roots().end()
                                 )
                                 {
-                                    //std::cout << "case 1" << std::endl;
-                                    //Chain for both trees, x1-x3
-                                    std::vector<std::vector<graph::Node*>> chainT1T2 = {{parentT1,parentT2}};
-
-                                    //Chain collection bool
-                                    bool case1check = true;
-
-                                    //Determine x4 for T1, T2
-                                    graph::Node* case1T1Parent = parentT1;
-                                    graph::Node* case1T2Parent = parentT2;
-
-                                    //Determine Sibling of x3
-                                    graph::Node* case1T1Sibling;
-                                    graph::Node* case1T2Sibling;
-
+                                    chainT1T2.push_back({case1T1Parent,case1T2Parent});
+                                    case1T1Parent = chainT1T2.back().front()->parent;
+                                    case1T2Parent = chainT1T2.back().back()->parent;
+                                    //T1 structure check
                                     if (case1T1Parent != nullptr && case1T2Parent != nullptr)
                                     {
-                                        //T1 structure check, determining sibling of x3 -> Supposed terminal
                                         if (case1T1Parent->leftChild == chainT1T2.back().front())
                                         {
                                             case1T1Sibling = case1T1Parent->rightChild;
@@ -476,117 +488,116 @@ solver::ChainReductionRule::isApplicable(
                                             case1T2Sibling = case1T2Parent->leftChild;
                                         }
                                     }
-                                    //Determine x4,... of chain
-                                    while (case1check)
-                                    {   //std::cout << chainT1T2.size() << std::endl;
-                                        //Sibling is in fact a terminal and is not attached to root
-                                        if (case1T1Sibling != nullptr && case1T2Sibling != nullptr
-                                           && case1T1Parent != nullptr && case1T2Parent != nullptr
-                                           && case1T1Sibling->leftChild == nullptr && case1T1Sibling->rightChild == nullptr
-                                           && case1T2Sibling->leftChild == nullptr && case1T2Sibling->rightChild == nullptr
-                                           && std::find(T1->Roots().begin(), T1->Roots().end(), case1T1Parent)
-                                           == T1->Roots().end()
-                                           && std::find(T2->Roots().begin(), T2->Roots().end(), case1T2Parent)
-                                           == T2->Roots().end()
-                                           && case1T1Parent != *T1->Roots().end()
-                                           && case1T2Parent != *T2->Roots().end()
-                                           )
-                                        {
-                                            chainT1T2.push_back({case1T1Parent,case1T2Parent});
-                                            case1T1Parent = chainT1T2.back().front()->parent;
-                                            case1T2Parent = chainT1T2.back().back()->parent;
-                                            //T1 structure check
-                                            if (case1T1Parent != nullptr && case1T2Parent != nullptr)
-                                            {
-                                                if (case1T1Parent->leftChild == chainT1T2.back().front())
-                                                {
-                                                    case1T1Sibling = case1T1Parent->rightChild;
-                                                }
-                                                else
-                                                {
-                                                    case1T1Sibling = case1T1Parent->leftChild;
-                                            }
-                                                //T2 structure c heck
-                                                if (case1T2Parent->leftChild == chainT1T2.back().back())
-                                                {
-                                                    case1T2Sibling = case1T2Parent->rightChild;
-                                                }
-                                                else
-                                                {
-                                                    case1T2Sibling = case1T2Parent->leftChild;
-                                                }
-
-                                                case1applied = true;
-                                            }
-                                            else
-                                            {
-                                                case1check = false;
-                                            }
-                                        }
-                                        else case1check = false;
-                                    }
-
-                                    if (chainT1T2.size() >= 2)
+                                    else
                                     {
-                                        chain = chainT1T2;
-                                        chainTrees.emplace_back(T1);
-                                        chainTrees.emplace_back(T2);
-                                        chainWithTrees.first = chain;
-                                        chainWithTrees.second = chainTrees;
-                                        return std::dynamic_pointer_cast<AbstractRule>(
-                                        std::make_shared<ChainReductionRule>(instance,chainWithTrees,context));
+                                        case1check = false;
                                     }
                                 }
-                                //Case 2: or the parent of x2 is the parent of the parent of x1, i.e parent index of sibling is
-                                //the same as the index for the parent of the parent on both trees, as well as for x3 and x2
-                                //Only one terminal for each parent node must exist
-                                else if (
-                                // Parent has indeed only one terminal on both trees
-                                    ((parentT1->leftChild == terminalT1.first && parentT1->rightChild == nullptr) ||
-                                    (parentT1->rightChild == terminalT1.first && parentT1->leftChild == nullptr))
+                                else case1check = false;
+                            }
+                            if (chainT1T2.size() >= 2)
+                            {
+                                chain = chainT1T2;
+                                chainTrees.emplace_back(T1);
+                                chainTrees.emplace_back(T2);
+                                chainWithTrees.first = chain;
+                                chainWithTrees.second = chainTrees;
+                                return std::dynamic_pointer_cast<AbstractRule>(
+                                std::make_shared<ChainReductionRule>(instance,chainWithTrees,context));
+                            }
+                        }
+                        //Case 2: or the parent of x2 is the parent of the parent of x1, i.e parent index of sibling is
+                        //the same as the index for the parent of the parent on both trees, as well as for x3 and x2
+                        //Only one terminal for each parent node must exist
+                        else if (
+                        // Parent has indeed only one terminal on both trees
+                        ((parentT1->leftChild == terminalT1.first && parentT1->rightChild == nullptr) ||
+                        (parentT1->rightChild == terminalT1.first && parentT1->leftChild == nullptr))
 
-                                    && ((parentT2->leftChild == terminalT2.first && parentT2->rightChild == nullptr) ||
-                                    (parentT2->rightChild == terminalT2.first && parentT2->leftChild == nullptr))
-                                // Parent of Parent of first terminal exists and...
-                                    && parentOfParentT1 != nullptr && parentOfParentT2 != nullptr
-                                // parent of Parent has one terminal x2 on both trees
-                                    && ((parentOfParentT1->leftChild == parentT1
-                                        && T1->TerminalToLabel().contains(parentOfParentT1->rightChild))
-                                        ||(parentOfParentT1->rightChild == parentT1
-                                        && T1->TerminalToLabel().contains(parentOfParentT1->leftChild)))
+                        && ((parentT2->leftChild == terminalT2.first && parentT2->rightChild == nullptr) ||
+                        (parentT2->rightChild == terminalT2.first && parentT2->leftChild == nullptr))
+                        // Parent of Parent of first terminal exists and...
+                        && parentOfParentT1 != nullptr && parentOfParentT2 != nullptr
+                        // parent of Parent has one terminal x2 on both trees
+                        && ((parentOfParentT1->leftChild == parentT1
+                        && T1->TerminalToLabel().contains(parentOfParentT1->rightChild))
+                        ||(parentOfParentT1->rightChild == parentT1
+                        && T1->TerminalToLabel().contains(parentOfParentT1->leftChild)))
 
-                                        && ((parentOfParentT2->leftChild == parentT2
-                                            && T2->TerminalToLabel().contains(parentOfParentT2->rightChild))
-                                        ||(parentOfParentT2->rightChild == parentT2
-                                            && T2->TerminalToLabel().contains(parentOfParentT2->leftChild)))
-                                //Parent of Parent of x2 exists on both trees and...
-                                    && parentOfParentT1->parent != nullptr && parentOfParentT2->parent != nullptr
-                                // Has a terminal on the other child side
-                                    && ((parentOfParentT1->parent->leftChild == parentOfParentT1
-                                        && T1->TerminalToLabel().contains(parentOfParentT1->parent->rightChild))
-                                        || (parentOfParentT1->parent->rightChild == parentOfParentT1
-                                        && T1->TerminalToLabel().contains(parentOfParentT1->parent->leftChild)))
+                        && ((parentOfParentT2->leftChild == parentT2
+                        && T2->TerminalToLabel().contains(parentOfParentT2->rightChild))
+                        ||(parentOfParentT2->rightChild == parentT2
+                        && T2->TerminalToLabel().contains(parentOfParentT2->leftChild)))
+                        //Parent of Parent of x2 exists on both trees and...
+                        && parentOfParentT1->parent != nullptr && parentOfParentT2->parent != nullptr
+                        // Has a terminal on the other child side
+                        && ((parentOfParentT1->parent->leftChild == parentOfParentT1
+                        && T1->TerminalToLabel().contains(parentOfParentT1->parent->rightChild))
+                        || (parentOfParentT1->parent->rightChild == parentOfParentT1
+                        && T1->TerminalToLabel().contains(parentOfParentT1->parent->leftChild)))
 
-                                        &&((parentOfParentT2->parent->leftChild == parentOfParentT2
-                                        && T2->TerminalToLabel().contains(parentOfParentT2->parent->rightChild))
-                                        || (parentOfParentT2->parent->rightChild == parentOfParentT2
-                                        && T2->TerminalToLabel().contains(parentOfParentT2->parent->leftChild)))
-                                        )
+                        &&((parentOfParentT2->parent->leftChild == parentOfParentT2
+                        && T2->TerminalToLabel().contains(parentOfParentT2->parent->rightChild))
+                        || (parentOfParentT2->parent->rightChild == parentOfParentT2
+                        && T2->TerminalToLabel().contains(parentOfParentT2->parent->leftChild)))
+                        )
+                        {
+                            //std::cout << "case 2" << std::endl;
+                            //Chain for both trees, parent nodes of x1, x2, x3
+                            std::vector<std::vector<graph::Node*>> chainT1T2 = {
+                                {parentOfParentT1->parent,parentOfParentT2->parent}};
+
+                            graph::Node* case2T1Parent = parentOfParentT1->parent;
+                            graph::Node* case2T2Parent = parentOfParentT2->parent;
+
+                            graph::Node* case2T1Sibling;
+                            graph::Node* case2T2Sibling;
+                            if (case2T1Parent != nullptr && case2T2Parent != nullptr)
+                            {
+                                //T1 structure check
+                                if ( case2T1Parent->leftChild == chainT1T2.back().front())
                                 {
-                                    //std::cout << "case 2" << std::endl;
-                                    //Chain for both trees, parent nodes of x1, x2, x3
-                                    std::vector<std::vector<graph::Node*>> chainT1T2 = {
-                                    {parentOfParentT1->parent,parentOfParentT2->parent}};
+                                    case2T1Sibling = case2T1Parent->rightChild;
+                                }
+                                else
+                                {
+                                    case2T1Sibling = case2T1Parent->leftChild;
+                                }
+                                //T2 structure c heck
+                                if (case2T2Parent->leftChild == chainT1T2.back().back())
+                                {
+                                    case2T2Sibling = case2T2Parent->rightChild;
+                                }
+                                else
+                                {
+                                    case2T2Sibling = case2T2Parent->leftChild;
+                                }
+                            }
+                            //Chain collection bool
+                            bool case2check = true;
 
-                                    graph::Node* case2T1Parent = parentOfParentT1->parent;
-                                    graph::Node* case2T2Parent = parentOfParentT2->parent;
-
-                                    graph::Node* case2T1Sibling;
-                                    graph::Node* case2T2Sibling;
+                            //Determine x4,... of chain
+                            while (case2check)
+                            {
+                                //std::cout << chainT1T2.size() << std::endl;
+                                //Siblings exist
+                                if (case2T1Sibling != nullptr && case2T2Sibling != nullptr
+                                && case2T1Parent != nullptr && case2T2Parent != nullptr
+                                && case2T1Sibling->leftChild == nullptr && case2T1Sibling->rightChild == nullptr
+                                && case2T2Sibling->leftChild == nullptr && case2T2Sibling->rightChild == nullptr
+                                && std::find(T1->Roots().begin(), T1->Roots().end(), case2T1Parent)
+                                == T1->Roots().end()
+                                && std::find(T2->Roots().begin(), T2->Roots().end(), case2T2Parent)
+                                == T2->Roots().end()
+                                )
+                                {
+                                    chainT1T2.push_back({case2T1Parent,case2T2Parent});
+                                    case2T1Parent = chainT1T2.back().front()->parent;
+                                    case2T2Parent = chainT1T2.back().back()->parent;
                                     if (case2T1Parent != nullptr && case2T2Parent != nullptr)
                                     {
                                         //T1 structure check
-                                        if ( case2T1Parent->leftChild == chainT1T2.back().front())
+                                        if (case2T1Parent->leftChild == chainT1T2.back().front())
                                         {
                                             case2T1Sibling = case2T1Parent->rightChild;
                                         }
@@ -597,84 +608,34 @@ solver::ChainReductionRule::isApplicable(
                                         //T2 structure c heck
                                         if (case2T2Parent->leftChild == chainT1T2.back().back())
                                         {
-                                            case2T2Sibling = case2T2Parent->rightChild;
+                                            case2T2Sibling = case2T1Parent->rightChild;
                                         }
                                         else
                                         {
                                             case2T2Sibling = case2T2Parent->leftChild;
                                         }
-
                                     }
-                                    //Chain collection bool
-                                    bool case2check = true;
-
-                                    //Determine x4,... of chain
-                                    while (case2check)
+                                    else
                                     {
-                                        //std::cout << chainT1T2.size() << std::endl;
-                                        //Siblings exist
-                                        if (case2T1Sibling != nullptr && case2T2Sibling != nullptr
-                                            && case2T1Parent != nullptr && case2T2Parent != nullptr
-                                            && case2T1Sibling->leftChild == nullptr && case2T1Sibling->rightChild == nullptr
-                                            && case2T2Sibling->leftChild == nullptr && case2T2Sibling->rightChild == nullptr
-                                            && std::find(T1->Roots().begin(), T1->Roots().end(), case2T1Parent)
-                                           == T1->Roots().end()
-                                           && std::find(T2->Roots().begin(), T2->Roots().end(), case2T2Parent)
-                                           == T2->Roots().end()
-                                        )
-                                        {
-                                            chainT1T2.push_back({case2T1Parent,case2T2Parent});
-                                            case2T1Parent = chainT1T2.back().front()->parent;
-                                            case2T2Parent = chainT1T2.back().back()->parent;
-
-                                            if (case2T1Parent != nullptr && case2T2Parent != nullptr)
-                                            {
-                                                //T1 structure check
-                                                if (case2T1Parent->leftChild == chainT1T2.back().front())
-                                                {
-                                                    case2T1Sibling = case2T1Parent->rightChild;
-                                                }
-                                                else
-                                                {
-                                                    case2T1Sibling = case2T1Parent->leftChild;
-                                                }
-                                                //T2 structure c heck
-                                                if (case2T2Parent->leftChild == chainT1T2.back().back())
-                                                {
-                                                    case2T2Sibling = case2T1Parent->rightChild;
-                                                }
-                                                else
-                                                {
-                                                    case2T2Sibling = case2T2Parent->leftChild;
-                                                }
-                                            }
-                                            else
-                                            {
-                                                case2check = false;
-                                            }
-                                        }
-                                        else case2check = false;
+                                        case2check = false;
                                     }
-
-                                    if (chainT1T2.size() >= 2)
-                                    {
-                                        chain = chainT1T2;
-                                        chainTrees.emplace_back(T1);
-                                        chainTrees.emplace_back(T2);
-                                        chainWithTrees.first = chain;
-                                        chainWithTrees.second = chainTrees;
-                                        return std::dynamic_pointer_cast<AbstractRule>(
-                                        std::make_shared<ChainReductionRule>(instance,chainWithTrees,context));
-                                    }
-
                                 }
-                                if (not chain.empty())
-                                {
-                                  break;
-                                }
+                                else case2check = false;
                             }
+                            if (chainT1T2.size() >= 2)
+                            {
+                                chain = chainT1T2;
+                                chainTrees.emplace_back(T1);
+                                chainTrees.emplace_back(T2);
+                                chainWithTrees.first = chain;
+                                chainWithTrees.second = chainTrees;
+                                return std::dynamic_pointer_cast<AbstractRule>(
+                                std::make_shared<ChainReductionRule>(instance,chainWithTrees,context));
+                            }
+
                         }
                     }
+                    if (not chain.empty()) break;
                 }
             }
             if (not chain.empty())
@@ -682,18 +643,11 @@ solver::ChainReductionRule::isApplicable(
                 break;
             }
         }
-        if(not chain.empty())
-        {
-            break;
-        }
     }
-    //when no chain was found:
 
+    //When no chain is found
     return nullptr;
-
 }
-
-
 std::string solver::ChainReductionRule::name() const
 {
     return "ChainReductionRule";
