@@ -16,8 +16,15 @@ namespace solver
         /// \brief First Chain found within two trees of a problem instance
         std::pair<std::vector<std::vector<graph::Node*>>,std::vector<std::shared_ptr<graph::Forest>>> chainWithTrees;
 
-        /// \brief Amount of changes done
-        std::vector<graph::Node*> changes;
+        /// \brief Parents of the last chain node
+        std::pair<graph::Node*,graph::Node*> parentToXN;
+
+        /// \brief The Nodes that are within the removed portions of the chain.
+        std::pair<std::vector<graph::Node*>,std::vector<graph::Node*>> chainNodes;
+
+        /// \brief The Labels for the Terminals from the removed portion of the chain.
+        std::pair<std::unordered_map<unsigned int, graph::Node>,std::unordered_map<unsigned int, graph::Node>>
+        chainLabels;
 
     public:
         /// \brief Chain Reduction Rule implementation that identifies the first chain out of the two forests given
@@ -26,8 +33,7 @@ namespace solver
         /// \param context information about the instance and the solver state
         /// \return The first chain between the two forests
         ChainReductionRule(const std::shared_ptr<graph::Instance>& instance,
-        std::pair<std::vector<std::vector<graph::Node*>>,std::vector<std::shared_ptr<graph::Forest>>>
-        chainWithTrees,
+        std::pair<std::vector<std::vector<graph::Node*>>,std::vector<std::shared_ptr<graph::Forest>>> chainWithTrees,
         const std::shared_ptr<Context>& context);
 
         /// \brief Apply the Chain Reduction rule onto the two Trees
