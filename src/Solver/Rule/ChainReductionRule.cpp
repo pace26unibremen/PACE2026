@@ -115,12 +115,14 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
         {
             topChainT2Parent->rightChild = bottomT2;
         }
-
+#ifdef DEBUG_IMAGE_VIEW_GRAPH
+        T1->renderImage();
+#endif
+#ifdef DEBUG_IMAGE_VIEW_GRAPH
+        T2->renderImage();
+#endif
         //Now, remove labels, terminals and nodes out of the two trees that are within the relevant section of the chain
         //,while storing them within this instance for unapply.
-
-
-
         // //Storage?
         // graph::Node chainBottomCutoffT1;
         // graph::Node chainBottomCutoffT2;
@@ -234,7 +236,6 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
         //         topNodeinT2->parent = nullptr;
         //     }
         // }
-
     }
     return RuleReturnCode::Continue;
 }
@@ -248,8 +249,8 @@ void solver::ChainReductionRule::unapply()
     isApplied = false;
 
     //Find nodes that belong to chain
-    graph::Node* bottomT1 = chainWithTrees.first[3].front();
-    graph::Node* bottomT2 = chainWithTrees.first[3].back();
+    graph::Node* bottomT1 = chainWithTrees.first[1].front();
+    graph::Node* bottomT2 = chainWithTrees.first[1].back();
     graph::Node* topT1 = chainWithTrees.first[chainWithTrees.first.size()-1].front();
     graph::Node* topT2 = chainWithTrees.first[chainWithTrees.first.size()-1].back();
 
@@ -260,7 +261,7 @@ void solver::ChainReductionRule::unapply()
         {
             for (auto& node2 : chainWithTrees.second.front()->Nodes())
             {
-                if (&node2 == chainWithTrees.first[4].front())
+                if (&node2 == chainWithTrees.first[2].front())
                 {
                     node.parent = &node2;
                     if (node2.leftChild == nullptr)
@@ -304,7 +305,7 @@ void solver::ChainReductionRule::unapply()
         {
             for (auto& node2 : chainWithTrees.second.back()->Nodes())
             {
-                if (&node2 == chainWithTrees.first[4].back())
+                if (&node2 == chainWithTrees.first[2].back())
                 {
                     node.parent = &node2;
                     if (node2.leftChild == nullptr)
@@ -340,9 +341,7 @@ void solver::ChainReductionRule::unapply()
             }
         }
     }
-
 }
-
 
 std::shared_ptr<solver::AbstractRule>
 solver::ChainReductionRule::isApplicable(
