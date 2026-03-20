@@ -332,7 +332,7 @@ build_stride:
     - mkdir -p hpc_transfer
     # Prepare .env file for Stride with all necessary variables
     - |
-      cat > hpc_transfer/.env <<'EOF'
+      cat > hpc_transfer/.env <<EOF
         STRIDE_SOLVER="./startSolver"
         STRIDE_TIMEOUT=$STRIDE_TIMEOUT
         STRIDE_GRACE=$STRIDE_GRACE
