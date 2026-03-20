@@ -331,16 +331,16 @@ build_stride:
     # 1) Prepare and copy files to HPC
     - mkdir -p hpc_transfer
     # Prepare .env file for Stride with all necessary variables
-    #- |
-    #  cat > hpc_transfer/.env << EOF
-    #    STRIDE_SOLVER="./startSolver"
-    #    STRIDE_TIMEOUT=$STRIDE_TIMEOUT
-    #    STRIDE_GRACE=$STRIDE_GRACE
-    #    STRIDE_DOWNLOADS_PATH=".stride-downloads"
-    #    STRIDE_INSTANCE_ORDER="nodes-trees-asc"
-    #    STRIDE_RUN_NAME="$STRIDE_RUN_NAME"
-    #    STRIDE_OPTIMAL=true
-    #  EOF
+    - |
+      cat > hpc_transfer/.env <<'EOF'
+        STRIDE_SOLVER="./startSolver"
+        STRIDE_TIMEOUT=$STRIDE_TIMEOUT
+        STRIDE_GRACE=$STRIDE_GRACE
+        STRIDE_DOWNLOADS_PATH=".stride-downloads"
+        STRIDE_INSTANCE_ORDER="nodes-trees-asc"
+        STRIDE_RUN_NAME="$STRIDE_RUN_NAME"
+        STRIDE_OPTIMAL=true
+      EOF
     - cp pace26stride/target/x86_64-unknown-linux-musl/smaller-release/stride hpc_transfer/
     - cp build/src/startSolver hpc_transfer/
     - cp res/instances/"$INSTANCES_LST" hpc_transfer/instances.lst
@@ -353,7 +353,7 @@ build_stride:
 
     # 2) Unpack and prepare, then submit job
     - |
-      ssh hpc bash <<EOF
+      ssh hpc bash <<'EOF'
         cd ~/pace-bench
       
         # Backup stride-logs if it exists
@@ -390,9 +390,9 @@ build_stride:
 
     # 4) Retrieve and check results
     - mkdir -p stride-logs
-    - rsync -avq --relative 'pace:~/pace-bench/hpc_transfer/stride-logs/./*/summary.json' stride-logs/
+    - rsync -avq --relative 'hpc:~/pace-bench/hpc_transfer/stride-logs/./*/summary.json' stride-logs/
     # Copy error logs if they exist; ignore if they don't (e.g. if the job succeeded without errors)
-    - rsync -avq --relative -ignore-missing-args 'pace:~/pace-bench/hpc_transfer/stride-logs/./*/solvererror' stride-logs/
+    - rsync -avq --relative -ignore-missing-args 'hpc:~/pace-bench/hpc_transfer/stride-logs/./*/solvererror' stride-logs/
     - bash gitlab-ci/bash/check_errors.sh
 
   artifacts:
