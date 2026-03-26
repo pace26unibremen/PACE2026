@@ -1,18 +1,6 @@
 cmake_minimum_required(VERSION 3.27.0)
 
-# This defining has been generated using LLM ->.
-if(NOT DEFINED CMAKE_CXX_COMPILER)
-    set(CMAKE_C_COMPILER clang CACHE STRING "" FORCE)
-    set(CMAKE_CXX_COMPILER clang++ CACHE STRING "" FORCE)
-endif() # <- LLM, whereas project() definition has been changed to incorporate C CXX. Theoretically, if Clang is not
-# installed it should default to GCC.
-
 project(Pace2026 VERSION 0.1.0 LANGUAGES C CXX)
-
-if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    message(WARNING "Clang++ is mandatory for Coverage/profiling builds ")
-endif()
-
 
 include(CMakePrintHelpers)
 
