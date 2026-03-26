@@ -18,10 +18,16 @@ TEST_CASE("Reduce Chain - Tree 1", "[Forest, DeleteNodeActionInChains, AbstractA
         auto i = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_2_8_mirrored_chain.tree");
         auto rule = ChainReductionRule::isApplicable(i,std::make_shared<Context>());
         INFO("Apply ChainReductionRule on Tree");
-        rule->apply();
         REQUIRE(rule);
+        rule->apply();
         REQUIRE(rule->IsApplied());
 
+        // graph::Forest forest = {nullptr,nullptr,nullptr,nullptr};
+        // for (auto current : *i)
+        // {
+        //    forest = current->copy();
+        //
+        // }
     }
 
     SECTION("Section 2")
