@@ -47,7 +47,7 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
     }
     isApplied = true;
 
-    //Repeat check for safety, latter >= 2 means that chain was indeed larger then 3 elements, as x1 and x2 are never
+    //Repeat check for safety, latter >= 2 means that chain was indeed longer then 3 elements, as x1 and x2 are never
     //stored due to being irrelevant
     if (chainWithTrees.second.size() == 2 && chainWithTrees.first.size() >= 2)
     {
@@ -78,27 +78,16 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
 
         bottomChainT2->leftChild == bottomT1 ? bottomChainT2->leftChild = nullptr : bottomChainT2->rightChild = nullptr;
 
-        if (topChainT1Parent->leftChild == topChainT1)
-        {
-            topChainT1Parent->leftChild = bottomT1;
-        }
-        else //if (topChainT1Parent->rightChild == topChainT1)
-        {
-            topChainT1Parent->rightChild = bottomT1;
-        }
+        //Create edge between x3 and xn's parent
+        topChainT1Parent->leftChild == topChainT1 ? topChainT1Parent->leftChild = bottomT1 : topChainT1Parent->rightChild
+        = bottomT1;
 
-        if (topChainT2Parent->leftChild == topChainT2)
-        {
-            topChainT2Parent->leftChild = bottomT2;
-        }
-        else //if (topChainT2Parent->rightChild == topChainT2)
-        {
-            topChainT2Parent->rightChild = bottomT2;
-        }
+        topChainT2Parent->leftChild == topChainT2 ? topChainT2Parent->leftChild = bottomT2 :
+        topChainT2Parent->rightChild = bottomT2;
+
         //Remove edge between xn and its parent and update parent accordingly with x3 being it's new child.
         topChainT1->parent = nullptr;
         topChainT2->parent = nullptr;
-
     }
     return RuleReturnCode::Continue;
 }
@@ -267,6 +256,19 @@ solver::ChainReductionRule::isApplicable(
                         && terminalT2.first->parent->rightChild != nullptr
                         && T2->TerminalToLabel().contains(terminalT2.first->parent->leftChild)
                         && T2->TerminalToLabel().contains(terminalT2.first->parent->rightChild)
+
+                        && terminalT1.first->parent->parent != nullptr && terminalT2.first->parent->parent != nullptr
+
+                        && (terminalT1.first->parent->parent->leftChild == terminalT1.first->parent
+                        || terminalT1.first->parent->parent->rightChild == terminalT1.first->parent)
+                        && (T1->TerminalToLabel().contains(terminalT1.first->parent->parent->leftChild)
+                        || T1->TerminalToLabel().contains(terminalT1.first->parent->parent->rightChild))
+
+                        && (terminalT2.first->parent->parent->leftChild == terminalT2.first->parent
+                        || terminalT2.first->parent->parent->rightChild == terminalT2.first->parent)
+                        && (T2->TerminalToLabel().contains(terminalT2.first->parent->parent->leftChild)
+                        || T2->TerminalToLabel().contains(terminalT2.first->parent->parent->rightChild))
+
                         )
                         {
                             //Chain for both trees
@@ -276,8 +278,8 @@ solver::ChainReductionRule::isApplicable(
                             bool case1check = true;
 
                             //Determine x4 for T1, T2
-                            graph::Node* case1T1Parent = parentT1;
-                            graph::Node* case1T2Parent = parentT2;
+                            graph::Node* case1T1Parent = parentT1->parent;
+                            graph::Node* case1T2Parent = parentT2->parent;
 
                             //Determine Sibling of x3
                             graph::Node* case1T1Sibling;
