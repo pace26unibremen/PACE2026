@@ -1,6 +1,5 @@
 #include "ChainReductionRule.hpp"
 #include <algorithm>
-#include <iostream>
 #include <unordered_map>
 #include <utility>
 
@@ -87,6 +86,29 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
         topChainT1->parent = nullptr;
         topChainT2->parent = nullptr;
 
+        //Change Siblings of parent of x3 and xn's parents terminal to match
+        if (topChainT1Parent->leftChild == nullptr)
+        {
+            bottomT1->sibling = topChainT1Parent->rightChild;
+            topChainT1Parent->rightChild->sibling = bottomT1;
+        }
+        else
+        {
+            bottomT1->sibling = topChainT1Parent->leftChild;
+            topChainT1Parent->leftChild->sibling = bottomT1;
+        }
+
+        if (topChainT2Parent->leftChild == nullptr)
+        {
+            bottomT2->sibling = topChainT2Parent->rightChild;
+            topChainT2Parent->rightChild->sibling = bottomT2;
+        }
+        else
+        {
+            bottomT2->sibling = topChainT2Parent->leftChild;
+            topChainT2Parent->leftChild->sibling = bottomT2;
+        }
+
         //Turn the chain terminals into single vertex trees, remove the rest of the chain structure.
         //-> for
         for (int i = 1; i < chainWithTrees.first.size(); i++)
@@ -101,6 +123,7 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                 //Remove the edge between these two
                 terminal->parent = nullptr;
                 chainWithTrees.first[i].front()->rightChild = nullptr;
+
             }
             else if (chainWithTrees.first[i].front()->rightChild == chainWithTrees.first[i-1].front())
             {
@@ -113,6 +136,7 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
             }
         }
     }
+
     return RuleReturnCode::Continue;
 }
 
