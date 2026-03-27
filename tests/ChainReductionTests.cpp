@@ -51,4 +51,22 @@ TEST_CASE("Reduce Chain - Tree 1", "[Forest, DeleteNodeActionInChains, AbstractA
         // std::cout << "Forests after solver" << std::endl;
         // e->write(cout);
     }
+
+    SECTION("Section 3 - Overall Test")
+    {
+        auto i = ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_2_8_mirrored_chain.tree");
+        for(auto forest : *i)
+        {
+            forest->write(cout);
+        }
+        auto j = ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_2_8_mirrored_chain.tree");
+        INFO("Test the Functionally within Branching Solver");
+        auto solver = BranchingSolver(i);
+        auto e = solver.solve();
+        for (auto forest : *i)
+        {
+            REQUIRE(e != forest);
+        }
+        e->write(cout);
+    }
 }
