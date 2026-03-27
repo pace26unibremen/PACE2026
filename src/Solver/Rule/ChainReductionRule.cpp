@@ -39,8 +39,6 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
     // Always there if the chain exists. At most the root of the tree.
     //Respectively, this needs to happen to the other side of the edge, i.e for x4 it must be done on x3,
     //and on xn+1 for xn, as it's two sided.
-    // Forest needs to be writable -> Removal of nodes within chain out of Nodes(), Terminals() and LabelToTerminal
-    // -> Storage is required -> protected class wide variables for those.
     if (this->isApplied)
     {
         throw std::invalid_argument("ChainReductionRule : apply : rule was already applied");
@@ -88,6 +86,32 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
         //Remove edge between xn and its parent and update parent accordingly with x3 being it's new child.
         topChainT1->parent = nullptr;
         topChainT2->parent = nullptr;
+
+        //Turn the chain terminals into single vertex trees, remove the rest of the chain structure.
+        //-> for
+        for (int i = 1; i < chainWithTrees.first.size(); i++)
+        {
+            //Every element is a parent -> Terminal
+            // If the left side is the parent of the child
+            if (chainWithTrees.first[i].front()->leftChild == chainWithTrees.first[i-1].front())
+            {
+                //->Right side is the terminal
+                graph::Node* terminal = chainWithTrees.first[i].front()->rightChild;
+
+                //Remove the edge between these two
+                terminal->parent = nullptr;
+                chainWithTrees.first[i].front()->rightChild = nullptr;
+            }
+            else if (chainWithTrees.first[i].front()->rightChild == chainWithTrees.first[i-1].front())
+            {
+                //->Left side is the terminal
+                graph::Node* terminal = chainWithTrees.first[i].front()->leftChild;
+
+                //Remove the edge between these two
+                terminal->parent = nullptr;
+                chainWithTrees.first[i].front()->leftChild = nullptr;
+            }
+        }
     }
     return RuleReturnCode::Continue;
 }
