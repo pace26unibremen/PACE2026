@@ -34,11 +34,11 @@ int LeastCommonAncestor::generatePreorderNumbers(graph::Node* node, const int pr
     return current;
 }
 
-void LeastCommonAncestor::eulerTour(graph::Node* node, int depth)
+void LeastCommonAncestor::eulerTour(graph::Node* node, const int depth)
 {
 
-    int preorderNumber = preorderToNode.size();
-    int eulerNumber = preorderNumbers.size();
+    const int preorderNumber = preorderToNode.size();
+    const int eulerNumber = preorderNumbers.size();
 
     preorderToNode.push_back(node);
 
@@ -54,14 +54,14 @@ void LeastCommonAncestor::eulerTour(graph::Node* node, int depth)
 
 
 
-    if (auto leftChild = node->leftChild)
+    if (const auto leftChild = node->leftChild)
     {
         eulerTour(leftChild, depth + 1);
         levelOfEulerTours.push_back(depth);
         preorderNumbers.push_back(preorderNumber);
     }
 
-    if (auto rightChild = node->rightChild)
+    if (const auto rightChild = node->rightChild)
     {
         eulerTour(rightChild, depth + 1);
         levelOfEulerTours.push_back(depth);

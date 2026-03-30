@@ -4,7 +4,7 @@
 
 #include "TwinRelation.hpp"
 #include "LeastCommonAncestor.hpp"
-
+#include <ranges>
 
 namespace cluster
 {
@@ -53,13 +53,13 @@ void TwinRelation::generateInteriorTwinRelation(graph::Node *givenNode,
     }
 
     // Apparently what happens from now on is a mystical magical left-fold.
-    if (auto leftChild = givenNode->leftChild)
+    if (const auto leftChild = givenNode->leftChild)
     {
         generateInteriorTwinRelation(leftChild, foreignLCA);
         nodeToTwinBuffer[givenNode] = nodeToTwinBuffer[leftChild];
     }
 
-    if (auto rightChild = givenNode->rightChild)
+    if (const auto rightChild = givenNode->rightChild)
     {
         generateInteriorTwinRelation(rightChild, foreignLCA);
 
@@ -85,7 +85,7 @@ void TwinRelation::fuseTwinBufferToSets() {
 void TwinRelation::prepareLeafTwins(const std::shared_ptr<graph::Forest>& homeForest,
                                     const std::shared_ptr<graph::Forest>& foreignForest) {
 
-    for (const auto& [label, node] : homeForest->LabelToTerminal())
+    for (const auto& label : homeForest->LabelToTerminal() | std::views::keys)
         nodeToTwinBuffer[homeForest->LabelToTerminal()[label]] = foreignForest->LabelToTerminal()[label];
 }
 
