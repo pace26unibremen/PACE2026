@@ -47,7 +47,8 @@ class ClusterInstance
     /// \param twinRelation The Twin-Map to get the equivalence class of a node to discern where to split each forest
     /// of the instance.
     /// \param clusterPoints The cluster points of the instance we want to split up.
-    ClusterInstance(const std::shared_ptr<graph::Instance>& instance, cluster::TwinRelation* twinRelation, std::vector<graph::Node*>* clusterPoints);
+    ClusterInstance(const std::shared_ptr<graph::Instance>& instance, cluster::TwinRelation* twinRelation,
+                    const std::vector<graph::Node*>* clusterPoints);
 
     /// \brief This is a wrapped constructor that skips dealing with all the prior classes.
     /// Be careful when using it, it'll keep the data structures used internally.

@@ -23,9 +23,9 @@ class ClusterPointGenerator
 
     static int checkHeightOfNode(graph::Node* node);
 
-    bool trueEquivalenceClass(graph::Node* node);
+    bool trueEquivalenceClass(graph::Node* node) const;
 
-    bool leafEquivalent(graph::Node* node);
+    bool leafEquivalent(graph::Node* node) const;
 
 
 

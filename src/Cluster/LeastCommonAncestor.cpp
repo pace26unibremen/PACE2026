@@ -4,12 +4,10 @@
 
 #include "LeastCommonAncestor.hpp"
 
-#include <cmath>
-#include "iostream"
 namespace cluster
 {
 // This design apparently is standard procedure (LCA through Euler Tour, RMQ & Sparse Table)
-LeastCommonAncestor::LeastCommonAncestor(std::shared_ptr<graph::Forest>& forestPointer)
+LeastCommonAncestor::LeastCommonAncestor(const std::shared_ptr<graph::Forest>& forestPointer)
 {
     graph::Node* rootNode = forestPointer->Roots().front();
 
@@ -22,7 +20,7 @@ LeastCommonAncestor::LeastCommonAncestor(std::shared_ptr<graph::Forest>& forestP
 
 
 
-int LeastCommonAncestor::generatePreorderNumbers(graph::Node* node, int preorderNumber)
+int LeastCommonAncestor::generatePreorderNumbers(graph::Node* node, const int preorderNumber)
 {
     nodesToPreorderNumber[node] = preorderNumber;
 
@@ -90,7 +88,7 @@ void LeastCommonAncestor::precomputeRangeMinimumQuery()
     }
 }
 
-int LeastCommonAncestor::computeRangeMinimumQuery(unsigned long i, unsigned long j)
+int LeastCommonAncestor::computeRangeMinimumQuery(const unsigned long i, const unsigned long j) const
 {
     // This scurrilous construction is a remnant of the reimplementation of rSPR. It will be changed in the future.
 
@@ -108,8 +106,7 @@ int LeastCommonAncestor::computeRangeMinimumQuery(unsigned long i, unsigned long
         length = 31 - __builtin_clz(length);
     }
 
-
-    int rmq1 = RangeMinimumQuery[length+1][i];
+    const int rmq1 = RangeMinimumQuery[length+1][i];
 
     int rmq2;
 
@@ -138,9 +135,8 @@ graph::Node* LeastCommonAncestor::getLeastCommonAncestor(graph::Node* firstNode,
         throw std::invalid_argument("One of the nodes is not contained within this structure. "
                                     "Did you accidentally pass a node from another tree?");
 
-
-    int preorderA = preorderToInternalPreorder[nodesToPreorderNumber[firstNode]];
-    int preorderB = preorderToInternalPreorder[nodesToPreorderNumber[secondNode]];
+    const int preorderA = preorderToInternalPreorder[nodesToPreorderNumber[firstNode]];
+    const int preorderB = preorderToInternalPreorder[nodesToPreorderNumber[secondNode]];
 
     int leastCommonAncestorIndex;
 

@@ -7,7 +7,7 @@
 namespace cluster
 {
 
-// This does not generate the same amount of Cluster Points as rSPR.
+// This does not generate the same amount of Cluster Points as rSPR, but they should be very much valid.
 // The engaged code reviewer may take a look at rSPR and tell me what's wrong (or right?) :)
 void ClusterPointGenerator::generateClusterPoints(graph::Node* node) {
     // Recurse
@@ -52,7 +52,7 @@ int ClusterPointGenerator::checkHeightOfNode(graph::Node* node)
 }
 
 
-bool ClusterPointGenerator::trueEquivalenceClass(graph::Node* node)
+bool ClusterPointGenerator::trueEquivalenceClass(graph::Node* node) const
 {
     // Generate the reference set: The cluster point node and its twins.
     std::set<graph::Node*> referenceSet = std::set<graph::Node*>();
@@ -75,7 +75,7 @@ bool ClusterPointGenerator::trueEquivalenceClass(graph::Node* node)
 }
 
 
-bool ClusterPointGenerator::leafEquivalent(graph::Node* node)
+bool ClusterPointGenerator::leafEquivalent(graph::Node* node) const
 {
     bool isLeafEquivalent = true;
 
@@ -95,7 +95,7 @@ bool ClusterPointGenerator::leafEquivalent(graph::Node* node)
 ClusterPointGenerator ClusterPointGenerator::wrappedConstructor(const std::shared_ptr<graph::Instance>& instance)
 {
     auto temporaryTable = cluster::TwinRelation(instance);
-    return ClusterPointGenerator(instance, &temporaryTable);
+    return { ClusterPointGenerator(instance, &temporaryTable) };
 }
 
 }

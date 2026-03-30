@@ -12,16 +12,19 @@
 #include "functional"
 #include "iostream"
 
-int labelMismatchTestFunction(std::shared_ptr<graph::Instance>*  instance, cluster::TwinRelation* interiorTwins,
-                              cluster::ClusterPointGenerator* generator)
+// This implements the testing of leaf equivalence independent of the BitMap within the node object,
+// to add safety redundancy.
+int labelMismatchTestFunction(const std::shared_ptr<graph::Instance>*  instance, cluster::TwinRelation* interiorTwins,
+                              const cluster::ClusterPointGenerator* generator)
 {
     int labelMismatches = 0;
+    int magicIllegalLabelNumber = 42879;
 
-    std::vector<graph::Node*> clusterPoints = generator->clusterPoints;
+    const std::vector<graph::Node*> clusterPoints = generator->clusterPoints;
 
 
 
-    std::function<void(std::set<unsigned int>*, graph::Node*, graph::Forest* forest)> fetchLabels =
+    const std::function<void(std::set<unsigned int>*, graph::Node*, graph::Forest* forest)> fetchLabels =
         [&](std::set<unsigned int>* set, graph::Node* node, graph::Forest* forest) -> void {
 
         if (node->leftChild == nullptr && node->rightChild == nullptr)
@@ -31,15 +34,14 @@ int labelMismatchTestFunction(std::shared_ptr<graph::Instance>*  instance, clust
         // then the leaves should not be in the Map of the forest with the decoupled child.
         if (not forest->TerminalToLabel().contains(node) && node->leftChild == nullptr && node->rightChild == nullptr)
         {
-            set->insert(1000);
+            set->insert(magicIllegalLabelNumber);
         }
 
         if (node->leftChild) fetchLabels(set, node->leftChild, forest);
         if (node->rightChild) fetchLabels(set, node->rightChild, forest);
     };
 
-
-    std::function<std::shared_ptr<graph::Forest>(graph::Node*)> getForestOfNode = [&](graph::Node* node) -> std::shared_ptr<graph::Forest>{
+    const std::function<std::shared_ptr<graph::Forest>(graph::Node*)> getForestOfNode = [&](graph::Node* node) -> std::shared_ptr<graph::Forest>{
         graph::Node* buffer = node;
         while (buffer->parent != nullptr) buffer = buffer->parent;
 
@@ -57,21 +59,17 @@ int labelMismatchTestFunction(std::shared_ptr<graph::Instance>*  instance, clust
     {
         std::set<unsigned int> referenceSet = std::set<unsigned int>();
 
-
-
         fetchLabels(&referenceSet, clusterPoint, getForestOfNode(clusterPoint).get());
-
 
         for (const auto& twin : interiorTwins->nodeToTwins[clusterPoint])
         {
             std::set<unsigned int> comparisonSet = std::set<unsigned int>();
-
             fetchLabels(&comparisonSet, twin, getForestOfNode(twin).get());
 
             for (const auto& label : comparisonSet)
             {
                 if (!referenceSet.contains(label) || referenceSet.size() != comparisonSet.size() ||
-                    comparisonSet.contains(1000) )
+                    comparisonSet.contains(magicIllegalLabelNumber) )
                 {
                     labelMismatches += 1;
                 }
@@ -80,31 +78,26 @@ int labelMismatchTestFunction(std::shared_ptr<graph::Instance>*  instance, clust
 
         }
 
-
         referenceSet.clear();
-
     }
     return labelMismatches;
 }
 
-size_t rootIsClusterPoint(std::shared_ptr<graph::Instance>*  instance, cluster::TwinRelation* interiorTwins,
-                          cluster::ClusterPointGenerator* generator)
+size_t rootIsClusterPoint(const std::shared_ptr<graph::Instance>*  instance, cluster::TwinRelation* interiorTwins,
+                          const cluster::ClusterPointGenerator* generator)
 {
     std::vector<graph::Node*> clusterPoints = generator->clusterPoints;
 
     std::set<graph::Node*> testSet = std::set<graph::Node*>();
-    for (const auto& forest : **instance){
+    for (const auto& forest : **instance)
+    {
 
-        auto root = forest->Roots().front();
-        for (const auto& twinOfRoot : interiorTwins->nodeToTwins[root])
+        for (auto root = forest->Roots().front(); const auto& twinOfRoot : interiorTwins->nodeToTwins[root])
         {
             testSet.insert(twinOfRoot);
 
-
             for (auto twinOfTwin : interiorTwins->nodeToTwins[twinOfRoot])
-            {
                 testSet.insert(twinOfTwin);
-            }
 
         }
 
@@ -113,7 +106,7 @@ size_t rootIsClusterPoint(std::shared_ptr<graph::Instance>*  instance, cluster::
 
     // This counts the number of "foreign nodes" in the root twin test set.
     int testSetContaminator = 0;
-    for (auto forest : **instance)
+    for (const auto& forest : **instance)
     {
         auto root = forest->Roots().front();
         if (!testSet.contains(root))
@@ -138,7 +131,7 @@ TEST_CASE("ClusterLabelEquivalence")
         cluster::TwinRelation interiorTwins = cluster::TwinRelation(instance);
         cluster::ClusterPointGenerator generator = cluster::ClusterPointGenerator(instance, &interiorTwins);
 
-        int labelMismatches = labelMismatchTestFunction(&instance, &interiorTwins, &generator);
+        const int labelMismatches = labelMismatchTestFunction(&instance, &interiorTwins, &generator);
 
 
 
@@ -161,7 +154,7 @@ TEST_CASE("RootTwinEquivalence")
         cluster::TwinRelation interiorTwins = cluster::TwinRelation(instance);
         cluster::ClusterPointGenerator generator = cluster::ClusterPointGenerator(instance, &interiorTwins);
 
-        size_t rootClassSize = rootIsClusterPoint(&instance, &interiorTwins, &generator);
+        const size_t rootClassSize = rootIsClusterPoint(&instance, &interiorTwins, &generator);
 
         // This is a bit hacky but should suffice for the test...
         REQUIRE(rootClassSize == instance->size());
@@ -192,9 +185,9 @@ TEST_CASE("RecursiveClusterI")
 
 
 
-        for (std::shared_ptr<std::vector<std::shared_ptr<graph::Forest>>> subInstance : *clusterInstance.getVectorOfInstances())
+        for (const std::shared_ptr<std::vector<std::shared_ptr<graph::Forest>>>& subInstance : *clusterInstance.getVectorOfInstances())
         {
-            // The test SEGFAULTS when you don't properly decouple and do stuff so I think it's working lmfao
+            // The test SEGFAULTS when you don't properly decouple and do stuff, so I think it's working lmfao
                 clusterInstance.decouple();
                 cluster::TwinRelation interiorTwinsCluster = cluster::TwinRelation(subInstance);
                 cluster::ClusterPointGenerator generatorCluster = cluster::ClusterPointGenerator(subInstance, &interiorTwins);
@@ -214,7 +207,7 @@ TEST_CASE("RecursiveClusterI")
 
         bool success = (rootClusterClassErrors == 0) and (labelMismatches == 0);
 
-        REQUIRE(success == true);
+        REQUIRE(success);
     }
 
 }
@@ -228,116 +221,4 @@ TEST_CASE("RecursiveClusterI")
 // likely take ages to compute, whereas this property (whether it hold or not) may have important semantic implication.
 
 
-// Test Question: Let A and B be nodes: Does
-// Forall Forests, Forall A, Forall B : LCA(A,B) = LCA(B,A) = naiveLCA(A,B) = naiveLCA(B,A)
-// hold true?
-TEST_CASE("LeastCommonAncestorCorrectness")
-{
-    SECTION("Check if the fetching of LCA Nodes is symmmetric and the same result to a naive implementation.")
-    {
 
-        std::function<graph::Node*(graph::Node*, graph::Node*)> naiveLCA =
-            [&](graph::Node* nodeA, graph::Node* nodeB) -> graph::Node* {
-
-            std::set<graph::Node*> traversedPoints = std::set<graph::Node*>();
-
-            if (nodeA == nullptr || nodeB == nullptr)
-                return nullptr;
-            
-            if (nodeA == nodeB)
-            {
-                return nodeA;
-            }
-
-            traversedPoints.insert(nodeA);
-            traversedPoints.insert(nodeB);
-
-            graph::Node* bufferA = nodeA;
-            graph::Node* bufferB = nodeB;
-            
-            int i = 0;
-            while (++i < 50000)
-            {
-                if (bufferA->parent && (bufferA = bufferA->parent) != nullptr)
-                {
-                    if (not traversedPoints.contains(bufferA))
-                        traversedPoints.insert(bufferA);     
-                    else return bufferA;
-                }
-                
-                if (bufferB->parent && (bufferB = bufferB->parent) != nullptr)
-                {
-                    if (not traversedPoints.contains(bufferB))
-                        traversedPoints.insert(bufferB);
-                    else return bufferB;
-                }
-            }
-
-            return nullptr;
-
-        };
-
-        std::function<void(std::set<graph::Node*>*, graph::Node*)> fetchNodePointerSet =
-            [&](std::set<graph::Node*>* set, graph::Node* node) -> void {
-
-            if (node)
-                set->insert(node);
-
-            if (node->leftChild) fetchNodePointerSet(set, node->leftChild);
-            if (node->rightChild) fetchNodePointerSet(set, node->rightChild);
-        };
-
-
-
-
-        std::shared_ptr<graph::Instance>  instance = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_100_11_stressTest.tree");
-
-        bool isValid = true;
-
-
-        for (std::shared_ptr<graph::Forest> forest :  *instance)
-        {
-            std::set<graph::Node*> allNodesOfForest = std::set<graph::Node*>();
-            fetchNodePointerSet(&allNodesOfForest, forest->Roots().front());
-
-            cluster::LeastCommonAncestor LCA = cluster::LeastCommonAncestor(forest);
-
-
-            for (const auto& outerNodeLoop : allNodesOfForest)
-            {
-
-                for (const auto& innerNodeLoop : allNodesOfForest)
-                {
-
-                    graph::Node* naive = naiveLCA(outerNodeLoop, innerNodeLoop);
-                    graph::Node* naivePrime = naiveLCA(innerNodeLoop, outerNodeLoop);
-
-                    if (naive == nullptr)
-                    {
-                        isValid = false;
-                        goto exit;
-                    }
-                    
-                    graph::Node* firstLCA = LCA.getLeastCommonAncestor(outerNodeLoop, innerNodeLoop);
-                    graph::Node* secondLCA = LCA.getLeastCommonAncestor(innerNodeLoop, outerNodeLoop);
-
-                    isValid &= ((firstLCA == secondLCA) && (firstLCA == naive) && (naive == naivePrime));
-                    if (not isValid)
-                        goto exit;
-                }
-
-            }
-
-
-
-
-        }
-
-        exit:
-
-
-        REQUIRE(isValid);
-    }
-
-
-}

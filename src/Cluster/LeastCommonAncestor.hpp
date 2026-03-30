@@ -35,7 +35,7 @@ class LeastCommonAncestor
       void eulerTour(graph::Node* node, int depth);
 
       void precomputeRangeMinimumQuery();
-      int computeRangeMinimumQuery(unsigned long i, unsigned long j);
+      int computeRangeMinimumQuery(unsigned long i, unsigned long j) const;
 
 
 
@@ -43,8 +43,8 @@ class LeastCommonAncestor
 
     /// \brief This is the constructor of the LCA Table. It provides the fetching of a LCA Node in constant time.
     /// \note This data structure currently has to be reinstantiated if the structure of the tree changes!
-    /// \param forest The forest of which we want to generate the LCA table for.
-    explicit LeastCommonAncestor(std::shared_ptr<graph::Forest>& forest);
+    /// \param forestPointer The forest of which we want to generate the LCA table for.
+    explicit LeastCommonAncestor(const std::shared_ptr<graph::Forest>& forestPointer);
 
 
 
