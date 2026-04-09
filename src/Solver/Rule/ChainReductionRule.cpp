@@ -1,5 +1,7 @@
 #include "ChainReductionRule.hpp"
+
 #include <algorithm>
+#include <iostream>
 #include <unordered_map>
 #include <utility>
 
@@ -65,77 +67,271 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
         graph::Node* topChainT1Parent = chainWithTrees.first[chainWithTrees.first.size()-1].front()->parent;
         graph::Node* topChainT2Parent = chainWithTrees.first[chainWithTrees.first.size()-1].back()->parent;
 
+
+        //REMOVAL OF EDGES
+
         //Remove the edge between x3 and x4, replace with edge between x3 and topChainT1Parent
         bottomT1->parent = topChainT1Parent;
         bottomT2->parent = topChainT2Parent;
 
-        //Update x4 to reflect x3 change
+        //Create edge between x3 and xn's parent
+        // topChainT1Parent->leftChild == topChainT1 ? topChainT1Parent->leftChild = bottomT1 : topChainT1Parent->rightChild
+        // = bottomT1;
 
+        if (topChainT1Parent->leftChild == topChainT1)
+        {
+            topChainT1Parent->leftChild = bottomT1;
+            topChainT1Parent->rightChild->sibling = bottomT1;
+            bottomT1->sibling = topChainT1Parent->rightChild;
+        }
+        else
+        {
+            topChainT1Parent->rightChild = bottomT1;
+            topChainT1Parent->leftChild->sibling = bottomT1;
+            bottomT1->sibling = topChainT1Parent->leftChild;
+        }
+
+        if (topChainT2Parent->leftChild == topChainT2)
+        {
+            topChainT2Parent->leftChild = bottomT2;
+            topChainT2Parent->rightChild->sibling = bottomT2;
+            bottomT2->sibling = topChainT2Parent->rightChild;
+        }
+        else
+        {
+            topChainT2Parent->rightChild = bottomT2;
+            topChainT2Parent->leftChild->sibling = bottomT2;
+            bottomT2->sibling = topChainT2Parent->leftChild;
+        }
+        // topChainT2Parent->leftChild == topChainT2 ? topChainT2Parent->leftChild = bottomT2 :
+        // topChainT2Parent->rightChild = bottomT2;
+
+        //Update x4 to reflect x3 change
         bottomChainT1->leftChild == bottomT1 ? bottomChainT1->leftChild = nullptr : bottomChainT1->rightChild = nullptr;
 
         bottomChainT2->leftChild == bottomT1 ? bottomChainT2->leftChild = nullptr : bottomChainT2->rightChild = nullptr;
-
-        //Create edge between x3 and xn's parent
-        topChainT1Parent->leftChild == topChainT1 ? topChainT1Parent->leftChild = bottomT1 : topChainT1Parent->rightChild
-        = bottomT1;
-
-        topChainT2Parent->leftChild == topChainT2 ? topChainT2Parent->leftChild = bottomT2 :
-        topChainT2Parent->rightChild = bottomT2;
 
         //Remove edge between xn and its parent and update parent accordingly with x3 being it's new child.
         topChainT1->parent = nullptr;
         topChainT2->parent = nullptr;
 
-        //Change Siblings of parent of x3 and xn's parents terminal to match
-        if (topChainT1Parent->leftChild == nullptr)
+
+        //REMOVAL OF SIBLING RELATIONSHIPS
+
+        //Remove sibling connection between xn and xn's parents terminal
+        topChainT1->sibling->sibling = nullptr;
+        topChainT1->sibling = nullptr;
+
+        topChainT2->sibling->sibling = nullptr;
+        topChainT2->sibling = nullptr;
+
+        //Remove sibling connection between x3's parent and x4
+        if (bottomChainT1->leftChild == nullptr)
         {
-            bottomT1->sibling = topChainT1Parent->rightChild;
-            topChainT1Parent->rightChild->sibling = bottomT1;
+            bottomChainT1->rightChild->sibling->sibling = nullptr;
+            bottomChainT1->rightChild->sibling = nullptr;
+            // bottomT1->sibling = topChainT1Parent->rightChild;
+            // topChainT1Parent->rightChild->sibling = bottomT1;
         }
         else
         {
-            bottomT1->sibling = topChainT1Parent->leftChild;
-            topChainT1Parent->leftChild->sibling = bottomT1;
+            bottomChainT1->leftChild->sibling->sibling = nullptr;
+            bottomChainT1->leftChild->sibling = nullptr;
+            // bottomT1->sibling = topChainT1Parent->leftChild;
+            // topChainT1Parent->leftChild->sibling = bottomT1;
         }
 
-        if (topChainT2Parent->leftChild == nullptr)
+        if (bottomChainT2->leftChild == nullptr)
         {
-            bottomT2->sibling = topChainT2Parent->rightChild;
-            topChainT2Parent->rightChild->sibling = bottomT2;
+            bottomChainT2->rightChild->sibling->sibling = nullptr;
+            bottomChainT2->rightChild->sibling = nullptr;
+            // bottomT2->sibling = topChainT2Parent->rightChild;
+            // topChainT2Parent->rightChild->sibling = bottomT2;
         }
         else
         {
-            bottomT2->sibling = topChainT2Parent->leftChild;
-            topChainT2Parent->leftChild->sibling = bottomT2;
+            bottomChainT2->leftChild->sibling->sibling = nullptr;
+            bottomChainT2->leftChild->sibling = nullptr;
+            // bottomT2->sibling = topChainT2Parent->leftChild;
+            // topChainT2Parent->leftChild->sibling = bottomT2;
         }
+        //Now: x4 to xn isolated from x1-x3 and xn's parent to root by both edges and sibling-relationship.
+        //What remains now is to remove the edges between x4 to xn and their parents, turning them to single vertex trees,
+        //And to remove the parent nodes out of the trees entirely...
 
-        //Turn the chain terminals into single vertex trees, remove the rest of the chain structure.
-        //-> for
-        for (int i = 1; i < chainWithTrees.first.size(); i++)
+        for (int i = chainWithTrees.first.size()-1; i > 0; i--)
         {
+            std::cout << i << std::endl;
             //Every element is a parent -> Terminal
             // If the left side is the parent of the child
-            if (chainWithTrees.first[i].front()->leftChild == chainWithTrees.first[i-1].front())
+            //For T1
+            if (i != 1)
             {
-                //->Right side is the terminal
-                graph::Node* terminal = chainWithTrees.first[i].front()->rightChild;
+                if (chainWithTrees.first[i].front()->leftChild == chainWithTrees.first[i-1].front())
+                {
+                    // std::cout << "Case 1, if 1" << std::endl;
+                    //->Right side is the terminal
+                    graph::Node* terminal = chainWithTrees.first[i].front()->rightChild;
 
-                //Remove the edge between these two
-                terminal->parent = nullptr;
-                chainWithTrees.first[i].front()->rightChild = nullptr;
+                    //Remove the edge between these two on the side of the terminal
+                    terminal->parent = nullptr;
 
+                    // chainWithTrees.first[i].front()->rightChild = nullptr;
+                    //Delete the parent node out of the list of Nodes -> Address still in ChainWithTrees for unapply.
+                    auto parentPos = std::find(chainWithTrees.second.front()->Roots().begin(),
+                            chainWithTrees.second.front()->Roots().end(), chainWithTrees.first[i].front());
+                    chainWithTrees.second.front()->Roots().erase(parentPos);
+
+                    //Remove the sibling connection
+                    terminal->sibling->sibling = nullptr;
+                    terminal->sibling = nullptr;
+
+                    //Add it as a root node, as it's a single vertex tree
+                    chainWithTrees.second.front()->Roots().emplace_back(terminal);
+                }
+                else if (chainWithTrees.first[i].front()->rightChild == chainWithTrees.first[i-1].front())
+                {
+                    // std::cout << "Case 1, if 2" << std::endl;
+                    //->Left side is the terminal
+                    graph::Node* terminal = chainWithTrees.first[i].front()->leftChild;
+
+                    //Remove the edge between these two
+                    terminal->parent = nullptr;
+
+                    // chainWithTrees.first[i].front()->leftChild = nullptr;
+                    //Remove parent out of Nodes in T1
+                    auto parentPos = std::find(chainWithTrees.second.front()->Roots().begin(),
+                            chainWithTrees.second.front()->Roots().end(), chainWithTrees.first[i].front());
+                    chainWithTrees.second.front()->Roots().erase(parentPos);
+
+                    //Remove the sibling connection
+                    terminal->sibling->sibling = nullptr;
+                    terminal->sibling = nullptr;
+
+                    //Add it as a root node, as it's a single vertex tree
+                    chainWithTrees.second.front()->Roots().emplace_back(terminal);
+                }
+
+                //For T2
+                if (chainWithTrees.first[i].back()->leftChild == chainWithTrees.first[i-1].back())
+                {
+                    // std::cout << "Case 2, if 1" << std::endl;
+                    //->Right side is the terminal
+                    graph::Node* terminal = chainWithTrees.first[i].back()->rightChild;
+
+                    //Remove the edge between these two
+                    terminal->parent = nullptr;
+
+                    //Remove parent out of Nodes in T2
+                    // chainWithTrees.first[i].back()->rightChild = nullptr;
+                    auto parentPos = std::find(chainWithTrees.second.back()->Roots().begin(),
+                            chainWithTrees.second.back()->Roots().end(), chainWithTrees.first[i].back());
+                    chainWithTrees.second.back()->Roots().erase(parentPos);
+
+                    //Remove the sibling connection
+                    terminal->sibling->sibling = nullptr;
+                    terminal->sibling = nullptr;
+
+                    //Add it as a root node, as it's a single vertex tree
+                    chainWithTrees.second.back()->Roots().emplace_back(terminal);
+                }
+                else if (chainWithTrees.first[i].back()->rightChild == chainWithTrees.first[i-1].back())
+                {
+                    // std::cout << "Case 2, if 2" << std::endl;
+                    //->Left side is the terminal
+                    graph::Node* terminal = chainWithTrees.first[i].back()->leftChild;
+
+                    //Remove the edge between these two
+                    terminal->parent = nullptr;
+
+                    //Remove parent out of Nodes in T2
+                    // chainWithTrees.first[i].back()->leftChild = nullptr;
+                    auto parentPos = std::find(chainWithTrees.second.back()->Roots().begin(),
+                            chainWithTrees.second.back()->Roots().end(), chainWithTrees.first[i].back());
+                    chainWithTrees.second.back()->Roots().erase(parentPos);
+
+                    //Remove the sibling connection
+                    terminal->sibling->sibling = nullptr;
+                    terminal->sibling = nullptr;
+
+                    //Add it as a root node, as it's a single vertex tree
+                    chainWithTrees.second.back()->Roots().emplace_back(terminal);
+                }
             }
-            else if (chainWithTrees.first[i].front()->rightChild == chainWithTrees.first[i-1].front())
+            else
             {
-                //->Left side is the terminal
-                graph::Node* terminal = chainWithTrees.first[i].front()->leftChild;
+                //T1, i = 1
+                if (chainWithTrees.first[i].front()->leftChild == nullptr)
+                {
+                    graph::Node* terminal = chainWithTrees.first[i].front()->rightChild;
 
-                //Remove the edge between these two
-                terminal->parent = nullptr;
-                chainWithTrees.first[i].front()->leftChild = nullptr;
+                    //Remove the edge between these two
+                    terminal->parent = nullptr;
+
+                    //Remove parent out of Nodes in T1
+                    // chainWithTrees.first[i].front()->rightChild = nullptr;
+                    auto parentPos = std::find(chainWithTrees.second.front()->Roots().begin(),
+                            chainWithTrees.second.front()->Roots().end(), chainWithTrees.first[i].front());
+                    chainWithTrees.second.front()->Roots().erase(parentPos);
+
+                    //Add it as a root node, as it's a single vertex tree
+                    chainWithTrees.second.front()->Roots().emplace_back(terminal);
+                }
+                else
+                {
+                    graph::Node* terminal = chainWithTrees.first[i].front()->leftChild;
+
+                    //Remove the edge between these two
+                    terminal->parent = nullptr;
+
+                    //Remove parent out of Nodes in T1
+                    // chainWithTrees.first[i].front()->leftChild = nullptr;
+                    auto parentPos = std::find(chainWithTrees.second.front()->Roots().begin(),
+                            chainWithTrees.second.front()->Roots().end(), chainWithTrees.first[i].front());
+                    chainWithTrees.second.front()->Roots().erase(parentPos);
+
+
+                    //Add it as a root node, as it's a single vertex tree
+                    chainWithTrees.second.front()->Roots().emplace_back(terminal);
+                }
+                //T2, i = 1 -> x4
+                if (chainWithTrees.first[i].back()->leftChild == nullptr)
+                {
+                    graph::Node* terminal = chainWithTrees.first[i].back()->rightChild;
+
+                    //Remove the edge between these two
+                    terminal->parent = nullptr;
+
+                    //Remove parent out of Nodes in T2
+                    // chainWithTrees.first[i].back()->rightChild = nullptr;
+                    auto parentPos = std::find(chainWithTrees.second.back()->Roots().begin(),
+                            chainWithTrees.second.back()->Roots().end(), chainWithTrees.first[i].back());
+                    chainWithTrees.second.back()->Roots().erase(parentPos);
+
+                    //Add it as a root node, as it's a single vertex tree
+                    chainWithTrees.second.back()->Roots().emplace_back(terminal);
+                }
+                else
+                {
+                    graph::Node* terminal = chainWithTrees.first[i].back()->leftChild;
+
+                    //Remove the edge between these two
+                    terminal->parent = nullptr;
+
+                    //Remove parent out of Nodes in T2
+                    // chainWithTrees.first[i].back()->leftChild = nullptr;
+                    auto parentPos = std::find(chainWithTrees.second.back()->Roots().begin(),
+                            chainWithTrees.second.back()->Roots().end(), chainWithTrees.first[i].back());
+                    chainWithTrees.second.back()->Roots().erase(parentPos);
+
+                    //Add it as a root node, as it's a single vertex tree
+                    chainWithTrees.second.back()->Roots().emplace_back(terminal);
+                }
             }
         }
     }
+
+
 
     return RuleReturnCode::Continue;
 }
