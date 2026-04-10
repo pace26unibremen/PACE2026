@@ -161,7 +161,6 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
 
         for (int i = chainWithTrees.first.size()-1; i > 0; i--)
         {
-            std::cout << i << std::endl;
             //Every element is a parent -> Terminal
             // If the left side is the parent of the child
             //For T1
@@ -176,11 +175,11 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                     //Remove the edge between these two on the side of the terminal
                     terminal->parent = nullptr;
 
-                    // chainWithTrees.first[i].front()->rightChild = nullptr;
-                    //Delete the parent node out of the list of Nodes -> Address still in ChainWithTrees for unapply.
-                    auto parentPos = std::find(chainWithTrees.second.front()->Roots().begin(),
-                            chainWithTrees.second.front()->Roots().end(), chainWithTrees.first[i].front());
-                    chainWithTrees.second.front()->Roots().erase(parentPos);
+
+                    // //Delete the parent node out of the list of Nodes -> Address still in ChainWithTrees for unapply.
+                    // auto parentPos = std::find(chainWithTrees.second.front()->Nodes().begin(),
+                    //         chainWithTrees.second.front()->Nodes().end(), test);
+                    // chainWithTrees.second.front()->Nodes().erase(parentPos);
 
                     //Remove the sibling connection
                     terminal->sibling->sibling = nullptr;
@@ -200,9 +199,9 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
 
                     // chainWithTrees.first[i].front()->leftChild = nullptr;
                     //Remove parent out of Nodes in T1
-                    auto parentPos = std::find(chainWithTrees.second.front()->Roots().begin(),
-                            chainWithTrees.second.front()->Roots().end(), chainWithTrees.first[i].front());
-                    chainWithTrees.second.front()->Roots().erase(parentPos);
+                    // auto parentPos = std::find(chainWithTrees.second.front()->Roots().begin(),
+                    //         chainWithTrees.second.front()->Roots().end(), chainWithTrees.first[i].front());
+                    // chainWithTrees.second.front()->Roots().erase(parentPos);
 
                     //Remove the sibling connection
                     terminal->sibling->sibling = nullptr;
@@ -224,9 +223,9 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
 
                     //Remove parent out of Nodes in T2
                     // chainWithTrees.first[i].back()->rightChild = nullptr;
-                    auto parentPos = std::find(chainWithTrees.second.back()->Roots().begin(),
-                            chainWithTrees.second.back()->Roots().end(), chainWithTrees.first[i].back());
-                    chainWithTrees.second.back()->Roots().erase(parentPos);
+                    // auto parentPos = std::find(chainWithTrees.second.back()->Roots().begin(),
+                    //         chainWithTrees.second.back()->Roots().end(), chainWithTrees.first[i].back());
+                    // chainWithTrees.second.back()->Roots().erase(parentPos);
 
                     //Remove the sibling connection
                     terminal->sibling->sibling = nullptr;
@@ -246,9 +245,9 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
 
                     //Remove parent out of Nodes in T2
                     // chainWithTrees.first[i].back()->leftChild = nullptr;
-                    auto parentPos = std::find(chainWithTrees.second.back()->Roots().begin(),
-                            chainWithTrees.second.back()->Roots().end(), chainWithTrees.first[i].back());
-                    chainWithTrees.second.back()->Roots().erase(parentPos);
+                    // auto parentPos = std::find(chainWithTrees.second.back()->Roots().begin(),
+                    //         chainWithTrees.second.back()->Roots().end(), chainWithTrees.first[i].back());
+                    // chainWithTrees.second.back()->Roots().erase(parentPos);
 
                     //Remove the sibling connection
                     terminal->sibling->sibling = nullptr;
@@ -270,9 +269,9 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
 
                     //Remove parent out of Nodes in T1
                     // chainWithTrees.first[i].front()->rightChild = nullptr;
-                    auto parentPos = std::find(chainWithTrees.second.front()->Roots().begin(),
-                            chainWithTrees.second.front()->Roots().end(), chainWithTrees.first[i].front());
-                    chainWithTrees.second.front()->Roots().erase(parentPos);
+                    // auto parentPos = std::find(chainWithTrees.second.front()->Roots().begin(),
+                    //         chainWithTrees.second.front()->Roots().end(), chainWithTrees.first[i].front());
+                    // chainWithTrees.second.front()->Roots().erase(parentPos);
 
                     //Add it as a root node, as it's a single vertex tree
                     chainWithTrees.second.front()->Roots().emplace_back(terminal);
@@ -286,9 +285,9 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
 
                     //Remove parent out of Nodes in T1
                     // chainWithTrees.first[i].front()->leftChild = nullptr;
-                    auto parentPos = std::find(chainWithTrees.second.front()->Roots().begin(),
-                            chainWithTrees.second.front()->Roots().end(), chainWithTrees.first[i].front());
-                    chainWithTrees.second.front()->Roots().erase(parentPos);
+                    // auto parentPos = std::find(chainWithTrees.second.front()->Roots().begin(),
+                    //         chainWithTrees.second.front()->Roots().end(), chainWithTrees.first[i].front());
+                    // chainWithTrees.second.front()->Roots().erase(parentPos);
 
 
                     //Add it as a root node, as it's a single vertex tree
@@ -304,9 +303,9 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
 
                     //Remove parent out of Nodes in T2
                     // chainWithTrees.first[i].back()->rightChild = nullptr;
-                    auto parentPos = std::find(chainWithTrees.second.back()->Roots().begin(),
-                            chainWithTrees.second.back()->Roots().end(), chainWithTrees.first[i].back());
-                    chainWithTrees.second.back()->Roots().erase(parentPos);
+                    // auto parentPos = std::find(chainWithTrees.second.back()->Roots().begin(),
+                    //         chainWithTrees.second.back()->Roots().end(), chainWithTrees.first[i].back());
+                    // chainWithTrees.second.back()->Roots().erase(parentPos);
 
                     //Add it as a root node, as it's a single vertex tree
                     chainWithTrees.second.back()->Roots().emplace_back(terminal);
@@ -320,9 +319,9 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
 
                     //Remove parent out of Nodes in T2
                     // chainWithTrees.first[i].back()->leftChild = nullptr;
-                    auto parentPos = std::find(chainWithTrees.second.back()->Roots().begin(),
-                            chainWithTrees.second.back()->Roots().end(), chainWithTrees.first[i].back());
-                    chainWithTrees.second.back()->Roots().erase(parentPos);
+                    // auto parentPos = std::find(chainWithTrees.second.back()->Roots().begin(),
+                    //         chainWithTrees.second.back()->Roots().end(), chainWithTrees.first[i].back());
+                    // chainWithTrees.second.back()->Roots().erase(parentPos);
 
                     //Add it as a root node, as it's a single vertex tree
                     chainWithTrees.second.back()->Roots().emplace_back(terminal);
@@ -457,7 +456,7 @@ solver::ChainReductionRule::isApplicable(
         std::unordered_map<graph::Node*,unsigned int> termIndexTreeTwo = T2->TerminalToLabel();
 
         //For all Terminals...
-        for (const auto& terminalT1 : termIndexTreeOne)
+        for (auto& terminalT1 : termIndexTreeOne)
         {   //T1
 
             //Determine parent
@@ -476,7 +475,7 @@ solver::ChainReductionRule::isApplicable(
                     break;
                 }
 
-                for (const auto& terminalT2 : termIndexTreeTwo)
+                for (auto& terminalT2 : termIndexTreeTwo)
                 {   //T2
                     //std::cout << "terminalT2: " << terminalT2.second << std::endl;
                     //Determine Structure
