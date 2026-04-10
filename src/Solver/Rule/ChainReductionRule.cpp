@@ -177,9 +177,24 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
 
 
                     // //Delete the parent node out of the list of Nodes -> Address still in ChainWithTrees for unapply.
+
                     // auto parentPos = std::find(chainWithTrees.second.front()->Nodes().begin(),
-                    //         chainWithTrees.second.front()->Nodes().end(), test);
+                    //         chainWithTrees.second.front()->Nodes().end(), *chainWithTrees.first[i].front());
                     // chainWithTrees.second.front()->Nodes().erase(parentPos);
+
+                    for (auto it = chainWithTrees.second.front()->Nodes().begin();
+                        it != chainWithTrees.second.front()->Nodes().end();)
+                    {
+                        if (it->parent == chainWithTrees.first[i].front()->parent &&
+                            it->sibling == chainWithTrees.first[i].front()->sibling &&
+                            it->leftChild == chainWithTrees.first[i].front()->leftChild &&
+                            it->rightChild == chainWithTrees.first[i].front()->rightChild &&
+                            it->hasSameTerminals(chainWithTrees.first[i].front()))
+                        {
+                            chainWithTrees.second.front()->Nodes().erase(it);
+                        }
+                        else ++it;
+                    }
 
                     //Remove the sibling connection
                     terminal->sibling->sibling = nullptr;
