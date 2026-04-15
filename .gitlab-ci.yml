@@ -304,12 +304,19 @@ build_stride:
     - build-solver
     - build_stride
   variables:
+    RUN_BENCHMARK: "none"   # none, quick, full, exact, all
+    RUN_SUFFIX: "" # Can be used on manual runs to change the run name
     INSTANCES_LST: "all.lst"  # Or full
     SLURM_SCRIPT: "quick_run.slurm"
     STRIDE_TIMEOUT: 1800
     STRIDE_GRACE: 10
-    STRIDE_RUN_NAME: "${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}"
+    STRIDE_RUN_NAME: "${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}${RUN_SUFFIX}"
   before_script:
+    - echo "Setting up SSH for HPC access..."
+    - ls -la
+    - ls -la gitlab-ci
+    - ls -l "$SSH_PRIVATE_KEY"
+
     - apt-get update && apt-get install -y openssh-client rsync
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
     - cp "$SSH_PRIVATE_KEY" ~/.ssh/id_ed25519
@@ -332,7 +339,7 @@ build_stride:
     - mkdir -p hpc_transfer
     # Prepare .env file for Stride with all necessary variables
     - |
-      cat > hpc_transfer/.env <<EOF
+      cat > hpc_transfer/.env <<'EOF'
         STRIDE_SOLVER="./startSolver"
         STRIDE_TIMEOUT=$STRIDE_TIMEOUT
         STRIDE_GRACE=$STRIDE_GRACE
@@ -350,6 +357,8 @@ build_stride:
 
     - ssh hpc "mkdir -p ~/pace-bench"
     - scp hpc_payload.tgz hpc:~/pace-bench/
+
+    - ssh hpc "which sbatch"
 
     # 2) Unpack and prepare, then submit job
     - |
@@ -413,8 +422,13 @@ run_quick_benchmark:
     # Skip if this is a release pipeline (merge into master)
     - if: '$CI_COMMIT_BRANCH == "master" && $CI_COMMIT_MESSAGE =~ /Merge request|See merge request/'
       when: never
+    # If manually triggered from the web UI and the variable is set to quick or all, run the quick benchmark
+    - if: '$CI_PIPELINE_SOURCE == "web" && ($RUN_BENCHMARK == "quick" || $RUN_BENCHMARK == "all")'
+      when: on_success
     # Run on all other pipelines (branches, MRs, direct master pushes)
-    - when: on_success
+    - if: '$CI_PIPELINE_SOURCE != "web"'
+      when: on_success
+    - when: never
 
 run_full_benchmark:
   variables:
@@ -425,6 +439,11 @@ run_full_benchmark:
     STRIDE_RUN_NAME: "${CI_COMMIT_TAG}_full"
   extends: .run_stride_benchmark_template
   <<: *release-rules
+  rules:
+    # If manually triggered from the web UI and the variable is set to full or all, run the quick benchmark
+    - if: '$CI_PIPELINE_SOURCE == "web" && ($RUN_BENCHMARK == "full" || $RUN_BENCHMARK == "all")'
+      when: on_success
+    - when: never
 
 run_exact-track_benchmark:
   variables:
@@ -435,3 +454,8 @@ run_exact-track_benchmark:
     STRIDE_RUN_NAME: "${CI_COMMIT_TAG}_exact"
   extends: .run_stride_benchmark_template
   <<: *release-rules
+  rules:
+    # If manually triggered from the web UI and the variable is set to exact or all, run the quick benchmark
+    - if: '$CI_PIPELINE_SOURCE == "web" && ($RUN_BENCHMARK == "exact" || $RUN_BENCHMARK == "all")'
+      when: on_success
+    - when: never
