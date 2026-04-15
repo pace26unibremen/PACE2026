@@ -16,14 +16,18 @@ solver::RuleReturnCode solver::SingleVertexTreePropagationRule::apply()
     }
     isApplied = true;
 
-    for (const auto& f_ptr : *instance)
+    for (const auto& fi : *instance)
     {
         for (unsigned int label : labelsToBeReduced)
         {
-            graph::Node* terminal = f_ptr->LabelToTerminal()[label];
+            graph::Node* terminal = fi->LabelToTerminal()[label];
             if (terminal->parent != nullptr)
             {
-                changes.emplace(terminal, f_ptr);
+                if (context->protectedEdges.contains(terminal))
+                {
+                    return RuleReturnCode::CutBranch;
+                }
+                changes.emplace(terminal, fi);
                 changes.top().doAction();
             }
         }
