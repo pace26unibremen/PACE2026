@@ -48,6 +48,10 @@ solver::RuleReturnCode solver::PairPathBranchingRule::apply()
                     changes.emplace(t1, f);
                     changes.top().doAction();
                 }
+                if (context->protectedEdges.contains(t1))
+                {
+                    return RuleReturnCode::CutBranch;
+                }
 
                 // we can protect edges to t2
                 // because we already tested all cases
@@ -68,6 +72,10 @@ solver::RuleReturnCode solver::PairPathBranchingRule::apply()
                 const auto t2 = f->LabelToTerminal()[label2];
                 if (t2->parent != nullptr)
                 {
+                    if (context->protectedEdges.contains(t2))
+                    {
+                        return RuleReturnCode::CutBranch;
+                    }
                     changes.emplace(t2, f);
                     changes.top().doAction();
                 }
@@ -82,6 +90,10 @@ solver::RuleReturnCode solver::PairPathBranchingRule::apply()
             {
                 for (auto pathDel : this->forestToPathDeletions[f])
                 {
+                    if (context->protectedEdges.contains(pathDel))
+                    {
+                        return RuleReturnCode::CutBranch;
+                    }
                     changes.emplace(pathDel, f);
                     changes.top().doAction();
 

@@ -40,6 +40,10 @@ solver::RuleReturnCode solver::PairUnconnectedBranchingRule::apply()
             for(const auto& f : forestsConnectedLabels)
             {
                 auto t1 = f->LabelToTerminal()[label1];
+                if (context->protectedEdges.contains(t1))
+                {
+                    return RuleReturnCode::CutBranch;
+                }
                 changes.emplace(t1, f);
                 changes.top().doAction();
             }
@@ -48,6 +52,10 @@ solver::RuleReturnCode solver::PairUnconnectedBranchingRule::apply()
             for(const auto& f : forestsConnectedLabels)
             {
                 auto t2 = f->LabelToTerminal()[label2];
+                if (context->protectedEdges.contains(t2))
+                {
+                    return RuleReturnCode::CutBranch;
+                }
                 changes.emplace(t2, f);
                 changes.top().doAction();
             }
