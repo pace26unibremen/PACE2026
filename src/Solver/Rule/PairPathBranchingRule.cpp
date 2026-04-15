@@ -48,7 +48,17 @@ solver::RuleReturnCode solver::PairPathBranchingRule::apply()
                     changes.emplace(t1, f);
                     changes.top().doAction();
                 }
+
+                // we can protect edges to t2
+                // because we already tested all cases
+                const auto t2 = f->LabelToTerminal()[label2];
+                if (not context->protectedEdges.contains(t2))
+                {
+                    edgeProtections.emplace(t2);
+                    context->protectedEdges.emplace(t2);
+                }
             }
+
             return RuleReturnCode::Continue;
         }
         case 2:
@@ -104,6 +114,15 @@ void solver::PairPathBranchingRule::unapply()
     {
         changes.top().undoAction();
         changes.pop();
+    }
+
+    if (branch == 3)
+    {
+        for (const auto& t : edgeProtections)
+        {
+            context->protectedEdges.erase(t);
+        }
+        edgeProtections.clear();
     }
 }
 
