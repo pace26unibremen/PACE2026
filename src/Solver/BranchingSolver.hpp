@@ -31,6 +31,19 @@ class BranchingSolver : public AbstractSolver
     /// \brief Context information about the instance and the solver state
     std::shared_ptr<Context> context = std::make_shared<Context>();
 
+    /// \brief A list of all branches for the last search depth.
+    /// Each branch is represented as a list of rules that where applied on this branch.
+    std::list<std::list<std::shared_ptr<AbstractRule>>> oldBranches =
+        std::list<std::list<std::shared_ptr<AbstractRule>>>();
+
+    /// \brief A list of all branches for the current search depth.
+    /// Each branch is represented as a list of rules that where applied on this branch.
+    std::list<std::list<std::shared_ptr<AbstractRule>>> newBranches =
+        std::list<std::list<std::shared_ptr<AbstractRule>>>();
+
+    /// \brief The branch of the previous depth that is the basis for the current calculations
+    std::list<std::shared_ptr<AbstractRule>> currentOldBranch = std::list<std::shared_ptr<AbstractRule>>();
+
     /// \brief unapply all rules until the next branching possibility
     /// \returns Whether all rules are unapplied. (Means there is no branching possibility left)
     bool rollBackBranch();

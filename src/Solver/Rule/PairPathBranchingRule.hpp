@@ -80,6 +80,9 @@ class PairPathBranchingRule : public AbstractBranchingRule
 
     [[nodiscard]]
     std::string name() const override;
+
+    [[nodiscard]]
+    std::shared_ptr<AbstractRule> clone() const override;
 };
 
 }  //namespace solver

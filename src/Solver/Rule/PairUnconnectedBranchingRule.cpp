@@ -156,3 +156,11 @@ std::string solver::PairUnconnectedBranchingRule::name() const
 {
     return "PairUnconnectedBranchingRule";
 }
+
+std::shared_ptr<solver::AbstractRule> solver::PairUnconnectedBranchingRule::clone() const
+{
+    affectedForests_type af = {label1, label2, forestsConnectedLabels};
+    auto clone = std::make_shared<PairUnconnectedBranchingRule>(instance, context, af);
+    clone->branch = isApplied ? branch - 1 : branch;
+    return clone;
+}

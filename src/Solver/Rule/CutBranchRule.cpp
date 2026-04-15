@@ -58,3 +58,8 @@ std::string solver::CutBranchRule::name() const
 {
     return "CutBranchRule";
 }
+
+std::shared_ptr<solver::AbstractRule> solver::CutBranchRule::clone() const
+{
+    return std::make_shared<solver::CutBranchRule>(instance, context);
+}

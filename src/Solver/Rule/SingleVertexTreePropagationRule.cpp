@@ -91,3 +91,8 @@ std::string solver::SingleVertexTreePropagationRule::name() const
 {
     return "SingleVertexTreePropagationRule";
 }
+
+std::shared_ptr<solver::AbstractRule> solver::SingleVertexTreePropagationRule::clone() const
+{
+    return std::make_shared<SingleVertexTreePropagationRule>(instance, context, labelsToBeReduced);
+}

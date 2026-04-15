@@ -93,3 +93,8 @@ std::string solver::PairEqualRule::name() const
 {
     return "PairEqualRule";
 }
+
+std::shared_ptr<solver::AbstractRule> solver::PairEqualRule::clone() const
+{
+    return std::make_shared<PairEqualRule>(instance, context, forestToSubtree);
+}

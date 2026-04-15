@@ -232,3 +232,11 @@ std::string solver::PairPathBranchingRule::name() const
 {
     return "PairPathBranchingRule";
 }
+
+std::shared_ptr<solver::AbstractRule> solver::PairPathBranchingRule::clone() const
+{
+    cuts_type c = {label1, label2, forestToPathDeletions};
+    auto clone = std::make_shared<PairPathBranchingRule>(instance, context, c);
+    clone->branch = isApplied ? branch - 1 : branch;
+    return clone;
+}
