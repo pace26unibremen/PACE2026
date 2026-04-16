@@ -36,6 +36,10 @@ class PairUnconnectedBranchingRule : public AbstractBranchingRule
     /// filled in the apply method and unfilled in the unapply method
     std::stack<DeleteEdgeAction> changes = std::stack<solver::DeleteEdgeAction>();
 
+    /// \brief A set of all edges that get protection in branch 2.
+    /// An edge is identified by the node it points to (the child-node).
+    std::unordered_set<graph::Node*> edgeProtections = std::unordered_set<graph::Node*>();
+
   public:
     /// \param instance the problem instance
     /// \param context information about the instance and the solver state

@@ -58,6 +58,15 @@ solver::RuleReturnCode solver::PairUnconnectedBranchingRule::apply()
                 }
                 changes.emplace(t2, f);
                 changes.top().doAction();
+
+                // we can protect edges to t1
+                // because we already tested all cases where t1 is cut in branch 1
+                const auto t1 = f->LabelToTerminal()[label1];
+                if (not context->protectedEdges.contains(t1))
+                {
+                    edgeProtections.emplace(t1);
+                    context->protectedEdges.emplace(t1);
+                }
             }
             break;
         default:
@@ -79,6 +88,15 @@ void solver::PairUnconnectedBranchingRule::unapply()
     {
         changes.top().undoAction();
         changes.pop();
+    }
+
+    if (branch == 2)
+    {
+        for (const auto& t : edgeProtections)
+        {
+            context->protectedEdges.erase(t);
+        }
+        edgeProtections.clear();
     }
 }
 

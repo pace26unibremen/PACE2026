@@ -54,7 +54,7 @@ solver::RuleReturnCode solver::PairPathBranchingRule::apply()
                 }
 
                 // we can protect edges to t2
-                // because we already tested all cases
+                // because we already tested all cases where t2 is cut in the other branches
                 const auto t2 = f->LabelToTerminal()[label2];
                 if (not context->protectedEdges.contains(t2))
                 {
