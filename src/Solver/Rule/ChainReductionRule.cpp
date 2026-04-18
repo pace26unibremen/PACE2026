@@ -11,7 +11,7 @@
 
 // TODO: Refactor node indices to node pointers when the rule is implemented
 
-solver::ChainReductionRule::ChainReductionRule() : AbstractRule(nullptr,nullptr)
+solver::ChainReductionRule::ChainReductionRule() : AbstractRule(nullptr,nullptr,true)
 {
     //Copying of the Trees maybe irrelevant when doing this without const params. Not sure.
 

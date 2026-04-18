@@ -6,7 +6,7 @@ namespace solver
 AbstractBranchingRule::AbstractBranchingRule(const std::shared_ptr<graph::Instance>& _instance,
                                              const std::shared_ptr<Context>& _context,
                                              const int _maxBranch) :
-    AbstractRule(_instance,_context),
+    AbstractRule(_instance,_context, false),
     maxBranch(_maxBranch)
 {}
 

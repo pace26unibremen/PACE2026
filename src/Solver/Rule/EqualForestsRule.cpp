@@ -6,7 +6,7 @@
 solver::EqualForestsRule::EqualForestsRule(const std::shared_ptr<graph::Instance>& instance,
                                            const std::shared_ptr<Context>& context,
                                            const std::unordered_set<std::shared_ptr<graph::Forest>>& toBeRemoved) :
-    AbstractRule(instance,context),
+    AbstractRule(instance,context, false),
     toBeRemoved(toBeRemoved)
 {}
 
