@@ -89,27 +89,40 @@ while true; do
           PERCENT=$((FINISHED * 100 / TOTAL))
           OUTPUT="${OUTPUT} | Progress: ${FINISHED}/${TOTAL} (${PERCENT}%) | Solved: ${SOLVED} | Timeouts: ${TIMEOUTS} | Errors: ${ERRORS} | Last Instance Trees: ${NUM_TREES} | Leaves: ${NUM_LEAVES}"
 
-          # Estimate time remaining (only if we have enough data for a reasonable estimate)
+          # Estimate time remaining using s_wtime from the last WINDOW entries in summary.json
           if [ "$FINISHED" -gt 5 ]; then
-            # Get elapsed time in seconds from Slurm
-            ELAPSED=$(sacct -j "$JOB_ID" --format=ElapsedRaw --noheader 2>/dev/null | head -n1 | awk '{print $1}')
-            ELAPSED=${ELAPSED:-0}
+              WINDOW=200
+              PARALLEL=32  # must match STRIDE_PARALLEL in .env
 
-            # Validate ELAPSED is a valid number
-            if [[ "$ELAPSED" =~ ^[0-9]+$ ]] && [ "$ELAPSED" -gt 0 ] && [ "$FINISHED" -gt 0 ]; then
-              # Calculate average time per instance
-              AVG_TIME=$((ELAPSED / FINISHED))
+              # Sum s_wtime over the last $WINDOW lines using awk
+              AVG_WTIME=$(tail -n "$WINDOW" "$SUMMARY_FILE" \
+                  | awk -F'"s_wtime":' 'NF>1 {
+                      split($2, a, /[,}]/);
+                      sum += a[1];
+                      count++
+                    }
+                    END {
+                      if (count > 0) printf "%.6f", sum / count / '"$PARALLEL"'
+                      else print "0"
+                    }')
+
+              # Convert float seconds to integer centiseconds for bash arithmetic
               REMAINING=$((TOTAL - FINISHED))
-              ETA_SECONDS=$((AVG_TIME * REMAINING))
+              ETA_SECONDS=$(awk "BEGIN {printf \"%d\", $AVG_WTIME * $REMAINING}")
 
-              # Convert seconds to hours and minutes for readability
-              ETA_HOURS=$((ETA_SECONDS / 3600))
-              ETA_MINS=$(((ETA_SECONDS % 3600) / 60))
-              ELAPSED_HOURS=$((ELAPSED / 3600))
-              ELAPSED_MINS=$(((ELAPSED % 3600) / 60))
+              if [ "$ETA_SECONDS" -gt 0 ]; then
+                  ETA_HOURS=$((ETA_SECONDS / 3600))
+                  ETA_MINS=$(((ETA_SECONDS % 3600) / 60))
 
-              OUTPUT="${OUTPUT} | Elapsed: ${ELAPSED_HOURS}h ${ELAPSED_MINS}m | ETA: ${ETA_HOURS}h ${ETA_MINS}m"
-            fi
+                  # Also show elapsed from Slurm for context
+                  ELAPSED=$(sacct -j "$JOB_ID" --format=ElapsedRaw --noheader 2>/dev/null \
+                      | head -n1 | awk '{print $1}')
+                  ELAPSED=${ELAPSED:-0}
+                  ELAPSED_HOURS=$((ELAPSED / 3600))
+                  ELAPSED_MINS=$(((ELAPSED % 3600) / 60))
+
+                  OUTPUT="${OUTPUT} | Elapsed: ${ELAPSED_HOURS}h ${ELAPSED_MINS}m | ETA: ${ETA_HOURS}h ${ETA_MINS}m (window: last ${WINDOW})"
+              fi
           fi
         fi
       else
