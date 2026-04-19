@@ -7,7 +7,6 @@
 #SBATCH --partition=CPU
 
 set -e
-cd ~/pace-bench/hpc_transfer
 
 chmod +x stride startSolver
 if [ -f .env ]; then

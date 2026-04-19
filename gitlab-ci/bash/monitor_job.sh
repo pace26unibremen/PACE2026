@@ -1,19 +1,14 @@
 #!/bin/bash
 # monitor_job.sh - Monitor a Slurm job and display progress information
-# This script polls the job state and shows real-time progress for stride benchmarks
+# Usage: monitor_job.sh <job_dir>
+#   job_dir: absolute path to the job's staging directory (e.g. ~/pace-bench/jobs/<CI_JOB_ID>)
 
-set -e  # Exit on any error
+set -e
 
-cd ~/pace-bench
+JOB_DIR="${1:?Usage: monitor_job.sh <job_dir>}"
+cd "$JOB_DIR"
+
 JOB_ID=$(cat last_job.id)
-
-# Load the old directory path to avoid confusion with previous runs
-# When multiple pipelines run in parallel, we need to identify which run directory
-# belongs to this specific job (not just the 'latest' symlink which changes)
-OLD_LATEST=""
-if [ -f "old_run_dir.path" ]; then
-  OLD_LATEST=$(cat old_run_dir.path)
-fi
 
 # Variables to track the specific run directory for this job
 RUN_DIR=""
@@ -30,8 +25,14 @@ while true; do
     echo "Job $JOB_ID completed successfully"
     exit 0
 
+  # Job ended with a Timeout, which is kind of expected with the huge test sets we use
+  elif [[ "$STATE" =~ ^TIMEOUT ]]; then
+    echo ""
+    echo "Job $JOB_ID cancelled by a TIMEOUT, this is expected, as the test set is really big"
+    exit 0
+
   # Job ended with an error state
-  elif [[ "$STATE" =~ ^(FAILED|CANCELLED|TIMEOUT|NODE_FAIL|PREEMPTED|OUT_OF_MEMORY) ]]; then
+  elif [[ "$STATE" =~ ^(FAILED|CANCELLED|NODE_FAIL|PREEMPTED|OUT_OF_MEMORY) ]]; then
     echo ""
     echo "Slurm job $JOB_ID ended with state $STATE"
     exit 1
@@ -47,28 +48,24 @@ while true; do
   elif [[ "$STATE" =~ ^RUNNING ]]; then
     OUTPUT="Job $JOB_ID is running..."
 
-    # Detect the run directory for this specific job (only once)
-    # Stride creates a new directory for each run and updates the 'latest' symlink
-    # We need to capture the directory path before another pipeline starts
+    # Detect run directory from latest symlink (only once).
+    # Since this is a per-job directory, latest always belongs to us.
     if [ "$RUN_DIR_FOUND" = false ]; then
-      if [ -L "hpc_transfer/stride-logs/latest" ]; then
-        CURRENT_LATEST=$(readlink -f hpc_transfer/stride-logs/latest)
-        # Only accept if it's a NEW directory (different from before job submission)
-        if [ "$CURRENT_LATEST" != "$OLD_LATEST" ] && [ -n "$CURRENT_LATEST" ] && [ -d "$CURRENT_LATEST" ]; then
-          RUN_DIR="$CURRENT_LATEST"
-          RUN_DIR_FOUND=true
-          # Save for later use (e.g., error checking after job completes)
-          echo "$RUN_DIR" > last_run_dir.path
-          echo ""
-          echo "Detected run directory: $RUN_DIR"
+        if [ -L "stride-logs/latest" ]; then
+            CURRENT_LATEST=$(readlink -f "stride-logs/latest")
+            if [ -n "$CURRENT_LATEST" ] && [ -d "$CURRENT_LATEST" ]; then
+                RUN_DIR="$CURRENT_LATEST"
+                RUN_DIR_FOUND=true
+                echo ""
+                echo "Detected run directory: $RUN_DIR"
+            fi
         fi
-      fi
     fi
 
     # Display progress information if we've found the run directory
     if [ "$RUN_DIR_FOUND" = true ]; then
       SUMMARY_FILE="${RUN_DIR}/summary.json"
-      INSTANCES_FILE="hpc_transfer/instances.lst"
+      INSTANCES_FILE="${JOB_DIR}/instances.lst"
 
       # Check if stride has started producing output
       if [ -f "$SUMMARY_FILE" ] && [ -f "$INSTANCES_FILE" ]; then
