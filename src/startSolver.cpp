@@ -15,7 +15,10 @@ void runOnStream(std::istream& inStream, std::ostream& outStream) {
 }
 
 int main(int argc, char* argv[]) {
-    if (argc == 1)
+
+    // For an unknown reason optil.io gives one empty string as an argument, but the input is still in stdin
+    // Therefore we use this edge case but still start on the stream like this
+    if (argc == 1 || (argc == 2 && std::string(argv[1]).empty()))
     {
         // With no arguments, read from stdin and write to stdout for stride benchmark
         runOnStream(std::cin, std::cout);
