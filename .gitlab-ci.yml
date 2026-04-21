@@ -387,7 +387,7 @@ build_stride:
     - rsync -avq --relative --ignore-missing-args "hpc:$JOB_DIR/stride-logs/./*/solvererror" stride-logs/
 
     # 5) Merge logs
-    - ssh hpc "cp -a ~/$HPC_JOB_DIR/stride-logs/ ~/$HPC_SHARED_DIR/stride-logs/"
+    - ssh hpc "cp -a ~/$HPC_JOB_DIR/stride-logs/. ~/$HPC_SHARED_DIR/stride-logs/"
     # Move slurm logs (named <jobname>_<slurm_job_id>.out/err via %x_%j)
     - ssh hpc "mv ~/$HPC_JOB_DIR/run_stride_* ~/$HPC_SHARED_DIR/slurm-logs/ 2>/dev/null || true"
 
