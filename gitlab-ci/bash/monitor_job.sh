@@ -14,6 +14,13 @@ JOB_ID=$(cat last_job.id)
 RUN_DIR=""
 RUN_DIR_FOUND=false
 
+# Get the Stride Timeout of the .env file
+STRIDE_TIMEOUT=300  # fallback default
+if [ -f "${JOB_DIR}/.env" ]; then
+    STRIDE_TIMEOUT=$(grep -m1 '^STRIDE_TIMEOUT=' "${JOB_DIR}/.env" | cut -d= -f2 | tr -d '"')
+    STRIDE_TIMEOUT=${STRIDE_TIMEOUT:-300}
+fi
+
 # Main polling loop - continuously check job state until completion or failure
 while true; do
   # Query Slurm for the job state
@@ -94,17 +101,24 @@ while true; do
               WINDOW=200
               PARALLEL=32  # must match STRIDE_PARALLEL in .env
 
-              # Sum s_wtime over the last $WINDOW lines using awk
+              # Sum s_wtime or timeout duration over the last $WINDOW lines using awk
               AVG_WTIME=$(tail -n "$WINDOW" "$SUMMARY_FILE" \
-                  | awk -F'"s_wtime":' 'NF>1 {
-                      split($2, a, /[,}]/);
-                      sum += a[1];
-                      count++
-                    }
-                    END {
-                      if (count > 0) printf "%.6f", sum / count / '"$PARALLEL"'
-                      else print "0"
-                    }')
+                  | awk -v timeout="$STRIDE_TIMEOUT" -v parallel="$PARALLEL" -F'"s_wtime":' '
+                      NF > 1 {
+                          # Has s_wtime field — use actual measured time
+                          split($2, a, /[,}]/);
+                          sum += a[1];
+                          count++
+                      }
+                      NF == 1 {
+                          # No s_wtime field — this is a Timeout, costs STRIDE_TIMEOUT seconds
+                          sum += timeout;
+                          count++
+                      }
+                      END {
+                          if (count > 0) printf "%.6f", sum / count / parallel
+                          else print "0"
+                      }')
 
               # Convert float seconds to integer centiseconds for bash arithmetic
               REMAINING=$((TOTAL - FINISHED))
