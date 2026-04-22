@@ -70,7 +70,7 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
         graph::Node* topChainT2Parent = chainWithTrees.first[chainWithTrees.first.size()-1].back()->parent;
 
 
-        //REMOVAL OF EDGES
+        //Attach unchanged parts of the tree together
 
         //Remove the edge between x3 and x4, replace with edge between x3 and topChainT1Parent
         bottomT1->parent = topChainT1Parent;
@@ -102,7 +102,10 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
             bottomT2->sibling = topChainT2Parent->leftChild;
         }
 
-        //Update x4 to reflect x3 change
+        //Address the chain itself
+
+        //Seperate the chain from the tree
+        //Lowest Node of chain is removed from its parent node-child
         bottomChainT1->leftChild == bottomT1 ? bottomChainT1->leftChild = nullptr : bottomChainT1->rightChild = nullptr;
 
         bottomChainT2->leftChild == bottomT2 ? bottomChainT2->leftChild = nullptr : bottomChainT2->rightChild = nullptr;
@@ -111,43 +114,35 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
         topChainT1->parent = nullptr;
         topChainT2->parent = nullptr;
 
-
-        //REMOVAL OF SIBLING RELATIONSHIPS
-
-        //Remove sibling connection between x3's parent and x4
+        //Remove sibling connections between x4 from the parent of his with x3
+        //from x3's parent over sibling to x4 is already done, so only the path from x4 to x3's parent must be changed.
         if (bottomChainT1->leftChild == nullptr)
         {
-            bottomChainT1->rightChild->sibling->sibling = nullptr;
             bottomChainT1->rightChild->sibling = nullptr;
         }
         else
         {
-            bottomChainT1->leftChild->sibling->sibling = nullptr;
             bottomChainT1->leftChild->sibling = nullptr;
         }
 
         if (bottomChainT2->leftChild == nullptr)
         {
-            bottomChainT2->rightChild->sibling->sibling = nullptr;
             bottomChainT2->rightChild->sibling = nullptr;
         }
         else
         {
-            bottomChainT2->leftChild->sibling->sibling = nullptr;
             bottomChainT2->leftChild->sibling = nullptr;
         }
-        //Now: x4 to xn isolated from x1-x3 and xn's parent to root by both edges and sibling-relationship.
-        //What remains now is to remove the edges between x4 to xn and their parents, turning them to single vertex trees,
-        //And to remove the parent nodes out of the trees entirely...
+
+        //Adress the now seperated chain in T1 and T2 through the removal of the parent nodes of the terminals as well
+        //as setting the terminals to be single tree vertices.
 
         for (int i = chainWithTrees.first.size()-1; i > 0; i--)
         {
-            //Every element is a parent -> Terminal
-            // If the left side is the parent of the child
-
-            //For T1
+            //Every element of chainWithTrees.first is a parent of a terminal. Index cycles through each.
             if (i != 1)
             {
+                //For T1
                 if (chainWithTrees.first[i].front()->leftChild == chainWithTrees.first[i-1].front())
                 {
                     // std::cout << "Case 1, if 1" << std::endl;
@@ -210,6 +205,7 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                     //Add it as a root node, as it's a single vertex tree
                     chainWithTrees.second.front()->Roots().emplace_back(terminal);
                 }
+
                 //For T2
                 if (chainWithTrees.first[i].back()->leftChild == chainWithTrees.first[i-1].back())
                 {
