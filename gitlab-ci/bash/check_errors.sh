@@ -17,7 +17,7 @@ fi
 
 if [ -z "$RUN_DIR_NAME" ]; then
     echo "Warning: Could not determine run directory for error checking"
-    exit 0
+    exit 1
 fi
 
 LOCAL_ERROR_DIR="${LOCAL_LOGS}/${RUN_DIR_NAME}/solvererror"
