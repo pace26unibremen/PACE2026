@@ -2,6 +2,8 @@
 
 #include "Rule/SubtreeReductionRule.hpp"
 
+#include <ranges>
+
 solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>& instance)
     : AbstractSolver(instance)
 {}
@@ -23,43 +25,23 @@ bool solver::BranchingSolver::rollBackBranch()
 
     while (true)
     {
-        if (changes.empty())
+        if (appliedRules.empty())
         {
             return true;
         }
 
-        auto rule = changes.top();
+        auto rule = appliedRules.back();
+        rule->unapply();
+        if (debPlugin) debPlugin->onUnapply(rule);
+        appliedRules.pop_back();
+
         if (auto branchingRule = std::dynamic_pointer_cast<AbstractBranchingRule>(rule))
         {
-            if (branchingRule->isFullyExplored())
+            if (not branchingRule->isFullyExplored())
             {
-                branchingRule->unapply();
-                if (debPlugin) debPlugin->onUnapply(rule);
-
-                changes.pop();
-                if (not temporalChanges.empty() and temporalChanges.top() == branchingRule)
-                {
-                    temporalChanges.pop();
-                }
-            }
-            else
-            {
-                branchingRule->unapply();
-                if (debPlugin) debPlugin->onUnapply(rule);
-                changes.pop();
                 // to enter the next branch we have to apply the branching rule again
                 applyNext.emplace(branchingRule);
                 return false;
-            }
-        }
-        else
-        {
-            rule->unapply();
-            if (debPlugin) debPlugin->onUnapply(rule);
-            changes.pop();
-            if (not temporalChanges.empty() and temporalChanges.top() == rule)
-            {
-                temporalChanges.pop();
             }
         }
     }
@@ -69,27 +51,29 @@ void solver::BranchingSolver::checkSolutionCandidate()
 {
     if (solution == nullptr or instance->at(0)->Roots().size() < solution->Roots().size())
     {
+        // update context (we have a better solution)
         context->bestSolutionSize = instance->at(0)->Roots().size();
-        std::stack<std::shared_ptr<AbstractRule>> temporalChangesCopy = std::stack<std::shared_ptr<AbstractRule>>();
-        while (not temporalChanges.empty())
+
+        // unapply all reduction rules to get solution for the original instance
+        for (const auto& reductionRule : appliedRules | std::views::reverse
+            | std::views::filter([](const std::shared_ptr<AbstractRule>& r){ return r->IsReduction();}))
         {
-            temporalChanges.top()->unapply();
-            temporalChangesCopy.push(temporalChanges.top());
-            temporalChanges.pop();
-            if (debPlugin) debPlugin->onTempUnapply(temporalChangesCopy.top(), temporalChanges.empty());
+            reductionRule->unapply();
+            if (debPlugin) debPlugin->onTempUnapply(reductionRule, false);
         }
+
+        // write out the solution
         solution = std::make_shared<graph::Forest>(instance->at(0)->copy());
-        while (not temporalChangesCopy.empty())
+
+        // apply all reduction rules again to restore state of the solver
+        for (const auto& reductionRule : appliedRules
+            | std::views::filter([](const std::shared_ptr<AbstractRule>& r){ return r->IsReduction();}))
         {
-            temporalChangesCopy.top()->apply();
-            if (debPlugin) debPlugin->onTempApply(temporalChangesCopy.top());
-            temporalChanges.push(temporalChangesCopy.top());
-            temporalChangesCopy.pop();
+            reductionRule->apply();
+            if (debPlugin) debPlugin->onTempApply(reductionRule);
         }
     }
 }
-
-
 
 std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
 {
@@ -101,8 +85,7 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
     {
         subtreeReduction->apply();
         if (debPlugin) debPlugin->onApply(subtreeReduction);
-        changes.push(subtreeReduction);
-        temporalChanges.push(subtreeReduction);
+        appliedRules.push_back(subtreeReduction);
     }
 
     // apply rules repeatedly until a return is triggerd
@@ -130,11 +113,7 @@ std::shared_ptr<graph::Forest> solver::BranchingSolver::solve()
 
         const auto returnCode = rule->apply();
         if (debPlugin) debPlugin->onApply(rule);
-        changes.push(rule);
-        if (std::dynamic_pointer_cast<PairEqualRule>(rule) or std::dynamic_pointer_cast<ChainReductionRule>(rule))
-        {
-            temporalChanges.push(rule);
-        }
+        appliedRules.push_back(rule);
 
         bool calculationFinished = false;
         switch (returnCode)

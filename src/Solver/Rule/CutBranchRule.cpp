@@ -2,7 +2,7 @@
 
 solver::CutBranchRule::CutBranchRule(const std::shared_ptr<graph::Instance>& instance,
                                      const std::shared_ptr<Context>& context) :
-    AbstractRule(instance, context)
+    AbstractRule(instance, context, false)
 {}
 
 solver::RuleReturnCode solver::CutBranchRule::apply()

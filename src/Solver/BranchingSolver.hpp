@@ -32,11 +32,8 @@ using isApplicableFn = std::function<std::shared_ptr<AbstractRule>(
 class BranchingSolver : public AbstractSolver
 {
   protected:
-    /// \brief stores all applied rules
-    std::stack<std::shared_ptr<AbstractRule>> changes = std::stack<std::shared_ptr<AbstractRule>>();
-
-    /// \brief stores all applied rules that have to be revoked to get the final solution
-    std::stack<std::shared_ptr<AbstractRule>> temporalChanges = std::stack<std::shared_ptr<AbstractRule>>();
+    /// \brief stores all applied rules of the current branch in the order in which they were applied.
+    std::list<std::shared_ptr<AbstractRule>> appliedRules = std::list<std::shared_ptr<AbstractRule>>();
 
     /// \brief queue of rules, that should be applied next
     std::queue<std::shared_ptr<AbstractRule>> applyNext = std::queue<std::shared_ptr<AbstractRule>>();
