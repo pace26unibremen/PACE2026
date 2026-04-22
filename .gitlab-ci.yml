@@ -1,9 +1,17 @@
 workflow:
   rules:
+    # Always run manually triggered pipelines (via UI "Run pipeline")
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: always
+    # Always run scheduled pipelines
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: always
+    # Skip all pipelines triggered by tags
     - if: $CI_COMMIT_TAG
-      when: never  # Skip all pipelines triggered by tags
+      when: never
+    # Skip pipelines for branches with open MRs (handled by MR pipelines, avoids duplicate pipelines)
     - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
-      when: never # Skip pipelines for branches with open MRs (handled by MR pipelines, avoids duplicate pipelines)
+      when: never
     - when: always
 
 # Shared anchor for reuse
