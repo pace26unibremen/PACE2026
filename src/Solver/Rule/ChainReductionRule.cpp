@@ -10,7 +10,7 @@ solver::ChainReductionRule::ChainReductionRule(
     std::pair<std::vector<std::vector<graph::Node*>>,std::vector<std::shared_ptr<graph::Forest>>> chainWithTrees,
     const std::shared_ptr<Context>& context
     ) :
-        AbstractRule(instance, context)
+        AbstractRule(instance, context,true)
 {
     //Copying of the Trees maybe irrelevant when doing this without const params. Not sure.
     this->chainWithTrees = std::move(chainWithTrees);
