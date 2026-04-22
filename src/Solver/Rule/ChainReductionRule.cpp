@@ -14,8 +14,11 @@ solver::ChainReductionRule::ChainReductionRule(
 {
     //Copying of the Trees maybe irrelevant when doing this without const params. Not sure.
     this->chainWithTrees = std::move(chainWithTrees);
-    parentToXN = {nullptr, nullptr};
-    chainNodes = {};
+
+    // auto t1Size = chainWithTrees.second.front()->Nodes().capacity();
+    // auto t2Size = chainWithTrees.second.back()->Nodes().capacity();
+    // deletedNodesT1.reserve(t1Size);
+    // deletedNodesT2.reserve(t2Size);
     chainLabels = {};
 }
 
@@ -45,6 +48,10 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
         throw std::invalid_argument("ChainReductionRule : apply : rule was already applied");
     }
     isApplied = true;
+
+    //Set the allowed memory of the set of to be deleted Nodes
+    deletedNodesT1.resize(chainWithTrees.second.front()->Nodes().capacity());
+    deletedNodesT2.resize(chainWithTrees.second.back()->Nodes().capacity());
 
     //Repeat check for safety, latter >= 2 means that chain was indeed longer then 3 elements, as x1 and x2 are never
     //stored due to being irrelevant
@@ -109,7 +116,7 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
         //Update x4 to reflect x3 change
         bottomChainT1->leftChild == bottomT1 ? bottomChainT1->leftChild = nullptr : bottomChainT1->rightChild = nullptr;
 
-        bottomChainT2->leftChild == bottomT1 ? bottomChainT2->leftChild = nullptr : bottomChainT2->rightChild = nullptr;
+        bottomChainT2->leftChild == bottomT2 ? bottomChainT2->leftChild = nullptr : bottomChainT2->rightChild = nullptr;
 
         //Remove edge between xn and its parent and update parent accordingly with x3 being it's new child.
         topChainT1->parent = nullptr;
@@ -118,12 +125,12 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
 
         //REMOVAL OF SIBLING RELATIONSHIPS
 
-        //Remove sibling connection between xn and xn's parents terminal
-        topChainT1->sibling->sibling = nullptr;
-        topChainT1->sibling = nullptr;
-
-        topChainT2->sibling->sibling = nullptr;
-        topChainT2->sibling = nullptr;
+        // //Remove sibling connection between xn and xn's parents terminal
+        // topChainT1->sibling->sibling = nullptr;
+        // topChainT1->sibling = nullptr;
+        //
+        // topChainT2->sibling->sibling = nullptr;
+        // topChainT2->sibling = nullptr;
 
         //Remove sibling connection between x3's parent and x4
         if (bottomChainT1->leftChild == nullptr)
@@ -175,25 +182,39 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                     //Remove the edge between these two on the side of the terminal
                     terminal->parent = nullptr;
 
-
-                    // //Delete the parent node out of the list of Nodes -> Address still in ChainWithTrees for unapply.
-
+                    //Delete the parent node out of the list of Nodes -> Address still in ChainWithTrees for unapply.
                     // auto parentPos = std::find(chainWithTrees.second.front()->Nodes().begin(),
-                    //         chainWithTrees.second.front()->Nodes().end(), *chainWithTrees.first[i].front());
+                    //       chainWithTrees.second.front()->Nodes().end(), *chainWithTrees.first[i].front());
                     // chainWithTrees.second.front()->Nodes().erase(parentPos);
 
-                    for (auto it = chainWithTrees.second.front()->Nodes().begin();
-                        it != chainWithTrees.second.front()->Nodes().end();)
+                    // for (auto it = chainWithTrees.second.front()->Nodes().begin();
+                    //     it != chainWithTrees.second.front()->Nodes().end();)
+                    // {
+                    //     if (it->parent == chainWithTrees.first[i].front()->parent &&
+                    //         it->sibling == chainWithTrees.first[i].front()->sibling &&
+                    //         it->leftChild == chainWithTrees.first[i].front()->leftChild &&
+                    //         it->rightChild == chainWithTrees.first[i].front()->rightChild &&
+                    //         // it->hasSameTerminals(chainWithTrees.first[i].front()))
+                    //         it->subtreeTerminals == chainWithTrees.first[i].front()->subtreeTerminals
+                    //         )
+                    //     {
+                    //         deletedNodesT1.insert(it, *chainWithTrees.first[i].front());
+                    //         chainWithTrees.second.front()->Nodes().erase(it);
+                    //     }
+                    // }
+                    std::vector<graph::Node>::iterator it = chainWithTrees.second.front()->Nodes().begin();
+                    for (int j = 0; j < chainWithTrees.second.front()->Nodes().size(); j++)
                     {
-                        if (it->parent == chainWithTrees.first[i].front()->parent &&
-                            it->sibling == chainWithTrees.first[i].front()->sibling &&
-                            it->leftChild == chainWithTrees.first[i].front()->leftChild &&
-                            it->rightChild == chainWithTrees.first[i].front()->rightChild &&
-                            it->hasSameTerminals(chainWithTrees.first[i].front()))
+                        if (&chainWithTrees.second.front()->Nodes()[j] == chainWithTrees.first[i].front())
                         {
+                            deletedNodesT1[j] = chainWithTrees.second.front()->Nodes()[j];
                             chainWithTrees.second.front()->Nodes().erase(it);
+                            break;
                         }
-                        else ++it;
+                        else
+                        {
+                            ++it;
+                        }
                     }
 
                     //Remove the sibling connection
@@ -217,6 +238,33 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                     // auto parentPos = std::find(chainWithTrees.second.front()->Roots().begin(),
                     //         chainWithTrees.second.front()->Roots().end(), chainWithTrees.first[i].front());
                     // chainWithTrees.second.front()->Roots().erase(parentPos);
+                    // for (auto it = chainWithTrees.second.front()->Nodes().begin();
+                    //     it != chainWithTrees.second.front()->Nodes().end();)
+                    // {
+                    //     if (it->parent == chainWithTrees.first[i].front()->parent &&
+                    //         it->sibling == chainWithTrees.first[i].front()->sibling &&
+                    //         it->leftChild == chainWithTrees.first[i].front()->leftChild &&
+                    //         it->rightChild == chainWithTrees.first[i].front()->rightChild &&
+                    //         it->subtreeTerminals == chainWithTrees.first[i].front()->subtreeTerminals)
+                    //     {
+                    //         deletedNodesT1.emplace(it, *chainWithTrees.first[i].front());
+                    //         chainWithTrees.second.front()->Nodes().erase(it);
+                    //     }
+                    // }
+                    std::vector<graph::Node>::iterator it = chainWithTrees.second.front()->Nodes().begin();
+                    for (int j = 0; j < chainWithTrees.second.front()->Nodes().size(); j++)
+                    {
+                        if (&chainWithTrees.second.front()->Nodes()[j] == chainWithTrees.first[i].front())
+                        {
+                            deletedNodesT1[j] = chainWithTrees.second.front()->Nodes()[j];
+                            chainWithTrees.second.front()->Nodes().erase(it);
+                            break;
+                        }
+                        else
+                        {
+                            ++it;
+                        }
+                    }
 
                     //Remove the sibling connection
                     terminal->sibling->sibling = nullptr;
@@ -225,6 +273,7 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                     //Add it as a root node, as it's a single vertex tree
                     chainWithTrees.second.front()->Roots().emplace_back(terminal);
                 }
+
 
                 //For T2
                 if (chainWithTrees.first[i].back()->leftChild == chainWithTrees.first[i-1].back())
@@ -241,6 +290,35 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                     // auto parentPos = std::find(chainWithTrees.second.back()->Roots().begin(),
                     //         chainWithTrees.second.back()->Roots().end(), chainWithTrees.first[i].back());
                     // chainWithTrees.second.back()->Roots().erase(parentPos);
+
+                    // for (auto it = chainWithTrees.second.back()->Nodes().begin();
+                    //     it != chainWithTrees.second.back()->Nodes().end();)
+                    // {
+                    //     if (it->parent == chainWithTrees.first[i].back()->parent &&
+                    //         it->sibling == chainWithTrees.first[i].back()->sibling &&
+                    //         it->leftChild == chainWithTrees.first[i].back()->leftChild &&
+                    //         it->rightChild == chainWithTrees.first[i].back()->rightChild &&
+                    //         it->subtreeTerminals == chainWithTrees.first[i].back()->subtreeTerminals)
+                    //     {
+                    //         deletedNodesT2.emplace(it, *chainWithTrees.first[i].back());
+                    //         chainWithTrees.second.back()->Nodes().erase(it);
+                    //     }
+                    // }
+
+                    std::vector<graph::Node>::iterator it = chainWithTrees.second.back()->Nodes().begin();
+                    for (int j = 0; j < chainWithTrees.second.back()->Nodes().size(); j++)
+                    {
+                        if (&chainWithTrees.second.back()->Nodes()[j] == chainWithTrees.first[i].back())
+                        {
+                            deletedNodesT2[j] = chainWithTrees.second.back()->Nodes()[j];
+                            chainWithTrees.second.back()->Nodes().erase(it);
+                            break;
+                        }
+                        else
+                        {
+                            ++it;
+                        }
+                    }
 
                     //Remove the sibling connection
                     terminal->sibling->sibling = nullptr;
@@ -263,6 +341,33 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                     // auto parentPos = std::find(chainWithTrees.second.back()->Roots().begin(),
                     //         chainWithTrees.second.back()->Roots().end(), chainWithTrees.first[i].back());
                     // chainWithTrees.second.back()->Roots().erase(parentPos);
+                    // for (auto it = chainWithTrees.second.back()->Nodes().begin();
+                    //     it != chainWithTrees.second.back()->Nodes().end();)
+                    // {
+                    //     if (it->parent == chainWithTrees.first[i].back()->parent &&
+                    //         it->sibling == chainWithTrees.first[i].back()->sibling &&
+                    //         it->leftChild == chainWithTrees.first[i].back()->leftChild &&
+                    //         it->rightChild == chainWithTrees.first[i].back()->rightChild &&
+                    //         it->subtreeTerminals == chainWithTrees.first[i].back()->subtreeTerminals)
+                    //     {
+                    //         deletedNodesT2.emplace(it, *chainWithTrees.first[i].back());
+                    //         chainWithTrees.second.back()->Nodes().erase(it);
+                    //     }
+                    // }
+                    std::vector<graph::Node>::iterator it = chainWithTrees.second.back()->Nodes().begin();
+                    for (int j = 0; j < chainWithTrees.second.back()->Nodes().size(); j++)
+                    {
+                        if (&chainWithTrees.second.back()->Nodes()[j] == chainWithTrees.first[i].back())
+                        {
+                            deletedNodesT2[j] = chainWithTrees.second.back()->Nodes()[j];
+                            chainWithTrees.second.back()->Nodes().erase(it);
+                            break;
+                        }
+                        else
+                        {
+                            ++it;
+                        }
+                    }
 
                     //Remove the sibling connection
                     terminal->sibling->sibling = nullptr;
@@ -287,6 +392,33 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                     // auto parentPos = std::find(chainWithTrees.second.front()->Roots().begin(),
                     //         chainWithTrees.second.front()->Roots().end(), chainWithTrees.first[i].front());
                     // chainWithTrees.second.front()->Roots().erase(parentPos);
+                    // for (auto it = chainWithTrees.second.front()->Nodes().begin();
+                    //     it != chainWithTrees.second.front()->Nodes().end();)
+                    // {
+                    //     if (it->parent == chainWithTrees.first[i].front()->parent &&
+                    //         it->sibling == chainWithTrees.first[i].front()->sibling &&
+                    //         it->leftChild == chainWithTrees.first[i].front()->leftChild &&
+                    //         it->rightChild == chainWithTrees.first[i].front()->rightChild &&
+                    //         it->subtreeTerminals == chainWithTrees.first[i].front()->subtreeTerminals)
+                    //     {
+                    //         deletedNodesT1.emplace(it, *chainWithTrees.first[i].front());
+                    //         chainWithTrees.second.front()->Nodes().erase(it);
+                    //     }
+                    // }
+                    std::vector<graph::Node>::iterator it = chainWithTrees.second.front()->Nodes().begin();
+                    for (int j = 0; j < chainWithTrees.second.front()->Nodes().size(); j++)
+                    {
+                        if (&chainWithTrees.second.front()->Nodes()[j] == chainWithTrees.first[i].front())
+                        {
+                            deletedNodesT1[j] = chainWithTrees.second.front()->Nodes()[j];
+                            chainWithTrees.second.front()->Nodes().erase(it);
+                            break;
+                        }
+                        else
+                        {
+                            ++it;
+                        }
+                    }
 
                     //Add it as a root node, as it's a single vertex tree
                     chainWithTrees.second.front()->Roots().emplace_back(terminal);
@@ -303,7 +435,33 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                     // auto parentPos = std::find(chainWithTrees.second.front()->Roots().begin(),
                     //         chainWithTrees.second.front()->Roots().end(), chainWithTrees.first[i].front());
                     // chainWithTrees.second.front()->Roots().erase(parentPos);
-
+                    // for (auto it = chainWithTrees.second.front()->Nodes().begin();
+                    //     it != chainWithTrees.second.front()->Nodes().end();)
+                    // {
+                    //     if (it->parent == chainWithTrees.first[i].front()->parent &&
+                    //         it->sibling == chainWithTrees.first[i].front()->sibling &&
+                    //         it->leftChild == chainWithTrees.first[i].front()->leftChild &&
+                    //         it->rightChild == chainWithTrees.first[i].front()->rightChild &&
+                    //         it->subtreeTerminals == chainWithTrees.first[i].front()->subtreeTerminals)
+                    //     {
+                    //         deletedNodesT1.emplace(it, *chainWithTrees.first[i].front());
+                    //         chainWithTrees.second.front()->Nodes().erase(it);
+                    //     }
+                    // }
+                    std::vector<graph::Node>::iterator it = chainWithTrees.second.front()->Nodes().begin();
+                    for (int j = 0; j < chainWithTrees.second.front()->Nodes().size(); j++)
+                    {
+                        if (&chainWithTrees.second.front()->Nodes()[j] == chainWithTrees.first[i].front())
+                        {
+                            deletedNodesT1[j] = chainWithTrees.second.front()->Nodes()[j];
+                            chainWithTrees.second.front()->Nodes().erase(it);
+                            break;
+                        }
+                        else
+                        {
+                            ++it;
+                        }
+                    }
 
                     //Add it as a root node, as it's a single vertex tree
                     chainWithTrees.second.front()->Roots().emplace_back(terminal);
@@ -321,6 +479,33 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                     // auto parentPos = std::find(chainWithTrees.second.back()->Roots().begin(),
                     //         chainWithTrees.second.back()->Roots().end(), chainWithTrees.first[i].back());
                     // chainWithTrees.second.back()->Roots().erase(parentPos);
+                    // for (auto it = chainWithTrees.second.back()->Nodes().begin();
+                    //     it != chainWithTrees.second.back()->Nodes().end();)
+                    // {
+                    //     if (it->parent == chainWithTrees.first[i].back()->parent &&
+                    //         it->sibling == chainWithTrees.first[i].back()->sibling &&
+                    //         it->leftChild == chainWithTrees.first[i].back()->leftChild &&
+                    //         it->rightChild == chainWithTrees.first[i].back()->rightChild &&
+                    //         it->subtreeTerminals == chainWithTrees.first[i].back()->subtreeTerminals)
+                    //     {
+                    //         deletedNodesT2.emplace(it, *chainWithTrees.first[i].back());
+                    //         chainWithTrees.second.back()->Nodes().erase(it);
+                    //     }
+                    // }
+                    std::vector<graph::Node>::iterator it = chainWithTrees.second.back()->Nodes().begin();
+                    for (int j = 0; j < chainWithTrees.second.back()->Nodes().size(); j++)
+                    {
+                        if (&chainWithTrees.second.back()->Nodes()[j] == chainWithTrees.first[i].back())
+                        {
+                            deletedNodesT2[j] = chainWithTrees.second.back()->Nodes()[j];
+                            chainWithTrees.second.back()->Nodes().erase(it);
+                            break;
+                        }
+                        else
+                        {
+                            ++it;
+                        }
+                    }
 
                     //Add it as a root node, as it's a single vertex tree
                     chainWithTrees.second.back()->Roots().emplace_back(terminal);
@@ -337,16 +522,40 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                     // auto parentPos = std::find(chainWithTrees.second.back()->Roots().begin(),
                     //         chainWithTrees.second.back()->Roots().end(), chainWithTrees.first[i].back());
                     // chainWithTrees.second.back()->Roots().erase(parentPos);
+                    // for (auto it = chainWithTrees.second.back()->Nodes().begin();
+                    //     it != chainWithTrees.second.back()->Nodes().end();)
+                    // {
+                    //     if (it->parent == chainWithTrees.first[i].back()->parent &&
+                    //         it->sibling == chainWithTrees.first[i].back()->sibling &&
+                    //         it->leftChild == chainWithTrees.first[i].back()->leftChild &&
+                    //         it->rightChild == chainWithTrees.first[i].back()->rightChild &&
+                    //         it->subtreeTerminals == chainWithTrees.first[i].back()->subtreeTerminals)
+                    //     {
+                    //         deletedNodesT2.emplace(it, *chainWithTrees.first[i].back());
+                    //         chainWithTrees.second.back()->Nodes().erase(it);
+                    //     }
+                    // }
 
                     //Add it as a root node, as it's a single vertex tree
+                    std::vector<graph::Node>::iterator it = chainWithTrees.second.back()->Nodes().begin();
+                    for (int j = 0; j < chainWithTrees.second.back()->Nodes().size(); j++)
+                    {
+                        if (&chainWithTrees.second.back()->Nodes()[j] == chainWithTrees.first[i].back())
+                        {
+                            deletedNodesT2[j] = chainWithTrees.second.back()->Nodes()[j];
+                            chainWithTrees.second.back()->Nodes().erase(it);
+                            break;
+                        }
+                        else
+                        {
+                            ++it;
+                        }
+                    }
                     chainWithTrees.second.back()->Roots().emplace_back(terminal);
                 }
             }
         }
     }
-
-
-
     return RuleReturnCode::Continue;
 }
 

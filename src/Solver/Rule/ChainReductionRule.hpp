@@ -16,11 +16,14 @@ namespace solver
         /// \brief First Chain found within two trees of a problem instance
         std::pair<std::vector<std::vector<graph::Node*>>,std::vector<std::shared_ptr<graph::Forest>>> chainWithTrees;
 
-        /// \brief Parents of the last chain node
-        std::pair<graph::Node*,graph::Node*> parentToXN;
+        /// \brief Adresss storage for all deleted Nodes during the chain removal process in T1
+        std::vector<graph::Node> deletedNodesT1;
 
-        /// \brief The Nodes that are within the removed portions of the chain.
-        std::pair<std::vector<graph::Node*>,std::vector<graph::Node*>> chainNodes;
+        /// \brief Address storage for all deleted Nodes during the chain removal process in T2
+        std::vector<graph::Node> deletedNodesT2;
+
+        /// \brief Legacy for unapply
+        std::pair<graph::Node*,graph::Node*> parentToXN;
 
         /// \brief The Labels for the Terminals from the removed portion of the chain.
         std::pair<std::unordered_map<unsigned int, graph::Node>,std::unordered_map<unsigned int, graph::Node>>
