@@ -19,7 +19,7 @@ void ClusterPointGenerator::generateClusterPoints(graph::Node* node) {
     // We're very strict about potential cluster points having the same depth within the trees.
     // Actually, doing this may save a lot of comparisons later.
     int nodeHeight = checkHeightOfNode(node);
-    for (const auto& twin : twinRelation->nodeToTwins[node])
+    for (const auto& twin : twinRelation.nodeToTwins[node])
         if (nodeHeight != checkHeightOfNode(twin)) return;
     // Heavy Invariant Checks (Same Leaf Set for class / True Twin Class)
     if (not leafEquivalent(node)) return; // We may want to remove this later!
@@ -30,9 +30,9 @@ void ClusterPointGenerator::generateClusterPoints(graph::Node* node) {
 }
 
 
-ClusterPointGenerator::ClusterPointGenerator(const std::shared_ptr<graph::Instance>& instance, cluster::TwinRelation* twinRelation) {
-    this->twinRelation = twinRelation;
-
+ClusterPointGenerator::ClusterPointGenerator(const std::shared_ptr<graph::Instance>& instance, const cluster::TwinRelation& twinRelation)
+    : twinRelation(twinRelation)
+{
     for (const std::shared_ptr<graph::Forest>& forest : *instance)
         rootToForest[forest->Roots().front()] = forest;
 
@@ -57,7 +57,7 @@ bool ClusterPointGenerator::trueEquivalenceClass(graph::Node* node) const
     // Generate the reference set: The cluster point node and its twins.
     std::set<graph::Node*> referenceSet = std::set<graph::Node*>();
     referenceSet.insert(node);
-    auto setOfTwins = twinRelation->nodeToTwins[node];
+    auto setOfTwins = twinRelation.nodeToTwins.at(node);
     for (const auto& twin : setOfTwins) referenceSet.insert(twin);
 
     // Generate comparison set: The union of the twins of the twins, for each twin of the cluster point.
@@ -67,7 +67,7 @@ bool ClusterPointGenerator::trueEquivalenceClass(graph::Node* node) const
     for (const auto& twin : setOfTwins)
     {
         comparisonSet.insert(twin);
-        for (const auto& twinOfTwin : twinRelation->nodeToTwins[twin])
+        for (const auto& twinOfTwin : twinRelation.nodeToTwins.at(twin))
             comparisonSet.insert(twinOfTwin);
     }
 
@@ -79,12 +79,12 @@ bool ClusterPointGenerator::leafEquivalent(graph::Node* node) const
 {
     bool isLeafEquivalent = true;
 
-    auto classOfTwins = twinRelation->nodeToTwins[node];
+    auto classOfTwins = twinRelation.nodeToTwins.at(node);
     for (const auto& twin : classOfTwins)
     {
         isLeafEquivalent &= node->hasSameTerminals(twin);
 
-        for (const auto& twinOfTwin : twinRelation->nodeToTwins[twin])
+        for (const auto& twinOfTwin : twinRelation.nodeToTwins.at(twin))
             isLeafEquivalent &= node->hasSameTerminals(twinOfTwin);
     }
 
@@ -94,8 +94,8 @@ bool ClusterPointGenerator::leafEquivalent(graph::Node* node) const
 
 ClusterPointGenerator ClusterPointGenerator::wrappedConstructor(const std::shared_ptr<graph::Instance>& instance)
 {
-    auto temporaryTable = cluster::TwinRelation(instance);
-    return { ClusterPointGenerator(instance, &temporaryTable) };
+    auto table = cluster::TwinRelation(instance);
+    return { ClusterPointGenerator(instance, table) };
 }
 
 }

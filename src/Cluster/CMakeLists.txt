@@ -3,7 +3,7 @@ file (GLOB cluster_header *.hpp)
 
 add_library(Cluster ${cluster_source})
 
-
+target_link_libraries(Cluster Graph)
 
 set_target_properties(Cluster PROPERTIES
         VERSION ${PROJECT_VERSION}

@@ -22,10 +22,10 @@ TwinRelation::TwinRelation(const std::shared_ptr<graph::Instance>& instance) {
 
     // This likely escalates runtime from linear to square. However, this is likely to be unavoidable.
 
-    for (int homeForestIndex = 0; homeForestIndex < instance->size(); ++homeForestIndex)
+    for (unsigned int homeForestIndex = 0; homeForestIndex < instance->size(); ++homeForestIndex)
     {
 
-        for (int foreignForestIndex = 0; foreignForestIndex < LCAs.size(); ++foreignForestIndex)
+        for (unsigned int foreignForestIndex = 0; foreignForestIndex < LCAs.size(); ++foreignForestIndex)
         {
             if (homeForestIndex == foreignForestIndex) continue;
             // Syncs leafs in the Twin-Buffer first.

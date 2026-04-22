@@ -1,5 +1,6 @@
 #include "BranchingSolver.hpp"
 
+#include "Rule/ClusterReductionRule.hpp"
 #include "Rule/SubtreeReductionRule.hpp"
 
 #include <ranges>
@@ -92,6 +93,15 @@ bool solver::BranchingSolver::solve()
         if (configuration->debPlugin) configuration->debPlugin->onApply(subtreeReduction);
         appliedRules.push_back(subtreeReduction);
     }
+    // Try to apply the cluster reduction before starting the main solving process
+    auto clusterReduction = solver::ClusterReductionRule::isApplicable(instance, context);
+    if (clusterReduction)
+    {
+        clusterReduction->apply();
+        if (configuration->debPlugin) configuration->debPlugin->onApply(clusterReduction);
+        appliedRules.push_back(clusterReduction);
+    }
+
 
     // apply rules repeatedly until a return is triggerd
     while (true)

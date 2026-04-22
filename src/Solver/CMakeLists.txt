@@ -1,12 +1,9 @@
 file (GLOB solver_source *.cpp)
 file (GLOB solver_header *.hpp)
 
-add_library(Solver ${solver_source}
-        Rule/ChainReductionRule.cpp
-        Rule/ChainReductionRule.h
-        ReferenceClusterSolver.cpp
-        ReferenceClusterSolver.hpp)
-target_link_libraries(Solver Graph)
+add_library(Solver ${solver_source})
+
+target_link_libraries(Solver Cluster Graph)
 
 set_target_properties(Solver PROPERTIES
         VERSION ${PROJECT_VERSION}
