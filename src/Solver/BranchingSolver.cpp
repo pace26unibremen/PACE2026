@@ -54,13 +54,7 @@ void solver::BranchingSolver::checkSolutionCandidate()
         // update context (we have a better solution)
         context->bestSolutionSize = instance->at(0)->Roots().size();
 
-        // unapply all reduction rules to get solution for the original instance
-        for (const auto& reductionRule : appliedRules | std::views::reverse
-            | std::views::filter([](const std::shared_ptr<AbstractRule>& r){ return r->IsReduction();}))
-        {
-            reductionRule->unapply();
-            if (configuration->debPlugin) configuration->debPlugin->onTempUnapply(reductionRule, false);
-        }
+        unapplyReductions();
 
         // write out the solution
         solution = std::make_shared<graph::Forest>(instance->at(0)->copy());
