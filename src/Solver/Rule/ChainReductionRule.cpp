@@ -76,10 +76,6 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
         bottomT1->parent = topChainT1Parent;
         bottomT2->parent = topChainT2Parent;
 
-        //Create edge between x3 and xn's parent
-        // topChainT1Parent->leftChild == topChainT1 ? topChainT1Parent->leftChild = bottomT1 : topChainT1Parent->rightChild
-        // = bottomT1;
-
         if (topChainT1Parent->leftChild == topChainT1)
         {
             topChainT1Parent->leftChild = bottomT1;
@@ -105,8 +101,6 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
             topChainT2Parent->leftChild->sibling = bottomT2;
             bottomT2->sibling = topChainT2Parent->leftChild;
         }
-        // topChainT2Parent->leftChild == topChainT2 ? topChainT2Parent->leftChild = bottomT2 :
-        // topChainT2Parent->rightChild = bottomT2;
 
         //Update x4 to reflect x3 change
         bottomChainT1->leftChild == bottomT1 ? bottomChainT1->leftChild = nullptr : bottomChainT1->rightChild = nullptr;
@@ -120,42 +114,27 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
 
         //REMOVAL OF SIBLING RELATIONSHIPS
 
-        // //Remove sibling connection between xn and xn's parents terminal
-        // topChainT1->sibling->sibling = nullptr;
-        // topChainT1->sibling = nullptr;
-        //
-        // topChainT2->sibling->sibling = nullptr;
-        // topChainT2->sibling = nullptr;
-
         //Remove sibling connection between x3's parent and x4
         if (bottomChainT1->leftChild == nullptr)
         {
             bottomChainT1->rightChild->sibling->sibling = nullptr;
             bottomChainT1->rightChild->sibling = nullptr;
-            // bottomT1->sibling = topChainT1Parent->rightChild;
-            // topChainT1Parent->rightChild->sibling = bottomT1;
         }
         else
         {
             bottomChainT1->leftChild->sibling->sibling = nullptr;
             bottomChainT1->leftChild->sibling = nullptr;
-            // bottomT1->sibling = topChainT1Parent->leftChild;
-            // topChainT1Parent->leftChild->sibling = bottomT1;
         }
 
         if (bottomChainT2->leftChild == nullptr)
         {
             bottomChainT2->rightChild->sibling->sibling = nullptr;
             bottomChainT2->rightChild->sibling = nullptr;
-            // bottomT2->sibling = topChainT2Parent->rightChild;
-            // topChainT2Parent->rightChild->sibling = bottomT2;
         }
         else
         {
             bottomChainT2->leftChild->sibling->sibling = nullptr;
             bottomChainT2->leftChild->sibling = nullptr;
-            // bottomT2->sibling = topChainT2Parent->leftChild;
-            // topChainT2Parent->leftChild->sibling = bottomT2;
         }
         //Now: x4 to xn isolated from x1-x3 and xn's parent to root by both edges and sibling-relationship.
         //What remains now is to remove the edges between x4 to xn and their parents, turning them to single vertex trees,
@@ -165,6 +144,7 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
         {
             //Every element is a parent -> Terminal
             // If the left side is the parent of the child
+
             //For T1
             if (i != 1)
             {
@@ -230,8 +210,6 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                     //Add it as a root node, as it's a single vertex tree
                     chainWithTrees.second.front()->Roots().emplace_back(terminal);
                 }
-
-
                 //For T2
                 if (chainWithTrees.first[i].back()->leftChild == chainWithTrees.first[i-1].back())
                 {
@@ -298,7 +276,7 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
             }
             else
             {
-                //T1, i = 1
+                //T1, i = 1 -> x4
                 if (chainWithTrees.first[i].front()->leftChild == nullptr)
                 {
                     graph::Node* terminal = chainWithTrees.first[i].front()->rightChild;
@@ -349,6 +327,7 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                     //Add it as a root node, as it's a single vertex tree
                     chainWithTrees.second.front()->Roots().emplace_back(terminal);
                 }
+
                 //T2, i = 1 -> x4
                 if (chainWithTrees.first[i].back()->leftChild == nullptr)
                 {
@@ -826,10 +805,10 @@ solver::ChainReductionRule::isApplicable(
             }
         }
     }
-
     //When no chain is found
     return nullptr;
 }
+
 std::string solver::ChainReductionRule::name() const
 {
     return "ChainReductionRule";
