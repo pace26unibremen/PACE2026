@@ -2,6 +2,9 @@
 #define PACE2026_CONTEXT_HPP
 
 #include <memory>
+#include <unordered_set>
+
+#include "../Graph/Node.hpp"
 
 namespace solver
 {
@@ -23,6 +26,10 @@ struct Context
     /// \brief The configuration of the branching solver.
     /// This should be set in the constructor of the branching solver.
     std::shared_ptr<BranchingSolverConfiguration> branchingSolverConfiguration = nullptr;
+
+    /// \brief A set of all protected edges (edges that must never be cut).
+    /// An edge is identified by the node it points to (the child-node).
+    std::unordered_set<graph::Node*> protectedEdges = std::unordered_set<graph::Node*>();
 };
 
 }  //namespace solver
