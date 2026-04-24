@@ -46,6 +46,12 @@ struct Node
     [[nodiscard]]
     bool hasSameTerminals(const Node* other) const;
 
+    /// Checks if a node has a terminal label in its subtree.
+    /// \param label
+    /// \return true if the subtreeTerminals list of this node contains the label
+    [[nodiscard]]
+    bool hasTerminal(unsigned int label) const;
+
     /// Checks if the terminals in the subtree of a node is a \b subset of
     /// the terminals of another node.
     /// \param other

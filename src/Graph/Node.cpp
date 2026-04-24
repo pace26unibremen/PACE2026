@@ -21,6 +21,11 @@ bool graph::Node::hasSameTerminals(const Node* other) const
     return true;
 }
 
+bool graph::Node::hasTerminal(unsigned int label) const
+{
+    return (subtreeTerminals[(label -1) / 64] & (uint64_t) 1 << (label -1) % 64) > 0;
+}
+
 bool graph::Node::hasSmallestTerminal(const graph::Node* other) const
 {
     for(unsigned int i = 0; i < subtreeTerminals.size(); i++ )
