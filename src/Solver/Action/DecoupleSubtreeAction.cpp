@@ -2,16 +2,16 @@
 
 #include <algorithm>
 
-solver::DecoupleSubtreeAction::DecoupleSubtreeAction(graph::Node* subtreeRoot, unsigned int newLabel,
+solver::DecoupleSubtreeAction::DecoupleSubtreeAction(graph::Node* decouplingPoint, unsigned int newLabel,
                                                      const std::shared_ptr<graph::Forest>& forest) :
         forest(forest),
-        subtreeRoot(subtreeRoot),
-        newNode(*subtreeRoot),
+        decouplingPoint(decouplingPoint),
+        decoupledSubtreeRoot(*decouplingPoint),
         newLabel(newLabel),
-        smallestLabelOfSubtree(smallestLabelOfSubtree = subtreeRoot->smallestTerminal())
+        smallestLabelOfSubtree(smallestLabelOfSubtree = decouplingPoint->smallestTerminal())
 {}
 
-void propagateXORLabelUp(const std::vector<u_int64_t>& labels, graph::Node* start)
+void solver::DecoupleSubtreeAction::propagateXORLabelUp(const std::vector<u_int64_t>& labels, graph::Node* start)
 {
     // Update subtreeTerminals up the tree, which now has child and it's subtrees removed
     const unsigned int subtreeTerminalsSize = start->subtreeTerminals.size();
@@ -45,87 +45,99 @@ void solver::DecoupleSubtreeAction::doAction()
 {
     // adjust edges of the new terminal (the subtreeRoot) and the new root of the subtree (newNode)
     // note that newNode is a copy of subtreeNode (Constructor)
-    subtreeRoot->leftChild = nullptr;
-    subtreeRoot->rightChild = nullptr;
+    decouplingPoint->leftChild = nullptr;
+    decouplingPoint->rightChild = nullptr;
 
-    newNode.parent = nullptr;
-    newNode.leftChild->parent = &newNode;
-    newNode.rightChild->parent = &newNode;
+    decoupledSubtreeRoot.parent = nullptr;
+    decoupledSubtreeRoot.sibling = nullptr;
+    decoupledSubtreeRoot.leftChild->parent = &decoupledSubtreeRoot;
+    decoupledSubtreeRoot.rightChild->parent = &decoupledSubtreeRoot;
 
     // update subtreeTerminals vector
-    std::vector<u_int64_t> labels = subtreeRoot->subtreeTerminals;
+    std::vector<u_int64_t> labels = decouplingPoint->subtreeTerminals;
     labels[(newLabel - 1) / 64] ^= (uint64_t) 1 << (newLabel -1) % 64;
 
-    propagateXORLabelUp(labels, subtreeRoot);
+    propagateXORLabelUp(labels, decouplingPoint);
 
-    forest->LabelToTerminal()[newLabel] = subtreeRoot;
-    forest->TerminalToLabel()[subtreeRoot] = newLabel;
+    forest->LabelToTerminal()[newLabel] = decouplingPoint;
+    forest->TerminalToLabel()[decouplingPoint] = newLabel;
 
     // we need to insert the new root at the correct index, and we may also need to reposition the og root of the tree
     auto root_Iterator = std::find_if(forest->Roots().begin(), forest->Roots().end(),
-                     [&](const graph::Node* r) { return subtreeRoot->hasSubsetTerminals(r); });
+                     [&](const graph::Node* r) { return decouplingPoint->hasSubsetTerminals(r); });
     // find og node of the tree
-    int indexOfTreeRoot = std::distance(forest->Roots().begin(), root_Iterator);
-    graph::Node* root = forest->Roots()[indexOfTreeRoot];
+    int indexOfParentTreeRoot = std::distance(forest->Roots().begin(), root_Iterator);
+    graph::Node* parentTreeRoot = forest->Roots()[indexOfParentTreeRoot];
     // check how to insert
-    bool newRootIsHigher = root->hasSmallestTerminal(&newNode);
-    if(newRootIsHigher)
+    bool decoupledSubtreeIsBigger = parentTreeRoot->hasSmallestTerminal(&decoupledSubtreeRoot);
+    if(decoupledSubtreeIsBigger)
     {
-        indexOfOldRoot = indexOfTreeRoot;
-        const auto newRoot_Iterator =
-            std::lower_bound(forest->Roots().begin() + indexOfTreeRoot, forest->Roots().end(), &newNode,
+        auto decoupledSubtreeIt =
+            std::lower_bound(root_Iterator, forest->Roots().end(), &decoupledSubtreeRoot,
                              [&](const graph::Node* a, const graph::Node* b) { return a->hasSmallestTerminal(b); });
-        forest->Roots().insert(newRoot_Iterator, &newNode);
-        indexOfNewRoot = std::distance(forest->Roots().begin(), newRoot_Iterator);
+        forest->Roots().insert(decoupledSubtreeIt, &decoupledSubtreeRoot);
     }
     else
     {
-        forest->Roots()[indexOfTreeRoot] = &newNode;
-        indexOfNewRoot = indexOfTreeRoot;
-
-        const auto oldRoot_Iterator =
-                std::lower_bound(forest->Roots().begin() + indexOfTreeRoot, forest->Roots().end(), root,
+        forest->Roots()[indexOfParentTreeRoot] = &decoupledSubtreeRoot;
+        auto parentTreeIt =
+                std::lower_bound(root_Iterator, forest->Roots().end(), parentTreeRoot,
                 [&](const graph::Node* a, const graph::Node* b) { return a->hasSmallestTerminal(b); });
-        forest->Roots().insert(oldRoot_Iterator, root);
-        indexOfOldRoot = std::distance(forest->Roots().begin(), oldRoot_Iterator);
+        forest->Roots().insert(parentTreeIt, parentTreeRoot);
     }
 }
 
 void solver::DecoupleSubtreeAction::undoAction()
 {
-    // the root of the decoupled subtree may have changed
-    // we assume here that the position in the roots-vector is the same
-    // and update newNode as root of decoupled subtree
-    newNode = *forest->Roots()[indexOfNewRoot];
+    // We cannot use assume that the decoupled subtree has not changed.
+    // So we couple only the part that contains the smallest terminal of the og subtree.
+    auto decoupledSubtreePartIt = std::find_if(forest->Roots().begin(), forest->Roots().end(),[&]
+        (const graph::Node* n) {return n->hasTerminal(smallestLabelOfSubtree);});
+
+    // We also cannot assume that the parent tree has not changed,
+    // so we search for the root that contains the newLabel (we could also traverse from subtreeRoot)
+    auto parentTreePartIt = std::find_if(forest->Roots().begin(), forest->Roots().end(),[&]
+        (const graph::Node* n) {return n->hasTerminal(newLabel);});
+
+    decoupledSubtreeRoot = **decoupledSubtreePartIt;
+    auto parentTreeRoot = *parentTreePartIt;
+
 
     // undo edges
-    subtreeRoot->leftChild = newNode.leftChild;
-    subtreeRoot->rightChild = newNode.rightChild;
-    subtreeRoot->leftChild->parent = subtreeRoot;
-    subtreeRoot->rightChild->parent = subtreeRoot;
+    decouplingPoint->leftChild = decoupledSubtreeRoot.leftChild;
+    decouplingPoint->rightChild = decoupledSubtreeRoot.rightChild;
+    if (decouplingPoint->leftChild)
+    {
+        decouplingPoint->leftChild->parent = decouplingPoint;
+    }
+    if (decouplingPoint->rightChild)
+    {
+        decouplingPoint->rightChild->parent = decouplingPoint;
+    }
 
-    newNode.parent = subtreeRoot->parent;
+    // this should be not necessary, but we just restore the situation
+    decoupledSubtreeRoot.parent = decouplingPoint->parent;
+    decoupledSubtreeRoot.sibling = decouplingPoint->sibling;
 
     // update subtreeTerminals vector
-    std::vector<u_int64_t> labels = newNode.subtreeTerminals;
+    std::vector<u_int64_t> labels = decoupledSubtreeRoot.subtreeTerminals;
     labels[(newLabel - 1) / 64] ^= (uint64_t) 1 << (newLabel -1) % 64;
 
-    propagateXORLabelUp(labels, subtreeRoot);
+    propagateXORLabelUp(labels, decouplingPoint);
 
     forest->LabelToTerminal().erase(newLabel);
-    forest->TerminalToLabel().erase(subtreeRoot);
+    forest->TerminalToLabel().erase(decouplingPoint);
 
 
     // undo roots
-    auto oldRoot = forest->Roots()[indexOfOldRoot];
-    bool newRootIsHigher = oldRoot->hasSmallestTerminal(&newNode);
-    if(newRootIsHigher)
+    bool decoupledSubtreeIsBigger = parentTreeRoot->hasSmallestTerminal(&decoupledSubtreeRoot);
+    if(decoupledSubtreeIsBigger)
     {
-        forest->Roots().erase(forest->Roots().begin() + indexOfNewRoot);
+        forest->Roots().erase(decoupledSubtreePartIt);
     }
     else
     {
-        forest->Roots()[indexOfNewRoot] = oldRoot;
-        forest->Roots().erase(forest->Roots().begin() + indexOfOldRoot);
+        *decoupledSubtreePartIt = parentTreeRoot;
+        forest->Roots().erase(parentTreePartIt);
     }
 }

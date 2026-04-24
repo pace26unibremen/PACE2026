@@ -21,7 +21,7 @@ solver::RuleReturnCode solver::ClusterReductionRule::apply()
 
     auto maxLabel = std::ranges::max(instance->at(0)->LabelToTerminal() | std::views::keys);
 
-    for (auto _cluster : pointsAndForests_PerCluster)
+    for (const auto& _cluster : pointsAndForests_PerCluster)
     {
         maxLabel++;
         for (const auto& [f,n] : _cluster)
@@ -65,13 +65,13 @@ solver::ClusterReductionRule::isApplicable(const std::shared_ptr<graph::Instance
         // check to which forest the twin belongs
         for (auto twin : cpg.twinRelation.nodeToTwins[clusterPointOfFrontForest])
         {
-            for (auto f : *instance)
+            for (const auto& f : *instance)
             {
                 const graph::Node* begin = f->Nodes().data();
                 const graph::Node* end   = begin + f->Nodes().size();
                 if ( twin >= begin && twin < end)
                 {
-                    PointsAndForests_PerCluster.back().push_back({f,twin});
+                    PointsAndForests_PerCluster.back().emplace_back(f,twin);
                     break;
                 }
             }

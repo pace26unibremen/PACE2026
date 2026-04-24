@@ -12,9 +12,9 @@ class DecoupleSubtreeAction : public solver::AbstractAction
   private:
     std::shared_ptr<graph::Forest> forest;
 
-    graph::Node* subtreeRoot;
+    graph::Node* decouplingPoint;
 
-    graph::Node newNode;
+    graph::Node decoupledSubtreeRoot;
 
     int newLabel;
 
@@ -24,8 +24,10 @@ class DecoupleSubtreeAction : public solver::AbstractAction
 
     unsigned int indexOfOldRoot;
 
+    static void propagateXORLabelUp(const std::vector<u_int64_t>& labels, graph::Node* start);
+
   public:
-    DecoupleSubtreeAction(graph::Node* subtreeRoot, unsigned int newLabel,
+    DecoupleSubtreeAction(graph::Node* decouplingPoint, unsigned int newLabel,
                           const std::shared_ptr<graph::Forest>& forest);
 
     void doAction() override;
