@@ -16,13 +16,9 @@ class DecoupleSubtreeAction : public solver::AbstractAction
 
     graph::Node decoupledSubtreeRoot;
 
-    int newLabel;
+    unsigned int newLabel;
 
     int smallestLabelOfSubtree;
-
-    unsigned int indexOfNewRoot;
-
-    unsigned int indexOfOldRoot;
 
     static void propagateXORLabelUp(const std::vector<u_int64_t>& labels, graph::Node* start);
 

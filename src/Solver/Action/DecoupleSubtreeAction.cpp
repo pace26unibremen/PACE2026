@@ -99,13 +99,58 @@ void solver::DecoupleSubtreeAction::undoAction()
     auto parentTreePartIt = std::find_if(forest->Roots().begin(), forest->Roots().end(),[&]
         (const graph::Node* n) {return n->hasTerminal(newLabel);});
 
-    decoupledSubtreeRoot = **decoupledSubtreePartIt;
+    auto decoupledSubtreePartRoot = *decoupledSubtreePartIt;
     auto parentTreeRoot = *parentTreePartIt;
+
+    // `decoupledSubtreeRoot`: The newly created node stored in this action instance.
+    // `decoupledSubtreePartRoot`: The root node that will be coupled (merged) with
+    // the terminal with the label `newLabel` (`decouplingPoint`)
+    // `parentTreeRoot` The root of the tree that contains the `decouplingPoint`
+    //
+    // 1. `decoupledSubtreeRoot` may be unequal to `decoupledSubtreePartRoot`
+    // 2. `decoupledSubtreeRoot` could be a valid root of a valid tree in the current forest.
+    // 3. We need to ensure that after this method call the newly created node (`decoupledSubtreeRoot`)
+    //    is not part of the forest anymore, because (probably) the rule and therefore the node
+    //    will be garbage collected, which leads to invalid pointers.
+    // idea: We just swap `decoupledSubtreePartRoot` and `decoupledSubtreeRoot`
+    // but only iff `decoupledSubtree` is an actual root (it might already be not a part of the forest anymore :D)
+    //  - `decoupledSubtreePartRoot` needs no valid address after the coupling
+    //  - `decoupledSubtreeRoot` gets the valid address of `decoupledSubtreePartRoot` in the node vector of the forest
+
+
+    auto decoupledSubtreeIt = std::ranges::find(forest->Roots(), &decoupledSubtreeRoot);
+    if (decoupledSubtreeIt != forest->Roots().end())
+    {
+        // decoupledSubtreeRoot is an actual root in the current tree
+
+        // swap the Node objects
+        std::swap(*decoupledSubtreePartRoot, decoupledSubtreeRoot);
+        // fix pointer of children
+        decoupledSubtreePartRoot->leftChild->parent = decoupledSubtreePartRoot;
+        decoupledSubtreePartRoot->rightChild->parent = decoupledSubtreePartRoot;
+        decoupledSubtreeRoot.leftChild->parent = &decoupledSubtreeRoot;
+        decoupledSubtreeRoot.rightChild->parent = &decoupledSubtreeRoot;
+
+        // fix order in root vector
+        std::swap(*decoupledSubtreeIt, *decoupledSubtreePartIt);
+
+        // The variable name of the subtree that we will attach to the parent tree
+        // should remain `decoupledSubtreePartRoot`
+        decoupledSubtreePartRoot = &decoupledSubtreeRoot;
+
+        // fix position of the iterators
+        // std::swap(decoupledSubtreeIt, decoupledSubtreePartIt);
+    }
+
+    // until here we just collected all necessary nodes etc
+    // we still want to couple the subtree part with the smallest label
+    // which is now `decoupledSubtreeRoot`
+    // we will connect the children of `decoupledSubtreeRoot` with the `decouplingPoint`
 
 
     // undo edges
-    decouplingPoint->leftChild = decoupledSubtreeRoot.leftChild;
-    decouplingPoint->rightChild = decoupledSubtreeRoot.rightChild;
+    decouplingPoint->leftChild = decoupledSubtreePartRoot->leftChild;
+    decouplingPoint->rightChild = decoupledSubtreePartRoot->rightChild;
     if (decouplingPoint->leftChild)
     {
         decouplingPoint->leftChild->parent = decouplingPoint;
@@ -115,14 +160,12 @@ void solver::DecoupleSubtreeAction::undoAction()
         decouplingPoint->rightChild->parent = decouplingPoint;
     }
 
-    // this should be not necessary, but we just restore the situation
-    decoupledSubtreeRoot.parent = decouplingPoint->parent;
-    decoupledSubtreeRoot.sibling = decouplingPoint->sibling;
+    // before updating the subtreeTerminal vector, we store which root node has a higher order
+    bool decoupledSubtreeIsPartBigger = parentTreeRoot->hasSmallestTerminal(decoupledSubtreePartRoot);
 
     // update subtreeTerminals vector
-    std::vector<u_int64_t> labels = decoupledSubtreeRoot.subtreeTerminals;
+    std::vector<u_int64_t> labels = decoupledSubtreePartRoot->subtreeTerminals;
     labels[(newLabel - 1) / 64] ^= (uint64_t) 1 << (newLabel -1) % 64;
-
     propagateXORLabelUp(labels, decouplingPoint);
 
     forest->LabelToTerminal().erase(newLabel);
@@ -130,8 +173,7 @@ void solver::DecoupleSubtreeAction::undoAction()
 
 
     // undo roots
-    bool decoupledSubtreeIsBigger = parentTreeRoot->hasSmallestTerminal(&decoupledSubtreeRoot);
-    if(decoupledSubtreeIsBigger)
+    if(decoupledSubtreeIsPartBigger)
     {
         forest->Roots().erase(decoupledSubtreePartIt);
     }
