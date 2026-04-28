@@ -88,3 +88,8 @@ std::string solver::ClusterReductionRule::name() const
 {
     return "ClusterReductionRule";
 }
+
+std::shared_ptr<solver::AbstractRule> solver::ClusterReductionRule::clone() const
+{
+    return std::make_shared<ClusterReductionRule>(instance, context, pointsAndForests_PerCluster);
+}

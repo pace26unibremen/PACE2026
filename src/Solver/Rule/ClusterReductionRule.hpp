@@ -34,6 +34,8 @@ class ClusterReductionRule : public AbstractRule
 
     [[nodiscard]]
     std::string name() const override;
+
+    std::shared_ptr<solver::AbstractRule> clone() const override;
 };
 
 }  //namespace solver

@@ -24,13 +24,17 @@ using isApplicableFn = std::function<std::shared_ptr<AbstractRule>(const std::sh
                                                                    const std::shared_ptr<Context>& context)>;
 
 /// \brief A struct that holds all configuration information and options for the \ref BranchingSolver.
-struct BranchingSolverConfiguration
+struct SolverConfiguration
 {
     /// \brief Whether the solver should perform a bounded depth search.
     /// I.e. the solver searches only for solutions that are equal to or better than a given parameter.
     /// If the solver doesn't find any suitable solution, it increases the parameter.
     /// The corresponding parameter is stored in the \ref Context as \ref Context::maxSolutionSize.
-    bool boundedDephtSearch = true;
+    bool boundedDephtSearch = false;
+
+    bool subtreeReduction = true;
+
+    bool clusterReduction = true;
 
     /// \brief vector of the isApplicable function of rules.
     /// It defines which rules are used and in which order they are checked for applicability.

@@ -2,8 +2,8 @@
 #define PACE2026_BRANCHING_SOLVER_HPP
 
 #include "AbstractSolver.hpp"
-#include "BranchingSolverConfiguration.hpp"
 #include "Context.hpp"
+#include "SolverConfiguration.hpp"
 
 #include <queue>
 
@@ -16,8 +16,8 @@ class BranchingSolver : public AbstractSolver
 {
   protected:
     /// \brief The configuration of the branching solver.
-    const std::shared_ptr<BranchingSolverConfiguration>
-    configuration = std::make_shared<BranchingSolverConfiguration>();
+    const std::shared_ptr<SolverConfiguration>
+    configuration = std::make_shared<SolverConfiguration>();
 
     /// \brief stores all applied rules of the current branch in the order in which they were applied.
     std::list<std::shared_ptr<AbstractRule>> appliedRules = std::list<std::shared_ptr<AbstractRule>>();
@@ -25,24 +25,12 @@ class BranchingSolver : public AbstractSolver
     /// \brief queue of rules, that should be applied next
     std::queue<std::shared_ptr<AbstractRule>> applyNext = std::queue<std::shared_ptr<AbstractRule>>();
 
-    /// \brief Stores the best solution, that the solver found so far.
-    std::shared_ptr<graph::Forest> solution = nullptr;
-
     /// \brief Context information about the instance and the solver state
     std::shared_ptr<Context> context = std::make_shared<Context>();
 
-    /// \brief A list of all branches for the last search depth.
-    /// Each branch is represented as a list of rules that where applied on this branch.
-    std::list<std::list<std::shared_ptr<AbstractRule>>> oldBranches =
-        std::list<std::list<std::shared_ptr<AbstractRule>>>();
-
-    /// \brief A list of all branches for the current search depth.
-    /// Each branch is represented as a list of rules that where applied on this branch.
-    std::list<std::list<std::shared_ptr<AbstractRule>>> newBranches =
-        std::list<std::list<std::shared_ptr<AbstractRule>>>();
-
-    /// \brief The branch of the previous depth that is the basis for the current calculations
-    std::list<std::shared_ptr<AbstractRule>> currentOldBranch = std::list<std::shared_ptr<AbstractRule>>();
+    /// \brief The branch that leads to the solution
+    std::list<std::shared_ptr<AbstractRule>> solutionBranch =
+        std::list<std::shared_ptr<AbstractRule>>();
 
     /// \brief unapply all rules until the next branching possibility
     /// \returns Whether all rules are unapplied. (Means there is no branching possibility left)
@@ -62,7 +50,7 @@ class BranchingSolver : public AbstractSolver
     /// \param instance to solve
     /// \param configuration for the branching solver
     explicit BranchingSolver(const std::shared_ptr<graph::Instance>& instance,
-                             const std::shared_ptr<solver::BranchingSolverConfiguration>& configuration);
+                             const std::shared_ptr<solver::SolverConfiguration>& configuration);
 
     ~BranchingSolver() override = default;
 

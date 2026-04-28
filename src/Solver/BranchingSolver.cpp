@@ -3,6 +3,7 @@
 #include "Rule/ClusterReductionRule.hpp"
 #include "Rule/SubtreeReductionRule.hpp"
 
+#include <algorithm>
 #include <ranges>
 
 solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>& instance)
@@ -12,7 +13,7 @@ solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>&
 }
 
 solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>& instance,
-                                         const std::shared_ptr<solver::BranchingSolverConfiguration>& configuration) :
+                                         const std::shared_ptr<solver::SolverConfiguration>& configuration) :
     AbstractSolver(instance),
     configuration(configuration)
 {
@@ -40,7 +41,7 @@ bool solver::BranchingSolver::rollBackBranch()
         {
             if (not branchingRule->isFullyExplored())
             {
-                // to enter the next branch we have to apply the branching rule again
+                // to enter the next branch, we have to apply the branching rule again
                 applyNext.emplace(branchingRule);
                 return false;
             }
@@ -50,23 +51,24 @@ bool solver::BranchingSolver::rollBackBranch()
 
 void solver::BranchingSolver::checkSolutionCandidate()
 {
-    if (solution == nullptr or instance->at(0)->Roots().size() < solution->Roots().size())
-    {
-        // update context (we have a better solution)
-        context->bestSolutionSize = instance->at(0)->Roots().size();
-
-        unapplyReductions();
-
-        // write out the solution
-        solution = std::make_shared<graph::Forest>(instance->at(0)->copy());
-
-        // apply all reduction rules again to restore state of the solver
-        for (const auto& reductionRule : appliedRules
-            | std::views::filter([](const std::shared_ptr<AbstractRule>& r){ return r->IsReduction();}))
+    auto numberClusterSingleVertexTrees = [&] {
+        std::unordered_set<graph::Node*> unique;
+        for (graph::Node* n : context->clusterLabel
+            | std::views::transform([&](unsigned int l) {return instance->at(0)->LabelToTerminal()[l];})
+            | std::views::filter([](graph::Node* n) { return n->parent == nullptr; }))
         {
-            reductionRule->apply();
-            if (configuration->debPlugin) configuration->debPlugin->onTempApply(reductionRule);
+            unique.insert(n);
         }
+        return unique.size();
+    }();
+    unsigned int candidateSolutionSice = instance->at(0)->Roots().size() - numberClusterSingleVertexTrees;
+
+    if (context->bestSolutionSize > candidateSolutionSice)
+    {
+        context->maxSolutionSize = candidateSolutionSice;
+        auto branchCloneView = appliedRules | std::views::transform(
+            [](const std::shared_ptr<AbstractRule>& r) { return r->clone(); });
+        solutionBranch = {branchCloneView.begin(), branchCloneView.end()};
     }
 }
 
@@ -84,24 +86,6 @@ void solver::BranchingSolver::unapplyReductions()
 bool solver::BranchingSolver::solve()
 {
     if (configuration->debPlugin) configuration->debPlugin->init(instance);
-
-    // Try to apply the subtree reduction before starting the main solving process
-    auto subtreeReduction = solver::SubtreeReductionRule::isApplicable(instance, context);
-    if (subtreeReduction)
-    {
-        subtreeReduction->apply();
-        if (configuration->debPlugin) configuration->debPlugin->onApply(subtreeReduction);
-        appliedRules.push_back(subtreeReduction);
-    }
-    // Try to apply the cluster reduction before starting the main solving process
-    auto clusterReduction = solver::ClusterReductionRule::isApplicable(instance, context);
-    if (clusterReduction)
-    {
-        clusterReduction->apply();
-        if (configuration->debPlugin) configuration->debPlugin->onApply(clusterReduction);
-        appliedRules.push_back(clusterReduction);
-    }
-
 
     // apply rules repeatedly until a return is triggerd
     while (true)
@@ -170,8 +154,12 @@ bool solver::BranchingSolver::solve()
             }
             else
             {
+                // apply solution branch
+                for (const auto& r : solutionBranch)
+                {
+                    r->apply();
+                }
                 if (configuration->debPlugin) configuration->debPlugin->onEnd();
-                *instance = {solution};
                 return true;
             }
         }

@@ -26,7 +26,7 @@ TEST_CASE("BranchingSolver on Tiny Test Set, unbounded depth search", "[Branchin
     {
         SECTION("solve " + f)
         {
-            auto config = std::make_shared<solver::BranchingSolverConfiguration>();
+            auto config = std::make_shared<solver::SolverConfiguration>();
             config->boundedDephtSearch = false;
             auto instance = graph::ReadInstance(std::string(RES_DIR) + "tiny/" + f);
             auto solver = solver::BranchingSolver(instance, config);
@@ -45,7 +45,7 @@ TEST_CASE("BranchingSolver on Tiny Test Set, bounded depth search", "[BranchingS
     {
         SECTION("solve " + f)
         {
-            auto config = std::make_shared<solver::BranchingSolverConfiguration>();
+            auto config = std::make_shared<solver::SolverConfiguration>();
             config->boundedDephtSearch = true;
             auto instance = graph::ReadInstance(std::string(RES_DIR) + "tiny/" + f);
             auto solver = solver::BranchingSolver(instance, config);

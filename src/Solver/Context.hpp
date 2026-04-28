@@ -9,7 +9,7 @@
 namespace solver
 {
 // forward declaration of \ref BranchingSolverConfiguration
-struct BranchingSolverConfiguration;
+struct SolverConfiguration;
 
 /// \brief A context stores information about the instance and the state of the branching solver.
 struct Context
@@ -25,11 +25,14 @@ struct Context
 
     /// \brief The configuration of the branching solver.
     /// This should be set in the constructor of the branching solver.
-    std::shared_ptr<BranchingSolverConfiguration> branchingSolverConfiguration = nullptr;
+    std::shared_ptr<SolverConfiguration> branchingSolverConfiguration = nullptr;
 
     /// \brief A set of all protected edges (edges that must never be cut).
     /// An edge is identified by the node it points to (the child-node).
     std::unordered_set<graph::Node*> protectedEdges = std::unordered_set<graph::Node*>();
+
+    /// \brief A set of newly created labels for clusters.
+    std::unordered_set<unsigned int> clusterLabel = std::unordered_set<unsigned int>();
 };
 
 }  //namespace solver
