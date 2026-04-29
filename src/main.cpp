@@ -1,45 +1,45 @@
 #include "Solver/BranchingSolver.hpp"
+#include "Solver/ReductionSolver.hpp"
+#include "Graph/Instance.hpp"
 
 #include <iostream>
-#include <string>
 
 using namespace std;
 using namespace graph;
 
 int main(int, char**)
 {
-    // auto instance = ReadInstance("../../../pace2026_Instances/2_25/instances/1.nw");
-    auto instance = ReadInstance(string(RES_DIR) + "examples/1.nw");
+    std::stringstream sstream;
+    sstream
+     << "#p 2 20" << endl
+     << "((3,(((((8,10),11),2),(9,19)),(20,18))),(((((15,4),(13,7)),17),((1,(12,16)),6)),(5,14)));" << endl
+     << "((((4,7),5),((6,14),(((12,1),(17,13)),(16,15)))),((((((8,10),11),2),(9,19)),(20,18)),3));" << endl;
+    auto i = ReadInstance(sstream);
 
-    const auto config = std::make_shared<solver::BranchingSolverConfiguration>();
-    // config->debPlugin = std::make_shared<solver::DebugPlugin>("../../debug");
-
-    config->activeRules = {
-            solver::CutBranchRule::isApplicable,
-            solver::EqualForestsRule::isApplicable,
-            solver::SingleVertexTreePropagationRule::isApplicable,
-            solver::PairUnconnectedBranchingRule::isApplicable,
-            solver::PairEqualRule::isApplicable,
-            solver::PairPathBranchingRule::isApplicable,
-            solver::DebugAssertFalseRule::isApplicable};
-
-    auto solver = solver::BranchingSolver(instance, config);
-
-    const auto t0 = std::clock();
-    auto solved = solver.solve();
-    const auto t1 = std::clock();
-
-    const auto t_delta_ms = ((double) (t1 - t0)) / ((double) CLOCKS_PER_SEC / 1000.0);
-
-    if (solved)
+    auto c = std::make_shared<solver::SolverConfiguration>();
+    c->subtreeReduction = true;
+    c->clusterReduction = true;
+    c->boundedDephtSearch = true;
+    // c->debPlugin = std::make_shared<solver::DebugPlugin>(string(RES_DIR) + "debugPlugin/");
+    c->activeRules =
     {
-        solver.unapplyReductions();
-        graph::WriteInstance(solver.Instance(), cout);
-        cout << "solved in: " << t_delta_ms << " ms" << endl;
-    }
-    else
-    {
-        cout << "doesnt solved completely:" << t_delta_ms << " ms" << endl;
-    }
+        solver::CutBranchRule::isApplicable,
+        solver::EqualForestsRule::isApplicable,
+        solver::SingleVertexTreePropagationRule::isApplicable,
+        solver::PairUnconnectedBranchingRule::isApplicable,
+        solver::PairEqualRule::isApplicable,
+        solver::PairPathBranchingRule::isApplicable,
+        solver::DebugAssertFalseRule::isApplicable
+    };
+
+    auto rs = solver::ReductionSolver(i,c);
+    auto bs = solver::BranchingSolver(i,c);
+
+    rs.solve();
+    bs.solve();
+    bs.unapplyReductions();
+    rs.unapplyReductions();
+
+    DotInstance(i,cout);
     return 17;
 }
