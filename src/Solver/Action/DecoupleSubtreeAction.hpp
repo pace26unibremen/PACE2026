@@ -20,7 +20,7 @@ class DecoupleSubtreeAction : public solver::AbstractAction
 
     int smallestLabelOfSubtree;
 
-    static void propagateXORLabelUp(const std::vector<u_int64_t>& labels, graph::Node* start);
+    static void propagateXORLabelUp(const std::vector<uint64_t>& labels, graph::Node* start);
 
   public:
     DecoupleSubtreeAction(graph::Node* decouplingPoint, unsigned int newLabel,

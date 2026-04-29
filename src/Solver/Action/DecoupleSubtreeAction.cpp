@@ -11,7 +11,7 @@ solver::DecoupleSubtreeAction::DecoupleSubtreeAction(graph::Node* decouplingPoin
         smallestLabelOfSubtree(smallestLabelOfSubtree = decouplingPoint->smallestTerminal())
 {}
 
-void solver::DecoupleSubtreeAction::propagateXORLabelUp(const std::vector<u_int64_t>& labels, graph::Node* start)
+void solver::DecoupleSubtreeAction::propagateXORLabelUp(const std::vector<uint64_t>& labels, graph::Node* start)
 {
     // Update subtreeTerminals up the tree, which now has child and it's subtrees removed
     const unsigned int subtreeTerminalsSize = start->subtreeTerminals.size();
@@ -54,7 +54,7 @@ void solver::DecoupleSubtreeAction::doAction()
     decoupledSubtreeRoot.rightChild->parent = &decoupledSubtreeRoot;
 
     // update subtreeTerminals vector
-    std::vector<u_int64_t> labels = decouplingPoint->subtreeTerminals;
+    std::vector<uint64_t> labels = decouplingPoint->subtreeTerminals;
     labels[(newLabel - 1) / 64] ^= (uint64_t) 1 << (newLabel -1) % 64;
 
     propagateXORLabelUp(labels, decouplingPoint);
