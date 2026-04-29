@@ -27,6 +27,21 @@ solver::ChainReductionRule::ChainReductionRule(
 //and, for each i ∈ {3, 4, . . . , n},
 //the parent of xi is the parent of the parent of xi−1.
 
+bool solver::ChainReductionRule::isNodeInNodeVector(const graph::Node* node, const std::vector<graph::Node*>& list)
+{
+    bool check = false;
+    for (const auto current : list)
+    {
+        if (node == current)
+        {
+            check = true;
+            break;
+        }
+    }
+    return check;
+}
+
+
 solver::RuleReturnCode solver::ChainReductionRule::apply()
 {
     //Goal: Deleting edges from the first and last chain node element to its not-terminal child and parent respectively
@@ -134,7 +149,7 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
              bottomChainT2->leftChild->sibling = nullptr;
          }
 
-        //Adress the now seperated chain in T1 and T2 through the removal of the parent nodes of the terminals as well
+        //Address the now seperated chain in T1 and T2 through the removal of the parent nodes of the terminals as well
         //as setting the terminals to be single tree vertices.
 
         for (int i = chainWithTrees.first.size()-1; i > 0; i--)
@@ -152,18 +167,18 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                     //Remove the edge between these two on the side of the terminal
                     terminal->parent = nullptr;
 
-                    std::vector<graph::Node>::iterator it;
-                    int counter = 0;
-                    for (auto it = chainWithTrees.second.front()->Nodes().begin(); it != chainWithTrees.second.front()->Nodes().end(); ++it)
-                    {
-                            if (&chainWithTrees.second.front()->Nodes()[counter] == chainWithTrees.first[i].front())
-                            {
-                                deletedNodesT1[counter] = chainWithTrees.second.front()->Nodes()[counter];
-                                chainWithTrees.second.front()->Nodes().erase(it);
-                                break;
-                            }
-                            counter++;
-                    }
+                    // std::vector<graph::Node>::iterator it;
+                    // int counter = 0;
+                    // for (auto it = chainWithTrees.second.front()->Nodes().begin(); it != chainWithTrees.second.front()->Nodes().end(); ++it)
+                    // {
+                    //         if (&chainWithTrees.second.front()->Nodes()[counter] == chainWithTrees.first[i].front())
+                    //         {
+                    //             deletedNodesT1[counter] = chainWithTrees.second.front()->Nodes()[counter];
+                    //             chainWithTrees.second.front()->Nodes().erase(it);
+                    //             break;
+                    //         }
+                    //         counter++;
+                    // }
                     // std::vector<graph::Node> nodes = chainWithTrees.second.front()->Nodes();
                     // int counter = 0;
                     // for (auto it = nodes.begin(); it != nodes.end(); ++it)
@@ -181,18 +196,17 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                     //     }
                     //     counter++;
                     // }
+                    // std::vector<graph::Node> nodes = chainWithTrees.second.front()->Nodes();
+                    for (int j = 0; j < chainWithTrees.second.front()->Nodes().size(); j++)
+                    {
 
-                    // for (int j = 0; j < chainWithTrees.second.front()->Nodes().size(); j++)
-                    // {
-                    //
-                    //     if (&chainWithTrees.second.front()->Nodes()[j] == chainWithTrees.first[i].front())
-                    //     {
-                    //         deletedNodesT1[j] = chainWithTrees.second.front()->Nodes()[j];
-                    //         chainWithTrees.second.front()->Nodes().erase(it);
-                    //         break;
-                    //     }
-                    //     ++it;
-                    // }
+                        if (&chainWithTrees.second.front()->Nodes()[j] == chainWithTrees.first[i].front())
+                        {
+                            deletedNodesT1[j] = chainWithTrees.second.front()->Nodes()[j];
+                            chainWithTrees.second.front()->Nodes().erase(chainWithTrees.second.front()->Nodes().begin()+j-1);
+                            break;
+                        }
+                    }
 
                     //Remove the sibling connection
                     terminal->sibling->sibling = nullptr;
@@ -222,17 +236,28 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                     //     ++it;
                     // }
                     // std::vector<graph::Node>::iterator it;
-                    std::vector<graph::Node> nodes = chainWithTrees.second.front()->Nodes();
-                    int counter = 0;
-                    for (auto it = nodes.begin(); it != nodes.end(); ++it)
+                    // std::vector<graph::Node> nodes = chainWithTrees.second.front()->Nodes();
+                    // int counter = 0;
+                    // for (auto it = nodes.begin(); it != nodes.end(); ++it)
+                    // {
+                    //     if (&nodes[counter] == chainWithTrees.first[i].front())
+                    //     {
+                    //         deletedNodesT1[counter] = nodes[counter];
+                    //         nodes.erase(it);
+                    //         break;
+                    //     }
+                    //     counter++;
+                    // }
+                    // std::vector<graph::Node> nodes = chainWithTrees.second.front()->Nodes();
+                    for (int j = 0; j < chainWithTrees.second.front()->Nodes().size(); j++)
                     {
-                        if (&nodes[counter] == chainWithTrees.first[i].front())
+
+                        if (&chainWithTrees.second.front()->Nodes()[j] == chainWithTrees.first[i].front())
                         {
-                            deletedNodesT1[counter] = nodes[counter];
-                            nodes.erase(it);
+                            deletedNodesT1[j] = chainWithTrees.second.front()->Nodes()[j];
+                            chainWithTrees.second.front()->Nodes().erase(chainWithTrees.second.front()->Nodes().begin()+j-1);
                             break;
                         }
-                        counter++;
                     }
 
                     //Remove the sibling connection
@@ -265,16 +290,27 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                     //     ++it;
                     // }
                     // std::vector<graph::Node>::iterator it;
-                    int counter = 0;
-                    for (auto it = chainWithTrees.second.back()->Nodes().begin(); it != chainWithTrees.second.back()->Nodes().end(); ++it)
+                    // int counter = 0;
+                    // for (auto it = chainWithTrees.second.back()->Nodes().begin(); it != chainWithTrees.second.back()->Nodes().end(); ++it)
+                    // {
+                    //     if (&chainWithTrees.second.back()->Nodes()[counter] == chainWithTrees.first[i].back())
+                    //     {
+                    //         deletedNodesT2[counter] = chainWithTrees.second.back()->Nodes()[counter];
+                    //         chainWithTrees.second.back()->Nodes().erase(it);
+                    //         break;
+                    //     }
+                    //     counter++;
+                    // }
+                    // std::vector<graph::Node> nodes = chainWithTrees.second.back()->Nodes();
+                    for (int j = 0; j < chainWithTrees.second.back()->Nodes().size(); j++)
                     {
-                        if (&chainWithTrees.second.back()->Nodes()[counter] == chainWithTrees.first[i].back())
+
+                        if (&chainWithTrees.second.back()->Nodes()[j] == chainWithTrees.first[i].back())
                         {
-                            deletedNodesT2[counter] = chainWithTrees.second.back()->Nodes()[counter];
-                            chainWithTrees.second.back()->Nodes().erase(it);
+                            deletedNodesT1[j] = chainWithTrees.second.back()->Nodes()[j];
+                            chainWithTrees.second.back()->Nodes().erase(chainWithTrees.second.back()->Nodes().begin()+j-1);
                             break;
                         }
-                        counter++;
                     }
 
                     //Remove the sibling connection
@@ -305,17 +341,29 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                     //     ++it;
                     // }
                     // std::vector<graph::Node>::iterator it;
-                    int counter = 0;
-                    for (auto it = chainWithTrees.second.back()->Nodes().begin(); it != chainWithTrees.second.back()->Nodes().end(); ++it)
+                    // int counter = 0;
+                    // for (auto it = chainWithTrees.second.back()->Nodes().begin(); it != chainWithTrees.second.back()->Nodes().end(); ++it)
+                    // {
+                    //     if (&chainWithTrees.second.back()->Nodes()[counter] == chainWithTrees.first[i].back())
+                    //     {
+                    //         deletedNodesT2[counter] = chainWithTrees.second.back()->Nodes()[counter];
+                    //         chainWithTrees.second.back()->Nodes().erase(it);
+                    //         break;
+                    //     }
+                    //     counter++;
+                    // }
+                    // std::vector<graph::Node> nodes = chainWithTrees.second.back()->Nodes();
+                    for (int j = 0; j < chainWithTrees.second.back()->Nodes().size(); j++)
                     {
-                        if (&chainWithTrees.second.back()->Nodes()[counter] == chainWithTrees.first[i].back())
+
+                        if (&chainWithTrees.second.back()->Nodes()[j] == chainWithTrees.first[i].back())
                         {
-                            deletedNodesT2[counter] = chainWithTrees.second.back()->Nodes()[counter];
-                            chainWithTrees.second.back()->Nodes().erase(it);
+                            deletedNodesT1[j] = chainWithTrees.second.back()->Nodes()[j];
+                            chainWithTrees.second.back()->Nodes().erase(chainWithTrees.second.back()->Nodes().begin()+j-1);
                             break;
                         }
-                        counter++;
                     }
+
 
                     //Remove the sibling connection
                     terminal->sibling->sibling = nullptr;
@@ -347,16 +395,27 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                     //     ++it;
                     // }
                     // std::vector<graph::Node>::iterator it;
-                    int counter = 0;
-                    for (auto it = chainWithTrees.second.front()->Nodes().begin(); it != chainWithTrees.second.front()->Nodes().end(); ++it)
+                    // int counter = 0;
+                    // for (auto it = chainWithTrees.second.front()->Nodes().begin(); it != chainWithTrees.second.front()->Nodes().end(); ++it)
+                    // {
+                    //     if (&chainWithTrees.second.front()->Nodes()[counter] == chainWithTrees.first[i].front())
+                    //     {
+                    //         deletedNodesT1[counter] = chainWithTrees.second.front()->Nodes()[counter];
+                    //         chainWithTrees.second.front()->Nodes().erase(it);
+                    //         break;
+                    //     }
+                    //     counter++;
+                    // }
+                    // std::vector<graph::Node> nodes = chainWithTrees.second.front()->Nodes();
+                    for (int j = 0; j < chainWithTrees.second.front()->Nodes().size(); j++)
                     {
-                        if (&chainWithTrees.second.front()->Nodes()[counter] == chainWithTrees.first[i].front())
+
+                        if (&chainWithTrees.second.front()->Nodes()[j] == chainWithTrees.first[i].front())
                         {
-                            deletedNodesT1[counter] = chainWithTrees.second.front()->Nodes()[counter];
-                            chainWithTrees.second.front()->Nodes().erase(it);
+                            deletedNodesT1[j] = chainWithTrees.second.front()->Nodes()[j];
+                            chainWithTrees.second.front()->Nodes().erase(chainWithTrees.second.front()->Nodes().begin()+j-1);
                             break;
                         }
-                        counter++;
                     }
 
 
@@ -382,16 +441,27 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                     //     ++it;
                     // }
                     // std::vector<graph::Node>::iterator it;
-                    int counter = 0;
-                    for (auto it = chainWithTrees.second.front()->Nodes().begin(); it != chainWithTrees.second.front()->Nodes().end(); ++it)
+                    // int counter = 0;
+                    // for (auto it = chainWithTrees.second.front()->Nodes().begin(); it != chainWithTrees.second.front()->Nodes().end(); ++it)
+                    // {
+                    //     if (&chainWithTrees.second.front()->Nodes()[counter] == chainWithTrees.first[i].front())
+                    //     {
+                    //         deletedNodesT1[counter] = chainWithTrees.second.front()->Nodes()[counter];
+                    //         chainWithTrees.second.front()->Nodes().erase(it);
+                    //         break;
+                    //     }
+                    //     counter++;
+                    // }
+                    // std::vector<graph::Node> nodes = chainWithTrees.second.front()->Nodes();
+                    for (int j = 0; j < chainWithTrees.second.front()->Nodes().size(); j++)
                     {
-                        if (&chainWithTrees.second.front()->Nodes()[counter] == chainWithTrees.first[i].front())
+
+                        if (&chainWithTrees.second.front()->Nodes()[j] == chainWithTrees.first[i].front())
                         {
-                            deletedNodesT1[counter] = chainWithTrees.second.front()->Nodes()[counter];
-                            chainWithTrees.second.front()->Nodes().erase(it);
+                            deletedNodesT1[j] = chainWithTrees.second.front()->Nodes()[j];
+                            chainWithTrees.second.front()->Nodes().erase(chainWithTrees.second.front()->Nodes().begin()+j-1);
                             break;
                         }
-                        counter++;
                     }
 
 
@@ -419,16 +489,27 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                     //     ++it;
                     // }
                     // std::vector<graph::Node>::iterator it;
-                    int counter = 0;
-                    for (auto it = chainWithTrees.second.back()->Nodes().begin(); it != chainWithTrees.second.back()->Nodes().end(); ++it)
+                    // int counter = 0;
+                    // for (auto it = chainWithTrees.second.back()->Nodes().begin(); it != chainWithTrees.second.back()->Nodes().end(); ++it)
+                    // {
+                    //     if (&chainWithTrees.second.back()->Nodes()[counter] == chainWithTrees.first[i].back())
+                    //     {
+                    //         deletedNodesT2[counter] = chainWithTrees.second.back()->Nodes()[counter];
+                    //         chainWithTrees.second.back()->Nodes().erase(it);
+                    //         break;
+                    //     }
+                    //     counter++;
+                    // }
+                    // std::vector<graph::Node> nodes = chainWithTrees.second.front()->Nodes();
+                    for (int j = 0; j < chainWithTrees.second.front()->Nodes().size(); j++)
                     {
-                        if (&chainWithTrees.second.back()->Nodes()[counter] == chainWithTrees.first[i].back())
+
+                        if (&chainWithTrees.second.front()->Nodes()[j] == chainWithTrees.first[i].back())
                         {
-                            deletedNodesT2[counter] = chainWithTrees.second.back()->Nodes()[counter];
-                            chainWithTrees.second.back()->Nodes().erase(it);
+                            deletedNodesT1[j] = chainWithTrees.second.front()->Nodes()[j];
+                            chainWithTrees.second.front()->Nodes().erase(chainWithTrees.second.front()->Nodes().begin()+j-1);
                             break;
                         }
-                        counter++;
                     }
 
                     //Add it as a root node, as it's a single vertex tree
@@ -454,17 +535,29 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                     //     ++it;
                     // }
                     // std::vector<graph::Node>::iterator it;
-                    int counter = 0;
-                    for (auto it = chainWithTrees.second.back()->Nodes().begin(); it != chainWithTrees.second.back()->Nodes().end(); ++it)
+                    // int counter = 0;
+                    // for (auto it = chainWithTrees.second.back()->Nodes().begin(); it != chainWithTrees.second.back()->Nodes().end(); ++it)
+                    // {
+                    //     if (&chainWithTrees.second.back()->Nodes()[counter] == chainWithTrees.first[i].back())
+                    //     {
+                    //         deletedNodesT2[counter] = chainWithTrees.second.back()->Nodes()[counter];
+                    //         chainWithTrees.second.back()->Nodes().erase(it);
+                    //         break;
+                    //     }
+                    //     counter++;
+                    // }
+                    // std::vector<graph::Node> nodes = chainWithTrees.second.back()->Nodes();
+                    for (int j = 0; j < chainWithTrees.second.front()->Nodes().size(); j++)
                     {
-                        if (&chainWithTrees.second.back()->Nodes()[counter] == chainWithTrees.first[i].back())
+
+                        if (&chainWithTrees.second.front()->Nodes()[j] == chainWithTrees.first[i].back())
                         {
-                            deletedNodesT2[counter] = chainWithTrees.second.back()->Nodes()[counter];
-                            chainWithTrees.second.back()->Nodes().erase(it);
+                            deletedNodesT1[j] = chainWithTrees.second.front()->Nodes()[j];
+                            chainWithTrees.second.front()->Nodes().erase(chainWithTrees.second.front()->Nodes().begin()+j-1);
                             break;
                         }
-                        counter++;
                     }
+
                     chainWithTrees.second.back()->Roots().emplace_back(terminal);
                 }
             }
@@ -695,15 +788,18 @@ solver::ChainReductionRule::isApplicable(
                                 && case1T1Sibling->leftChild == nullptr && case1T1Sibling->rightChild == nullptr
                                 && case1T2Sibling->leftChild == nullptr && case1T2Sibling->rightChild == nullptr
 
-                                //and is not attached to root
-                                && std::find(T1->Roots().begin(), T1->Roots().end(), case1T1Parent)
-                                == T1->Roots().end()
-                                && std::find(T2->Roots().begin(), T2->Roots().end(), case1T2Parent)
-                                == T2->Roots().end()
+                                //and the current parent node isn't a root node
+                                && not isNodeInNodeVector(case1T1Parent, T1->Roots())
+                                && not isNodeInNodeVector(case1T2Parent, T2->Roots())
 
-                                //and the current looked at parent isn't a or the root node of the forest
-                                && case1T1Parent != *T1->Roots().end()
-                                && case1T2Parent != *T2->Roots().end()
+                                // && std::find(T1->Roots().begin(), T1->Roots().end(), case1T1Parent)
+                                // == T1->Roots().end()
+                                // && std::find(T2->Roots().begin(), T2->Roots().end(), case1T2Parent)
+                                // == T2->Roots().end()
+                                //
+                                // //and the current looked at parent isn't a or the root node of the forest
+                                // && case1T1Parent != *T1->Roots().end()
+                                // && case1T2Parent != *T2->Roots().end()
                                 )
                                 {
                                     //Push the identified chain element into the chain list
@@ -829,15 +925,15 @@ solver::ChainReductionRule::isApplicable(
                             while (case2check)
                             {
                                 //std::cout << chainT1T2.size() << std::endl;
-                                //Siblings exist
+                                //Siblings and Parent exist
                                 if (case2T1Sibling != nullptr && case2T2Sibling != nullptr
                                 && case2T1Parent != nullptr && case2T2Parent != nullptr
+                                //Sibling (Terminal) is a terminal
                                 && case2T1Sibling->leftChild == nullptr && case2T1Sibling->rightChild == nullptr
                                 && case2T2Sibling->leftChild == nullptr && case2T2Sibling->rightChild == nullptr
-                                && std::find(T1->Roots().begin(), T1->Roots().end(), case2T1Parent)
-                                == T1->Roots().end()
-                                && std::find(T2->Roots().begin(), T2->Roots().end(), case2T2Parent)
-                                == T2->Roots().end()
+                                //Current parent node isnt a root node
+                                && not isNodeInNodeVector(case2T1Parent, T1->Roots())
+                                && not isNodeInNodeVector(case2T2Parent, T2->Roots())
                                 )
                                 {
                                     chainT1T2.push_back({case2T1Parent,case2T2Parent});

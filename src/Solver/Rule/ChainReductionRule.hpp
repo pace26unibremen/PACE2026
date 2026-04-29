@@ -29,6 +29,7 @@ namespace solver
         std::pair<std::unordered_map<unsigned int, graph::Node>,std::unordered_map<unsigned int, graph::Node>>
         chainLabels;
 
+
     public:
         /// \brief Chain Reduction Rule implementation that identifies the first chain out of the two forests given
         /// \param instance The problem instance
@@ -38,6 +39,12 @@ namespace solver
         ChainReductionRule(const std::shared_ptr<graph::Instance>& instance,
         std::pair<std::vector<std::vector<graph::Node*>>,std::vector<std::shared_ptr<graph::Forest>>> chainWithTrees,
         const std::shared_ptr<Context>& context);
+
+        /// \brief Helper Function that checks if a node is contained within a list or not
+        /// \param node The node to be checked for within the list
+        /// \param list The list of nodes which is checked
+        /// \return Boolean of if the node is within the list or not
+        static bool isNodeInNodeVector(const graph::Node* node, const std::vector<graph::Node*>& list);
 
         /// \brief Apply the Chain Reduction rule onto the two Trees
         RuleReturnCode apply() override;
