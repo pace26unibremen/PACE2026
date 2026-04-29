@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cstdint>
+#include <unordered_set>
 
 namespace graph
 {
@@ -69,6 +70,8 @@ struct Node
     /// \returns the smallest label
     [[nodiscard, maybe_unused]]
     unsigned int smallestTerminal() const;
+    
+    std::unordered_set<unsigned int> SubtreeLabels() const;
 
 };
 

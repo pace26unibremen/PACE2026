@@ -71,3 +71,20 @@ unsigned int graph::Node::smallestTerminal() const
     }
     assert(false);
 }
+
+std::unordered_set<unsigned int> graph::Node::SubtreeLabels() const
+{
+    std::unordered_set<unsigned int> result;
+    for (size_t block = 0; block < subtreeTerminals.size(); ++block) {
+        uint64_t value = subtreeTerminals[block];
+
+        while (value != 0) {
+            uint64_t t = value & -value;
+            int bit_index = __builtin_ctzll(value);
+            unsigned int number = block * 64 + bit_index + 1;
+            result.insert(number);
+            value ^= t;
+        }
+    }
+    return result;
+}
