@@ -25,7 +25,7 @@ struct Context
 
     /// \brief The configuration of the branching solver.
     /// This should be set in the constructor of the branching solver.
-    std::shared_ptr<SolverConfiguration> branchingSolverConfiguration = nullptr;
+    std::shared_ptr<SolverConfiguration> solverConfiguration = nullptr;
 
     /// \brief A set of all protected edges (edges that must never be cut).
     /// An edge is identified by the node it points to (the child-node).

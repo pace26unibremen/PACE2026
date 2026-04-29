@@ -1,6 +1,9 @@
 #include "CutBranchRule.hpp"
 
-#include "../BranchingSolverConfiguration.hpp"
+#include "../SolverConfiguration.hpp"
+
+#include <algorithm>
+#include <ranges>
 
 solver::CutBranchRule::CutBranchRule(const std::shared_ptr<graph::Instance>& instance,
                                      const std::shared_ptr<Context>& context) :
@@ -31,7 +34,7 @@ solver::CutBranchRule::isApplicable(const std::shared_ptr<graph::Instance>& inst
                                     const std::shared_ptr<Context>& context)
 {
 
-    if (context->branchingSolverConfiguration->boundedDephtSearch)
+    if (context->solverConfiguration->boundedDephtSearch)
     {
         for (const auto& f : *instance)
         {
@@ -45,7 +48,18 @@ solver::CutBranchRule::isApplicable(const std::shared_ptr<graph::Instance>& inst
     {
         for (const auto& f : *instance)
         {
-            if (f->Roots().size() >=  context->bestSolutionSize)
+            auto numberClusterSingleVertexTrees = [&] {
+                std::unordered_set<graph::Node*> unique;
+                for (graph::Node* n : context->clusterLabel
+                    | std::views::transform([&f](unsigned int l) {return f->LabelToTerminal()[l];})
+                    | std::views::filter([](graph::Node* n) { return n->parent == nullptr; }))
+                {
+                    unique.insert(n);
+                }
+                return unique.size();
+            }();
+
+            if (f->Roots().size() - numberClusterSingleVertexTrees >=  context->bestSolutionSize)
             {
                 return std::make_shared<solver::CutBranchRule>(instance, context);
             }

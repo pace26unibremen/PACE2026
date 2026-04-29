@@ -1,4 +1,5 @@
 #include "Solver/BranchingSolver.hpp"
+#include "Solver/ReductionSolver.hpp"
 #include <fstream>
 #include <iostream>
 
@@ -6,14 +7,25 @@ void runOnStream(std::istream& inStream, std::ostream& outStream) {
     // Start Timer
     auto startTime = std::clock();
     auto instance = graph::ReadInstance(inStream);
-    auto solver = solver::BranchingSolver(instance);
-    auto solved = solver.solve();
-    solver.unapplyReductions();
-    auto endTime = std::clock();
-    auto time_delta_ms = ((double) (endTime - startTime)) / ((double) CLOCKS_PER_SEC / 1000.0);
 
-    outStream << "# t " << time_delta_ms << "\n# s " << solver.Instance()->at(0)->Roots().size() << "\n";
-    solver.Instance()->at(0)->write(outStream);
+    auto config = std::make_shared<solver::SolverConfiguration>();
+    config->subtreeReduction = true;
+    config->clusterReduction = true;
+    config->boundedDephtSearch = true;
+
+    auto rs = solver::ReductionSolver(instance, config);
+    auto bs = solver::BranchingSolver(instance, config);
+
+    rs.solve();
+    bs.solve();
+    bs.unapplyReductions();
+    rs.unapplyReductions();
+
+    auto endTime = std::clock();
+    auto timeDelta = (double) (endTime - startTime) / (double) CLOCKS_PER_SEC;
+
+    outStream << "# t " << timeDelta << "\n# s " << instance->at(0)->Roots().size() << "\n";
+    instance->at(0)->write(outStream);
 }
 
 int main(int argc, char* argv[]) {
