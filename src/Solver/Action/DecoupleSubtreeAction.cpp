@@ -126,10 +126,15 @@ void solver::DecoupleSubtreeAction::undoAction()
         // swap the Node objects
         std::swap(*decoupledSubtreePartRoot, decoupledSubtreeRoot);
         // fix pointer of children
-        decoupledSubtreePartRoot->leftChild->parent = decoupledSubtreePartRoot;
-        decoupledSubtreePartRoot->rightChild->parent = decoupledSubtreePartRoot;
-        decoupledSubtreeRoot.leftChild->parent = &decoupledSubtreeRoot;
-        decoupledSubtreeRoot.rightChild->parent = &decoupledSubtreeRoot;
+
+        if (decoupledSubtreePartRoot->leftChild)
+            decoupledSubtreePartRoot->leftChild->parent = decoupledSubtreePartRoot;
+        if (decoupledSubtreePartRoot->rightChild)
+            decoupledSubtreePartRoot->rightChild->parent = decoupledSubtreePartRoot;
+        if (decoupledSubtreeRoot.leftChild)
+            decoupledSubtreeRoot.leftChild->parent = &decoupledSubtreeRoot;
+        if (decoupledSubtreeRoot.rightChild)
+            decoupledSubtreeRoot.rightChild->parent = &decoupledSubtreeRoot;
 
         // fix order in root vector
         std::swap(*decoupledSubtreeIt, *decoupledSubtreePartIt);
@@ -170,6 +175,26 @@ void solver::DecoupleSubtreeAction::undoAction()
 
     forest->LabelToTerminal().erase(newLabel);
     forest->TerminalToLabel().erase(decouplingPoint);
+
+    // if the `decoupledSubtreePart` is a single-vertex tree, we need to maintain the maps
+    if (decoupledSubtreeIt != forest->Roots().end() and forest->TerminalToLabel().contains(decoupledSubtreePartRoot))
+    {
+        forest->TerminalToLabel()[decouplingPoint] = forest->TerminalToLabel()[decoupledSubtreePartRoot];
+        forest->TerminalToLabel().erase(decoupledSubtreePartRoot);
+
+        // it might be necessary to update all labels that maps to `decoupledSubtreePartRoot`
+        forest->LabelToTerminal()[forest->TerminalToLabel()[decouplingPoint]] = decouplingPoint;
+    }
+
+    // if the `decoupledSubtreePart` is a single-vertex tree, we need to maintain the maps
+    if (decoupledSubtreeIt != forest->Roots().end() and forest->TerminalToLabel().contains(*decoupledSubtreeIt))
+    {
+        forest->TerminalToLabel()[decouplingPoint] = forest->TerminalToLabel()[*decoupledSubtreeIt];
+        forest->TerminalToLabel().erase(*decoupledSubtreeIt);
+
+        // it might be necessary to update all labels that maps to `decoupledSubtreePartRoot`
+        forest->LabelToTerminal()[forest->TerminalToLabel()[decouplingPoint]] = decouplingPoint;
+    }
 
 
     // undo roots
