@@ -3,7 +3,7 @@ add_subdirectory(Cluster)
 add_subdirectory(Solver)
 
 add_executable(main main.cpp)
-target_link_libraries(main PRIVATE Solver Graph Cluster)
+target_link_libraries(main PRIVATE Solver Cluster Graph)
 target_compile_definitions(main PRIVATE RES_DIR="${CMAKE_SOURCE_DIR}/res/")
 
 add_executable(startSolver startSolver.cpp)
