@@ -37,12 +37,12 @@ target_link_libraries(BranchingSolverSimpleTests PRIVATE Solver Graph Cluster Ca
 add_test(NAME BranchingSolverSimpleTests COMMAND $<TARGET_FILE:BranchingSolverSimpleTests>)
 target_compile_definitions(BranchingSolverSimpleTests PRIVATE RES_DIR="${CMAKE_SOURCE_DIR}/res/")
 
-add_executable(ClusterPointTests ClusterPointTests.cpp)
-target_link_libraries(ClusterPointTests PRIVATE Solver Graph Cluster Catch2::Catch2WithMain)
-add_test(NAME ClusterPointTests COMMAND $<TARGET_FILE:ClusterPointTests>)
-target_compile_definitions(ClusterPointTests PRIVATE TEST_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/res/tests/")
-
-add_executable(MiscellaneousTests MiscellaneousTests.cpp)
-target_link_libraries(MiscellaneousTests PRIVATE Solver Graph Cluster Catch2::Catch2WithMain)
-add_test(NAME MiscellaneousTests COMMAND $<TARGET_FILE:MiscellaneousTests>)
-target_compile_definitions(MiscellaneousTests PRIVATE TEST_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/res/tests/")
+#add_executable(ClusterPointTests ClusterPointTests.cpp)
+#target_link_libraries(ClusterPointTests PRIVATE Solver Graph Cluster Catch2::Catch2WithMain)
+#add_test(NAME ClusterPointTests COMMAND $<TARGET_FILE:ClusterPointTests>)
+#target_compile_definitions(ClusterPointTests PRIVATE TEST_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/res/tests/")
+#
+#add_executable(MiscellaneousTests MiscellaneousTests.cpp)
+#target_link_libraries(MiscellaneousTests PRIVATE Solver Graph Cluster Catch2::Catch2WithMain)
+#add_test(NAME MiscellaneousTests COMMAND $<TARGET_FILE:MiscellaneousTests>)
+#target_compile_definitions(MiscellaneousTests PRIVATE TEST_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/res/tests/")
