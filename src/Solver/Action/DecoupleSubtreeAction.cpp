@@ -169,7 +169,7 @@ void solver::DecoupleSubtreeAction::undoAction()
     bool decoupledSubtreeIsPartBigger = parentTreeRoot->hasSmallestTerminal(decoupledSubtreePartRoot);
 
     // update subtreeTerminals vector
-    std::vector<u_int64_t> labels = decoupledSubtreePartRoot->subtreeTerminals;
+    std::vector<uint64_t> labels = decoupledSubtreePartRoot->subtreeTerminals;
     labels[(newLabel - 1) / 64] ^= (uint64_t) 1 << (newLabel -1) % 64;
     propagateXORLabelUp(labels, decouplingPoint);
 
