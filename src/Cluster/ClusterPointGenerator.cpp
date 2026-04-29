@@ -18,9 +18,9 @@ void ClusterPointGenerator::generateClusterPoints(graph::Node* node) {
     if (node->leftChild == nullptr or node->rightChild == nullptr) return;
     // We're very strict about potential cluster points having the same depth within the trees.
     // Actually, doing this may save a lot of comparisons later.
-    int nodeHeight = checkHeightOfNode(node);
-    for (const auto& twin : twinRelation.nodeToTwins[node])
-        if (nodeHeight != checkHeightOfNode(twin)) return;
+    // int nodeHeight = checkHeightOfNode(node);
+    // for (const auto& twin : twinRelation.nodeToTwins[node])
+    //     if (nodeHeight != checkHeightOfNode(twin)) return;
     // Heavy Invariant Checks (Same Leaf Set for class / True Twin Class)
     if (not leafEquivalent(node)) return; // We may want to remove this later!
     if (not trueEquivalenceClass(node)) return;
