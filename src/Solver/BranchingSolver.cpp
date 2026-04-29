@@ -1,15 +1,12 @@
 #include "BranchingSolver.hpp"
 
-#include "Rule/ClusterReductionRule.hpp"
-#include "Rule/SubtreeReductionRule.hpp"
-
 #include <algorithm>
 #include <ranges>
 
 solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>& instance)
     : AbstractSolver(instance)
 {
-    this->context->branchingSolverConfiguration = this->configuration;
+    this->context->solverConfiguration = this->configuration;
 }
 
 solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>& instance,
@@ -17,7 +14,7 @@ solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>&
     AbstractSolver(instance),
     configuration(configuration)
 {
-    this->context->branchingSolverConfiguration = this->configuration;
+    this->context->solverConfiguration = this->configuration;
 }
 
 bool solver::BranchingSolver::rollBackBranch()
@@ -55,17 +52,17 @@ void solver::BranchingSolver::checkSolutionCandidate()
         std::unordered_set<graph::Node*> unique;
         for (graph::Node* n : context->clusterLabel
             | std::views::transform([&](unsigned int l) {return instance->at(0)->LabelToTerminal()[l];})
-            | std::views::filter([](graph::Node* n) { return n->parent == nullptr; }))
+            | std::views::filter([](const graph::Node* t) { return t->parent == nullptr; }))
         {
             unique.insert(n);
         }
         return unique.size();
     }();
-    unsigned int candidateSolutionSice = instance->at(0)->Roots().size() - numberClusterSingleVertexTrees;
+    unsigned int candidateSolutionSize = instance->at(0)->Roots().size() - numberClusterSingleVertexTrees;
 
-    if (context->bestSolutionSize > candidateSolutionSice)
+    if (context->bestSolutionSize > candidateSolutionSize)
     {
-        context->maxSolutionSize = candidateSolutionSice;
+        context->maxSolutionSize = candidateSolutionSize;
         auto branchCloneView = appliedRules | std::views::transform(
             [](const std::shared_ptr<AbstractRule>& r) { return r->clone(); });
         solutionBranch = {branchCloneView.begin(), branchCloneView.end()};
@@ -157,6 +154,7 @@ bool solver::BranchingSolver::solve()
                 // apply solution branch
                 for (const auto& r : solutionBranch)
                 {
+                    appliedRules.push_back(r);
                     r->apply();
                 }
                 if (configuration->debPlugin) configuration->debPlugin->onEnd();
