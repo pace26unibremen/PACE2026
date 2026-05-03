@@ -40,11 +40,17 @@ namespace solver
         std::pair<std::vector<std::vector<graph::Node*>>,std::vector<std::shared_ptr<graph::Forest>>> chainWithTrees,
         const std::shared_ptr<Context>& context);
 
-        /// \brief Helper Function that checks if a node is contained within a list or not
+        /// \brief Helper function that checks if a node is contained within a list or not
         /// \param node The node to be checked for within the list
         /// \param list The list of nodes which is checked
         /// \return Boolean of if the node is within the list or not
         static bool isNodeInNodeVector(const graph::Node* node, const std::vector<graph::Node*>& list);
+
+        /// \brief Helper function that deletes the connections between the parameter node with the terminal child as
+        /// well as removing them from the tree they're in. Copies the node beforehand into a constructor list.
+        /// \param node The Node to be edited
+        void removeConnectionOfTerminalNode(graph::Node* node, std::shared_ptr<graph::Forest>& forest);
+        void storeNode(const graph::Node* node, const std::shared_ptr<graph::Forest>& forest);
 
         /// \brief Apply the Chain Reduction rule onto the two Trees
         RuleReturnCode apply() override;
