@@ -23,12 +23,16 @@ solver::RuleReturnCode solver::ClusterReductionRule::apply()
 
     for (const auto& _cluster : pointsAndForests_PerCluster)
     {
-        maxLabel++;
         for (const auto& [f,n] : _cluster)
         {
-            changes.emplace(n,maxLabel,f);
+            changes.emplace(f,n,maxLabel+1,maxLabel+2);
             changes.top().doAction();
         }
+
+        // TODO should be removed in the unapply
+        context->clusterLabel.insert(maxLabel+1);
+
+        maxLabel += 2;
     }
 
     return RuleReturnCode::Continue;
