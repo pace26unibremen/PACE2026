@@ -53,7 +53,7 @@ void solver::DecoupleSubtreeAction::doAction()
 
     decoupledSubtreeVirtualSibling.parent = &decoupledSubtreeVirtualRoot;
     decoupledSubtreeVirtualSibling.sibling = &decoupledSubtreeRoot;
-    decoupledSubtreeVirtualSibling.subtreeTerminals = std::vector<uint64_t>(decoupledSubtreeRoot.subtreeTerminals);
+    decoupledSubtreeVirtualSibling.subtreeTerminals = std::vector<uint64_t>(decoupledSubtreeRoot.subtreeTerminals.size());
     decoupledSubtreeVirtualSibling.subtreeTerminals[(newLabelSubtree-1) / 64] = (uint64_t) 1 << (newLabelSubtree - 1) % 64;
 
     decoupledSubtreeVirtualRoot.leftChild = &decoupledSubtreeRoot;

@@ -21,6 +21,19 @@ solver::RuleReturnCode solver::ClusterReductionRule::apply()
 
     auto maxLabel = std::ranges::max(instance->at(0)->LabelToTerminal() | std::views::keys);
 
+    // because we introduce new labels, we may get out of range in the subtreeTerminals field of graph::Node.
+    unsigned int numberOfNewLabels = 2 * pointsAndForests_PerCluster.size();
+    if (numberOfNewLabels + (maxLabel % 64) > 64)
+    {
+        for (const auto& f : *instance)
+        {
+            for (auto n : f->Nodes())
+            {
+                n.subtreeTerminals.resize(((maxLabel + numberOfNewLabels + 63) / 64));
+            }
+        }
+    }
+
     for (const auto& _cluster : pointsAndForests_PerCluster)
     {
         for (const auto& [f,n] : _cluster)
