@@ -272,10 +272,6 @@ void solver::DecoupleSubtreeAction::undoWithoutSubtreeRoot()
 
     // swap decouplingPoint and decouplingPoint
     auto decoupledSubtreeRootIt = std::find(forest->Roots().begin(), forest->Roots().end(), &decoupledSubtreeRoot);
-    if (decoupledSubtreeRootIt != forest->Roots().end())
-    {
-        int bob = 17;
-    }
     std::swap(*decouplingPoint, decoupledSubtreeRoot);
     if (decoupledSubtreeRootIt != forest->Roots().end())
     {
