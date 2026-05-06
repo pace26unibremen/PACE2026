@@ -354,7 +354,7 @@ build_stride:
         STRIDE_SOLVER="./startSolver"
         STRIDE_TIMEOUT=$STRIDE_TIMEOUT
         STRIDE_GRACE=$STRIDE_GRACE
-        STRIDE_DOWNLOADS_PATH="$HPC_SHARED_DIR/.stride-downloads"
+        STRIDE_DOWNLOADS_PATH="../../shared/.stride-downloads"
         STRIDE_INSTANCE_ORDER="nodes-trees-asc"
         STRIDE_RUN_NAME="$STRIDE_RUN_NAME"
         STRIDE_OPTIMAL=true
