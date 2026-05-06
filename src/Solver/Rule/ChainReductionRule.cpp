@@ -247,49 +247,49 @@ void solver::ChainReductionRule::unapply()
     }
     isApplied = false;
 
-    int counter = 0;
-    for (auto node : deletedNodesT1)
-    {
-
-            if (node.parent != nullptr) chainWithTrees.second.front()->Nodes()[counter].parent =
-                node.parent;
-
-            if (node.leftChild != nullptr) chainWithTrees.second.front()->Nodes()[counter].leftChild =
-                node.leftChild;
-
-            if (node.rightChild != nullptr) chainWithTrees.second.front()->Nodes()[counter].rightChild =
-                node.rightChild;
-
-            if (node.sibling != nullptr) chainWithTrees.second.front()->Nodes()[counter].sibling =
-                node.sibling;
-
-            if (not node.subtreeTerminals.empty())
-                chainWithTrees.second.front()->Nodes()[counter].subtreeTerminals = node.subtreeTerminals;
-            counter++;
-
-            counter++;
-    }
-
-    counter = 0;
-    for (auto node : deletedNodesT2)
-    {
-
-            if (node.parent != nullptr) chainWithTrees.second.back()->Nodes()[counter].parent =
-                node.parent;
-
-            if (node.leftChild != nullptr) chainWithTrees.second.back()->Nodes()[counter].leftChild =
-                node.leftChild;
-
-            if (node.rightChild != nullptr) chainWithTrees.second.back()->Nodes()[counter].rightChild =
-                node.rightChild;
-
-            if (node.sibling != nullptr) chainWithTrees.second.back()->Nodes()[counter].sibling =
-                node.sibling;
-
-            if (not node.subtreeTerminals.empty())
-                chainWithTrees.second.back()->Nodes()[counter].subtreeTerminals = node.subtreeTerminals;
-        counter++;
-    }
+    // int counter = 0;
+    // for (auto node : deletedNodesT1)
+    // {
+    //
+    //         if (node.parent != nullptr) chainWithTrees.second.front()->Nodes()[counter].parent =
+    //             node.parent;
+    //
+    //         if (node.leftChild != nullptr) chainWithTrees.second.front()->Nodes()[counter].leftChild =
+    //             node.leftChild;
+    //
+    //         if (node.rightChild != nullptr) chainWithTrees.second.front()->Nodes()[counter].rightChild =
+    //             node.rightChild;
+    //
+    //         if (node.sibling != nullptr) chainWithTrees.second.front()->Nodes()[counter].sibling =
+    //             node.sibling;
+    //
+    //         if (not node.subtreeTerminals.empty())
+    //             chainWithTrees.second.front()->Nodes()[counter].subtreeTerminals = node.subtreeTerminals;
+    //         counter++;
+    //
+    //         counter++;
+    // }
+    //
+    // counter = 0;
+    // for (auto node : deletedNodesT2)
+    // {
+    //
+    //         if (node.parent != nullptr) chainWithTrees.second.back()->Nodes()[counter].parent =
+    //             node.parent;
+    //
+    //         if (node.leftChild != nullptr) chainWithTrees.second.back()->Nodes()[counter].leftChild =
+    //             node.leftChild;
+    //
+    //         if (node.rightChild != nullptr) chainWithTrees.second.back()->Nodes()[counter].rightChild =
+    //             node.rightChild;
+    //
+    //         if (node.sibling != nullptr) chainWithTrees.second.back()->Nodes()[counter].sibling =
+    //             node.sibling;
+    //
+    //         if (not node.subtreeTerminals.empty())
+    //             chainWithTrees.second.back()->Nodes()[counter].subtreeTerminals = node.subtreeTerminals;
+    //     counter++;
+    // }
 }
 
 std::shared_ptr<solver::AbstractRule>
