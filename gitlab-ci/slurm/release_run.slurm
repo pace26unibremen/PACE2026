@@ -1,10 +1,11 @@
 #!/bin/bash
 #SBATCH --job-name=pace_stride_release_run
-#SBATCH --time=12:00:00
+#SBATCH --time=24:00:00
 #SBATCH --mem=32G
 #SBATCH --output=run_stride_%j.out
 #SBATCH --error=run_stride_%j.err
 #SBATCH --partition=CPU
+#SBATCH --cpus-per-task=18
 
 set -e
 
