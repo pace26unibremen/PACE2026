@@ -425,8 +425,7 @@ build_stride:
       || echo "Dashboard notification failed (non-fatal)"
 
   artifacts:
-    when:
-      - always
+    when: always
     paths:
       - stride-logs/
     expire_in: 1 Month
