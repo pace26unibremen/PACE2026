@@ -40,6 +40,9 @@ solver::RuleReturnCode solver::ClusterReductionRule::apply()
         {
             changes.emplace(f,n,maxLabel+1,maxLabel+2);
             changes.top().doAction();
+
+            context->protectedEdges.emplace(f->LabelToTerminal()[maxLabel+2]);
+            context->protectedEdges.emplace(f->LabelToTerminal()[maxLabel+2]->sibling);
         }
 
         // TODO should be removed in the unapply
