@@ -139,6 +139,12 @@ while true; do
               fi
           fi
         fi
+        # Add cpu count and memory usage if available
+        CPU=$(sacct -j "$JOB_ID" --format=AllocCPUS --noheader 2>/dev/null | head -n1 | tr -d ' \n')
+        MEM=$(sacct -j "$JOB_ID" --format=AllocTRES%50 --noheader 2>/dev/null | head -n1 | grep -oP 'mem=\K[^,]+')
+        if [ -n "$CPU" ] && [ -n "$MEM" ]; then
+          OUTPUT="${OUTPUT} | Allocated Resources: ${CPU} CPUs, ${MEM} Memory"
+        fi
       else
         # Files don't exist yet - stride is still initializing
         OUTPUT="$OUTPUT | Waiting for output files..."
