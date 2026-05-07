@@ -27,9 +27,9 @@ solver::RuleReturnCode solver::ClusterReductionRule::apply()
     {
         for (const auto& f : *instance)
         {
-            for (auto n : f->Nodes())
+            for (auto& n : f->Nodes())
             {
-                n.subtreeTerminals.resize(((maxLabel + numberOfNewLabels + 63) / 64));
+                n.subtreeTerminals.resize((maxLabel + numberOfNewLabels + 63) / 64);
             }
         }
     }
