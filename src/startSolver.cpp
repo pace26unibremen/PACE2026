@@ -11,7 +11,7 @@ void runOnStream(std::istream& inStream, std::ostream& outStream) {
     auto config = std::make_shared<solver::SolverConfiguration>();
     config->subtreeReduction = true;
     config->clusterReduction = true;
-    config->boundedDephtSearch = true;
+    config->boundedDephtSearch = false;
 
     auto rs = solver::ReductionSolver(instance, config);
     auto bs = solver::BranchingSolver(instance, config);
