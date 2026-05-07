@@ -390,16 +390,39 @@ build_stride:
     # Copy error logs if they exist; ignore if they don't (e.g. if the job succeeded without errors)
     - rsync -avq --relative --ignore-missing-args "hpc:$JOB_DIR/stride-logs/./*/solvererror" stride-logs/
 
-    # 5) Merge logs
+    # 5) Resolve run folder from local rsync output
+    - |
+      RUN_FOLDER=$(ls -1 stride-logs/ | head -n1)
+      echo "Resolved run folder: $RUN_FOLDER"
+
+    # 6) Merge logs
     - ssh hpc "cp -a ~/$HPC_JOB_DIR/stride-logs/. ~/$HPC_SHARED_DIR/stride-logs/"
     # Move slurm logs (named <jobname>_<slurm_job_id>.out/err via %x_%j)
     - ssh hpc "mv ~/$HPC_JOB_DIR/run_stride_* ~/$HPC_SHARED_DIR/slurm-logs/ 2>/dev/null || true"
 
-    # 6) Remove staging directory
+    # 7) Remove staging directory
     - ssh hpc "rm -rf pace-bench/jobs/$CI_JOB_ID"
 
-    # 7) Check for errors
+    # 8) Check for errors
     - bash gitlab-ci/bash/check_errors.sh stride-logs/
+
+    # 9) Notify dashboard (best effort, don't fail the job if this fails)
+    - |
+      curl -sf -X POST "$DASHBOARD_WEBHOOK_URL/api/webhook/notify" \
+        -H "X-Webhook-Token: $DASHBOARD_WEBHOOK_SECRET" \
+        -H "Content-Type: application/json" \
+        --data "$(jq -cn \
+          --arg run_name         "$RUN_FOLDER" \
+          --arg commit_sha       "$CI_COMMIT_SHORT_SHA" \
+          --arg branch           "$CI_COMMIT_BRANCH" \
+          --arg commit_message   "$CI_COMMIT_MESSAGE" \
+          --arg commit_author    "$GITLAB_USER_NAME" \
+          --arg commit_timestamp "$CI_COMMIT_TIMESTAMP" \
+          --arg pipeline_url     "$CI_PIPELINE_URL" \
+          '{run_name:$run_name,commit_sha:$commit_sha,branch:$branch,
+            commit_message:$commit_message,commit_author:$commit_author,
+            commit_timestamp:$commit_timestamp,pipeline_url:$pipeline_url}')" \
+      || echo "Dashboard notification failed (non-fatal)"
 
   artifacts:
     when:
