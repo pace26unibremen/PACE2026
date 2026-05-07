@@ -62,7 +62,7 @@ void solver::BranchingSolver::checkSolutionCandidate()
 
     if (context->bestSolutionSize > candidateSolutionSize)
     {
-        context->maxSolutionSize = candidateSolutionSize;
+        context->bestSolutionSize = candidateSolutionSize;
         auto branchCloneView = appliedRules | std::views::transform(
             [](const std::shared_ptr<AbstractRule>& r) { return r->clone(); });
         solutionBranch = {branchCloneView.begin(), branchCloneView.end()};
