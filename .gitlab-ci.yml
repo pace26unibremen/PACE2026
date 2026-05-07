@@ -402,6 +402,8 @@ build_stride:
     - bash gitlab-ci/bash/check_errors.sh stride-logs/
 
   artifacts:
+    when:
+      - always
     paths:
       - stride-logs/
     expire_in: 1 Month
