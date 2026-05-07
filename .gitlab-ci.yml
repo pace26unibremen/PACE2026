@@ -317,7 +317,7 @@ build_stride:
     STRIDE_RUN_NAME: "${CI_COMMIT_REF_NAME}_${CI_COMMIT_SHORT_SHA}${RUN_SUFFIX}"
   before_script:
     - echo "Setting up SSH for HPC access..."
-    - apt-get update && apt-get install -y openssh-client rsync
+    - apt-get update && apt-get install -y openssh-client rsync curl jq
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
     - cp "$SSH_PRIVATE_KEY" ~/.ssh/id_ed25519
     - chmod 600 ~/.ssh/id_ed25519
@@ -392,7 +392,7 @@ build_stride:
 
     # 5) Resolve run folder from local rsync output
     - |
-      RUN_FOLDER=$(ls -1 stride-logs/ | head -n1)
+      RUN_FOLDER=$(readlink -f stride-logs/latest | xargs basename)
       echo "Resolved run folder: $RUN_FOLDER"
 
     # 6) Merge logs
