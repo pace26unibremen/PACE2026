@@ -467,7 +467,7 @@ run_full_benchmark:
 
 run_exact-track_benchmark:
   variables:
-    INSTANCES_LST: "pace26_exact_pub.lst"
+    INSTANCES_LST: "pace26_exact_pub_v2.lst"
     SLURM_SCRIPT: "release_run.slurm"
     STRIDE_TIMEOUT: 1800
     STRIDE_GRACE: 10
