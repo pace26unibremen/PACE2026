@@ -392,7 +392,7 @@ build_stride:
 
     # 5) Resolve run folder from local rsync output
     - |
-      RUN_FOLDER=$(readlink -f stride-logs/latest | xargs basename)
+      RUN_FOLDER=$(ls -1d stride-logs/run_* 2>/dev/null | sort | tail -n1 | xargs basename)
       echo "Resolved run folder: $RUN_FOLDER"
 
     # 6) Merge logs
