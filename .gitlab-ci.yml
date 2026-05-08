@@ -408,7 +408,7 @@ build_stride:
 
     # 9) Notify dashboard (best effort, don't fail the job if this fails)
     - |
-      curl -sf -X POST "$DASHBOARD_WEBHOOK_URL/api/webhook/notify" \
+      curl -X POST "$DASHBOARD_WEBHOOK_URL/api/webhook/notify" \
         -H "X-Webhook-Token: $DASHBOARD_WEBHOOK_SECRET" \
         -H "Content-Type: application/json" \
         --data "$(jq -cn \
@@ -422,7 +422,6 @@ build_stride:
           '{run_name:$run_name,commit_sha:$commit_sha,branch:$branch,
             commit_message:$commit_message,commit_author:$commit_author,
             commit_timestamp:$commit_timestamp,pipeline_url:$pipeline_url}')" \
-      || echo "Dashboard notification failed (non-fatal)"
 
   artifacts:
     when: always
