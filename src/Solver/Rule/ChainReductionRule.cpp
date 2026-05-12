@@ -28,13 +28,13 @@ solver::ChainReductionRule::ChainReductionRule(
 bool solver::ChainReductionRule::isNodeInNodeVector(const graph::Node* node, const std::vector<graph::Node*>& list)
 {
     bool check = false;
-    for (const auto current : list)
+    for(int i = 0; i < list.size(); i++)
     {
-        if (node == current)
-        {
-            check = true;
-            break;
-        }
+       if (node == list[i])
+       {
+           check = true;
+           break;
+       }
     }
     return check;
 }
@@ -231,26 +231,25 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
     //stored due to being irrelevant
     if (chainWithTrees.second.size() == 2 && chainWithTrees.first.size() >= 2)
     {
+        //Store all node connections by their index.
+        for (int index = 0; index < chainWithTrees.second.front()->Nodes().capacity(); index++)
+        {
+            storeNodeIndices(&chainWithTrees.second.front()->Nodes()[index], chainWithTrees.second.front());
+
+        }
+        for (int index = 0; index < chainWithTrees.second.back()->Nodes().capacity(); index++)
+        {
+            storeNodeIndices(&chainWithTrees.second.back()->Nodes()[index], chainWithTrees.second.back());
+        }
         // Acquire the notes required
         // Fetch x3
         graph::Node* bottomT1 = chainWithTrees.first[0].front();
         graph::Node* bottomT2 = chainWithTrees.first[0].back();
 
-        storeNodeIndices(bottomT1,chainWithTrees.second.front());
-        storeNodeIndices(bottomT2, chainWithTrees.second.back());
-
         //Fetch xn's parent out of tree.
         graph::Node* topChainT1Parent = chainWithTrees.first[chainWithTrees.first.size()-1].front()->parent;
         graph::Node* topChainT2Parent = chainWithTrees.first[chainWithTrees.first.size()-1].back()->parent;
 
-        storeNodeIndices(topChainT1Parent, chainWithTrees.second.front());
-        storeNodeIndices(topChainT2Parent,chainWithTrees.second.back());
-
-        for (auto element : chainWithTrees.first)
-        {
-            storeNodeIndices(element.front(), chainWithTrees.second.front());
-            storeNodeIndices(element.back(), chainWithTrees.second.back());
-        }
         //Address the now seperated chain in T1 and T2 through the removal of the parent nodes of the terminals as well
         //as setting the terminals to be single tree vertices.
 
@@ -301,71 +300,66 @@ void solver::ChainReductionRule::unapply()
 {
     std::vector<graph::Node>& nodesT1 = chainWithTrees.second.front()->Nodes();
     std::vector<graph::Node>& nodesT2 = chainWithTrees.second.back()->Nodes();
+
     if (not this->isApplied)
     {
         throw std::invalid_argument("ChainReductionRule : unapply : rule is not applied");
     }
     isApplied = false;
 
-    for (auto entry: deletedNodesT1Indices)
+    for (int index = 0; index < deletedNodesT1Indices.capacity(); index++)
     {
-        int counter = 0;
-        if (entry.empty() == false)
+        if (deletedNodesT1Indices[index].empty() == false)
         {
             //parent
-            if (entry[0] != -1)
+            if (deletedNodesT1Indices[index][0] != -1)
             {
-                nodesT1[counter].parent = &nodesT1.at(entry[0]);
+                nodesT1[index].parent = &nodesT1.at(deletedNodesT1Indices[index][0]);
             }
             //sibling
-            if (entry[1] != -1)
+            if (deletedNodesT1Indices[index][1] != -1)
             {
-                nodesT1[counter].sibling = &nodesT1.at(entry[1]);
+                nodesT1[index].sibling = &nodesT1.at(deletedNodesT1Indices[index][1]);
             }
             //left
-            if (entry[2] != -1)
+            if (deletedNodesT1Indices[index][2] != -1)
             {
-                nodesT1[counter].leftChild = &nodesT1.at(entry[2]);
+                nodesT1[index].leftChild = &nodesT1.at(deletedNodesT1Indices[index][2]);
             }
             //right
-            if (entry[3] != -1)
+            if (deletedNodesT1Indices[index][3] != -1)
             {
-                nodesT1[counter].rightChild = &nodesT1.at(entry[3]);
+                nodesT1[index].rightChild = &nodesT1.at(deletedNodesT1Indices[index][3]);
             }
         }
-        counter++;
     }
 
-    for (auto entry: deletedNodesT2Indices)
+    for (int index = 0; index < deletedNodesT2Indices.capacity(); index++)
     {
-        int counter = 0;
-        if (entry.empty() == false)
+        if (deletedNodesT2Indices[index].empty() == false)
         {
             //parent
-            if (entry[0] != -1)
+            if (deletedNodesT2Indices[index][0] != -1)
             {
-                nodesT2[counter].parent = &nodesT2.at(entry[0]);
+                nodesT2[index].parent = &nodesT2.at(deletedNodesT2Indices[index][0]);
             }
             //sibling
-            if (entry[1] != -1)
+            if (deletedNodesT2Indices[index][1] != -1)
             {
-                nodesT2[counter].sibling = &nodesT2.at(entry[1]);
+                nodesT2[index].sibling = &nodesT2.at(deletedNodesT2Indices[index][1]);
             }
             //left
-            if (entry[2] != -1)
+            if (deletedNodesT2Indices[index][2] != -1)
             {
-                nodesT2[counter].leftChild = &nodesT2.at(entry[2]);
+                nodesT2[index].leftChild = &nodesT2.at(deletedNodesT2Indices[index][2]);
             }
             //right
-            if (entry[3] != -1)
+            if (deletedNodesT2Indices[index][3] != -1)
             {
-                nodesT2[counter].rightChild = &nodesT2.at(entry[3]);
+                nodesT2[index].rightChild = &nodesT2.at(deletedNodesT2Indices[index][3]);
             }
         }
-        counter++;
     }
-
-
 }
 
 std::shared_ptr<solver::AbstractRule>
@@ -432,7 +426,8 @@ solver::ChainReductionRule::isApplicable(
                         && T2->TerminalToLabel().contains(terminalT2.first->parent->leftChild)
                         && T2->TerminalToLabel().contains(terminalT2.first->parent->rightChild)
 
-                        && terminalT1.first->parent->parent != nullptr && terminalT2.first->parent->parent != nullptr
+                        && terminalT1.first->parent->parent != nullptr
+                        && terminalT2.first->parent->parent != nullptr
 
                         && (terminalT1.first->parent->parent->leftChild == terminalT1.first->parent
                         || terminalT1.first->parent->parent->rightChild == terminalT1.first->parent)
@@ -443,7 +438,6 @@ solver::ChainReductionRule::isApplicable(
                         || terminalT2.first->parent->parent->rightChild == terminalT2.first->parent)
                         && (T2->TerminalToLabel().contains(terminalT2.first->parent->parent->leftChild)
                         || T2->TerminalToLabel().contains(terminalT2.first->parent->parent->rightChild))
-
                         )
                         {
                             //Chain for both trees
