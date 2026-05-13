@@ -90,12 +90,14 @@ void solver::ChainReductionRule::storeNodeIndices(const graph::Node* node, const
     indicesList = {parentPos, siblingPos, leftPos, rightPos};
     if (forest == chainWithTrees.second.front())
     {
-        deletedNodesT1Indices.at(nodePos) = indicesList;
+        deletedNodesT1Indices.first.at(nodePos) = indicesList;
     }
     else
     {
-        deletedNodesT2Indices.at(nodePos) = indicesList;
+        deletedNodesT2Indices.first.at(nodePos) = indicesList;
     }
+
+    deletedNodesT2Indices.second.at(nodePos) = forest->Nodes().at(nodePos).subtreeTerminals;
 }
 
 void solver::ChainReductionRule::removeConnectionOfTerminalNode(graph::Node* node, std::shared_ptr<graph::Forest>& forest)
@@ -186,8 +188,8 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
     isApplied = true;
 
     //Set the allowed memory of the set of to be deleted Nodes
-    deletedNodesT1Indices.resize(chainWithTrees.second.front()->Nodes().capacity());
-    deletedNodesT2Indices.resize(chainWithTrees.second.back()->Nodes().capacity());
+    deletedNodesT1Indices.first.resize(chainWithTrees.second.front()->Nodes().capacity());
+    deletedNodesT2Indices.first.resize(chainWithTrees.second.back()->Nodes().capacity());
 
     //Repeat check for safety, latter >= 2 means that chain was indeed longer then 3 elements, as x1 and x2 are never
     //stored due to being irrelevant
@@ -269,57 +271,61 @@ void solver::ChainReductionRule::unapply()
     }
     isApplied = false;
 
-    for (int index = 0; index < deletedNodesT1Indices.capacity(); index++)
+    for (int index = 0; index < deletedNodesT1Indices.first.capacity(); index++)
     {
-        if (deletedNodesT1Indices[index].empty() == false)
+        if (deletedNodesT1Indices.first[index].empty() == false)
         {
             //parent
-            if (deletedNodesT1Indices[index][0] != -1)
+            if (deletedNodesT1Indices.first[index][0] != -1)
             {
-                nodesT1[index].parent = &nodesT1.at(deletedNodesT1Indices[index][0]);
+                nodesT1[index].parent = &nodesT1.at(deletedNodesT1Indices.first[index][0]);
             }
             //sibling
-            if (deletedNodesT1Indices[index][1] != -1)
+            if (deletedNodesT1Indices.first[index][1] != -1)
             {
-                nodesT1[index].sibling = &nodesT1.at(deletedNodesT1Indices[index][1]);
+                nodesT1[index].sibling = &nodesT1.at(deletedNodesT1Indices.first[index][1]);
             }
             //left
-            if (deletedNodesT1Indices[index][2] != -1)
+            if (deletedNodesT1Indices.first[index][2] != -1)
             {
-                nodesT1[index].leftChild = &nodesT1.at(deletedNodesT1Indices[index][2]);
+                nodesT1[index].leftChild = &nodesT1.at(deletedNodesT1Indices.first[index][2]);
             }
             //right
-            if (deletedNodesT1Indices[index][3] != -1)
+            if (deletedNodesT1Indices.first[index][3] != -1)
             {
-                nodesT1[index].rightChild = &nodesT1.at(deletedNodesT1Indices[index][3]);
+                nodesT1[index].rightChild = &nodesT1.at(deletedNodesT1Indices.first[index][3]);
             }
+
+            nodesT1[index].subtreeTerminals = deletedNodesT1Indices.second[index];
         }
     }
 
-    for (int index = 0; index < deletedNodesT2Indices.capacity(); index++)
+    for (int index = 0; index < deletedNodesT2Indices.first.capacity(); index++)
     {
-        if (deletedNodesT2Indices[index].empty() == false)
+        if (deletedNodesT2Indices.first[index].empty() == false)
         {
             //parent
-            if (deletedNodesT2Indices[index][0] != -1)
+            if (deletedNodesT2Indices.first[index][0] != -1)
             {
-                nodesT2[index].parent = &nodesT2.at(deletedNodesT2Indices[index][0]);
+                nodesT2[index].parent = &nodesT2.at(deletedNodesT2Indices.first[index][0]);
             }
             //sibling
-            if (deletedNodesT2Indices[index][1] != -1)
+            if (deletedNodesT2Indices.first[index][1] != -1)
             {
-                nodesT2[index].sibling = &nodesT2.at(deletedNodesT2Indices[index][1]);
+                nodesT2[index].sibling = &nodesT2.at(deletedNodesT2Indices.first[index][1]);
             }
             //left
-            if (deletedNodesT2Indices[index][2] != -1)
+            if (deletedNodesT2Indices.first[index][2] != -1)
             {
-                nodesT2[index].leftChild = &nodesT2.at(deletedNodesT2Indices[index][2]);
+                nodesT2[index].leftChild = &nodesT2.at(deletedNodesT2Indices.first[index][2]);
             }
             //right
-            if (deletedNodesT2Indices[index][3] != -1)
+            if (deletedNodesT2Indices.first[index][3] != -1)
             {
-                nodesT2[index].rightChild = &nodesT2.at(deletedNodesT2Indices[index][3]);
+                nodesT2[index].rightChild = &nodesT2.at(deletedNodesT2Indices.first[index][3]);
             }
+
+            nodesT2[index].subtreeTerminals = deletedNodesT2Indices.second[index];
         }
     }
 }

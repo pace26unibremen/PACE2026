@@ -17,10 +17,10 @@ namespace solver
         std::pair<std::vector<std::vector<graph::Node*>>,std::vector<std::shared_ptr<graph::Forest>>> chainWithTrees;
 
         /// \brief Indices for all nodes prior to editing the first tree of the instance
-        std::vector<std::vector<int>> deletedNodesT1Indices;
+        std::pair<std::vector<std::vector<int>>, std::vector<std::vector<uint64_t>>> deletedNodesT1Indices;
 
         /// \brief Indices for all nodes prior to editing the second tree of the instance
-        std::vector<std::vector<int>> deletedNodesT2Indices;
+        std::pair<std::vector<std::vector<int>>, std::vector<std::vector<uint64_t>>> deletedNodesT2Indices;
 
     public:
         /// \brief Chain Reduction Rule implementation that identifies the first chain out of the two forests given
