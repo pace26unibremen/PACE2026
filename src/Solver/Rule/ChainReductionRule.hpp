@@ -22,10 +22,6 @@ namespace solver
         /// \brief Indices for all nodes prior to editing the second tree of the instance
         std::vector<std::vector<int>> deletedNodesT2Indices;
 
-        /// \brief The Labels for the Terminals from the removed portion of the chain.
-        std::pair<std::unordered_map<unsigned int, graph::Node>,std::unordered_map<unsigned int, graph::Node>>
-        chainLabels;
-
     public:
         /// \brief Chain Reduction Rule implementation that identifies the first chain out of the two forests given
         /// \param instance The problem instance

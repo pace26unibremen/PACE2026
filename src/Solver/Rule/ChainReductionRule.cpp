@@ -12,7 +12,7 @@ solver::ChainReductionRule::ChainReductionRule(
 {
     //Copying of the Trees maybe irrelevant when doing this without const params. Not sure.
     this->chainWithTrees = std::move(chainWithTrees);
-    chainLabels = {};
+
 }
 
 //Chain def:Let T be a rooted phylogenetic X-tree, and let C =
