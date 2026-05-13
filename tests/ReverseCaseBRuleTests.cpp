@@ -86,4 +86,18 @@ TEST_CASE("ReverseCaseBRule - Two Trees", "[Forest, ReverseCaseBRule, AbstractRu
         REQUIRE(f1 == f1Copy);
         REQUIRE(f2 == f2Copy);
     }
+
+    SECTION("Rule not applicable")
+    {
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_6_example3.tree",6,1);
+        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "forest_4_6_simple.tree",6,4);
+
+        auto instance = std::make_shared<std::vector<std::shared_ptr<Forest>>>();
+        instance->push_back(std::make_shared<Forest>(f1));
+        instance->push_back(std::make_shared<Forest>(f2));
+
+        auto rule = ReverseCaseBRule::isApplicable(instance, nullptr);
+
+        REQUIRE(rule == nullptr);
+    }
 }
