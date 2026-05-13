@@ -42,13 +42,16 @@ namespace solver
         /// \return Boolean of if the node is within the list or not
         static bool isNodeInNodeVector(const graph::Node* node, const std::vector<graph::Node*>& list);
 
-
-
+        /// \brief Helper function which saves the connections of a node to his associated nodes
+        /// within the corresponding forest through saving the indicies to the node address within the forest node list
+        /// \param node The node whose connections should be saved
+        /// \param forest The forest from which the node originates
         void storeNodeIndices(const graph::Node* node, const std::shared_ptr<graph::Forest>& forest);
 
         /// \brief Helper function that deletes the connections between the parameter node with the terminal child as
         /// well as removing them from the tree they're in. Copies the node beforehand into a constructor list.
         /// \param node The Node to be edited
+        /// \param forest The forest from which the node originates.
         void removeConnectionOfTerminalNode(graph::Node* node, std::shared_ptr<graph::Forest>& forest);
 
 
