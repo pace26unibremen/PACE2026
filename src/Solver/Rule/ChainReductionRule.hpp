@@ -16,23 +16,15 @@ namespace solver
         /// \brief First Chain found within two trees of a problem instance
         std::pair<std::vector<std::vector<graph::Node*>>,std::vector<std::shared_ptr<graph::Forest>>> chainWithTrees;
 
-        /// \brief Adresss storage for all deleted Nodes during the chain removal process in T1
-        std::vector<graph::Node> deletedNodesT1;
-
+        /// \brief Indices for all nodes prior to editing the first tree of the instance
         std::vector<std::vector<int>> deletedNodesT1Indices;
 
-        /// \brief Address storage for all deleted Nodes during the chain removal process in T2
-        std::vector<graph::Node> deletedNodesT2;
-
+        /// \brief Indices for all nodes prior to editing the second tree of the instance
         std::vector<std::vector<int>> deletedNodesT2Indices;
-
-        /// \brief Legacy for unapply
-        std::pair<graph::Node*,graph::Node*> parentToXN;
 
         /// \brief The Labels for the Terminals from the removed portion of the chain.
         std::pair<std::unordered_map<unsigned int, graph::Node>,std::unordered_map<unsigned int, graph::Node>>
         chainLabels;
-
 
     public:
         /// \brief Chain Reduction Rule implementation that identifies the first chain out of the two forests given

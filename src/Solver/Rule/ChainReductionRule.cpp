@@ -98,42 +98,6 @@ void solver::ChainReductionRule::storeNodeIndices(const graph::Node* node, const
     }
 }
 
-void solver::ChainReductionRule::storeNode(const graph::Node* node, const std::shared_ptr<graph::Forest>& forest)
-{
-    if (forest == chainWithTrees.second.front())
-    {
-        for (int index = 0; index < forest->Nodes().capacity(); index++)
-        {
-            if (&forest->Nodes()[index] == node)
-            {
-                deletedNodesT1[index].leftChild = node->leftChild;
-                deletedNodesT1[index].rightChild = node->rightChild;
-                deletedNodesT1[index].parent = node->parent;
-                deletedNodesT1[index].sibling = node->sibling;
-                break;
-            }
-        }
-    }
-    else if (forest == chainWithTrees.second.back())
-    {
-        for (int index = 0; index < forest->Nodes().capacity(); index++)
-        {
-            if (&forest->Nodes()[index] == node)
-            {
-                deletedNodesT2[index].leftChild = node->leftChild;
-                deletedNodesT2[index].rightChild = node->rightChild;
-                deletedNodesT2[index].parent = node->parent;
-                deletedNodesT2[index].sibling = node->sibling;
-                break;
-            }
-        }
-    }
-    else
-    {
-        throw std::invalid_argument("ChainReductionRule : storeNode : forest is not within chainWithTrees");
-    }
-}
-
 void solver::ChainReductionRule::removeConnectionOfTerminalNode(graph::Node* node, std::shared_ptr<graph::Forest>& forest)
 {
     //If left child is terminal
@@ -222,8 +186,6 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
     isApplied = true;
 
     //Set the allowed memory of the set of to be deleted Nodes
-    deletedNodesT1.resize(chainWithTrees.second.front()->Nodes().capacity());
-    deletedNodesT2.resize(chainWithTrees.second.back()->Nodes().capacity());
     deletedNodesT1Indices.resize(chainWithTrees.second.front()->Nodes().capacity());
     deletedNodesT2Indices.resize(chainWithTrees.second.back()->Nodes().capacity());
 
