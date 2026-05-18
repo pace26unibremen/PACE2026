@@ -21,8 +21,8 @@ solver::RuleReturnCode solver::Case2BRule::apply()
         const auto toCutNode1 = f->LabelToTerminal()[toCutLabel1];
         const auto toCutNode2 = f->LabelToTerminal()[toCutLabel2];
         changes.emplace(toCutNode1, f);
-        changes.emplace(toCutNode2, f);
         changes.top().doAction();
+        changes.emplace(toCutNode2, f);
         changes.top().doAction();
     }
 
@@ -61,8 +61,8 @@ solver::Case2BRule::isApplicable(const std::shared_ptr<graph::Instance>& instanc
             if (node->parent->parent != nullptr and f1->TerminalToLabel().contains(node->parent->sibling)) //uncle (x) is leaf
             {
                 aLabel = f1->TerminalToLabel().at(node);
-                cLabel = f1->TerminalToLabel().at(node->parent->parent->sibling);
-                xLabel = f1->TerminalToLabel().at(node->parent->parent->parent->sibling);
+                cLabel = f1->TerminalToLabel().at(node->sibling);
+                xLabel = f1->TerminalToLabel().at(node->parent->sibling);
 
                 bool doCut = true;
 
