@@ -3,6 +3,9 @@
 
 #include "../../Graph/Instance.hpp"
 #include "Context.hpp"
+#include "RuleReturnCode.hpp"
+
+#include <list>
 
 namespace solver
 {
@@ -22,20 +25,22 @@ class AbstractRule
     /// \brief Stores if the rule is already applied
     bool isApplied = false;
 
+    /// \brief It indicates if the rule is a reduction, which is a rule that must be rolled back
+    /// to transform the found solution to the solution of the original instance.
+    const bool isReduction;
+
   public:
     /// constructor
-    AbstractRule(const std::shared_ptr<graph::Instance>&, const std::shared_ptr<Context>& context);
+    AbstractRule(const std::shared_ptr<graph::Instance>&,
+                 const std::shared_ptr<Context>& context,
+                 bool isReduction);
 
     /// destructor
     virtual ~AbstractRule() = default;
 
     /// \brief applies rule
-    /// \returns return code
-    /// - \c 0 default, continue solving
-    /// - \c 1 rule solves the instance
-    /// - \c 2 branch can be cutted
-    /// - \c -1 stop the solver (without valid solution)
-    virtual int apply() = 0;
+    /// \returns a return code, see \ref RuleReturnCode
+    virtual RuleReturnCode apply() = 0;
 
     /// \brief reverts the changes of the rule
     virtual void unapply() = 0;
@@ -44,9 +49,22 @@ class AbstractRule
     [[nodiscard, maybe_unused]]
     bool IsApplied() const;
 
+    /// \brief returns if the rule is a reduction.
+    /// \ref isReduction
+    [[nodiscard]]
+    bool IsReduction() const;
+
     /// \brief name of the rule
     [[nodiscard]]
     virtual std::string name() const = 0;
+
+    /// \brief A list of rules that should be applied next.
+    ///
+    /// If the \ref apply method returns \ref RuleReturnCode::ContinueWithRuleSuggestion
+    /// this indicates that the list contains items and the solver should adopt them.
+    ///
+    /// The first element of the list should be applied first, followed by the next element, and so on.
+    virtual std::shared_ptr<std::list<std::shared_ptr<AbstractRule>>> NextRuleSuggestion();
 };
 
 } // namespace solver

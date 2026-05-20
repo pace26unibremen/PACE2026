@@ -4,19 +4,20 @@
 
 solver::PairEqualRule::PairEqualRule(const std::shared_ptr<graph::Instance>& instance,
                                      const std::shared_ptr<Context>& context,
-                                     const std::unordered_map<std::shared_ptr<graph::Forest>, graph::Node*>& forestToSubtree) :
-    AbstractRule(instance,context),
+                                     const std::unordered_map<std::shared_ptr<graph::Forest>,
+                                     graph::Node*>& forestToSubtree) :
+    AbstractRule(instance,context, true),
     forestToSubtree(forestToSubtree)
 {
     this->changes = std::stack<solver::CollapseSubtreeAction>();
 }
 
 
-int solver::PairEqualRule::apply()
+solver::RuleReturnCode solver::PairEqualRule::apply()
 {
     if (this->isApplied)
     {
-        throw std::invalid_argument("PairEqualRule : apply : rule is not applied");
+        throw std::invalid_argument("PairEqualRule : apply : rule is already applied");
     }
     isApplied = true;
 
@@ -26,7 +27,7 @@ int solver::PairEqualRule::apply()
         changes.top().doAction();
     }
 
-    return 0;
+    return RuleReturnCode::Continue;
 }
 
 void solver::PairEqualRule::unapply()
@@ -57,7 +58,7 @@ solver::PairEqualRule::isApplicable(const std::shared_ptr<graph::Instance>& inst
     auto f = instance->at(0);
     for (const auto& [label, node] : f->LabelToTerminal())
     {
-        if (node->sibling != nullptr and f->Terminals().contains(node->sibling))
+        if (node->sibling != nullptr and f->TerminalToLabel().contains(node->sibling))
         {
             label1 = label;
             label2 = node->sibling->smallestTerminal();

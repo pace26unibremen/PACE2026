@@ -15,12 +15,17 @@ class CutBranchRule : public  AbstractRule
                   const std::shared_ptr<Context>& context);
 
     /// \brief applies rule
-    /// \see AbstractRule::apply
-    /// \returns always return code \c 2 (branch can be cutted)
-    int apply() override;
+    /// \returns always \ref RuleReturnCode::CutBranch
+    RuleReturnCode apply() override;
 
     void unapply() override;
 
+    /// \brief It checks whether the CutBranchRule is applicable and generates an instance of this rule if so.
+    /// This method considers the CutBranchRule applicable if the `bestSolutionSize` of the `context`
+    /// is at most the highest number of trees in a forest.
+    /// \param instance on which the rule should be applied
+    /// \param context contains additional information to the instance and the solver state
+    /// \returns shared_pointer to CutBranchRule if rule is applicable, else null pointer
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                       const std::shared_ptr<Context>& context);
 

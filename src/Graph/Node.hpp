@@ -11,22 +11,23 @@ namespace graph
 struct Node
 {
     /// \brief Pointer to parent node.\n
-    /// \c -1 indicates that \c this is the root node.
+    /// \default is nullptr
     Node* parent = nullptr;
 
     /// \brief Pointer to the sibling.
-    /// \c -1 indicates that \c this is the last sibling.
+    /// \default is nullptr
     Node* sibling = nullptr;
 
     /// \brief Pointer to the left child in.
-    /// \c -1 indicates that \c this has no left child.
+    /// \default is nullptr
     Node* leftChild = nullptr;
 
     /// \brief Pointer to the right child in.
-    /// \c -1 indicates that \c this has no right child.
+    /// \default is nullptr
     Node* rightChild = nullptr;
 
     /// \brief a bitmask that stores all terminals that in the subtree of this node
+    /// \note Since there is no label '0', the bit (1 << i) encodes 'i+1', not 'i'.
     std::vector<uint64_t> subtreeTerminals = {};
 
     /// \brief Constructor.
@@ -36,7 +37,7 @@ struct Node
     /// \param rightChild Pointer to the right child.
     Node(Node* parent, Node* sibling, Node* leftChild, Node* rightChild);
 
-    /// \brief Default Constructor.\n
+    /// \brief Default Constructor.
     Node() = default;
 
     /// Checks if two nodes have the same terminals in their subtrees.
@@ -52,13 +53,14 @@ struct Node
     [[nodiscard]]
     bool hasSubsetTerminals(const Node* other) const;
 
-    /// Checks if a node has a the minimal terminal in its subtree, compared to another node.
+    /// Checks if a node has the minimal terminal in its subtree, compared to another node.
     /// \param other
     /// \return true if \c this has the minimal terminal, else false
     [[nodiscard]]
     bool hasSmallestTerminal(const Node* other) const;
 
-    /// \brief returns the smallest terminal in the nodes subtree.
+    /// \brief returns the smallest label in the nodes' subtree.
+    /// \returns the smallest label
     [[nodiscard, maybe_unused]]
     unsigned int smallestTerminal() const;
 

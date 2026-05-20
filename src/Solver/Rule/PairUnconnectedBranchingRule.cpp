@@ -21,11 +21,11 @@ solver::PairUnconnectedBranchingRule::PairUnconnectedBranchingRule(
         forestsConnectedLabels(get<2>(affectedForests))
 {}
 
-int solver::PairUnconnectedBranchingRule::apply()
+solver::RuleReturnCode solver::PairUnconnectedBranchingRule::apply()
 {
     if (this->isApplied)
     {
-        throw std::invalid_argument("PairUnconnectedBranchingRule : apply : rule is not applied");
+        throw std::invalid_argument("PairUnconnectedBranchingRule : apply : rule is already applied");
     }
     if (this->branch >= 2)
     {
@@ -56,7 +56,7 @@ int solver::PairUnconnectedBranchingRule::apply()
             assert(false);
     }
 
-    return 0;
+    return RuleReturnCode::Continue;
 }
 
 void solver::PairUnconnectedBranchingRule::unapply()
@@ -86,7 +86,7 @@ solver::PairUnconnectedBranchingRule::isApplicable(const std::shared_ptr<graph::
     auto f = instance->at(0);
     for (const auto& [label, node] : f->LabelToTerminal())
     {
-        if (node->sibling != nullptr and f->Terminals().contains(node->sibling))
+        if (node->sibling != nullptr and f->TerminalToLabel().contains(node->sibling))
         {
             get<0>(af) = label;
             get<1>(af) = node->sibling->smallestTerminal();

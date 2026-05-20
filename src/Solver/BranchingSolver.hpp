@@ -17,22 +17,27 @@
 
 #include <functional>
 #include <stack>
+#include <queue>
 
 namespace solver
 {
 
-typedef std::function<std::shared_ptr<AbstractRule>(
+/// \brief a function type that maps an instance and a context to a rule
+using isApplicableFn = std::function<std::shared_ptr<AbstractRule>(
     const std::shared_ptr<graph::Instance>& instance,
-    const std::shared_ptr<Context>& context)> isApplicableFn;
+    const std::shared_ptr<Context>& context)>;
 
+
+/// \brief The Branching Solver solves the MAF problem by repeatedly applying \ref AbstractRule "rules",
+/// including \ref AbstractBranchingRule "branching rules", so that the solver's search space is a tree.
 class BranchingSolver : public AbstractSolver
 {
   protected:
-    /// \brief stores all applied rules
-    std::stack<std::shared_ptr<AbstractRule>> changes = std::stack<std::shared_ptr<AbstractRule>>();
+    /// \brief stores all applied rules of the current branch in the order in which they were applied.
+    std::list<std::shared_ptr<AbstractRule>> appliedRules = std::list<std::shared_ptr<AbstractRule>>();
 
-    /// \brief stores all applied rules that have to be revoked to get the final solution
-    std::stack<std::shared_ptr<AbstractRule>> temporalChanges = std::stack<std::shared_ptr<AbstractRule>>();
+    /// \brief queue of rules, that should be applied next
+    std::queue<std::shared_ptr<AbstractRule>> applyNext = std::queue<std::shared_ptr<AbstractRule>>();
 
     /// \brief Stores the best solution, that the solver found so far.
     std::shared_ptr<graph::Forest> solution = nullptr;
@@ -49,7 +54,7 @@ class BranchingSolver : public AbstractSolver
 
     /// \brief Checks whether the current instance is a better solution than the current candidate.
     /// If true, it restores all temporal changes on the instance and writes a copy in the solution field.
-    /// \warning Assumes that the current instance is a solution.
+    /// \note Assumes that the current instance is a solution.
     void checkSolutionCandidate();
 
     /// \brief vector of the isApplicable function of rules.
@@ -65,18 +70,24 @@ class BranchingSolver : public AbstractSolver
         };
 
   public:
+    /// \brief Constructor for a branching solver.
+    /// \param instance to solve
     explicit BranchingSolver(const std::shared_ptr<graph::Instance>& instance);
 
     ~BranchingSolver() override = default;
 
+    /// \brief starts the solver
+    /// \returns the solution
     std::shared_ptr<graph::Forest> solve() override;
 
-    /// \brief setter / getter for the debPlugin field
-    /// \see BranchingSolver::debPlugin
+    /// \brief setter / getter for the debug plugin field
+    /// \property DebPlugin
+    /// \ref BranchingSolver::debPlugin
     std::shared_ptr<DebugPlugin>& DebPlugin();
 
-    /// \brief setter / getter for the activeRules field
-    /// \see BranchingSolver::activeRules
+    /// \brief setter / getter for the active rules field
+    /// \property ActiveRules
+    /// \ref BranchingSolver::activeRules
     std::vector<isApplicableFn>& ActiveRules();
 };
 

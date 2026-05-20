@@ -2,12 +2,12 @@
 
 solver::DebugAssertFalseRule::DebugAssertFalseRule(const std::shared_ptr<graph::Instance>& instance,
                                                    const std::shared_ptr<Context>& context) :
-    AbstractRule(instance, context)
+    AbstractRule(instance, context, false)
 {}
 
-int solver::DebugAssertFalseRule::apply()
+solver::RuleReturnCode solver::DebugAssertFalseRule::apply()
 {
-    return -1;
+    return RuleReturnCode::ImidateReturn;
 }
 
 void solver::DebugAssertFalseRule::unapply() {}

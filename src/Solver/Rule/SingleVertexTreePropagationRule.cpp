@@ -4,15 +4,15 @@ solver::SingleVertexTreePropagationRule::SingleVertexTreePropagationRule(
     const std::shared_ptr<graph::Instance>& instance,
     const std::shared_ptr<Context>& context,
     const std::unordered_set<unsigned int>& labelsToBeReduced) :
-        AbstractRule(instance, context),
+        AbstractRule(instance, context, false),
         labelsToBeReduced(labelsToBeReduced)
 {}
 
-int solver::SingleVertexTreePropagationRule::apply()
+solver::RuleReturnCode solver::SingleVertexTreePropagationRule::apply()
 {
     if (this->isApplied)
     {
-        throw std::invalid_argument("SingleVertexTreePropagationRule : apply : rule was already applied");
+        throw std::invalid_argument("SingleVertexTreePropagationRule : apply : rule is already applied");
     }
     isApplied = true;
 
@@ -29,7 +29,7 @@ int solver::SingleVertexTreePropagationRule::apply()
         }
     }
 
-    return 0;
+    return RuleReturnCode::Continue;
 }
 
 void solver::SingleVertexTreePropagationRule::unapply()

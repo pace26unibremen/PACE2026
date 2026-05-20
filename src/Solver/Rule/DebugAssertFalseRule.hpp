@@ -15,12 +15,15 @@ class DebugAssertFalseRule : public AbstractRule
                                   const std::shared_ptr<Context>& context);
 
     /// \brief applies rule
-    /// \see AbstractRule::apply
-    /// \returns always return code  \c -1 (stop the solver)
-    int apply() override;
+    /// \returns always \ref RuleReturnCode::ImidateReturn
+    RuleReturnCode apply() override;
 
     void unapply() override;
 
+    /// \brief The DebugAssertFalseRule is always applicable.
+    /// \param instance on which the rule should be applied
+    /// \param context contains additional information to the instance and the solver state
+    /// \returns shared_pointer to DebugAssertFalseRule
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                       const std::shared_ptr<Context>& context);
 
