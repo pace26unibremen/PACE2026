@@ -94,13 +94,15 @@ void solver::ChainReductionRule::storeNodeIndices(const graph::Node* node, const
     if (forest == chainWithTrees.second.front())
     {
         deletedNodesT1Indices.first.at(nodePos) = indicesList;
+        deletedNodesT1Indices.second.at(nodePos) = forest->Nodes()[nodePos].subtreeTerminals;
     }
     else
     {
         deletedNodesT2Indices.first.at(nodePos) = indicesList;
+        deletedNodesT2Indices.second.at(nodePos) = forest->Nodes()[nodePos].subtreeTerminals;
     }
 
-    deletedNodesT2Indices.second.at(nodePos) = forest->Nodes()[nodePos].subtreeTerminals;
+    // deletedNodesT2Indices.second.at(nodePos) = forest->Nodes()[nodePos].subtreeTerminals;
 }
 
 void solver::ChainReductionRule::removeConnectionOfTerminalNode(graph::Node* node, std::shared_ptr<graph::Forest>& forest)
@@ -302,15 +304,15 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
         //as setting the terminals to be single tree vertices.
 
         //For xn to root, remove the terminal markers within their respective subtreeTerminals bitmask.
-        // updateSubtreeTerminals();
+        updateSubtreeTerminals();
 
         for (int i = chainWithTrees.first.size()-1; i > 0; i--)
         {
             //Every element of chainWithTrees.first is a parent of a terminal. Index cycles through each.
             removeConnectionOfTerminalNode(chainWithTrees.first[i].front(), chainWithTrees.second.front());
-            // chainWithTrees.first[i].front()->subtreeTerminals = {};
+            chainWithTrees.first[i].front()->subtreeTerminals = {};
             removeConnectionOfTerminalNode(chainWithTrees.first[i].back(), chainWithTrees.second.back());
-            // chainWithTrees.first[i].back()->subtreeTerminals = {};
+            chainWithTrees.first[i].back()->subtreeTerminals = {};
         }
 
         //Connect the two parts of the now seperated trees
