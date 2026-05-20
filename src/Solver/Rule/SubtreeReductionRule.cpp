@@ -212,7 +212,7 @@ solver::SubtreeReductionRule::isApplicable(const std::shared_ptr<graph::Instance
             if (allSubtreesOfForest.empty()) continue;
             forestToSubtrees.emplace(forest, allSubtreesOfForest);
         }
-        if (not forestToSubtrees.empty()) return nullptr;
+        if (forestToSubtrees.empty()) return nullptr;
         return std::make_shared<SubtreeReductionRule>(instance, context, forestToSubtrees);
     }
 
