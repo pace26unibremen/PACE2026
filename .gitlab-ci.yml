@@ -170,7 +170,7 @@ prepare-release:
       LABELS=$(echo "$MR_DATA" | jq -r '[.labels[] | select(test("^[Tt]ype::"))] | join(", ")')
       if [[ "$LABELS" =~ [Tt]ype::[Ff]eature ]]; then
         BUMP="minor"
-      elif [[ "$LABELS" =~ [Tt]ype::(bug|[Mm]aintenance|[Mm]eta[[:space:]]*[Ff]eature) ]]; then
+      elif [[ "$LABELS" =~ [Tt]ype::([bB]ug|[Mm]aintenance|[Mm]eta[[:space:]]*[Ff]eature) ]]; then
         BUMP="patch"
       else
         echo "Error: No valid type:: label: $LABELS"
