@@ -5,6 +5,7 @@
 #SBATCH --output=run_stride_%j.out
 #SBATCH --error=run_stride_%j.err
 #SBATCH --partition=CPU
+#SBATCH --cpus-per-task=18
 
 set -e
 
