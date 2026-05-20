@@ -173,22 +173,6 @@ void solver::ChainReductionRule::removeConnectionOfTerminalNode(graph::Node* nod
     }
 }
 
-int solver::ChainReductionRule::determineSideOfChain(graph::Node* node)
-{
-    graph::Node* parentOfNode = node->parent;
-
-    // If the parent node of the parameter is a root node
-    if (parentOfNode->parent == nullptr && parentOfNode->sibling == nullptr)
-    {
-        //If the parameter is on the left side, return 0, else if the parameter is on the right, then return 1
-        if (parentOfNode->leftChild == node) return 0;
-        if (parentOfNode->rightChild == node) return 1;
-    }
-    else
-    {   //"Climb up the tree" using the parent of the param node as a new parameter node.
-        return determineSideOfChain(parentOfNode);
-    }
-}
 std::vector<uint64_t> solver::ChainReductionRule::eraseTerminals(std::vector<uint64_t> target, std::vector<uint64_t> toBeErased)
 {
     for (int i = 0; i < target.size(); i++)
