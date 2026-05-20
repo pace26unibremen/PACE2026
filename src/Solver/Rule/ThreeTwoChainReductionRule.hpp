@@ -26,7 +26,8 @@ namespace solver
       ThreeTwoChainReductionRule(
           const std::shared_ptr<graph::Instance>& instance, const std::shared_ptr<Context>& context,
           const std::pair<graph::Node*, std::vector<std::shared_ptr<graph::Forest>>>& nodeAndTrees);
-      int apply() override;
+
+        solver::RuleReturnCode apply() override;
 
         void unapply() override;
 

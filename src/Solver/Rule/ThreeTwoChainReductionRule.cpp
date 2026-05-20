@@ -10,11 +10,11 @@ solver::ThreeTwoChainReductionRule::ThreeTwoChainReductionRule(
     const std::shared_ptr<graph::Instance>& instance,
     const std::shared_ptr<Context>& context,
     const std::pair<graph::Node*,std::vector<std::shared_ptr<graph::Forest>>>& nodeAndTrees) :
-        AbstractRule(instance, context)
+        AbstractRule(instance, context, true)
 {
     this->nodeAndTrees = nodeAndTrees;
     std::cout << "Terminal.at 1" << std::endl;
-    for (const auto& terminal : nodeAndTrees.second.front()->Terminals())
+    for (const auto& terminal : nodeAndTrees.second.front()->TerminalToLabel())
     {
         if (terminal.first == nodeAndTrees.first)
         {
@@ -26,7 +26,7 @@ solver::ThreeTwoChainReductionRule::ThreeTwoChainReductionRule(
     changes = std::stack<solver::AbstractAction>{};
 }
 
-int solver::ThreeTwoChainReductionRule::apply()
+solver::RuleReturnCode solver::ThreeTwoChainReductionRule::apply()
 {
     if (this->isApplied)
     {
@@ -54,26 +54,26 @@ int solver::ThreeTwoChainReductionRule::apply()
             graph::Node* currentNode = &tree->Nodes().at(index);
             if (currentNode == node)
             {
-                tree->Nodes().erase(tree->Nodes().begin()+index-1);
-                break;
+                // tree->Nodes().erase(tree->Nodes().begin()+index-1);
+                // break;
             }
         }
 
-        for (const auto& terminal : tree->Terminals())
+        for (const auto& terminal : tree->TerminalToLabel())
         {
             if (terminal.first == node)
             {
-                tree->Terminals().erase(terminal.first);
-                break;
+                // tree->TerminalToLabel().erase(terminal.first);
+                // break;
             }
         }
 
-        tree->Terminals().erase(node);
+        tree->TerminalToLabel().erase(node);
 
         //Da node Terminal ist -> Keine Kinder, Keine Wiederverknüpfung.
     }
 
-    return 0;
+    return RuleReturnCode::Continue;
 }
 
 void solver::ThreeTwoChainReductionRule::unapply()
@@ -102,7 +102,7 @@ void solver::ThreeTwoChainReductionRule::unapply()
         }
 
         tree->Nodes().emplace_back(*node);
-        tree->Terminals().emplace(node,nodeLabel);
+        tree->TerminalToLabel().emplace(node,nodeLabel);
         tree->LabelToTerminal().emplace(nodeLabel, node);
     }
 
@@ -124,7 +124,7 @@ solver::ThreeTwoChainReductionRule::isApplicable(const std::shared_ptr<graph::In
             if (T1 != T2)
             {
                 //T1: T in def
-                for (const auto& terminalT1 : T1->Terminals())
+                for (const auto& terminalT1 : T1->TerminalToLabel())
                 {
                     //Find a 3-Pendant chain
                     //Anti Single Vertex Check:
@@ -137,14 +137,14 @@ solver::ThreeTwoChainReductionRule::isApplicable(const std::shared_ptr<graph::In
                             terminalT1.first->sibling->parent == terminalT1.first->parent &&
                             terminalT1.first->parent->sibling != nullptr &&
                             terminalT1.first->parent->parent == terminalT1.first->parent->sibling->parent &&
-                            T1->Terminals().contains(terminalT1.first->sibling) &&
-                            T1->Terminals().contains(terminalT1.first->parent->sibling))
+                            T1->TerminalToLabel().contains(terminalT1.first->sibling) &&
+                            T1->TerminalToLabel().contains(terminalT1.first->parent->sibling))
                         {
                             //x1,x2,x3 known: x1 Term, x2 sibling, x3 parent
                             std::cout << "Terminal.at 2" << std::endl;
                             std::vector<unsigned int> chainInT1Ints = {terminalT1.second,
-                                T1->Terminals().at(terminalT1.first->sibling),
-                                T1->Terminals().at(terminalT1.first->parent->sibling)};
+                                T1->TerminalToLabel().at(terminalT1.first->sibling),
+                                T1->TerminalToLabel().at(terminalT1.first->parent->sibling)};
                             std::cout << "Terminal.at 3" << std::endl;
 
                             //If (xi , x3) is a pendant 2-chain in T' with xi ∈ {x1, x2}
@@ -213,14 +213,14 @@ solver::ThreeTwoChainReductionRule::isApplicable(const std::shared_ptr<graph::In
                             terminalT1.first->parent->parent->sibling != nullptr &&
                             terminalT1.first->parent->parent->sibling->parent ==
                             terminalT1.first->parent->parent->parent &&
-                            T1->Terminals().contains(terminalT1.first->parent->sibling) &&
-                            T1->Terminals().contains(terminalT1.first->parent->parent->sibling)
+                            T1->TerminalToLabel().contains(terminalT1.first->parent->sibling) &&
+                            T1->TerminalToLabel().contains(terminalT1.first->parent->parent->sibling)
                             )
                         {
                             std::cout << "Terminal.at 4" << std::endl;
                             std::vector<unsigned int> chainInT1Ints = {terminalT1.second,
-                                T1->Terminals().at(terminalT1.first->parent->sibling),
-                                T1->Terminals().at(terminalT1.first->parent->parent->sibling)};
+                                T1->TerminalToLabel().at(terminalT1.first->parent->sibling),
+                                T1->TerminalToLabel().at(terminalT1.first->parent->parent->sibling)};
 
                             //If (xi , x3) is a pendant 2-chain in T' with xi ∈ {x1, x2}
                             //Case 1: Sharing same parent. | Currently assuming that labels are shared...
