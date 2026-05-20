@@ -17,9 +17,11 @@ namespace solver
         std::pair<std::vector<std::vector<graph::Node*>>,std::vector<std::shared_ptr<graph::Forest>>> chainWithTrees;
 
         /// \brief Indices for all nodes prior to editing the first tree of the instance
+        /// Left pair element denotes the indicies for each node, right contains the bitmask list for each node
         std::pair<std::vector<std::vector<int>>, std::vector<std::vector<uint64_t>>> deletedNodesT1Indices;
 
         /// \brief Indices for all nodes prior to editing the second tree of the instance
+        /// Left pair element denotes the indicies for each node, right contains the bitmask list for each node
         std::pair<std::vector<std::vector<int>>, std::vector<std::vector<uint64_t>>> deletedNodesT2Indices;
 
     public:
@@ -50,6 +52,16 @@ namespace solver
         /// \param forest The forest from which the node originates.
         void removeConnectionOfTerminalNode(graph::Node* node, std::shared_ptr<graph::Forest>& forest);
 
+        /// \brief Helper function that determinates on which side from the viewpoint of the root node
+        /// the parameter node is within its tree.
+        /// \param node The node from which its side position is to be determined
+        /// \return 0 if the node is on the left side, 1 if the node is on the right side
+        int determineSideOfChain(graph::Node* node);
+
+        std::vector<uint64_t> eraseTerminals(std::vector<uint64_t> target, std::vector<uint64_t> toBeErased);
+
+        /// \brief Helper function that updates the subtree terminal bitmasks of the nodes.
+        void updateSubtreeTerminals();
 
         void storeNode(const graph::Node* node, const std::shared_ptr<graph::Forest>& forest);
 

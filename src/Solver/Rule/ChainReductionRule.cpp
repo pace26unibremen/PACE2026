@@ -1,6 +1,7 @@
 #include "ChainReductionRule.hpp"
 
 #include <algorithm>
+#include <forward_list>
 #include <unordered_map>
 #include <utility>
 solver::ChainReductionRule::ChainReductionRule(
@@ -40,6 +41,8 @@ bool solver::ChainReductionRule::isNodeInNodeVector(const graph::Node* node, con
 }
 void solver::ChainReductionRule::storeNodeIndices(const graph::Node* node, const std::shared_ptr<graph::Forest>& forest)
 {
+    auto capacityOfNodes = forest->Nodes().capacity();
+
     std::vector<int> indicesList;
     indicesList.reserve(4);
 
@@ -58,28 +61,28 @@ void solver::ChainReductionRule::storeNodeIndices(const graph::Node* node, const
     int leftPos = -1;
     int rightPos = -1;
 
-    for (int i = 0; i < forest->Nodes().capacity(); i++)
+    for (int i = 0; i < capacityOfNodes; i++)
     {
         if (&forest->Nodes()[i] == node->parent)
         {
             parentPos = i;
         }
     }
-    for (int i = 0; i < forest->Nodes().capacity(); i++)
+    for (int i = 0; i < capacityOfNodes; i++)
     {
         if (&forest->Nodes()[i] == node->sibling)
         {
             siblingPos = i;
         }
     }
-    for (int i = 0; i < forest->Nodes().capacity(); i++)
+    for (int i = 0; i < capacityOfNodes; i++)
     {
         if (&forest->Nodes()[i] == node->leftChild)
         {
             leftPos = i;
         }
     }
-    for (int i = 0; i < forest->Nodes().capacity(); i++)
+    for (int i = 0; i < capacityOfNodes; i++)
     {
         if (&forest->Nodes()[i] == node->rightChild)
         {
@@ -97,7 +100,7 @@ void solver::ChainReductionRule::storeNodeIndices(const graph::Node* node, const
         deletedNodesT2Indices.first.at(nodePos) = indicesList;
     }
 
-    deletedNodesT2Indices.second.at(nodePos) = forest->Nodes().at(nodePos).subtreeTerminals;
+    deletedNodesT2Indices.second.at(nodePos) = forest->Nodes()[nodePos].subtreeTerminals;
 }
 
 void solver::ChainReductionRule::removeConnectionOfTerminalNode(graph::Node* node, std::shared_ptr<graph::Forest>& forest)
@@ -168,7 +171,83 @@ void solver::ChainReductionRule::removeConnectionOfTerminalNode(graph::Node* nod
     }
 }
 
+int solver::ChainReductionRule::determineSideOfChain(graph::Node* node)
+{
+    graph::Node* parentOfNode = node->parent;
 
+    // If the parent node of the parameter is a root node
+    if (parentOfNode->parent == nullptr && parentOfNode->sibling == nullptr)
+    {
+        //If the parameter is on the left side, return 0, else if the parameter is on the right, then return 1
+        if (parentOfNode->leftChild == node) return 0;
+        if (parentOfNode->rightChild == node) return 1;
+    }
+    else
+    {   //"Climb up the tree" using the parent of the param node as a new parameter node.
+        return determineSideOfChain(parentOfNode);
+    }
+}
+std::vector<uint64_t> solver::ChainReductionRule::eraseTerminals(std::vector<uint64_t> target, std::vector<uint64_t> toBeErased)
+{
+    for (int i = 0; i < target.size(); i++)
+    {
+        if (target[i] == toBeErased[i] && target[i] != 0)
+        {
+            target[i] = 0;
+        }
+    }
+
+    return target;
+}
+
+void solver::ChainReductionRule::updateSubtreeTerminals()
+{
+    std::shared_ptr<graph::Forest>& t1 = chainWithTrees.second.front();
+    std::shared_ptr<graph::Forest>& t2 = chainWithTrees.second.back();
+
+    //x3
+    graph::Node* t1BeginNode = chainWithTrees.first[0].front();
+    graph::Node* t2BeginNode = chainWithTrees.first[0].back();
+
+    //xn
+    graph::Node* t1EndNode = chainWithTrees.first[chainWithTrees.first.size()-1].front();
+    graph::Node* t2EndNode = chainWithTrees.first[chainWithTrees.first.size()-1].back();
+
+    //Determine the sum of the subtree terminal numbers that are part of the chain.
+    std::vector<uint64_t> subtreeTerminalsT1 = t1EndNode->subtreeTerminals;
+    std::vector<uint64_t> subtreeTerminalsT2 = t2EndNode->subtreeTerminals;
+    //Delete the terminal markers that are in x3, as to not remove them.
+    subtreeTerminalsT1 = eraseTerminals(subtreeTerminalsT1, t1BeginNode->subtreeTerminals);
+    subtreeTerminalsT2 = eraseTerminals(subtreeTerminalsT2, t2BeginNode->subtreeTerminals);
+
+    //Nodes to be reached until root
+    graph::Node* parentOfEndNodeT1 = t1EndNode->parent;
+    graph::Node* parentOfEndNodeT2 = t2EndNode->parent;
+
+    while (parentOfEndNodeT1->parent != nullptr && parentOfEndNodeT1->sibling != nullptr)
+    {
+        parentOfEndNodeT1->subtreeTerminals =
+            eraseTerminals(parentOfEndNodeT1->subtreeTerminals, subtreeTerminalsT1);
+
+        parentOfEndNodeT1 = parentOfEndNodeT1->parent;
+    }
+    //Ends when parendOfEndNodeT1 is root of t1 -> apply once more
+    parentOfEndNodeT1->subtreeTerminals =
+        eraseTerminals(parentOfEndNodeT1->subtreeTerminals, subtreeTerminalsT1);
+
+    while (parentOfEndNodeT2->parent != nullptr && parentOfEndNodeT2->sibling != nullptr)
+    {
+        parentOfEndNodeT2->subtreeTerminals =
+            eraseTerminals(parentOfEndNodeT2->subtreeTerminals, subtreeTerminalsT2);
+
+        parentOfEndNodeT2 = parentOfEndNodeT2->parent;
+    }
+    //Ends when parendOfEndNodeT1 is root of t2 -> apply once more
+    parentOfEndNodeT2->subtreeTerminals =
+        eraseTerminals(parentOfEndNodeT2->subtreeTerminals, subtreeTerminalsT2);
+
+    //-> for all xn to root, the subtreeTerminal bitmask has been updated.
+}
 
 solver::RuleReturnCode solver::ChainReductionRule::apply()
 {
@@ -179,8 +258,8 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
     //  This is always there given the chain definition
     //Else if it's the last node in the list, then remove his edge to the parent of his.
     // Always there if the chain exists. At most the root of the tree.
-    //Respectively, this needs to happen to the other side of the edge, i.e for x4 it must be done on x3,
-    //and on xn+1 for xn, as it's two sided.
+    //Respectively, this needs to happen to the other side of the edge, i.e. for x4 it must be done on x3,
+    //and on xn+1 for xn, as it's two-sided.
     if (this->isApplied)
     {
         throw std::invalid_argument("ChainReductionRule : apply : rule was already applied");
@@ -188,8 +267,12 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
     isApplied = true;
 
     //Set the allowed memory of the set of to be deleted Nodes
+    //First for all nodes
     deletedNodesT1Indices.first.resize(chainWithTrees.second.front()->Nodes().capacity());
     deletedNodesT2Indices.first.resize(chainWithTrees.second.back()->Nodes().capacity());
+    //Then for all possible subtreeTerminals
+    deletedNodesT1Indices.second.resize(chainWithTrees.second.front()->Nodes().capacity());
+    deletedNodesT2Indices.second.resize(chainWithTrees.second.back()->Nodes().capacity());
 
     //Repeat check for safety, latter >= 2 means that chain was indeed longer then 3 elements, as x1 and x2 are never
     //stored due to being irrelevant
@@ -201,6 +284,7 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
             storeNodeIndices(&chainWithTrees.second.front()->Nodes()[index], chainWithTrees.second.front());
 
         }
+
         for (int index = 0; index < chainWithTrees.second.back()->Nodes().capacity(); index++)
         {
             storeNodeIndices(&chainWithTrees.second.back()->Nodes()[index], chainWithTrees.second.back());
@@ -217,11 +301,16 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
         //Address the now seperated chain in T1 and T2 through the removal of the parent nodes of the terminals as well
         //as setting the terminals to be single tree vertices.
 
+        //For xn to root, remove the terminal markers within their respective subtreeTerminals bitmask.
+        // updateSubtreeTerminals();
+
         for (int i = chainWithTrees.first.size()-1; i > 0; i--)
         {
             //Every element of chainWithTrees.first is a parent of a terminal. Index cycles through each.
             removeConnectionOfTerminalNode(chainWithTrees.first[i].front(), chainWithTrees.second.front());
+            // chainWithTrees.first[i].front()->subtreeTerminals = {};
             removeConnectionOfTerminalNode(chainWithTrees.first[i].back(), chainWithTrees.second.back());
+            // chainWithTrees.first[i].back()->subtreeTerminals = {};
         }
 
         //Connect the two parts of the now seperated trees
