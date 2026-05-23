@@ -73,7 +73,7 @@ solver::Case2BRule::isApplicable(const std::shared_ptr<graph::Instance>& instanc
                 { // necessary structure does not exist in f2
                     doCut = false;
                 }
-                if (not (a2->parent->parent->sibling == f2->LabelToTerminal().at(cLabel) and a2->parent->parent->parent->sibling == f2->LabelToTerminal().at(xLabel)))
+                else if (not (a2->parent->parent->sibling == f2->LabelToTerminal().at(cLabel) and a2->parent->parent->parent->sibling == f2->LabelToTerminal().at(xLabel)))
                 { // c and x are not leaves or aren't in the correct position
                     doCut = false;
                 }
