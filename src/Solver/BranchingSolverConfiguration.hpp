@@ -10,6 +10,7 @@
 #include "Rule/PairUnconnectedBranchingRule.hpp"
 #include "Rule/SingleVertexTreePropagationRule.hpp"
 #include "Rule/DebugAssertFalseRule.hpp"
+#include "Rule/ReverseCaseBRule.hpp"
 
 #include <functional>
 #include <memory>
@@ -40,6 +41,7 @@ struct BranchingSolverConfiguration
         solver::SingleVertexTreePropagationRule::isApplicable,
         solver::PairUnconnectedBranchingRule::isApplicable,
         solver::PairEqualRule::isApplicable,
+        solver::ReverseCaseBRule::isApplicable,
         solver::PairPathBranchingRule::isApplicable,
         solver::DebugAssertFalseRule::isApplicable
         };
