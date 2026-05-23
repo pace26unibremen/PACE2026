@@ -1,5 +1,5 @@
-#ifndef PACE2026_CUT_BRANCH_RULE_HPP
-#define PACE2026_CUT_BRANCH_RULE_HPP
+#ifndef PACE2026_CASE_2B_RULE_HPP
+#define PACE2026_CASE_2B_RULE_HPP
 
 #include "../Action/DeleteEdgeAction.hpp"
 #include "AbstractRule.hpp"
@@ -49,4 +49,4 @@ public:
 
 }  //namespace solver
 
-#endif  //PACE2026_CUT_BRANCH_RULE_HPP
+#endif  //PACE2026_CASE_2B_RULE_HPP
