@@ -75,8 +75,13 @@ solver::ReverseCaseBRule::isApplicable(const std::shared_ptr<graph::Instance>& i
                     {
                         cutN1 = false;
                     }
-                    if (unc->sibling == n2)
+                    else if (unc->sibling == n2)
                     {
+                        cutN2 = false;
+                    }
+                    else // unc's sibling in fi is neither n1 nor n2
+                    {
+                        cutN1 = false;
                         cutN2 = false;
                     }
                 }
