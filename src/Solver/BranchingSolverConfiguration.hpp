@@ -30,7 +30,7 @@ struct BranchingSolverConfiguration
     /// I.e. the solver searches only for solutions that are equal to or better than a given parameter.
     /// If the solver doesn't find any suitable solution, it increases the parameter.
     /// The corresponding parameter is stored in the \ref Context as \ref Context::maxSolutionSize.
-    bool boundedDephtSearch = true;
+    bool boundedDephtSearch = false;
 
     /// \brief vector of the isApplicable function of rules.
     /// It defines which rules are used and in which order they are checked for applicability.
