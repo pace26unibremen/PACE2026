@@ -32,7 +32,7 @@ bool solver::BranchingSolver::rollBackBranch()
 
         auto rule = appliedRules.back();
         rule->unapply();
-        if (configuration->debPlugin) configuration->debPlugin->onUnapply(rule);
+        for (const auto& plugin : configuration->plugins) plugin->onUnapply(rule);
         appliedRules.pop_back();
 
         if (auto branchingRule = std::dynamic_pointer_cast<AbstractBranchingRule>(rule))
@@ -53,6 +53,7 @@ void solver::BranchingSolver::checkSolutionCandidate()
     {
         // update context (we have a better solution)
         context->bestSolutionSize = instance->at(0)->Roots().size();
+        for (const auto& plugin : configuration->plugins) plugin->onNewBestSolution(context->bestSolutionSize);
 
         unapplyReductions();
 
@@ -64,7 +65,7 @@ void solver::BranchingSolver::checkSolutionCandidate()
             | std::views::filter([](const std::shared_ptr<AbstractRule>& r){ return r->IsReduction();}))
         {
             reductionRule->apply();
-            if (configuration->debPlugin) configuration->debPlugin->onTempApply(reductionRule);
+            for (const auto& plugin : configuration->plugins) plugin->onTempApply(reductionRule);
         }
     }
 }
@@ -76,24 +77,25 @@ void solver::BranchingSolver::unapplyReductions()
         | std::views::filter([](const std::shared_ptr<AbstractRule>& r){ return r->IsReduction();}))
     {
         reductionRule->unapply();
-        if (configuration->debPlugin) configuration->debPlugin->onTempUnapply(reductionRule, false);
+        for (const auto& plugin : configuration->plugins) plugin->onTempUnapply(reductionRule, false);
     }
 }
 
 bool solver::BranchingSolver::solve()
 {
-    if (configuration->debPlugin) configuration->debPlugin->init(instance);
+    for (const auto& plugin : configuration->plugins) plugin->init(instance);
 
     // Try to apply the subtree reduction before starting the main solving process
     auto subtreeReduction = solver::SubtreeReductionRule::isApplicable(instance, context);
     if (subtreeReduction)
     {
+        for (const auto& plugin : configuration->plugins) plugin->beforeApply(subtreeReduction);
         subtreeReduction->apply();
-        if (configuration->debPlugin) configuration->debPlugin->onApply(subtreeReduction);
+        for (const auto& plugin : configuration->plugins) plugin->onApply(subtreeReduction);
         appliedRules.push_back(subtreeReduction);
     }
 
-    // apply rules repeatedly until a return is triggerd
+    // apply rules repeatedly until a return is triggered
     while (true)
     {
         std::shared_ptr<AbstractRule> rule = nullptr;
@@ -116,8 +118,9 @@ bool solver::BranchingSolver::solve()
             }
         }
 
+        for (const auto& plugin : configuration->plugins) plugin->beforeApply(rule);
         const auto returnCode = rule->apply();
-        if (configuration->debPlugin) configuration->debPlugin->onApply(rule);
+        for (const auto& plugin : configuration->plugins) plugin->onApply(rule);
         appliedRules.push_back(rule);
 
         bool calculationFinished = false;
@@ -134,6 +137,7 @@ bool solver::BranchingSolver::solve()
             case RuleReturnCode::EndBranchWithSolutionCandidate:
                 if (configuration->boundedDephtSearch)
                 {
+                    for (const auto& plugin : configuration->plugins) plugin->onEnd();
                     return true;
                 }
                 else
@@ -160,7 +164,7 @@ bool solver::BranchingSolver::solve()
             }
             else
             {
-                if (configuration->debPlugin) configuration->debPlugin->onEnd();
+                for (const auto& plugin : configuration->plugins) plugin->onEnd();
                 *instance = {solution};
                 return true;
             }
