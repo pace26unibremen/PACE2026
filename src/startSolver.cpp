@@ -26,7 +26,7 @@ void runOnStream(std::istream& inStream, std::ostream& outStream) {
         // The timeout flag fired before any solution candidate was found.
         // This can happen when SIGTERM arrives very early in a run or when
         // the instance takes a long time to reach its first solution candidate.
-        std::cerr << "Solver stopped without producing a solution\n";
+        std::clog << "Solver stopped without producing a solution\n";
         return;
     }
 
