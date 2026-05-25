@@ -1,13 +1,35 @@
 #include "Solver/BranchingSolver.hpp"
+#include <atomic>
+#include <csignal>
 #include <fstream>
 #include <iostream>
+
+#ifdef _POSIX_VERSION
+static std::atomic<bool> g_timeout{false};
+static void sigtermHandler(int) { g_timeout.store(true, std::memory_order_relaxed); }
+#endif
 
 void runOnStream(std::istream& inStream, std::ostream& outStream) {
     // Start Timer
     auto startTime = std::clock();
     auto instance = graph::ReadInstance(inStream);
     auto solver = solver::BranchingSolver(instance);
+
+#ifdef _POSIX_VERSION
+    std::signal(SIGTERM, sigtermHandler);
+    solver.setTimeoutFlag(&g_timeout);
+#endif
+
     auto solved = solver.solve();
+    if (!solved)
+    {
+        // The timeout flag fired before any solution candidate was found.
+        // This can happen when SIGTERM arrives very early in a run or when
+        // the instance takes a long time to reach its first solution candidate.
+        std::cerr << "Solver stopped without producing a solution\n";
+        return;
+    }
+
     solver.unapplyReductions();
     auto endTime = std::clock();
     auto time_delta_ms = ((double) (endTime - startTime)) / ((double) CLOCKS_PER_SEC / 1000.0);
