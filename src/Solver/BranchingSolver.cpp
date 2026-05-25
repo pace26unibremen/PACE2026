@@ -18,8 +18,17 @@ solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>&
     this->context->branchingSolverConfiguration = this->configuration;
 }
 
+void solver::BranchingSolver::setTimeoutFlag(std::atomic<bool>* flag)
+{
+    timeoutFlag = flag;
+}
+
 bool solver::BranchingSolver::rollBackBranch()
 {
+    // Stop this branch immediately on timeout.
+    if (timeoutFlag && timeoutFlag->load(std::memory_order_relaxed))
+        return true;
+
     // all rule suggestions can be discarded at the end of a branch
     applyNext = std::queue<std::shared_ptr<AbstractRule>>();
 
@@ -93,9 +102,13 @@ bool solver::BranchingSolver::solve()
         appliedRules.push_back(subtreeReduction);
     }
 
-    // apply rules repeatedly until a return is triggerd
+    // apply rules repeatedly until a return is triggered
     while (true)
     {
+        // On timeout, stop before starting a new iteration.
+        if (timeoutFlag && timeoutFlag->load(std::memory_order_relaxed))
+            break;
+
         std::shared_ptr<AbstractRule> rule = nullptr;
 
         // check if we have rules in the pipeline
@@ -160,10 +173,18 @@ bool solver::BranchingSolver::solve()
             }
             else
             {
-                if (configuration->debPlugin) configuration->debPlugin->onEnd();
-                *instance = {solution};
-                return true;
+                // Fully explored (or timeout cut the search short). Fall through to
+                // the output path below.
+                break;
             }
         }
     }
+
+    // Reached when the search space is fully explored (unbounded depth) or when the
+    // timeout flag fires. Write out the best solution found, if any.
+    // solution may be nullptr when SIGTERM arrives before any candidate is found.
+    if (configuration->debPlugin) configuration->debPlugin->onEnd();
+    if (solution != nullptr)
+        *instance = {solution};
+    return solution != nullptr;
 }
