@@ -158,12 +158,12 @@ struct SolverConfig
     ///
     /// \return A \c SolverConfig with all three metrics plugins pre-loaded and
     ///         SIGTERM armed.
-    static SolverConfig pipeline()
+    static SolverConfig pipeline(std::ostream& out = std::cout)
     {
         SolverConfig c;
         c.track = Track::Pipeline;
         c.enableSigterm = true;
-        for (auto& p : solver::plugin::MetricsPlugins::makeAll())
+        for (auto& p : solver::plugin::MetricsPlugins::makeAll(out))
             c.branchingConfig.plugins.push_back(p);
         return c;
     }
@@ -178,10 +178,10 @@ struct SolverConfig
     /// \param dirPath Directory where DOT files are written.
     /// \return A \c SolverConfig with all metrics plugins and the visualisation
     ///         plugin pre-loaded.
-    static SolverConfig debug(const std::string& dirPath)
+    static SolverConfig debug(const std::string& dirPath, std::ostream& out = std::cout)
     {
         SolverConfig c;
-        for (auto& p : solver::plugin::MetricsPlugins::makeAll())
+        for (auto& p : solver::plugin::MetricsPlugins::makeAll(out))
             c.branchingConfig.plugins.push_back(p);
         c.branchingConfig.plugins.push_back(
             std::make_shared<solver::plugin::VisualizationPlugin>(dirPath));

@@ -176,6 +176,11 @@ static void printHelp(std::string_view prog)
 }
 
 /// \brief Map a track name string to a \ref solver::SolverConfig.
+///
+/// Plugin stride lines always go to \c std::cout — they are PACE harness
+/// protocol output and must appear on stdout regardless of where the solution
+/// file is written.
+///
 /// \throws std::invalid_argument for unknown names.
 static solver::SolverConfig resolveConfig(const std::string& name)
 {
