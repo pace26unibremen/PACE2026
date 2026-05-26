@@ -72,6 +72,7 @@ build-solver:
       - build/tests/DeleteEdgeActionTests
       - build/tests/BranchingSolverSimpleTests
       - build/tests/PluginTests
+      - build/tests/MetricsPluginTests
 
 build-solver-windows:
   stage: build
@@ -122,6 +123,7 @@ test-plugins:
     - chmod +x PluginTests
   script:
     - ./PluginTests --reporter junit -o PluginTests-results.xml
+    - ./MetricsPluginTests --reporter junit -o MetricsPluginTests-results.xml
 
 pages:
   image: alpine:3.20
