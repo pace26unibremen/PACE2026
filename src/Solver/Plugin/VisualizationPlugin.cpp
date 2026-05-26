@@ -24,7 +24,7 @@ void solver::plugin::VisualizationPlugin::writeStateNode()
                  "fillcolor=lightblue, "
                  "width=1,"
                  "label = \"" << stateIDs.top() << "\n";
-    for (auto& f : *instance)
+    for (auto& f : *instance_)
     {
         overviewFile << f->Roots().size() << " ";
     }
@@ -72,7 +72,7 @@ void solver::plugin::VisualizationPlugin::dotInstance(const std::filesystem::pat
     {
         std::shared_ptr<graph::Forest> forest = shadowInstance->at(i);
         // forests no longer in the active instance were removed by reductions — render them differently
-        auto found = std::find(instance->begin(), instance->end(), forest) != instance->end();
+        auto found = std::find(instance_->begin(), instance_->end(), forest) != instance_->end();
 
         std::string subgraphParam = (found ? "    style = dotted;\n" : "    style = \"dotted,filled\";\n");
         subgraphParam += "    cluster = true;\n"
@@ -92,9 +92,10 @@ void solver::plugin::VisualizationPlugin::dotInstance(const std::filesystem::pat
     os.close();
 }
 
-void solver::plugin::VisualizationPlugin::init(const std::shared_ptr<graph::Instance>& _instance)
+void solver::plugin::VisualizationPlugin::init(const std::shared_ptr<graph::Instance>& _instance,
+                                               const std::shared_ptr<solver::Context>& _context)
 {
-    instance = _instance;
+    AbstractPlugin::init(_instance, _context);
 
     // keep a snapshot of the initial forests to track which ones get removed
     shadowInstance = std::make_shared<graph::Instance>();
@@ -166,7 +167,7 @@ void solver::plugin::VisualizationPlugin::onEnd()
     overviewFile.close();
 }
 
-void solver::plugin::VisualizationPlugin::onTempUnapply(const std::shared_ptr<solver::AbstractRule>& rule, bool lastRule)
+void solver::plugin::VisualizationPlugin::onReductionUnapply(const std::shared_ptr<solver::AbstractRule>& rule, bool lastRule)
 {
     maxStateId++;
     if (lastRule)
@@ -184,7 +185,7 @@ void solver::plugin::VisualizationPlugin::onTempUnapply(const std::shared_ptr<so
     stateIDs.push(maxStateId);
 }
 
-void solver::plugin::VisualizationPlugin::onTempApply(const std::shared_ptr<solver::AbstractRule>& rule)
+void solver::plugin::VisualizationPlugin::onReductionReapply(const std::shared_ptr<solver::AbstractRule>& rule)
 {
     int old = stateIDs.top();
     stateIDs.pop();

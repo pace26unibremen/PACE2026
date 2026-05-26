@@ -31,9 +31,6 @@ class VisualizationPlugin : public AbstractPlugin
     /// \brief snapshot of all forests at solve-start (to mark forests removed by reductions)
     std::shared_ptr<graph::Instance> shadowInstance;
 
-    /// \brief live pointer to the solver's current instance
-    std::shared_ptr<graph::Instance> instance;
-
     void writeStateNode();
     void writeRuleNode(const std::shared_ptr<solver::AbstractRule>& rule);
     void dotInstance(const std::filesystem::path& path);
@@ -42,11 +39,12 @@ class VisualizationPlugin : public AbstractPlugin
     /// \param dirPath path to the directory where DOT files are written
     explicit VisualizationPlugin(std::string dirPath);
 
-    void init(const std::shared_ptr<graph::Instance>& instance) override;
+    void init(const std::shared_ptr<graph::Instance>& instance,
+              const std::shared_ptr<solver::Context>& context) override;
     void onApply(const std::shared_ptr<solver::AbstractRule>& rule) override;
     void onUnapply(const std::shared_ptr<solver::AbstractRule>& rule) override;
-    void onTempUnapply(const std::shared_ptr<solver::AbstractRule>& rule, bool lastRule) override;
-    void onTempApply(const std::shared_ptr<solver::AbstractRule>& rule) override;
+    void onReductionUnapply(const std::shared_ptr<solver::AbstractRule>& rule, bool lastRule) override;
+    void onReductionReapply(const std::shared_ptr<solver::AbstractRule>& rule) override;
     void onEnd() override;
 };
 
