@@ -25,7 +25,12 @@
 //    c.branchingConfig.plugins.push_back(...);
 //    return c;
 // ============================================================
-static solver::SolverConfig defaultConfig() { return solver::SolverConfig::exactTrack(); }
+static solver::SolverConfig defaultConfig(std::ostream& /*out*/)
+{
+    // exactTrack has no plugins — out is unused here but kept for a uniform
+    // signature with resolveConfig so callers don't need to special-case it.
+    return solver::SolverConfig::exactTrack();
+}
 
 // ============================================================
 //  POSIX SIGTERM infrastructure
@@ -60,7 +65,7 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
     if (config.enableSigterm) {
         std::signal(SIGTERM, sigtermHandler);
         config.branchingConfig.plugins.push_back(
-            std::make_shared<solver::plugin::SigtermPlugin>(&g_timeout));
+            std::make_shared<solver::plugin::SigtermPlugin>(&g_timeout, out));
     }
 #endif
 
@@ -177,16 +182,15 @@ static void printHelp(std::string_view prog)
 
 /// \brief Map a track name string to a \ref solver::SolverConfig.
 ///
-/// Plugin stride lines always go to \c std::cout — they are PACE harness
-/// protocol output and must appear on stdout regardless of where the solution
-/// file is written.
-///
+/// \param out  Stream that plugin output (stride lines) will be written to.
+///             Should be the same stream the solution is written to so that
+///             both solution data and metrics land in the same destination.
 /// \throws std::invalid_argument for unknown names.
-static solver::SolverConfig resolveConfig(const std::string& name)
+static solver::SolverConfig resolveConfig(const std::string& name, std::ostream& out)
 {
     if (name == "exact")     return solver::SolverConfig::exactTrack();
     if (name == "heuristic") return solver::SolverConfig::heuristicTrack();
-    if (name == "pipeline")  return solver::SolverConfig::pipeline();
+    if (name == "pipeline")  return solver::SolverConfig::pipeline(out);
     throw std::invalid_argument(
         "Unknown --track value: \"" + name + "\". "
         "Valid values: exact, heuristic, pipeline.");
@@ -245,13 +249,18 @@ int main(int argc, char* argv[])
         if (auto dotenv = readPaceTrackFromDotEnv())
             trackName = std::move(*dotenv);
     }
-    const solver::SolverConfig config = trackName.empty()
-                                            ? defaultConfig()
-                                            : resolveConfig(trackName);
 
-    // ---- Run ------------------------------------------------------------
+    // ---- Open streams first so plugin output follows solution output -----
+    //
+    // Plugins (metrics, SIGTERM) write to the same stream as the solution so
+    // that both land in the same file or on stdout together.  The config must
+    // therefore be built after the output stream is known.
+
     if (infile.empty()) {
         // Stdin / stdout mode — used by optil.io and the PACE stride harness.
+        const solver::SolverConfig config = trackName.empty()
+                                                ? defaultConfig(std::cout)
+                                                : resolveConfig(trackName, std::cout);
         runOnStream(std::cin, std::cout, config);
         return 0;
     }
@@ -267,6 +276,9 @@ int main(int argc, char* argv[])
     if (!outStream)
         throw std::runtime_error("Cannot open output file: " + outfile);
 
+    const solver::SolverConfig config = trackName.empty()
+                                            ? defaultConfig(outStream)
+                                            : resolveConfig(trackName, outStream);
     runOnStream(inStream, outStream, config);
     return 0;
 }
