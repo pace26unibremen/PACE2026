@@ -17,13 +17,15 @@ class MockPlugin : public solver::plugin::AbstractPlugin
   public:
     std::vector<std::string> calls;
 
-    void init(const std::shared_ptr<graph::Instance>&) override            { calls.push_back("init"); }
+    void init(const std::shared_ptr<graph::Instance>&,
+              const std::shared_ptr<solver::Context>&) override             { calls.push_back("init"); }
     void beforeApply(const std::shared_ptr<solver::AbstractRule>&) override { calls.push_back("beforeApply"); }
     void onApply(const std::shared_ptr<solver::AbstractRule>&) override     { calls.push_back("onApply"); }
     void onUnapply(const std::shared_ptr<solver::AbstractRule>&) override   { calls.push_back("onUnapply"); }
-    void onTempUnapply(const std::shared_ptr<solver::AbstractRule>&, bool) override { calls.push_back("onTempUnapply"); }
-    void onTempApply(const std::shared_ptr<solver::AbstractRule>&) override  { calls.push_back("onTempApply"); }
+    void onReductionUnapply(const std::shared_ptr<solver::AbstractRule>&, bool) override { calls.push_back("onReductionUnapply"); }
+    void onReductionReapply(const std::shared_ptr<solver::AbstractRule>&) override       { calls.push_back("onReductionReapply"); }
     void onNewBestSolution(std::size_t) override                            { calls.push_back("onNewBestSolution"); }
+    void onBranchEnd() override                                                  { calls.push_back("onBranchEnd"); }
     void onEnd() override                                                   { calls.push_back("onEnd"); }
 
     int count(const std::string& name) const
@@ -137,6 +139,45 @@ TEST_CASE("Plugin: onNewBestSolution is called at least once in unbounded mode",
     solver::BranchingSolver(instance, makeConfig({mock}, false)).solve();
 
     CHECK(mock->count("onNewBestSolution") >= 1);
+}
+
+TEST_CASE("Plugin: onBranchEnd is called at least once in both modes", "[Plugin]")
+{
+    SECTION("bounded depth search")
+    {
+        auto mock = std::make_shared<MockPlugin>();
+        auto instance = graph::ReadInstance(std::string(RES_DIR) + "tiny/tiny01.nw");
+        solver::BranchingSolver(instance, makeConfig({mock}, true)).solve();
+
+        CHECK(mock->count("onBranchEnd") >= 1);
+    }
+
+    SECTION("unbounded depth search")
+    {
+        auto mock = std::make_shared<MockPlugin>();
+        auto instance = graph::ReadInstance(std::string(RES_DIR) + "tiny/tiny01.nw");
+        solver::BranchingSolver(instance, makeConfig({mock}, false)).solve();
+
+        CHECK(mock->count("onBranchEnd") >= 1);
+    }
+}
+
+TEST_CASE("Plugin: onBranchEnd always precedes onEnd", "[Plugin]")
+{
+    // onBranchEnd must always fire before onEnd — it represents the final
+    // branch reaching a terminal state.
+    SECTION("bounded depth search — single leaf then onEnd")
+    {
+        auto mock = std::make_shared<MockPlugin>();
+        auto instance = graph::ReadInstance(std::string(RES_DIR) + "tiny/tiny01.nw");
+        solver::BranchingSolver(instance, makeConfig({mock}, true)).solve();
+
+        // In bounded mode the last two events must be onBranchEnd then onEnd.
+        REQUIRE(mock->calls.size() >= 2);
+        const auto n = mock->calls.size();
+        CHECK(mock->calls[n - 2] == "onBranchEnd");
+        CHECK(mock->calls[n - 1] == "onEnd");
+    }
 }
 
 TEST_CASE("VisualizationPlugin: overview.dot is a syntactically closed DOT graph", "[Plugin][VisualizationPlugin]")
