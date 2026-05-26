@@ -53,9 +53,11 @@ void solver::BranchingSolver::checkSolutionCandidate()
     {
         // update context (we have a better solution)
         context->bestSolutionSize = instance->at(0)->Roots().size();
-        for (const auto& plugin : configuration->plugins) plugin->onNewBestSolution(context->bestSolutionSize);
 
         unapplyReductions();
+
+        // notify plugins now that the instance is fully expanded (reductions undone)
+        for (const auto& plugin : configuration->plugins) plugin->onNewBestSolution(context->bestSolutionSize);
 
         // write out the solution
         solution = std::make_shared<graph::Forest>(instance->at(0)->copy());
@@ -65,25 +67,32 @@ void solver::BranchingSolver::checkSolutionCandidate()
             | std::views::filter([](const std::shared_ptr<AbstractRule>& r){ return r->IsReduction();}))
         {
             reductionRule->apply();
-            for (const auto& plugin : configuration->plugins) plugin->onTempApply(reductionRule);
+            for (const auto& plugin : configuration->plugins) plugin->onReductionReapply(reductionRule);
         }
     }
 }
 
 void solver::BranchingSolver::unapplyReductions()
 {
+    // The first reduction in appliedRules (forward) is the last one to be unapplied (reverse iteration).
+    // Find it upfront so we can pass lastRule=true to plugins without a separate allocation.
+    std::shared_ptr<AbstractRule> firstReduction;
+    for (const auto& r : appliedRules)
+        if (r->IsReduction()) { firstReduction = r; break; }
+
     // unapply all reduction rules to get solution for the original instance
     for (const auto& reductionRule : appliedRules | std::views::reverse
         | std::views::filter([](const std::shared_ptr<AbstractRule>& r){ return r->IsReduction();}))
     {
         reductionRule->unapply();
-        for (const auto& plugin : configuration->plugins) plugin->onTempUnapply(reductionRule, false);
+        for (const auto& plugin : configuration->plugins)
+            plugin->onReductionUnapply(reductionRule, reductionRule == firstReduction);
     }
 }
 
 bool solver::BranchingSolver::solve()
 {
-    for (const auto& plugin : configuration->plugins) plugin->init(instance);
+    for (const auto& plugin : configuration->plugins) plugin->init(instance, context);
 
     // Try to apply the subtree reduction before starting the main solving process
     auto subtreeReduction = solver::SubtreeReductionRule::isApplicable(instance, context);
@@ -137,16 +146,19 @@ bool solver::BranchingSolver::solve()
             case RuleReturnCode::EndBranchWithSolutionCandidate:
                 if (configuration->boundedDephtSearch)
                 {
+                    for (const auto& plugin : configuration->plugins) plugin->onBranchEnd();
                     for (const auto& plugin : configuration->plugins) plugin->onEnd();
                     return true;
                 }
                 else
                 {
+                    for (const auto& plugin : configuration->plugins) plugin->onBranchEnd();
                     checkSolutionCandidate();
                     calculationFinished = rollBackBranch();
                     break;
                 }
             case RuleReturnCode::CutBranch:
+                for (const auto& plugin : configuration->plugins) plugin->onBranchEnd();
                 calculationFinished = rollBackBranch();
                 break;
             case RuleReturnCode::ImidateReturn:
