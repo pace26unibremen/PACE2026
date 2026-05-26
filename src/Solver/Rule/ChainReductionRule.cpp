@@ -4,6 +4,8 @@
 #include <forward_list>
 #include <unordered_map>
 #include <utility>
+#include <iostream>
+
 solver::ChainReductionRule::ChainReductionRule(
     const std::shared_ptr<graph::Instance>& instance,
     std::pair<std::vector<std::vector<graph::Node*>>,std::vector<std::shared_ptr<graph::Forest>>> chainWithTrees,
@@ -13,6 +15,8 @@ solver::ChainReductionRule::ChainReductionRule(
 {
     //Copying of the Trees maybe irrelevant when doing this without const params. Not sure.
     this->chainWithTrees = std::move(chainWithTrees);
+    rootsT1Indices = {};
+    rootsT2Indices = {};
 
 }
 
@@ -39,7 +43,40 @@ bool solver::ChainReductionRule::isNodeInNodeVector(const graph::Node* node, con
     }
     return check;
 }
-void solver::ChainReductionRule::storeNodeIndices(const graph::Node* node, const std::shared_ptr<graph::Forest>& forest)
+
+void solver::ChainReductionRule::storeRootNodes(const std::shared_ptr<graph::Forest>& forest)
+{
+    std::vector<int> indicesList;
+    indicesList.reserve(2);
+
+    int leftPos = -1;
+    int rightPos = -1;
+
+    for (int i = 0; i < forest->Roots().capacity(); i++)
+    {
+        for (int j = 0; j < forest->Nodes().capacity(); j++)
+        {
+            // if (forest->Nodes()[j] == *forest->Roots()[i]->leftChild)
+            //     leftPos = j;
+            // if (&forest->Nodes()[j] == forest->Roots()[i]->rightChild)
+            //     rightPos = j;
+        }
+        indicesList = {leftPos, rightPos};
+
+        if (forest == chainWithTrees.second.front())
+        {
+            rootsT1Indices.first.push_back(indicesList);
+            rootsT1Indices.second.push_back(forest->Roots()[i]->subtreeTerminals);
+        }
+        if (forest == chainWithTrees.second.back())
+        {
+            rootsT2Indices.first.push_back(indicesList);
+            rootsT2Indices.second.push_back(forest->Roots()[i]->subtreeTerminals);
+        }
+    }
+}
+
+void solver::ChainReductionRule::storeEditedNodeIndices(const graph::Node* node, const std::shared_ptr<graph::Forest>& forest)
 {
     auto capacityOfNodes = forest->Nodes().capacity();
 
@@ -47,7 +84,7 @@ void solver::ChainReductionRule::storeNodeIndices(const graph::Node* node, const
     indicesList.reserve(4);
 
     int nodePos = 0;
-    for (int i = 0; i < forest->Nodes().capacity(); i++)
+    for (int i = 0; i < capacityOfNodes; i++)
     {
         if (&forest->Nodes()[i] == node)
         {
@@ -102,7 +139,6 @@ void solver::ChainReductionRule::storeNodeIndices(const graph::Node* node, const
         deletedNodesT2Indices.second.at(nodePos) = forest->Nodes()[nodePos].subtreeTerminals;
     }
 
-    // deletedNodesT2Indices.second.at(nodePos) = forest->Nodes()[nodePos].subtreeTerminals;
 }
 
 void solver::ChainReductionRule::removeConnectionOfTerminalNode(graph::Node* node, std::shared_ptr<graph::Forest>& forest)
@@ -112,7 +148,7 @@ void solver::ChainReductionRule::removeConnectionOfTerminalNode(graph::Node* nod
     {
         //alter terminal to be alone
         graph::Node* terminal = node->leftChild;
-        storeNodeIndices(terminal, forest);
+        storeEditedNodeIndices(terminal, forest);
 
         terminal->parent = nullptr;
         if (terminal->sibling != nullptr)
@@ -122,6 +158,7 @@ void solver::ChainReductionRule::removeConnectionOfTerminalNode(graph::Node* nod
         }
         terminal->sibling = nullptr;
         //->Single vertex terminal
+        forest->Roots().push_back(terminal);
 
         //now alter param node
         if (node->rightChild != nullptr) node->rightChild->parent = nullptr;
@@ -142,7 +179,7 @@ void solver::ChainReductionRule::removeConnectionOfTerminalNode(graph::Node* nod
     {
         //alter terminal to be alone
         graph::Node* terminal = node->rightChild;
-        storeNodeIndices(terminal,forest);
+        storeEditedNodeIndices(terminal,forest);
 
         terminal->parent = nullptr;
         if (terminal->sibling != nullptr)
@@ -267,14 +304,19 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
         //Store all node connections by their index.
         for (int index = 0; index < chainWithTrees.second.front()->Nodes().capacity(); index++)
         {
-            storeNodeIndices(&chainWithTrees.second.front()->Nodes()[index], chainWithTrees.second.front());
+            storeEditedNodeIndices(&chainWithTrees.second.front()->Nodes()[index], chainWithTrees.second.front());
 
         }
 
         for (int index = 0; index < chainWithTrees.second.back()->Nodes().capacity(); index++)
         {
-            storeNodeIndices(&chainWithTrees.second.back()->Nodes()[index], chainWithTrees.second.back());
+            storeEditedNodeIndices(&chainWithTrees.second.back()->Nodes()[index], chainWithTrees.second.back());
         }
+
+        //Store current Root Nodes
+        // storeRootNodes(chainWithTrees.second.front());
+        // storeRootNodes(chainWithTrees.second.back());
+
         // Acquire the notes required
         // Fetch x3
         graph::Node* bottomT1 = chainWithTrees.first[0].front();
@@ -340,12 +382,15 @@ void solver::ChainReductionRule::unapply()
     std::vector<graph::Node>& nodesT1 = chainWithTrees.second.front()->Nodes();
     std::vector<graph::Node>& nodesT2 = chainWithTrees.second.back()->Nodes();
 
+    std::vector<graph::Node*> rootsT1 = chainWithTrees.second.front()->Roots();
+    std::vector<graph::Node*> rootsT2 = chainWithTrees.second.back()->Roots();
     if (not this->isApplied)
     {
         throw std::invalid_argument("ChainReductionRule : unapply : rule is not applied");
     }
     isApplied = false;
 
+    //For all potentially edited nodes out of T1, restore their old connections to other nodes by index
     for (int index = 0; index < deletedNodesT1Indices.first.capacity(); index++)
     {
         if (deletedNodesT1Indices.first[index].empty() == false)
@@ -374,7 +419,7 @@ void solver::ChainReductionRule::unapply()
             nodesT1[index].subtreeTerminals = deletedNodesT1Indices.second[index];
         }
     }
-
+    //For all potentially edited nodes out of T2, restore their old connections to other nodes by index
     for (int index = 0; index < deletedNodesT2Indices.first.capacity(); index++)
     {
         if (deletedNodesT2Indices.first[index].empty() == false)
@@ -403,6 +448,27 @@ void solver::ChainReductionRule::unapply()
             nodesT2[index].subtreeTerminals = deletedNodesT2Indices.second[index];
         }
     }
+
+    //Restore all root nodes in T1
+    for (int index = 0; index < rootsT1Indices.first.size(); index++)
+    {
+        if (rootsT1Indices.first[index][0] != -1)
+            rootsT1[index]->leftChild = &nodesT1.at(rootsT1Indices.first[index][0]);
+        if (rootsT1Indices.first[index][1] != -1)
+            rootsT1[index]->rightChild = &nodesT1.at(rootsT1Indices.first[index][1]);
+    }
+    //Remove all unnecessary root node entries?
+    rootsT1.resize(rootsT1Indices.first.size());
+
+    //Restore all root nodes in T2
+    for (int index = 0; index < rootsT2Indices.first.size(); index++)
+    {
+        if (rootsT2Indices.first[index][0] != -1)
+            rootsT2[index]->leftChild = &nodesT2.at(rootsT2Indices.first[index][0]);
+        if (rootsT2Indices.first[index][1] != -1)
+            rootsT2[index]->rightChild = &nodesT2.at(rootsT2Indices.first[index][1]);
+    }
+    rootsT2.resize(rootsT2Indices.first.size());
 }
 
 std::shared_ptr<solver::AbstractRule>
@@ -419,6 +485,9 @@ solver::ChainReductionRule::isApplicable(
     {
         std::shared_ptr<graph::Forest> T1 = instance->front();
         std::shared_ptr<graph::Forest> T2 = instance->back();
+
+        T1->write(std::cout);
+        T2->write(std::cout);
 
         //Fetch Leaves - Terminal Index to Label
         std::unordered_map<graph::Node*,unsigned int> termIndexTreeOne = T1->TerminalToLabel();

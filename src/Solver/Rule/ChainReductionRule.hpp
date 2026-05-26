@@ -24,6 +24,12 @@ namespace solver
         /// Left pair element denotes the indicies for each node, right contains the bitmask list for each node
         std::pair<std::vector<std::vector<int>>, std::vector<std::vector<uint64_t>>> deletedNodesT2Indices;
 
+        /// \brief Indices for all root nodes prior to applying the rule for the first tree
+         std::pair<std::vector<std::vector<int>>, std::vector<std::vector<uint64_t>>> rootsT1Indices;
+
+        /// \brief Indices for all root nodes prior to applying the rule for the second tree
+         std::pair<std::vector<std::vector<int>>, std::vector<std::vector<uint64_t>>> rootsT2Indices;
+
     public:
         /// \brief Chain Reduction Rule implementation that identifies the first chain out of the two forests given
         /// \param instance The problem instance
@@ -40,11 +46,15 @@ namespace solver
         /// \return Boolean of if the node is within the list or not
         static bool isNodeInNodeVector(const graph::Node* node, const std::vector<graph::Node*>& list);
 
+        /// \brief Helper function that stores all root nodes within a forest
+        /// \param forest The forest whose root nodes should be stored
+        void storeRootNodes(const std::shared_ptr<graph::Forest>& forest);
+
         /// \brief Helper function which saves the connections of a node to his associated nodes
         /// within the corresponding forest through saving the indicies to the node address within the forest node list
         /// \param node The node whose connections should be saved
         /// \param forest The forest from which the node originates
-        void storeNodeIndices(const graph::Node* node, const std::shared_ptr<graph::Forest>& forest);
+        void storeEditedNodeIndices(const graph::Node* node, const std::shared_ptr<graph::Forest>& forest);
 
         /// \brief Helper function that deletes the connections between the parameter node with the terminal child as
         /// well as removing them from the tree they're in. Copies the node beforehand into a constructor list.
