@@ -22,6 +22,8 @@ class StrideTestHelper : public solver::plugin::AbstractStridePlugin
   public:
     using AbstractStridePlugin::emitStrideLine;
     using AbstractStridePlugin::toJson;
+    using AbstractStridePlugin::toJsonSnakeKeys;
+    using AbstractStridePlugin::toSnakeCase;
 };
 
 // ---------------------------------------------------------------------------
@@ -123,7 +125,7 @@ TEST_CASE("AbstractStridePlugin: toJson(vector<Snapshot>)", "[MetricsPlugin][JSO
         CHECK(StrideTestHelper::toJson(std::vector<solver::plugin::Snapshot>{}) == "[]");
     }
 
-    SECTION("single snapshot — field order and format")
+    SECTION("single snapshot — field order and format, rule keys converted to snake_case")
     {
         solver::plugin::Snapshot s{
             .wtime        = 0.123,
@@ -134,9 +136,10 @@ TEST_CASE("AbstractStridePlugin: toJson(vector<Snapshot>)", "[MetricsPlugin][JSO
             .ruleTimes_ms = {{"CutBranchRule", 7.5}},
         };
         const std::string json = StrideTestHelper::toJson(std::vector<solver::plugin::Snapshot>{s});
+        // Rule name keys are converted to snake_case by toJson(Snapshot) at serialisation time.
         CHECK(json == "[{\"wtime\":0.123,\"score\":4,\"branch_opens\":1,\"branch_closes\":1,"
-                      "\"rule_counts\":{\"CutBranchRule\":2},"
-                      "\"rule_times_ms\":{\"CutBranchRule\":7.500}}]");
+                      "\"rule_counts\":{\"cut_branch_rule\":2},"
+                      "\"rule_times_ms\":{\"cut_branch_rule\":7.500}}]");
     }
 
     SECTION("two snapshots are comma-separated")
@@ -151,6 +154,16 @@ TEST_CASE("AbstractStridePlugin: toJson(vector<Snapshot>)", "[MetricsPlugin][JSO
         REQUIRE(first_close != std::string::npos);
         CHECK(json[first_close + 1] == ',');
     }
+}
+
+TEST_CASE("AbstractStridePlugin: toSnakeCase converts CamelCase to snake_case", "[MetricsPlugin][JSON]")
+{
+    CHECK(StrideTestHelper::toSnakeCase("CutBranchRule")          == "cut_branch_rule");
+    CHECK(StrideTestHelper::toSnakeCase("PairPathBranchingRule")  == "pair_path_branching_rule");
+    CHECK(StrideTestHelper::toSnakeCase("EqualForestsRule")       == "equal_forests_rule");
+    CHECK(StrideTestHelper::toSnakeCase("SingleVertexTreePropagationRule") == "single_vertex_tree_propagation_rule");
+    CHECK(StrideTestHelper::toSnakeCase("already_snake")          == "already_snake");
+    CHECK(StrideTestHelper::toSnakeCase("R")                      == "r");
 }
 
 TEST_CASE("AbstractStridePlugin: emitStrideLine writes #s prefix", "[MetricsPlugin][stride]")
@@ -179,6 +192,7 @@ TEST_CASE("RuleStatsPlugin: accumulates counts and emits stride lines on onEnd",
     plugin.beforeApply(ruleA); plugin.onApply(ruleA);
     plugin.beforeApply(ruleB); plugin.onApply(ruleB);
 
+    // Collector stores CamelCase keys (rule->name()); conversion happens at emit time only.
     REQUIRE(collector->ruleCounts.at("RuleA") == 2);
     REQUIRE(collector->ruleCounts.at("RuleB") == 1);
 
@@ -188,9 +202,9 @@ TEST_CASE("RuleStatsPlugin: accumulates counts and emits stride lines on onEnd",
     CHECK(out.find("#s rule_times_ms ") != std::string::npos);
     CHECK(out.find("#s rule_counts ") != std::string::npos);
 
-    // rule_counts JSON must encode the right numbers.
-    CHECK(out.find("\"RuleA\":2") != std::string::npos);
-    CHECK(out.find("\"RuleB\":1") != std::string::npos);
+    // rule_counts JSON must encode the right numbers with snake_case keys.
+    CHECK(out.find("\"rule_a\":2") != std::string::npos);
+    CHECK(out.find("\"rule_b\":1") != std::string::npos);
 }
 
 TEST_CASE("RuleStatsPlugin: timing is non-negative", "[MetricsPlugin][RuleStats]")
@@ -217,7 +231,7 @@ TEST_CASE("RuleStatsPlugin: collectTiming=false still counts rules but skips tim
     plugin.beforeApply(ruleA); plugin.onApply(ruleA);
     plugin.beforeApply(ruleB); plugin.onApply(ruleB);
 
-    // Counts must still be accumulated.
+    // Counts must still be accumulated (CamelCase keys in the collector).
     CHECK(collector->ruleCounts.at("RuleA") == 2);
     CHECK(collector->ruleCounts.at("RuleB") == 1);
 
@@ -395,5 +409,5 @@ TEST_CASE("MetricsPlugins::makeAll: shared collector — RuleStats data visible 
 
     // The snapshot should contain the rule count accumulated by RuleStatsPlugin.
     const std::string out = captureStdout([&] { convergence->onEnd(); });
-    CHECK(out.find("\"TestRule\":1") != std::string::npos);
+    CHECK(out.find("\"test_rule\":1") != std::string::npos);
 }
