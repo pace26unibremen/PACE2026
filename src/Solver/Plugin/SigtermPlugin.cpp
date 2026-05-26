@@ -1,7 +1,7 @@
 #include "SigtermPlugin.hpp"
 
-solver::plugin::SigtermPlugin::SigtermPlugin(const std::atomic<bool>* timeoutFlag)
-    : timeoutFlag(timeoutFlag)
+solver::plugin::SigtermPlugin::SigtermPlugin(const std::atomic<bool>* timeoutFlag, std::ostream& out)
+    : AbstractStridePlugin(out), timeoutFlag(timeoutFlag)
 {
 }
 

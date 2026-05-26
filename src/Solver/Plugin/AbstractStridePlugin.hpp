@@ -3,6 +3,7 @@
 
 #include "AbstractPlugin.hpp"
 
+#include <iostream>
 #include <map>
 #include <string>
 #include <vector>
@@ -24,17 +25,30 @@ struct Snapshot
     std::map<std::string, double> ruleTimes_ms; ///< Cumulative rule wall-clock times (ms)
 };
 
-/// \brief Base class for plugins that emit stride lines to stdout.
+/// \brief Base class for plugins that emit stride lines to a given output stream.
 ///
 /// Extends \ref AbstractPlugin with:
 /// - Three static \c toJson overloads for compact JSON serialisation
 ///   (hand-rolled, no external library).
-/// - A static \c emitStrideLine helper that writes \c "#s key value\\n".
+/// - A non-static \c emitStrideLine helper that writes \c "#s key value\\n"
+///   to the stream supplied at construction time.
+///
+/// The output stream defaults to \c std::cout so all existing construction
+/// sites remain unchanged.  Pass a different stream (e.g. the solver's
+/// output file) to route stride lines alongside the solution output.
 ///
 /// No new virtual hooks are introduced — subclasses still override only the
 /// hooks they need from \ref AbstractPlugin.
 class AbstractStridePlugin : public AbstractPlugin
 {
+  protected:
+    /// \brief Output stream for stride lines.  Defaults to \c std::cout.
+    std::ostream& out_;
+
+  public:
+    /// \param out Stream to write \c "#s …" lines to.  Defaults to \c std::cout.
+    explicit AbstractStridePlugin(std::ostream& out = std::cout) : out_(out) {}
+
   protected:
     /// \brief Convert a CamelCase name to lowercase snake_case.
     ///
@@ -65,8 +79,8 @@ class AbstractStridePlugin : public AbstractPlugin
     /// Use this at emit time (onEnd) to avoid repeated allocation during the hot solver path.
     static std::string toJsonSnakeKeys(const std::map<std::string, double>& m);
 
-    /// \brief Write a single stride line \c "#s key jsonValue\\n" to \c std::cout.
-    static void emitStrideLine(const std::string& key, const std::string& jsonValue);
+    /// \brief Write a single stride line \c "#s key jsonValue\\n" to \ref out_.
+    void emitStrideLine(const std::string& key, const std::string& jsonValue);
 };
 
 } // namespace solver::plugin

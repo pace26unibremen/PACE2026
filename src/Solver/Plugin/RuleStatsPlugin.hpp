@@ -37,7 +37,8 @@ class RuleStatsPlugin : public AbstractStridePlugin
     ///                       rule application; if \c false only counts are collected,
     ///                       eliminating the timer overhead.
     explicit RuleStatsPlugin(std::shared_ptr<MetricsCollector> collector,
-                             bool collectTiming = true);
+                             bool collectTiming = true,
+                             std::ostream& out = std::cout);
 
     void beforeApply(const std::shared_ptr<solver::AbstractRule>& rule) override;
     void onApply(const std::shared_ptr<solver::AbstractRule>& rule) override;

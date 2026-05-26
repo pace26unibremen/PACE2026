@@ -34,15 +34,16 @@ namespace solver::plugin
 struct MetricsPlugins
 {
     /// \brief Create all three metric plugins sharing one \ref MetricsCollector.
+    /// \param out Stream to write \c "#s …" lines to.  Defaults to \c std::cout.
     /// \return Vector of three plugins ready to be appended to
     ///         \ref BranchingSolverConfiguration::plugins.
-    static std::vector<std::shared_ptr<AbstractPlugin>> makeAll()
+    static std::vector<std::shared_ptr<AbstractPlugin>> makeAll(std::ostream& out = std::cout)
     {
         auto collector = std::make_shared<MetricsCollector>();
         return {
-            std::make_shared<RuleStatsPlugin>(collector),
-            std::make_shared<BranchCountPlugin>(collector),
-            std::make_shared<ConvergencePlugin>(collector),
+            std::make_shared<RuleStatsPlugin>(collector, true, out),
+            std::make_shared<BranchCountPlugin>(collector, out),
+            std::make_shared<ConvergencePlugin>(collector, out),
         };
     }
 };

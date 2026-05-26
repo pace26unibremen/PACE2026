@@ -2,8 +2,9 @@
 
 #include <utility>
 
-solver::plugin::ConvergencePlugin::ConvergencePlugin(std::shared_ptr<MetricsCollector> collector)
-    : collector(std::move(collector))
+solver::plugin::ConvergencePlugin::ConvergencePlugin(std::shared_ptr<MetricsCollector> collector,
+                                                     std::ostream& out)
+    : AbstractStridePlugin(out), collector(std::move(collector))
 {
 }
 

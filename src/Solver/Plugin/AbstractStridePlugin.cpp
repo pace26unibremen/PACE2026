@@ -128,5 +128,5 @@ std::string solver::plugin::AbstractStridePlugin::toJsonSnakeKeys(const std::map
 
 void solver::plugin::AbstractStridePlugin::emitStrideLine(const std::string& key, const std::string& jsonValue)
 {
-    std::cout << "#s " << key << ' ' << jsonValue << '\n';
+    out_ << "#s " << key << ' ' << jsonValue << '\n';
 }

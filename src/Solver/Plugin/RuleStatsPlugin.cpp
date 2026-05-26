@@ -3,8 +3,9 @@
 #include <utility>
 
 solver::plugin::RuleStatsPlugin::RuleStatsPlugin(std::shared_ptr<MetricsCollector> collector,
-                                                  bool collectTiming)
-    : collector(std::move(collector)), collectTiming(collectTiming)
+                                                  bool collectTiming,
+                                                  std::ostream& out)
+    : AbstractStridePlugin(out), collector(std::move(collector)), collectTiming(collectTiming)
 {
 }
 

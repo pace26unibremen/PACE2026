@@ -30,7 +30,7 @@ class SigtermPlugin : public AbstractStridePlugin
   public:
     /// \param timeoutFlag pointer to the atomic flag set by the signal handler,
     ///                    or \c nullptr if no signal handling is active.
-    explicit SigtermPlugin(const std::atomic<bool>* timeoutFlag);
+    explicit SigtermPlugin(const std::atomic<bool>* timeoutFlag, std::ostream& out = std::cout);
 
     /// \brief Emits \c "#s timeout 1" if the timeout flag is set, \c "#s timeout 0" otherwise.
     void onEnd() override;

@@ -21,7 +21,7 @@ class BranchCountPlugin : public AbstractStridePlugin
     std::shared_ptr<MetricsCollector> collector;
 
   public:
-    explicit BranchCountPlugin(std::shared_ptr<MetricsCollector> collector);
+    explicit BranchCountPlugin(std::shared_ptr<MetricsCollector> collector, std::ostream& out = std::cout);
 
     /// \brief Increments \c collector->branchOpens when \p rule is an \ref AbstractBranchingRule.
     void onApply(const std::shared_ptr<solver::AbstractRule>& rule) override;

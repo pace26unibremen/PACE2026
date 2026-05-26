@@ -31,7 +31,7 @@ class ConvergencePlugin : public AbstractStridePlugin
     std::vector<Snapshot> snapshots;
 
   public:
-    explicit ConvergencePlugin(std::shared_ptr<MetricsCollector> collector);
+    explicit ConvergencePlugin(std::shared_ptr<MetricsCollector> collector, std::ostream& out = std::cout);
 
     /// \brief Records \c collector->startTime = steady_clock::now().
     void init(const std::shared_ptr<graph::Instance>& instance,
@@ -40,7 +40,7 @@ class ConvergencePlugin : public AbstractStridePlugin
     /// \brief Appends a snapshot of the current collector state to the trace.
     void onNewBestSolution(std::size_t score) override;
 
-    /// \brief Emits `#s convergence [...]` to stdout.
+    /// \brief Emits `#s convergence [...]` to \ref out_.
     void onEnd() override;
 };
 

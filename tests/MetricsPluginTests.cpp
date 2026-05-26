@@ -21,6 +21,7 @@
 class StrideTestHelper : public solver::plugin::AbstractStridePlugin
 {
   public:
+    using AbstractStridePlugin::AbstractStridePlugin; // inherit stream constructor
     using AbstractStridePlugin::emitStrideLine;
     using AbstractStridePlugin::toJson;
     using AbstractStridePlugin::toJsonSnakeKeys;
@@ -169,11 +170,10 @@ TEST_CASE("AbstractStridePlugin: toSnakeCase converts CamelCase to snake_case", 
 
 TEST_CASE("AbstractStridePlugin: emitStrideLine writes #s prefix", "[MetricsPlugin][stride]")
 {
-    const std::string out = captureStdout([]
-    {
-        StrideTestHelper::emitStrideLine("branch_opens", "42");
-    });
-    CHECK(out == "#s branch_opens 42\n");
+    std::ostringstream ss;
+    StrideTestHelper helper{ss};
+    helper.emitStrideLine("branch_opens", "42");
+    CHECK(ss.str() == "#s branch_opens 42\n");
 }
 
 // ===========================================================================
