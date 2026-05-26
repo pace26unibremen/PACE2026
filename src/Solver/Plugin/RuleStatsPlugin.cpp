@@ -16,18 +16,20 @@ void solver::plugin::RuleStatsPlugin::beforeApply(const std::shared_ptr<solver::
 
 void solver::plugin::RuleStatsPlugin::onApply(const std::shared_ptr<solver::AbstractRule>& rule)
 {
-    const std::string& ruleName = rule->name();
-    collector->ruleCounts[ruleName]++;
+    const std::string& key = rule->name();
+    collector->ruleCounts[key]++;
     if (collectTiming)
     {
         using namespace std::chrono;
         const double elapsedMs = duration<double, std::milli>(steady_clock::now() - ruleStart).count();
-        collector->ruleTimes_ms[ruleName] += elapsedMs;
+        collector->ruleTimes_ms[key] += elapsedMs;
     }
 }
 
 void solver::plugin::RuleStatsPlugin::onEnd()
 {
-    emitStrideLine("rule_times_ms", toJson(collector->ruleTimes_ms));
-    emitStrideLine("rule_counts", toJson(collector->ruleCounts));
+    // Keys in the collector are CamelCase (rule->name()); convert to snake_case
+    // only here at emit time, not on every onApply call in the hot path.
+    emitStrideLine("rule_times_ms", toJsonSnakeKeys(collector->ruleTimes_ms));
+    emitStrideLine("rule_counts",   toJsonSnakeKeys(collector->ruleCounts));
 }
