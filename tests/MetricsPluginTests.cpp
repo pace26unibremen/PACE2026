@@ -5,6 +5,7 @@
 #include "../src/Solver/Plugin/MetricsCollector.hpp"
 #include "../src/Solver/Plugin/MetricsPlugins.hpp"
 #include "../src/Solver/Plugin/RuleStatsPlugin.hpp"
+#include "../src/Solver/Plugin/SigtermPlugin.hpp"
 #include "../src/Solver/Rule/AbstractBranchingRule.hpp"
 #include "../src/Solver/Rule/RuleReturnCode.hpp"
 
@@ -410,4 +411,34 @@ TEST_CASE("MetricsPlugins::makeAll: shared collector — RuleStats data visible 
     // The snapshot should contain the rule count accumulated by RuleStatsPlugin.
     const std::string out = captureStdout([&] { convergence->onEnd(); });
     CHECK(out.find("\"test_rule\":1") != std::string::npos);
+}
+
+// ===========================================================================
+// SigtermPlugin
+// ===========================================================================
+
+TEST_CASE("SigtermPlugin: emits timeout 0 when flag is not set", "[MetricsPlugin][Sigterm]")
+{
+    std::atomic<bool> flag{false};
+    solver::plugin::SigtermPlugin plugin(&flag);
+
+    const std::string out = captureStdout([&] { plugin.onEnd(); });
+    CHECK(out == "#s timeout 0\n");
+}
+
+TEST_CASE("SigtermPlugin: emits timeout 1 when flag is set", "[MetricsPlugin][Sigterm]")
+{
+    std::atomic<bool> flag{true};
+    solver::plugin::SigtermPlugin plugin(&flag);
+
+    const std::string out = captureStdout([&] { plugin.onEnd(); });
+    CHECK(out == "#s timeout 1\n");
+}
+
+TEST_CASE("SigtermPlugin: emits timeout 0 when constructed with nullptr", "[MetricsPlugin][Sigterm]")
+{
+    solver::plugin::SigtermPlugin plugin(nullptr);
+
+    const std::string out = captureStdout([&] { plugin.onEnd(); });
+    CHECK(out == "#s timeout 0\n");
 }
