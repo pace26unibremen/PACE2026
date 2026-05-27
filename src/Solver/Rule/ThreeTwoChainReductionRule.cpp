@@ -51,6 +51,7 @@ solver::ThreeTwoChainReductionRule::isApplicable(const std::shared_ptr<graph::In
                                                  const std::shared_ptr<Context>& context)
 {
 
+    return nullptr;
 }
 
 std::string solver::ThreeTwoChainReductionRule::name() const
