@@ -23,7 +23,7 @@ solver::RuleReturnCode solver::ClusterReductionRule::apply()
 
     // because we introduce new labels, we may get out of range in the subtreeTerminals field of graph::Node.
     unsigned int numberOfNewLabels = 2 * pointsAndForests_PerCluster.size();
-    if (numberOfNewLabels + (maxLabel % 64) > 64)
+    if ((numberOfNewLabels + maxLabel + 63) / 64 > (maxLabel + 63) / 64)
     {
         for (const auto& f : *instance)
         {
