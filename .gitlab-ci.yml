@@ -156,6 +156,7 @@ prepare-release:
   <<: *release-rules
   before_script:
     - apt-get update && apt-get install -y curl jq git
+    - git fetch --tags  # Ensure we have all tags to determine the latest version
   script:
     - |
       # Get latest merged MR IID targeting master
