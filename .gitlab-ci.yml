@@ -295,7 +295,7 @@ prepare-release:
 # Actual release job using the GitLab release keyword + official image
 release-job:
   stage: release
-  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  image: registry.gitlab.com/gitlab-org/cli:latest
   needs:
     - job: prepare-release
       artifacts: true
