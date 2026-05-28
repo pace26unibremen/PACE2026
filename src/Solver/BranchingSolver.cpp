@@ -25,8 +25,11 @@ void solver::BranchingSolver::setTimeoutFlag(std::atomic<bool>* flag)
 
 bool solver::BranchingSolver::rollBackBranch()
 {
-    // Stop this branch immediately on timeout.
-    if (timeoutFlag && timeoutFlag->load(std::memory_order_relaxed))
+    // Stop this branch on timeout — but only once at least one solution
+    // candidate has been stored.  Without one, keep rolling back and exploring
+    // until the first EndBranchWithSolutionCandidate so the solver always
+    // produces output within the POSIX grace period.
+    if (timeoutFlag && timeoutFlag->load(std::memory_order_relaxed) && solution != nullptr)
         return true;
 
     // all rule suggestions can be discarded at the end of a branch
@@ -116,8 +119,10 @@ bool solver::BranchingSolver::solve()
     // apply rules repeatedly until a return is triggered
     while (true)
     {
-        // On timeout, stop before starting a new iteration.
-        if (timeoutFlag && timeoutFlag->load(std::memory_order_relaxed))
+        // On timeout, stop before starting a new iteration — but only once at
+        // least one solution candidate has been found.  Without one, keep
+        // searching so the solver always produces output within the grace period.
+        if (timeoutFlag && timeoutFlag->load(std::memory_order_relaxed) && solution != nullptr)
             break;
 
         std::shared_ptr<AbstractRule> rule = nullptr;
