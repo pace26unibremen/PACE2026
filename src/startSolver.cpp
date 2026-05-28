@@ -80,9 +80,11 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
 
     const bool solved = solver.solve();
     if (!solved) {
-        // Timeout flag fired before any solution candidate was found.
-        // This can happen when SIGTERM arrives very early or when the first
-        // solution candidate takes a long time to reach.
+        // Only reachable when SIGTERM fires before the very first solution
+        // candidate — i.e. within the first few milliseconds of a run on an
+        // instance where even reaching a leaf takes longer than the grace
+        // period.  In normal heuristic-track usage the solver keeps searching
+        // until at least one candidate is found, so this path should be rare.
         std::clog << "Solver stopped without producing a solution\n";
         return;
     }
