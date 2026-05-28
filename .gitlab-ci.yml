@@ -295,27 +295,53 @@ prepare-release:
 # Actual release job using the GitLab release keyword + official image
 release-job:
   stage: release
-  image: registry.gitlab.com/gitlab-org/cli:latest
+  image: ubuntu:24.04
   needs:
     - job: prepare-release
       artifacts: true
   <<: *release-rules
+  before_script:
+    - apt-get update && apt-get install -y curl jq
   script:
     - echo "Creating GitLab release for tag $TAG"
-  release:
-    tag_name: '$TAG'
-    ref: '$CI_COMMIT_SHA'
-    tag_message: 'Release $TAG'
-    name: 'Release $TAG'
-    description: release-description.md  # Points to the file
-    assets:
-      links:
-        - name: 'solver (Linux x86_64 static binary)'
-          url: '$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_SHA/raw/build/src/startSolver?job=build-solver'
-          link_type: 'package'
-        - name: 'solver (Windows x86_64 static binary)'
-          url: '$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_SHA/raw/build-win/src/startSolver.exe?job=build-solver-windows'
-          link_type: 'package'
+    - |
+      # Create the Git tag
+      curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+           --header "Content-Type: application/json" \
+           --data "$(jq -n \
+             --arg tag "$TAG" \
+             --arg ref "$CI_COMMIT_SHA" \
+             --arg msg "Release $TAG" \
+             '{tag_name:$tag, ref:$ref, message:$msg}')" \
+           "$CI_API_V4_URL/projects/$CI_PROJECT_ID/repository/tags"
+    - |
+      # Create the release
+      curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+           --header "Content-Type: application/json" \
+           --data "$(jq -n \
+             --arg tag "$TAG" \
+             --arg name "Release $TAG" \
+             --rawfile desc release-description.md \
+             '{tag_name:$tag, name:$name, description:$desc}')" \
+           "$CI_API_V4_URL/projects/$CI_PROJECT_ID/releases"
+    - |
+      # Add Linux binary asset link
+      curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+           --header "Content-Type: application/json" \
+           --data "$(jq -n \
+             --arg name "solver (Linux x86_64 static binary)" \
+             --arg url "$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_SHA/raw/build/src/startSolver?job=build-solver" \
+             '{name:$name, url:$url, link_type:"package"}')" \
+           "$CI_API_V4_URL/projects/$CI_PROJECT_ID/releases/$TAG/assets/links"
+    - |
+      # Add Windows binary asset link
+      curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+           --header "Content-Type: application/json" \
+           --data "$(jq -n \
+             --arg name "solver (Windows x86_64 static binary)" \
+             --arg url "$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_SHA/raw/build-win/src/startSolver.exe?job=build-solver-windows" \
+             '{name:$name, url:$url, link_type:"package"}')" \
+           "$CI_API_V4_URL/projects/$CI_PROJECT_ID/releases/$TAG/assets/links"
 
 # Build stride from source
 build_stride:
