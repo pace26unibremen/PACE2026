@@ -1,7 +1,7 @@
 #ifndef PACE2026_BRANCHING_SOLVER_CONFIGURATION_HPP
 #define PACE2026_BRANCHING_SOLVER_CONFIGURATION_HPP
 
-#include "DebugPlugin.hpp"
+#include "Plugin/AbstractPlugin.hpp"
 #include "Rule/AbstractRule.hpp"
 #include "Rule/CutBranchRule.hpp"
 #include "Rule/EqualForestsRule.hpp"
@@ -13,6 +13,7 @@
 
 #include <functional>
 #include <memory>
+#include <vector>
 
 namespace solver
 {
@@ -44,8 +45,10 @@ struct BranchingSolverConfiguration
         solver::DebugAssertFalseRule::isApplicable
         };
 
-    /// \brief A debug plugin, nullptr for no additional debug info
-    std::shared_ptr<DebugPlugin> debPlugin = nullptr;
+    /// \brief Plugins to run alongside the solver. Empty by default (no plugins active).
+    /// Add plugins here to observe solver events — see \ref solver::plugin::AbstractPlugin.
+    /// Example: plugins.push_back(std::make_shared<solver::plugin::VisualizationPlugin>("debugOutput/dot"));
+    std::vector<std::shared_ptr<solver::plugin::AbstractPlugin>> plugins = {};
 };
 
 } // namespace solver

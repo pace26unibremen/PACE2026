@@ -44,7 +44,7 @@ bool solver::BranchingSolver::rollBackBranch()
 
         auto rule = appliedRules.back();
         rule->unapply();
-        if (configuration->debPlugin) configuration->debPlugin->onUnapply(rule);
+        for (const auto& plugin : configuration->plugins) plugin->onUnapply(rule);
         appliedRules.pop_back();
 
         if (auto branchingRule = std::dynamic_pointer_cast<AbstractBranchingRule>(rule))
@@ -68,6 +68,9 @@ void solver::BranchingSolver::checkSolutionCandidate()
 
         unapplyReductions();
 
+        // notify plugins now that the instance is fully expanded (reductions undone)
+        for (const auto& plugin : configuration->plugins) plugin->onNewBestSolution(context->bestSolutionSize);
+
         // write out the solution
         solution = std::make_shared<graph::Forest>(instance->at(0)->copy());
 
@@ -76,32 +79,40 @@ void solver::BranchingSolver::checkSolutionCandidate()
             | std::views::filter([](const std::shared_ptr<AbstractRule>& r){ return r->IsReduction();}))
         {
             reductionRule->apply();
-            if (configuration->debPlugin) configuration->debPlugin->onTempApply(reductionRule);
+            for (const auto& plugin : configuration->plugins) plugin->onReductionReapply(reductionRule);
         }
     }
 }
 
 void solver::BranchingSolver::unapplyReductions()
 {
+    // The first reduction in appliedRules (forward) is the last one to be unapplied (reverse iteration).
+    // Find it upfront so we can pass lastRule=true to plugins without a separate allocation.
+    std::shared_ptr<AbstractRule> firstReduction;
+    for (const auto& r : appliedRules)
+        if (r->IsReduction()) { firstReduction = r; break; }
+
     // unapply all reduction rules to get solution for the original instance
     for (const auto& reductionRule : appliedRules | std::views::reverse
         | std::views::filter([](const std::shared_ptr<AbstractRule>& r){ return r->IsReduction();}))
     {
         reductionRule->unapply();
-        if (configuration->debPlugin) configuration->debPlugin->onTempUnapply(reductionRule, false);
+        for (const auto& plugin : configuration->plugins)
+            plugin->onReductionUnapply(reductionRule, reductionRule == firstReduction);
     }
 }
 
 bool solver::BranchingSolver::solve()
 {
-    if (configuration->debPlugin) configuration->debPlugin->init(instance);
+    for (const auto& plugin : configuration->plugins) plugin->init(instance, context);
 
     // Try to apply the subtree reduction before starting the main solving process
     auto subtreeReduction = solver::SubtreeReductionRule::isApplicable(instance, context);
     if (subtreeReduction)
     {
+        for (const auto& plugin : configuration->plugins) plugin->beforeApply(subtreeReduction);
         subtreeReduction->apply();
-        if (configuration->debPlugin) configuration->debPlugin->onApply(subtreeReduction);
+        for (const auto& plugin : configuration->plugins) plugin->onApply(subtreeReduction);
         appliedRules.push_back(subtreeReduction);
     }
 
@@ -134,8 +145,9 @@ bool solver::BranchingSolver::solve()
             }
         }
 
+        for (const auto& plugin : configuration->plugins) plugin->beforeApply(rule);
         const auto returnCode = rule->apply();
-        if (configuration->debPlugin) configuration->debPlugin->onApply(rule);
+        for (const auto& plugin : configuration->plugins) plugin->onApply(rule);
         appliedRules.push_back(rule);
 
         bool calculationFinished = false;
@@ -152,15 +164,19 @@ bool solver::BranchingSolver::solve()
             case RuleReturnCode::EndBranchWithSolutionCandidate:
                 if (configuration->boundedDephtSearch)
                 {
+                    for (const auto& plugin : configuration->plugins) plugin->onBranchEnd();
+                    for (const auto& plugin : configuration->plugins) plugin->onEnd();
                     return true;
                 }
                 else
                 {
+                    for (const auto& plugin : configuration->plugins) plugin->onBranchEnd();
                     checkSolutionCandidate();
                     calculationFinished = rollBackBranch();
                     break;
                 }
             case RuleReturnCode::CutBranch:
+                for (const auto& plugin : configuration->plugins) plugin->onBranchEnd();
                 calculationFinished = rollBackBranch();
                 break;
             case RuleReturnCode::ImidateReturn:
@@ -188,7 +204,7 @@ bool solver::BranchingSolver::solve()
     // Reached when the search space is fully explored (unbounded depth) or when the
     // timeout flag fires. Write out the best solution found, if any.
     // solution may be nullptr when SIGTERM arrives before any candidate is found.
-    if (configuration->debPlugin) configuration->debPlugin->onEnd();
+    for (const auto& plugin : configuration->plugins) plugin->onEnd();
     if (solution != nullptr)
         *instance = {solution};
     return solution != nullptr;

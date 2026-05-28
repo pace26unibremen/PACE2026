@@ -36,3 +36,8 @@ add_executable(BranchingSolverSimpleTests BranchingSolverSimpleTests.cpp)
 target_link_libraries(BranchingSolverSimpleTests PRIVATE Solver Graph Catch2::Catch2WithMain)
 add_test(NAME BranchingSolverSimpleTests COMMAND $<TARGET_FILE:BranchingSolverSimpleTests>)
 target_compile_definitions(BranchingSolverSimpleTests PRIVATE RES_DIR="${CMAKE_SOURCE_DIR}/res/")
+
+add_executable(PluginTests PluginTests.cpp)
+target_link_libraries(PluginTests PRIVATE Solver Graph Catch2::Catch2WithMain)
+add_test(NAME PluginTests COMMAND $<TARGET_FILE:PluginTests>)
+target_compile_definitions(PluginTests PRIVATE RES_DIR="${CMAKE_SOURCE_DIR}/res/")
