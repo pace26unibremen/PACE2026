@@ -168,6 +168,7 @@ prepare-release:
         DESC_FULL="Manually triggered release."
         MR_IID=""
         ISSUE_IID=""
+        LOOKUP_SHA="$CI_COMMIT_SHA"
       else
         # --- Determine which commit to look up the MR for ---
         LOOKUP_SHA="${RELEASE_COMMIT_SHA:-$CI_COMMIT_SHA}"
@@ -265,11 +266,12 @@ prepare-release:
         echo "$RELEASE_DESC"
       fi
     - |
-      # Write dotenv file for next job (used by release keyword)
+      # Write dotenv — TAG and the exact commit the release points to
       {
         printf 'TAG=%s\n' "$TAG"
+        printf 'RELEASE_COMMIT_SHA=%s\n' "$LOOKUP_SHA"
       } > release.env
-      echo "Wrote release.env with TAG=$TAG"
+      echo "Wrote release.env: TAG=$TAG RELEASE_COMMIT_SHA=$LOOKUP_SHA"
     - |
       # Write full description as Markdown artifact
       cat > release-description.md << EOF
@@ -303,18 +305,18 @@ release-job:
   before_script:
     - apt-get update && apt-get install -y curl jq git
   script:
-    - echo "TAG=$TAG"
+    - echo "TAG=$TAG RELEASE_COMMIT_SHA=$RELEASE_COMMIT_SHA"
     - |
-      # Configure git to use the job token for push
+      # Configure git to push via job token
       git remote set-url origin "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
       git config user.email "ci@gitlab"
       git config user.name "GitLab CI"
     - |
-      # Create and push the tag via git (job token works here)
-      git tag -a "$TAG" "$CI_COMMIT_SHA" -m "Release $TAG"
+      # Tag the MR merge commit, not master HEAD
+      git tag -a "$TAG" "$RELEASE_COMMIT_SHA" -m "Release $TAG"
       git push origin "$TAG"
     - |
-      # Create the release with description and asset links via API (JOB-TOKEN works here)
+      # Create the release with asset links referencing the tag as ref
       curl --fail \
            --header "JOB-TOKEN: $CI_JOB_TOKEN" \
            --header "Content-Type: application/json" \
@@ -322,9 +324,8 @@ release-job:
              --arg tag "$TAG" \
              --arg name "Release $TAG" \
              --rawfile desc release-description.md \
-             --arg sha "$CI_COMMIT_SHA" \
-             --arg linux_url "$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_SHA/raw/build/src/startSolver?job=build-solver" \
-             --arg win_url "$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_SHA/raw/build-win/src/startSolver.exe?job=build-solver-windows" \
+             --arg linux_url "$CI_PROJECT_URL/-/jobs/artifacts/$TAG/raw/build/src/startSolver?job=build-solver" \
+             --arg win_url "$CI_PROJECT_URL/-/jobs/artifacts/$TAG/raw/build-win/src/startSolver.exe?job=build-solver-windows" \
              '{
                tag_name: $tag,
                name: $name,
