@@ -13,7 +13,7 @@ using namespace solver;
 
 TEST_CASE("Reduce Chain - Tree 1", "[Forest, DeleteNodeActionInChains, AbstractAction]")
 {
-    SECTION("Section 1")
+    SECTION("Section 1 - It actually executes")
     {
         auto i = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_2_8_mirrored_chain.tree");
         auto rule = ChainReductionRule::isApplicable(i,std::make_shared<Context>());
@@ -21,37 +21,43 @@ TEST_CASE("Reduce Chain - Tree 1", "[Forest, DeleteNodeActionInChains, AbstractA
         REQUIRE(rule);
         rule->apply();
         REQUIRE(rule->IsApplied());
-
-        // graph::Forest forest = {nullptr,nullptr,nullptr,nullptr};
-        // for (auto current : *i)
-        // {
-        //    forest = current->copy();
-        //
-        // }
     }
 
-    SECTION("Section 2")
+    SECTION("Section 2 - Unapply leads to initial state")
     {
         auto i = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_2_8_mirrored_chain.tree");
-        for(auto forest : *i)
-        {
-            forest->write(cout);
-        }
-        INFO("Section 2 - Check for Changes after apply");
+        auto j = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_2_8_mirrored_chain.tree");
+        // for(auto forest : *i)
+        // {
+        //     forest->write(cout);
+        // }
         auto rule = ChainReductionRule::isApplicable(i,std::make_shared<Context>());
         REQUIRE(rule);
         rule->apply();
         REQUIRE(rule->IsApplied());
-        for(auto forest : *i)
-        {
-            forest->write(cout);
-        }
+        // for(auto forest : *i)
+        // {
+        //     forest->write(cout);
+        // }
         rule->unapply();
         REQUIRE(not rule->IsApplied());
-        for(auto forest : *i)
+        REQUIRE(i->size() == j->size());
+        for (int k = 0; k < i->size(); k++)
         {
-            forest->write(cout);
+            REQUIRE(i->at(k)->Roots().size() == j->at(k)->Roots().size());
+            REQUIRE(i->at(k)->TerminalToLabel().size() == j->at(k)->TerminalToLabel().size());
+            REQUIRE(i->at(k)->LabelToTerminal().size() == j->at(k)->LabelToTerminal().size());
+            REQUIRE(i->at(k)->Nodes().size() == j->at(k)->Nodes().size());
+            for (int n = 0; n < i->at(k)->Nodes().size(); n++)
+            {
+                REQUIRE(i->at(k)->Nodes().at(n).subtreeTerminals == j->at(k)->Nodes().at(n).subtreeTerminals);
+            }
         }
+
+        // for(auto forest : *i)
+        // {
+        //     forest->write(cout);
+        // }
     }
 
     // SECTION("Section 3 - Overall Test")
