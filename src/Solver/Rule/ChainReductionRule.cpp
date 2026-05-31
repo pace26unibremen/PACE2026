@@ -52,27 +52,31 @@ void solver::ChainReductionRule::storeRootNodes(const std::shared_ptr<graph::For
     int leftPos = -1;
     int rightPos = -1;
 
-    for (int i = 0; i < forest->Roots().capacity(); i++)
+    for (int i = 0; i < forest->Roots().size(); i++)
     {
-        for (int j = 0; j < forest->Nodes().capacity(); j++)
+        if (forest->Roots()[i] != nullptr)
         {
-            // if (forest->Nodes()[j] == *forest->Roots()[i]->leftChild)
-            //     leftPos = j;
-            // if (&forest->Nodes()[j] == forest->Roots()[i]->rightChild)
-            //     rightPos = j;
-        }
-        indicesList = {leftPos, rightPos};
+            for (int j = 0; j < forest->Nodes().size(); j++)
+            {
+                if (&forest->Nodes()[j] == forest->Roots()[i]->leftChild)
+                    leftPos = j;
+                if (&forest->Nodes()[j] == forest->Roots()[i]->rightChild)
+                    rightPos = j;
+            }
+            indicesList = {leftPos, rightPos};
 
-        if (forest == chainWithTrees.second.front())
-        {
-            rootsT1Indices.first.push_back(indicesList);
-            rootsT1Indices.second.push_back(forest->Roots()[i]->subtreeTerminals);
+            if (forest == chainWithTrees.second.front())
+            {
+                rootsT1Indices.first.push_back(indicesList);
+                rootsT1Indices.second.push_back(forest->Roots()[i]->subtreeTerminals);
+            }
+            if (forest == chainWithTrees.second.back())
+            {
+                rootsT2Indices.first.push_back(indicesList);
+                rootsT2Indices.second.push_back(forest->Roots()[i]->subtreeTerminals);
+            }
         }
-        if (forest == chainWithTrees.second.back())
-        {
-            rootsT2Indices.first.push_back(indicesList);
-            rootsT2Indices.second.push_back(forest->Roots()[i]->subtreeTerminals);
-        }
+        else break;
     }
 }
 
@@ -219,7 +223,6 @@ std::vector<uint64_t> solver::ChainReductionRule::eraseTerminals(std::vector<uin
             target[i] = 0;
         }
     }
-
     return target;
 }
 
@@ -314,8 +317,8 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
         }
 
         //Store current Root Nodes
-        // storeRootNodes(chainWithTrees.second.front());
-        // storeRootNodes(chainWithTrees.second.back());
+        storeRootNodes(chainWithTrees.second.front());
+        storeRootNodes(chainWithTrees.second.back());
 
         // Acquire the notes required
         // Fetch x3
@@ -391,7 +394,7 @@ void solver::ChainReductionRule::unapply()
     isApplied = false;
 
     //For all potentially edited nodes out of T1, restore their old connections to other nodes by index
-    for (int index = 0; index < deletedNodesT1Indices.first.capacity(); index++)
+    for (int index = 0; index < deletedNodesT1Indices.first.size(); index++)
     {
         if (deletedNodesT1Indices.first[index].empty() == false)
         {
@@ -420,7 +423,7 @@ void solver::ChainReductionRule::unapply()
         }
     }
     //For all potentially edited nodes out of T2, restore their old connections to other nodes by index
-    for (int index = 0; index < deletedNodesT2Indices.first.capacity(); index++)
+    for (int index = 0; index < deletedNodesT2Indices.first.size(); index++)
     {
         if (deletedNodesT2Indices.first[index].empty() == false)
         {
@@ -469,6 +472,35 @@ void solver::ChainReductionRule::unapply()
             rootsT2[index]->rightChild = &nodesT2.at(rootsT2Indices.first[index][1]);
     }
     rootsT2.resize(rootsT2Indices.first.size());
+
+}
+
+int solver::ChainReductionRule::identifyDistanceToRoot(graph::Node* node, std::shared_ptr<graph::Forest>& forest)
+{
+        int counter = 0;
+        graph::Node* current = node;
+        if (isNodeInNodeVector(node, forest->Roots())) return 0;
+        while (true)
+        {
+            current = current->parent;
+            counter++;
+            if (isNodeInNodeVector(current, forest->Roots())) return counter;
+        }
+}
+
+std::vector<int> solver::ChainReductionRule::structureToRoot(graph::Node* node, std::shared_ptr<graph::Forest>& forest)
+{
+    std::vector<int> result = {};
+    graph::Node* current = node;
+    graph::Node* parent = current->parent;
+    while (parent!=nullptr)
+    {
+        if (parent->leftChild == current) result.push_back(0);
+        else if (parent->rightChild == current) result.push_back(1);
+        current = current->parent;
+        parent = parent->parent;
+    }
+    return result;
 }
 
 std::shared_ptr<solver::AbstractRule>
@@ -490,8 +522,8 @@ solver::ChainReductionRule::isApplicable(
         T2->write(std::cout);
 
         //Fetch Leaves - Terminal Index to Label
-        std::unordered_map<graph::Node*,unsigned int> termIndexTreeOne = T1->TerminalToLabel();
-        std::unordered_map<graph::Node*,unsigned int> termIndexTreeTwo = T2->TerminalToLabel();
+        std::unordered_map<graph::Node*,unsigned int>& termIndexTreeOne = T1->TerminalToLabel();
+        std::unordered_map<graph::Node*,unsigned int>& termIndexTreeTwo = T2->TerminalToLabel();
 
         //For all Terminals...
         for (auto& terminalT1 : termIndexTreeOne)
@@ -526,6 +558,8 @@ solver::ChainReductionRule::isApplicable(
                     {
                         //Determine x3 for case 2 for chain def in T2
                         graph::Node* parentOfParentT2 = parentT2->parent;
+                        std::vector structureToRootT1 = structureToRoot(terminalT1.first, T1);
+                        std::vector structureToRootT2 = structureToRoot(terminalT2.first,T2);
 
                         //Case 1: if the parent of x1 coincides with the parent of x2 for both trees T1 and T2
                         if (terminalT1.first->parent->leftChild != nullptr
@@ -550,7 +584,9 @@ solver::ChainReductionRule::isApplicable(
                         || terminalT2.first->parent->parent->rightChild == terminalT2.first->parent)
                         && (T2->TerminalToLabel().contains(terminalT2.first->parent->parent->leftChild)
                         || T2->TerminalToLabel().contains(terminalT2.first->parent->parent->rightChild))
-                        )
+
+                        && identifyDistanceToRoot(terminalT1.first,T1) == identifyDistanceToRoot(terminalT2.first,T2)
+                        && structureToRootT1 == structureToRootT2)
                         {
                             //Chain for both trees
                             std::vector<std::vector<graph::Node*>> chainT1T2 = {{parentT1,parentT2}};
@@ -692,6 +728,9 @@ solver::ChainReductionRule::isApplicable(
                         && T2->TerminalToLabel().contains(parentOfParentT2->parent->rightChild))
                         || (parentOfParentT2->parent->rightChild == parentOfParentT2
                         && T2->TerminalToLabel().contains(parentOfParentT2->parent->leftChild)))
+
+                        && identifyDistanceToRoot(terminalT1.first,T1) == identifyDistanceToRoot(terminalT2.first,T2)
+                        && structureToRootT1 == structureToRootT2
                         )
                         {
                             //std::cout << "case 2" << std::endl;
@@ -702,8 +741,8 @@ solver::ChainReductionRule::isApplicable(
                             graph::Node* case2T1Parent = parentOfParentT1->parent;
                             graph::Node* case2T2Parent = parentOfParentT2->parent;
 
-                            graph::Node* case2T1Sibling;
-                            graph::Node* case2T2Sibling;
+                            graph::Node* case2T1Sibling = nullptr;
+                            graph::Node* case2T2Sibling = nullptr;
                             if (case2T1Parent != nullptr && case2T2Parent != nullptr)
                             {
                                 //T1 structure check
@@ -785,7 +824,6 @@ solver::ChainReductionRule::isApplicable(
                                 return std::dynamic_pointer_cast<AbstractRule>(
                                 std::make_shared<ChainReductionRule>(instance,chainWithTrees,context));
                             }
-
                         }
                     }
                     if (not chain.empty()) break;

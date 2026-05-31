@@ -70,6 +70,10 @@ namespace solver
 
         std::vector<uint64_t> eraseTerminals(std::vector<uint64_t> target, std::vector<uint64_t> toBeErased);
 
+        static int identifyDistanceToRoot(graph::Node* node, std::shared_ptr<graph::Forest>& forest);
+
+        static std::vector<int> structureToRoot(graph::Node* node, std::shared_ptr<graph::Forest>& forest);
+
         /// \brief Helper function that updates the subtree terminal bitmasks of the nodes.
         void updateSubtreeTerminals();
 
