@@ -1,10 +1,8 @@
 #include "ChainReductionRule.hpp"
 
 #include <algorithm>
-#include <forward_list>
 #include <unordered_map>
 #include <utility>
-#include <iostream>
 
 solver::ChainReductionRule::ChainReductionRule(
     const std::shared_ptr<graph::Instance>& instance,
@@ -33,9 +31,9 @@ solver::ChainReductionRule::ChainReductionRule(
 bool solver::ChainReductionRule::isNodeInNodeVector(const graph::Node* node, const std::vector<graph::Node*>& list)
 {
     bool check = false;
-    for(int i = 0; i < list.size(); i++)
+    for(auto i : list)
     {
-       if (node == list[i])
+       if (node == i)
        {
            check = true;
            break;
