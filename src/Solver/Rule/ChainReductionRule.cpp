@@ -518,9 +518,6 @@ solver::ChainReductionRule::isApplicable(
         std::shared_ptr<graph::Forest> T1 = instance->front();
         std::shared_ptr<graph::Forest> T2 = instance->back();
 
-        T1->write(std::cout);
-        T2->write(std::cout);
-
         //Fetch Leaves - Terminal Index to Label
         std::unordered_map<graph::Node*,unsigned int>& termIndexTreeOne = T1->TerminalToLabel();
         std::unordered_map<graph::Node*,unsigned int>& termIndexTreeTwo = T2->TerminalToLabel();
