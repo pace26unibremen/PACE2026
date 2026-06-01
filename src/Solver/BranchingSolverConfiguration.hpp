@@ -10,6 +10,7 @@
 #include "Rule/PairUnconnectedBranchingRule.hpp"
 #include "Rule/SingleVertexTreePropagationRule.hpp"
 #include "Rule/DebugAssertFalseRule.hpp"
+#include "Rule/ChainReductionRule.hpp"
 
 #include <functional>
 #include <memory>
@@ -35,6 +36,7 @@ struct BranchingSolverConfiguration
     /// \brief vector of the isApplicable function of rules.
     /// It defines which rules are used and in which order they are checked for applicability.
     std::vector<isApplicableFn> activeRules = {
+        solver::ChainReductionRule::isApplicable,
         solver::CutBranchRule::isApplicable,
         solver::EqualForestsRule::isApplicable,
         solver::SingleVertexTreePropagationRule::isApplicable,
