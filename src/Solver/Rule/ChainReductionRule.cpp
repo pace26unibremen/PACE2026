@@ -82,13 +82,13 @@ void solver::ChainReductionRule::storeRootNodes(const std::shared_ptr<graph::For
 
 void solver::ChainReductionRule::storeEditedNodeIndices(const graph::Node* node, const std::shared_ptr<graph::Forest>& forest)
 {
-    auto capacityOfNodes = forest->Nodes().capacity();
+    auto sizeOfNodes = forest->Nodes().size();
 
     std::vector<int> indicesList;
     indicesList.reserve(4);
 
     int nodePos = 0;
-    for (int i = 0; i < capacityOfNodes; i++)
+    for (int i = 0; i < sizeOfNodes; i++)
     {
         if (&forest->Nodes()[i] == node)
         {
@@ -102,28 +102,27 @@ void solver::ChainReductionRule::storeEditedNodeIndices(const graph::Node* node,
     int leftPos = -1;
     int rightPos = -1;
 
-    for (int i = 0; i < capacityOfNodes; i++)
+    for (int i = 0; i < sizeOfNodes; i++)
     {
         if (&forest->Nodes()[i] == node->parent)
         {
             parentPos = i;
         }
     }
-    for (int i = 0; i < capacityOfNodes; i++)
-    {
-        if (&forest->Nodes()[i] == node->sibling)
+    for (int i = 0; i < sizeOfNodes; i++)
+    {if (&forest->Nodes()[i] == node->sibling)
         {
             siblingPos = i;
         }
     }
-    for (int i = 0; i < capacityOfNodes; i++)
+    for (int i = 0; i < sizeOfNodes; i++)
     {
         if (&forest->Nodes()[i] == node->leftChild)
         {
             leftPos = i;
         }
     }
-    for (int i = 0; i < capacityOfNodes; i++)
+    for (int i = 0; i < sizeOfNodes; i++)
     {
         if (&forest->Nodes()[i] == node->rightChild)
         {
@@ -305,13 +304,13 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
     if (chainWithTrees.second.size() == 2 && chainWithTrees.first.size() >= 2)
     {
         //Store all node connections by their index.
-        for (int index = 0; index < chainWithTrees.second.front()->Nodes().capacity(); index++)
+        for (int index = 0; index < chainWithTrees.second.front()->Nodes().size(); index++)
         {
             storeEditedNodeIndices(&chainWithTrees.second.front()->Nodes()[index], chainWithTrees.second.front());
 
         }
 
-        for (int index = 0; index < chainWithTrees.second.back()->Nodes().capacity(); index++)
+        for (int index = 0; index < chainWithTrees.second.back()->Nodes().size(); index++)
         {
             storeEditedNodeIndices(&chainWithTrees.second.back()->Nodes()[index], chainWithTrees.second.back());
         }
