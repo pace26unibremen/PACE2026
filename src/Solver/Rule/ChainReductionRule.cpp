@@ -227,9 +227,6 @@ std::vector<uint64_t> solver::ChainReductionRule::eraseTerminals(std::vector<uin
 
 void solver::ChainReductionRule::updateSubtreeTerminals()
 {
-    std::shared_ptr<graph::Forest>& t1 = chainWithTrees.second.front();
-    std::shared_ptr<graph::Forest>& t2 = chainWithTrees.second.back();
-
     //x3
     graph::Node* t1BeginNode = chainWithTrees.first[0].front();
     graph::Node* t2BeginNode = chainWithTrees.first[0].back();
