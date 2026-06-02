@@ -31,6 +31,12 @@ namespace solver
 
         void unapply() override;
 
+        static bool checkIfContainedInRoot(graph::Node* node, std::shared_ptr<graph::Forest> forest);
+
+        /// Check if for two nodes the B-Rule condition is reached.
+        ///
+        static int bCheck(graph::Node* node1, graph::Node* node2, std::shared_ptr<graph::Forest> forest);
+
         static std::shared_ptr<solver::AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                            const std::shared_ptr<Context>& context);
         [[nodiscard]]
