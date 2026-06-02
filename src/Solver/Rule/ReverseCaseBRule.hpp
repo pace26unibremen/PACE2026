@@ -9,8 +9,8 @@
 namespace solver
 {
 
-/// \brief This rule informs the solver to cut the current branch,
-/// if the current instance is already equal or worse to the current solution.
+/// \brief This rule does the reverse of rule B,
+/// cutting out the middle node without the need to branch.
 class ReverseCaseBRule : public  AbstractRule
 {
   protected:
@@ -27,17 +27,15 @@ public:
                   const unsigned int& toCutLabel);
 
     /// \brief applies rule
-    /// \returns always \ref RuleReturnCode::CutBranch
+    /// \returns some RuleReturnCode
     RuleReturnCode apply() override;
 
     void unapply() override;
 
-    /// \brief It checks whether the CutBranchRule is applicable and generates an instance of this rule if so.
-    /// This method considers the CutBranchRule applicable if the `bestSolutionSize` of the `context`
-    /// is at most the highest number of trees in a forest.
+    /// \brief It checks whether the ReverseCaseBRule is applicable and generates an instance of this rule if so.
     /// \param instance on which the rule should be applied
     /// \param context contains additional information to the instance and the solver state
-    /// \returns shared_pointer to CutBranchRule if rule is applicable, else null pointer
+    /// \returns shared_pointer to ReverseCaseBRule if rule is applicable, else null pointer
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                       const std::shared_ptr<Context>& context);
 
