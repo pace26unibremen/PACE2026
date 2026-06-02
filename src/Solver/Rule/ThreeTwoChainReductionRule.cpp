@@ -46,10 +46,96 @@ void solver::ThreeTwoChainReductionRule::unapply()
 
 }
 
+bool solver::ThreeTwoChainReductionRule::checkIfContainedInRoot(graph::Node* node, std::shared_ptr<graph::Forest> forest)
+{
+    for (int i = 0; i < forest->Roots().size(); i++)
+    {
+        if (forest->Roots().at(i) == node) return true;
+    }
+    return false;
+}
+
+int solver::ThreeTwoChainReductionRule::bCheck(graph::Node* node1, graph::Node* node2, std::shared_ptr<graph::Forest> forest)
+{
+    auto listOfNodes = forest->Nodes();
+    auto terminals = forest->TerminalToLabel();
+
+    if () return 1;
+    if () return 2;
+    if () return 3;
+    if () return 4;
+    if () return 5;
+    if () return 6;
+    if () return 7;
+    if () return 8;
+
+    return 0;
+}
 std::shared_ptr<solver::AbstractRule>
 solver::ThreeTwoChainReductionRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                  const std::shared_ptr<Context>& context)
 {
+    auto f = instance->at(0);
+    for (const auto& [label1,node1] : f->LabelToTerminal())
+    {
+        for (const auto& [label2,node2] : f->LabelToTerminal())
+        {
+            //Nodes arent the same and they arent pendant to each other.
+            if (label1 != label2 && node1->sibling != node2 && node2->sibling != node1
+            //And they arent root nodes
+            && not checkIfContainedInRoot(node1,f) && not checkIfContainedInRoot(node2,f)
+            // The nodes follow the B schema: Only one pendant node between them.
+            )
+            {
+                auto bCase = bCheck(node1, node2, f);
+
+                switch (bCase)
+                {
+                    case 0:
+                    {
+                        continue;
+                    }
+                    case 1:
+                    {
+
+                    }
+                    case 2:
+                    {
+
+                    }
+                    case 3:
+                    {
+
+                    }
+                    case 4:
+                    {
+
+                    }
+                    case 5:
+                    {
+
+                    }
+                    case 6:
+                    {
+
+                    }
+                    case 7:
+                    {
+
+                    }
+                    case 8:
+                    {
+
+                    }
+                    default:
+                    {
+                        throw std::invalid_argument("ThreeTwoChainReductionRule : default case in isApplicable reached "
+                                                    "-how the hell did this happen");
+                    }
+                }
+            }
+        }
+    }
 
     return nullptr;
 }
