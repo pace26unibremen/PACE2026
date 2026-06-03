@@ -9,21 +9,10 @@
 solver::ThreeTwoChainReductionRule::ThreeTwoChainReductionRule(
     const std::shared_ptr<graph::Instance>& instance,
     const std::shared_ptr<Context>& context,
-    const std::pair<graph::Node*,std::vector<std::shared_ptr<graph::Forest>>>& nodeAndTrees) :
+    graph::Node* node) :
         AbstractRule(instance, context, true)
 {
-    this->nodeAndTrees = nodeAndTrees;
-    std::cout << "Terminal.at 1" << std::endl;
-    for (const auto& terminal : nodeAndTrees.second.front()->TerminalToLabel())
-    {
-        if (terminal.first == nodeAndTrees.first)
-        {
-            this->nodeLabel = terminal.second;
-            break;
-        }
-    }
-    //this->nodeLabel = nodeAndTrees.second.front()->Terminals().at(nodeAndTrees.first);
-    changes = std::stack<solver::AbstractAction>{};
+    this->node = node;
 }
 
 solver::RuleReturnCode solver::ThreeTwoChainReductionRule::apply()
@@ -44,6 +33,15 @@ void solver::ThreeTwoChainReductionRule::unapply()
     }
     isApplied = false;
 
+}
+
+bool solver::ThreeTwoChainReductionRule::allBoolsSayTrue(std::vector<bool> list)
+{
+    for (const auto& item : list)
+    {
+        if (not item) return false;
+    }
+    return true;
 }
 
 bool solver::ThreeTwoChainReductionRule::checkIfContainedInRoot(graph::Node* node, std::shared_ptr<graph::Forest> forest)
@@ -117,35 +115,51 @@ solver::ThreeTwoChainReductionRule::isApplicable(const std::shared_ptr<graph::In
                     }
                     case 1:
                     {
+                        auto bNode = node1->parent->rightChild;
+                        std::vector<bool> checkForAllOtherTrees = {};
+                        checkForAllOtherTrees.reserve(instance->size()-1);
+                        for (int i = 1; i < instance->size(); i++)
+                        {
+                            auto fi = instance->at(i);
+                            if (node1->parent != nullptr && node1->parent->parent != nullptr
+                            && node1->parent->parent->rightChild == node2
+                            && node1->parent->rightChild == node2 && node1->parent->rightChild != node1)
+                                checkForAllOtherTrees.push_back(true);
+                            else checkForAllOtherTrees.push_back(false);
+
+                            if (allBoolsSayTrue(checkForAllOtherTrees))
+                                return std::make_shared<ThreeTwoChainReductionRule>(instance, context, bNode);
+                        }
+
 
                     }
                     case 2:
                     {
-
+                        auto bNode = node1->parent->leftChild;
                     }
                     case 3:
                     {
-
+                        auto bNode = node1->parent->rightChild->leftChild;
                     }
                     case 4:
                     {
-
+                        auto bNode = node1->parent->rightChild->rightChild;
                     }
                     case 5:
                     {
-
+                        auto bNode = node1->parent->leftChild->rightChild;
                     }
                     case 6:
                     {
-
+                        auto bNode = node1->parent->leftChild->leftChild;
                     }
                     case 7:
                     {
-
+                        auto bNode =  node1->parent->leftChild;
                     }
                     case 8:
                     {
-
+                        auto bNode = node1->parent->rightChild;
                     }
                     default:
                     {

@@ -16,20 +16,17 @@ namespace solver
     class ThreeTwoChainReductionRule : public AbstractRule
     {
     protected:
-        std::pair<graph::Node*,std::vector<std::shared_ptr<graph::Forest>>> nodeAndTrees;
-
-        unsigned int nodeLabel;
-
-        std::stack<solver::AbstractAction> changes;
+        graph::Node* node;
 
     public:
-      ThreeTwoChainReductionRule(
-          const std::shared_ptr<graph::Instance>& instance, const std::shared_ptr<Context>& context,
-          const std::pair<graph::Node*, std::vector<std::shared_ptr<graph::Forest>>>& nodeAndTrees);
 
-        solver::RuleReturnCode apply() override;
+      ThreeTwoChainReductionRule(const std::shared_ptr<graph::Instance>& instance,
+                                 const std::shared_ptr<Context>& context, graph::Node* node);
+      solver::RuleReturnCode apply() override;
 
         void unapply() override;
+
+        static bool allBoolsSayTrue(std::vector<bool> list);
 
         static bool checkIfContainedInRoot(graph::Node* node, std::shared_ptr<graph::Forest> forest);
 
