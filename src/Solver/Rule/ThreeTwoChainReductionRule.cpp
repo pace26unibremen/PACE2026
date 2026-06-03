@@ -60,17 +60,37 @@ int solver::ThreeTwoChainReductionRule::bCheck(graph::Node* node1, graph::Node* 
     auto listOfNodes = forest->Nodes();
     auto terminals = forest->TerminalToLabel();
 
-    if () return 1;
-    if () return 2;
-    if () return 3;
-    if () return 4;
-    if () return 5;
-    if () return 6;
-    if () return 7;
-    if () return 8;
+    if (node1->parent != nullptr && node1->parent->parent != nullptr
+        && node1->parent->parent->rightChild == node2
+        && node1->parent->rightChild != nullptr && node1->parent->rightChild != node1 ) return 1;
+
+    if (node1->parent != nullptr && node1->parent->parent != nullptr
+        && node1->parent->parent->leftChild == node2
+        && node1->parent->leftChild != nullptr && node1->parent->leftChild != node1) return 2;wwwwwwwwwwwwwwwwwwwwwwwwwww
+
+    if (node1->parent != nullptr && node1->parent->rightChild != nullptr && node1->parent->rightChild != node1
+        && node1->parent->rightChild->rightChild == node2
+        && node1->parent->rightChild->leftChild != nullptr) return 3;
+
+    if (node1->parent != nullptr && node1->parent->rightChild != nullptr && node1->parent->rightChild != node1
+        && node1->parent->rightChild->leftChild == node2
+        && node1->parent->rightChild->rightChild != nullptr) return 4;
+
+    if (node1->parent != nullptr && node1->parent->leftChild != nullptr && node1->parent->leftChild != node1
+        && node1->parent->leftChild->leftChild == node2 && node1->parent->leftChild->rightChild != nullptr) return 5;
+
+    if (node1->parent != nullptr && node1->parent->leftChild != nullptr && node1->parent->leftChild != node1
+        && node1->parent->leftChild->leftChild != nullptr && node1->parent->leftChild->rightChild == node2) return 6;
+
+    if (node1->parent !=nullptr && node1->parent->parent != nullptr && node1->parent->rightChild != node1
+        && node1->parent->parent->leftChild == node2 && node1->parent->leftChild != nullptr) return 7;
+
+    if (node1->parent !=nullptr && node1->parent->parent != nullptr && node1->parent->leftChild != node1
+        && node1->parent->parent->rightChild == node2 && node1->parent->rightChild != nullptr) return 8;
 
     return 0;
 }
+
 std::shared_ptr<solver::AbstractRule>
 solver::ThreeTwoChainReductionRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                  const std::shared_ptr<Context>& context)
