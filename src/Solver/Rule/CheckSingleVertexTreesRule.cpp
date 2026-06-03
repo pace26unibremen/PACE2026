@@ -18,7 +18,7 @@ solver::RuleReturnCode solver::CheckSingleVertexTreesRule::apply()
     }
     isApplied = true;
 
-    return RuleReturnCode::Continue;
+    return RuleReturnCode::EndBranchWithSolutionCandidate;
 }
 
 void solver::CheckSingleVertexTreesRule::unapply()
