@@ -66,7 +66,7 @@ int solver::ThreeTwoChainReductionRule::bCheck(graph::Node* node1, graph::Node* 
 
     if (node1->parent != nullptr && node1->parent->parent != nullptr
         && node1->parent->parent->leftChild == node2
-        && node1->parent->leftChild != nullptr && node1->parent->leftChild != node1) return 2;wwwwwwwwwwwwwwwwwwwwwwwwwww
+        && node1->parent->leftChild != nullptr && node1->parent->leftChild != node1) return 2;
 
     if (node1->parent != nullptr && node1->parent->rightChild != nullptr && node1->parent->rightChild != node1
         && node1->parent->rightChild->rightChild == node2
