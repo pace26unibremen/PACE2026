@@ -1,6 +1,9 @@
 #ifndef PACE2026_CHAINREDUCTIONRULE_H
 #define PACE2026_CHAINREDUCTIONRULE_H
 #include "AbstractRule.hpp"
+#include "../Action/DeleteEdgeAction.hpp"
+
+#include <stack>
 #include <vector>
 
 namespace solver
@@ -29,6 +32,10 @@ namespace solver
 
         /// \brief Indices for all root nodes prior to applying the rule for the second tree
          std::pair<std::vector<std::vector<int>>, std::vector<std::vector<uint64_t>>> rootsT2Indices;
+
+        /// \brief Stack of action that modify the instance,
+        /// filled in the apply method and unfilled in the unapply method
+        std::stack<DeleteEdgeAction> changes = std::stack<DeleteEdgeAction>();
 
     public:
         /// \brief Chain Reduction Rule implementation that identifies the first chain out of the two forests given
