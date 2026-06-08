@@ -15,7 +15,6 @@ solver::ChainReductionRule::ChainReductionRule(
     this->chainWithTrees = std::move(chainWithTrees);
     rootsT1Indices = {};
     rootsT2Indices = {};
-
 }
 
 //Chain def:Let T be a rooted phylogenetic X-tree, and let C =
@@ -78,7 +77,7 @@ void solver::ChainReductionRule::storeRootNodes(const std::shared_ptr<graph::For
     }
 }
 
-void solver::ChainReductionRule::storeEditedNodeIndices(const graph::Node* node, const std::shared_ptr<graph::Forest>& forest)
+void solver::ChainReductionRule::storeNodeIndices(const graph::Node* node, const std::shared_ptr<graph::Forest>& forest)
 {
     auto sizeOfNodes = forest->Nodes().size();
 
@@ -149,7 +148,7 @@ void solver::ChainReductionRule::removeConnectionOfTerminalNode(graph::Node* nod
     {
         //alter terminal to be alone
         graph::Node* terminal = node->leftChild;
-        storeEditedNodeIndices(terminal, forest);
+        storeNodeIndices(terminal, forest);
 
         terminal->parent = nullptr;
         if (terminal->sibling != nullptr)
@@ -180,7 +179,7 @@ void solver::ChainReductionRule::removeConnectionOfTerminalNode(graph::Node* nod
     {
         //alter terminal to be alone
         graph::Node* terminal = node->rightChild;
-        storeEditedNodeIndices(terminal,forest);
+        storeNodeIndices(terminal,forest);
 
         terminal->parent = nullptr;
         if (terminal->sibling != nullptr)
@@ -301,13 +300,13 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
         //Store all node connections by their index.
         for (int index = 0; index < chainWithTrees.second.front()->Nodes().size(); index++)
         {
-            storeEditedNodeIndices(&chainWithTrees.second.front()->Nodes()[index], chainWithTrees.second.front());
+            storeNodeIndices(&chainWithTrees.second.front()->Nodes()[index], chainWithTrees.second.front());
 
         }
 
         for (int index = 0; index < chainWithTrees.second.back()->Nodes().size(); index++)
         {
-            storeEditedNodeIndices(&chainWithTrees.second.back()->Nodes()[index], chainWithTrees.second.back());
+            storeNodeIndices(&chainWithTrees.second.back()->Nodes()[index], chainWithTrees.second.back());
         }
 
         //Store current Root Nodes

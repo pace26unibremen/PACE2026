@@ -54,7 +54,7 @@ namespace solver
         /// within the corresponding forest through saving the indicies to the node address within the forest node list
         /// \param node The node whose connections should be saved
         /// \param forest The forest from which the node originates
-        void storeEditedNodeIndices(const graph::Node* node, const std::shared_ptr<graph::Forest>& forest);
+        void storeNodeIndices(const graph::Node* node, const std::shared_ptr<graph::Forest>& forest);
 
         /// \brief Helper function that deletes the connections between the parameter node with the terminal child as
         /// well as removing them from the tree they're in. Copies the node beforehand into a constructor list.
