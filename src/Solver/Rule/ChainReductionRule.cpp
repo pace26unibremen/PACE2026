@@ -1,4 +1,5 @@
 #include "ChainReductionRule.hpp"
+#include "../Action/DeleteEdgeAction.hpp"
 
 #include <algorithm>
 #include <unordered_map>
@@ -323,6 +324,9 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
         graph::Node* topChainT1Parent = chainWithTrees.first[chainWithTrees.first.size()-1].front()->parent;
         graph::Node* topChainT2Parent = chainWithTrees.first[chainWithTrees.first.size()-1].back()->parent;
 
+        topOfChainT1 = topChainT1Parent;
+        topOfChainT2 = topChainT2Parent;
+
         //Address the now seperated chain in T1 and T2 through the removal of the parent nodes of the terminals as well
         //as setting the terminals to be single tree vertices.
 
@@ -388,38 +392,51 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
             }
         }
 
-        // //Connect the two parts of the now seperated trees
-        // bottomT1->parent = topChainT1Parent;
-        // bottomT2->parent = topChainT2Parent;
-        //
-        // //Connect the sibling connections between top's terminal and bottom node parts
-        // //Due to removeConnectionOfTerminalNode: The top Chain node side's most upper node has no parent ref
-        // //-> Other side still has it.
-        // if (topChainT1Parent->leftChild->parent == topChainT1Parent)
-        // {
-        //     bottomT1->sibling = topChainT1Parent->leftChild;
-        //     topChainT1Parent->rightChild = bottomT1;
-        //     topChainT1Parent->leftChild->sibling = bottomT1;
-        // }
-        // else if (topChainT1Parent->rightChild->parent == topChainT1Parent)
-        // {
-        //     bottomT1->sibling = topChainT1Parent->rightChild;
-        //     topChainT1Parent->leftChild = bottomT1;
-        //     topChainT1Parent->rightChild->sibling = bottomT1;
-        // }
-        //
-        // if (topChainT2Parent->leftChild->parent == topChainT2Parent)
-        // {
-        //     bottomT2->sibling = topChainT2Parent->leftChild;
-        //     topChainT2Parent->rightChild = bottomT2;
-        //     topChainT2Parent->leftChild->sibling = bottomT2;
-        // }
-        // else if (topChainT2Parent->rightChild->parent == topChainT2Parent)
-        // {
-        //     bottomT2->sibling = topChainT2Parent->rightChild;
-        //     topChainT2Parent->leftChild = bottomT2;
-        //     topChainT2Parent->rightChild->sibling = bottomT2;
-        // }
+    // Connect the two parts of the now seperated trees
+        bottomT1->parent = topChainT1Parent;
+        bottomT2->parent = topChainT2Parent;
+
+        updateSubtreeTerminals();
+
+    // //Connect the sibling connections between top's terminal and bottom node parts
+    // // If left side is terminal
+    // if (topChainT1Parent->leftChild != nullptr &&
+    //     topChainT1Parent->leftChild->leftChild == nullptr &&
+    //     topChainT1Parent->leftChild->rightChild != nullptr)
+    //     {
+    //         bottomT1->sibling = topChainT1Parent->leftChild;
+    //         topChainT1Parent->rightChild = bottomT1;
+    //         topChainT1Parent->leftChild->sibling = bottomT1;
+    //     }
+    // else if (
+    //     topChainT1Parent->rightChild != nullptr &&
+    //     topChainT1Parent->rightChild->leftChild == nullptr &&
+    //     topChainT1Parent->rightChild->rightChild != nullptr)
+    //     {
+    //         bottomT1->sibling = topChainT1Parent->rightChild;
+    //         topChainT1Parent->leftChild = bottomT1;
+    //         topChainT1Parent->rightChild->sibling = bottomT1;
+    //     }
+    //
+    // if (topChainT2Parent->leftChild != nullptr &&
+    //     topChainT2Parent->leftChild->leftChild == nullptr &&
+    //     topChainT2Parent->leftChild->rightChild != nullptr)
+    //     {
+    //         bottomT2->sibling = topChainT2Parent->leftChild;
+    //         topChainT2Parent->rightChild = bottomT2;
+    //         topChainT2Parent->leftChild->sibling = bottomT2;
+    //     }
+    // else if (
+    //     topChainT2Parent->rightChild != nullptr &&
+    //     topChainT2Parent->rightChild->leftChild == nullptr &&
+    //     topChainT2Parent->rightChild->rightChild != nullptr)
+    //     {
+    //         bottomT2->sibling = topChainT2Parent->rightChild;
+    //         topChainT2Parent->leftChild = bottomT2;
+    //         topChainT2Parent->rightChild->sibling = bottomT2;
+    //     }
+    //    //Update the terminals
+    //    // updateSubtreeTerminals();
     }
     return RuleReturnCode::Continue;
 }
@@ -437,12 +454,30 @@ void solver::ChainReductionRule::unapply()
     }
     isApplied = false;
 
+    // DeleteEdgeAction forBottomT1(chainWithTrees.first[0].front(), chainWithTrees.second.front());
+    // DeleteEdgeAction forBottomT2(chainWithTrees.first[0].back(), chainWithTrees.second.back());
+    //
+    // forBottomT1.doAction();
+    // forBottomT2.doAction();
+    auto bottomt1 = chainWithTrees.first[0].front();
+    auto bottomt2 = chainWithTrees.first[0].back();
+
+    bottomt1->parent = nullptr;
+    bottomt2->parent = nullptr;
+
+    // updateSubtreeTerminals();
+
+    // if (topOfChainT1->leftChild == bottomt1) topOfChainT1->leftChild = chainWithTrees.first[chainWithTrees.first.size()-1].front();
+    // else topOfChainT1->rightChild = chainWithTrees.first[chainWithTrees.first.size()-1].front();
+    // if (topOfChainT2->leftChild == bottomt2) topOfChainT2->leftChild = chainWithTrees.first[chainWithTrees.first.size()-1].back();
+    // else topOfChainT2->rightChild = chainWithTrees.first[chainWithTrees.first.size()-1].back();
+
     while (not changes.empty())
     {
         changes.top().undoAction();
         changes.pop();
     }
-
+    // updateSubtreeTerminals();
     // chainWithTrees.first[0].front()->parent = chainWithTrees.first[1].front();
     // chainWithTrees.first[0].back()->parent = chainWithTrees.first[1].back();
 
