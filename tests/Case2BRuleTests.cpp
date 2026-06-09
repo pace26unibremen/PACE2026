@@ -65,3 +65,22 @@ TEST_CASE("Case2BRule tests", "[Forest, Case2BRule]")
         REQUIRE(rule == nullptr);
     }
 }
+
+TEST_CASE("Case2BRule tests with instance 102cea936a3ca4590d7c6fe4b83256ae", "[Forest, Case2BRule]")
+{
+    SECTION("Three Trees")
+    {
+        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_9_example1.tree",9,1);
+        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_9_example2.tree",9,1);
+        auto f3 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_9_example3.tree",9,1);
+
+        auto instance = std::make_shared<std::vector<std::shared_ptr<Forest>>>();
+        instance->push_back(std::make_shared<Forest>(f1));
+        instance->push_back(std::make_shared<Forest>(f2));
+        instance->push_back(std::make_shared<Forest>(f3));
+
+        auto rule = Case2BRule::isApplicable(instance, nullptr);
+
+
+    }
+}
