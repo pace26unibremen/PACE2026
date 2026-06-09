@@ -5,6 +5,7 @@
 #include "BranchingSolverConfiguration.hpp"
 #include "Context.hpp"
 
+#include <atomic>
 #include <queue>
 
 namespace solver
@@ -27,6 +28,10 @@ class BranchingSolver : public AbstractSolver
 
     /// \brief Stores the best solution, that the solver found so far.
     std::shared_ptr<graph::Forest> solution = nullptr;
+
+    /// \brief Timeout flag set by an external signal handler. When true, solve() stops at the
+    /// next branch rollback and returns whatever solution has been found so far. Null = disabled.
+    std::atomic<bool>* timeoutFlag = nullptr;
 
     /// \brief Context information about the instance and the solver state
     std::shared_ptr<Context> context = std::make_shared<Context>();
@@ -59,6 +64,11 @@ class BranchingSolver : public AbstractSolver
 
     /// \brief Unapplies all reduction rules, that where applied to the instance.
     void unapplyReductions() override;
+
+    /// \brief Registers a timeout flag. When the flag is set to true (e.g. from a signal handler),
+    /// solve() stops at the next branch rollback and returns the best solution found so far.
+    /// Pass nullptr to disable. Returns false if no solution existed when the flag fired.
+    void setTimeoutFlag(std::atomic<bool>* flag);
 };
 
 }  //namespace solver

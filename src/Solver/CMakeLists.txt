@@ -13,3 +13,4 @@ set_target_properties(Solver PROPERTIES
 
 add_subdirectory(Action)
 add_subdirectory(Rule)
+add_subdirectory(Plugin)
