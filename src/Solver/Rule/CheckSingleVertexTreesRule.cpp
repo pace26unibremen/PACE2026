@@ -6,7 +6,6 @@ solver::CheckSingleVertexTreesRule::CheckSingleVertexTreesRule(const std::shared
                                      const std::shared_ptr<Context>& context) :
     AbstractRule(instance,context, true)
 {
-    this->changes = std::stack<solver::CollapseSubtreeAction>();
 }
 
 

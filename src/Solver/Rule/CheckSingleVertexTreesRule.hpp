@@ -18,11 +18,6 @@ namespace solver
 /// </a>
 class CheckSingleVertexTreesRule : public AbstractRule
 {
-  protected:
-    /// \brief Stack of action that modify the instance,
-    /// filled in the apply method and unfilled in the unapply method
-    std::stack<CollapseSubtreeAction> changes = std::stack<solver::CollapseSubtreeAction>();
-
   public:
     /// \param instance the problem instance
     /// \param context information about the instance and the solver state
@@ -37,8 +32,8 @@ class CheckSingleVertexTreesRule : public AbstractRule
     void unapply() override;
 
     /// \brief It checks whether the CheckSingleVertexTreesRule is applicable and generates an instance of this rule if so.
-    /// This method only considers the CheckSingleVertexTreesRule applicable if the first pair found in forest 1
-    /// has a corresponding pair of terminals in each of the other forests.
+    /// Importantly, may terminate search even if some forests still have connected components as long as the first forest
+    /// of the instance only contains single vertex trees.
     /// \param instance on which the rule should be applied
     /// \param context contains additional information to the instance and the solver state
     /// \returns shared_pointer to CheckSingleVertexTreesRule if rule is applicable, else null pointer
