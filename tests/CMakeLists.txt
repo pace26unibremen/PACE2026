@@ -37,11 +37,7 @@ target_link_libraries(BranchingSolverSimpleTests PRIVATE Solver Graph Catch2::Ca
 add_test(NAME BranchingSolverSimpleTests COMMAND $<TARGET_FILE:BranchingSolverSimpleTests>)
 target_compile_definitions(BranchingSolverSimpleTests PRIVATE RES_DIR="${CMAKE_SOURCE_DIR}/res/")
 
-add_executable(PluginTests PluginTests.cpp)
-target_link_libraries(PluginTests PRIVATE Solver Graph Catch2::Catch2WithMain)
-add_test(NAME PluginTests COMMAND $<TARGET_FILE:PluginTests>)
-target_compile_definitions(PluginTests PRIVATE RES_DIR="${CMAKE_SOURCE_DIR}/res/")
-
-add_executable(MetricsPluginTests MetricsPluginTests.cpp)
-target_link_libraries(MetricsPluginTests PRIVATE Solver Graph Catch2::Catch2WithMain)
-add_test(NAME MetricsPluginTests COMMAND $<TARGET_FILE:MetricsPluginTests>)
+add_executable(ThreeTwoChainReductionTests ThreeTwoChainReductionTest.cpp)
+target_link_libraries(ThreeTwoChainReductionTests PRIVATE Solver Graph Catch2::Catch2WithMain)
+add_test(NAME ThreeTwoChainReductionTests COMMAND $<TARGET_FILE:ThreeTwoChainReductionTests>)
+target_compile_definitions(ThreeTwoChainReductionTests PRIVATE RES_DIR="${CMAKE_SOURCE_DIR}/res/")
