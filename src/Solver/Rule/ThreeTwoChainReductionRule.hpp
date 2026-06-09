@@ -7,7 +7,7 @@
 #include "AbstractRule.hpp"
 #include <vector>
 #include <stack>
-#include "..\Action\AbstractAction.hpp"
+#include "../Action/DeleteEdgeAction.hpp"
 
 
 namespace solver
@@ -17,6 +17,8 @@ namespace solver
     {
     protected:
         std::vector<graph::Node*> nodes;
+
+        std::stack<DeleteEdgeAction> changes;
 
     public:
 

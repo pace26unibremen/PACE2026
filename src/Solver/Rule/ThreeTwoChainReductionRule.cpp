@@ -23,6 +23,11 @@ solver::RuleReturnCode solver::ThreeTwoChainReductionRule::apply()
     }
     isApplied = true;
 
+    for (int i = 0; i < nodes.size(); i++)
+    {
+        changes.emplace(nodes[i], instance->at(i));
+        changes.top().doAction();
+    }
 
     return solver::RuleReturnCode::Continue;
 
@@ -36,6 +41,11 @@ void solver::ThreeTwoChainReductionRule::unapply()
     }
     isApplied = false;
 
+    while (not changes.empty())
+    {
+        changes.top().undoAction();
+        changes.pop();
+    }
 }
 
 bool solver::ThreeTwoChainReductionRule::allBoolsSayTrue(std::vector<bool> list)
