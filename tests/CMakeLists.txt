@@ -42,3 +42,12 @@ target_link_libraries(Case2BRuleTests PRIVATE Solver Graph Catch2::Catch2WithMai
 add_test(NAME Case2BRuleTests COMMAND $<TARGET_FILE:Case2BRuleTests>)
 target_compile_definitions(Case2BRuleTests PRIVATE RES_DIR="${CMAKE_SOURCE_DIR}/res/")
 target_compile_definitions(Case2BRuleTests PRIVATE TEST_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/res/tests/")
+
+add_executable(PluginTests PluginTests.cpp)
+target_link_libraries(PluginTests PRIVATE Solver Graph Catch2::Catch2WithMain)
+add_test(NAME PluginTests COMMAND $<TARGET_FILE:PluginTests>)
+target_compile_definitions(PluginTests PRIVATE RES_DIR="${CMAKE_SOURCE_DIR}/res/")
+
+add_executable(MetricsPluginTests MetricsPluginTests.cpp)
+target_link_libraries(MetricsPluginTests PRIVATE Solver Graph Catch2::Catch2WithMain)
+add_test(NAME MetricsPluginTests COMMAND $<TARGET_FILE:MetricsPluginTests>)
