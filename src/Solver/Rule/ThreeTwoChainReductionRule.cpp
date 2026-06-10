@@ -115,7 +115,10 @@ solver::ThreeTwoChainReductionRule::isApplicable(const std::shared_ptr<graph::In
             if (label1 != label2 && node1->sibling != node2 && node2->sibling != node1
             //And they arent root nodes
             && not checkIfContainedInRoot(node1,f) && not checkIfContainedInRoot(node2,f)
+            //and there are at least two trees
+            && (instance->size() >= 2)
             // The nodes follow the B schema: Only one pendant node between them.
+
             )
             {
                 auto bCase = bCheck(node1, node2, f);
