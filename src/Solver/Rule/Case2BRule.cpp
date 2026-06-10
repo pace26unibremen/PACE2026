@@ -101,7 +101,7 @@ solver::Case2BRule::isApplicable(const std::shared_ptr<graph::Instance>& instanc
                     { // structure is not found
                         doCut = false;
                     }
-                    if (not (a->parent->parent->sibling == c and a->parent->parent->parent->sibling == x))
+                    else if (not (a->parent->parent->sibling == c and a->parent->parent->parent->sibling == x))
                     { // node(s) c or x wrong
                         doCut = false;
                     }
@@ -109,8 +109,8 @@ solver::Case2BRule::isApplicable(const std::shared_ptr<graph::Instance>& instanc
                     { // b1 or b2 aren't leaves
                         doCut = false;
                     }
-                    if (not (fi->TerminalToLabel().at(a->sibling) == toCutLabelPair.first and fi->TerminalToLabel().at(a->parent->sibling) == toCutLabelPair.second))
-                    {
+                    else if (not (fi->TerminalToLabel().at(a->sibling) == toCutLabelPair.first and fi->TerminalToLabel().at(a->parent->sibling) == toCutLabelPair.second))
+                    { // leaves to be cut match those of previous forests
                         doCut = false;
                     }
                 }
