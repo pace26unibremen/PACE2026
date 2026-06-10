@@ -185,6 +185,7 @@ solver::ThreeTwoChainReductionRule::isApplicable(const std::shared_ptr<graph::In
                         }
                             if (allBoolsSayTrue(checkForAllOtherTrees))
                                 return std::make_shared<ThreeTwoChainReductionRule>(instance, context, bNodes);
+                            else continue;
                     }
                     case 3:
                     {
