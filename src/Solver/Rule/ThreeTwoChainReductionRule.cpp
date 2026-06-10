@@ -3,8 +3,7 @@
 //
 
 #include "ThreeTwoChainReductionRule.hpp"
-
-#include <iostream>
+#include <utility>
 
 solver::ThreeTwoChainReductionRule::ThreeTwoChainReductionRule(
     const std::shared_ptr<graph::Instance>& instance,
@@ -12,7 +11,7 @@ solver::ThreeTwoChainReductionRule::ThreeTwoChainReductionRule(
     std::vector<graph::Node*> nodes) :
         AbstractRule(instance, context, true)
 {
-    this->nodes = nodes;
+    this->nodes = std::move(nodes);
 }
 
 solver::RuleReturnCode solver::ThreeTwoChainReductionRule::apply()
@@ -48,7 +47,7 @@ void solver::ThreeTwoChainReductionRule::unapply()
     }
 }
 
-bool solver::ThreeTwoChainReductionRule::allBoolsSayTrue(std::vector<bool> list)
+bool solver::ThreeTwoChainReductionRule::allBoolsSayTrue(const std::vector<bool>& list)
 {
     for (const auto& item : list)
     {
@@ -57,7 +56,7 @@ bool solver::ThreeTwoChainReductionRule::allBoolsSayTrue(std::vector<bool> list)
     return true;
 }
 
-bool solver::ThreeTwoChainReductionRule::checkIfContainedInRoot(graph::Node* node, std::shared_ptr<graph::Forest> forest)
+bool solver::ThreeTwoChainReductionRule::checkIfContainedInRoot(const graph::Node* node, const std::shared_ptr<graph::Forest>& forest)
 {
     for (int i = 0; i < forest->Roots().size(); i++)
     {
@@ -66,7 +65,8 @@ bool solver::ThreeTwoChainReductionRule::checkIfContainedInRoot(graph::Node* nod
     return false;
 }
 
-int solver::ThreeTwoChainReductionRule::bCheck(graph::Node* node1, graph::Node* node2, std::shared_ptr<graph::Forest> forest)
+int solver::ThreeTwoChainReductionRule::bCheck(const graph::Node* node1, const graph::Node* node2,
+                                               const std::shared_ptr<graph::Forest>& forest)
 {
     auto listOfNodes = forest->Nodes();
     auto terminals = forest->TerminalToLabel();
