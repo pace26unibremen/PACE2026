@@ -50,7 +50,7 @@ std::shared_ptr<solver::AbstractRule>
 solver::Case2BRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                     const std::shared_ptr<Context>& context)
 {
-    std::pair<int, int> toCutLabelPair;
+    std::pair<unsigned int, unsigned int> toCutLabelPair;
     const auto f1 = instance->at(0);
     unsigned int aLabel, cLabel, xLabel;
 
@@ -107,6 +107,10 @@ solver::Case2BRule::isApplicable(const std::shared_ptr<graph::Instance>& instanc
                     }
                     if (not (fi->TerminalToLabel().contains(a->sibling) and fi->TerminalToLabel().contains(a->parent->sibling)))
                     { // b1 or b2 aren't leaves
+                        doCut = false;
+                    }
+                    if (not (fi->TerminalToLabel().at(a->sibling) == toCutLabelPair.first and fi->TerminalToLabel().at(a->parent->sibling) == toCutLabelPair.second))
+                    {
                         doCut = false;
                     }
                 }
