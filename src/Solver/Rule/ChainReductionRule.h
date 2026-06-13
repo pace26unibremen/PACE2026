@@ -6,7 +6,6 @@
 #define PACE2026_CHAINREDUCTIONRULE_H
 #include "AbstractRule.hpp"
 
-
 namespace solver
 {
     class ChainReductionRule : public AbstractRule
