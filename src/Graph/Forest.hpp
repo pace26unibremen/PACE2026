@@ -171,10 +171,6 @@ class Forest
     /// \returns true if the forest has a valid representation.
     bool isValid() const;
 
-    /// \brief Checks if two trees have the same structure, i.e node structure
-    bool hasSameStructure(Forest& first, Forest& other);
-
-
     /// \brief Operator that checks if the first tree is a subtree of the second.
     /// \param other The tree to compare with.
     /// \return true if the first tree is a subtree, false otherwise.
