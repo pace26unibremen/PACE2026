@@ -11,12 +11,12 @@
 
 // TODO: Refactor node indices to node pointers when the rule is implemented
 
-// // solver::ChainReductionRule::ChainReductionRule() : AbstractRule(nullptr,nullptr,true)
-// {
-//     //Copying of the Trees maybe irrelevant when doing this without const params. Not sure.
-//
-//
-// }
+solver::ChainReductionRule::ChainReductionRule() : AbstractRule(nullptr,nullptr,true)
+{
+    //Copying of the Trees maybe irrelevant when doing this without const params. Not sure.
+
+
+}
 
 //Wie will man es machen?
 //von Anzahl der Nodes bis 4...
