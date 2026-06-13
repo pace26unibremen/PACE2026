@@ -16,8 +16,8 @@ namespace solver
     class ThreeTwoChainReductionRule : public AbstractRule
     {
     protected:
-        /// \brief The nodes which were identified to be the B-Node for each forest within the instance
-        std::vector<graph::Node*> nodes;
+        /// \brief The Label of the B node that should be deleted
+        unsigned bLabel;
         /// \brief A stack entailing all edge deletion actions between the B-Nodes and their respective forests
         std::stack<DeleteEdgeAction> changes;
 
@@ -26,10 +26,10 @@ namespace solver
         /// \see Whidden et al. 2013
         /// \param instance The instance which is to be analyzed
         /// \param context Information storage for the branchen
-        /// \param nodes The B-Nodes identified to be removed in accordance to the B-Rule
+        /// \param bLabel The label of the B node
         ThreeTwoChainReductionRule(const std::shared_ptr<graph::Instance>& instance,
                                  const std::shared_ptr<Context>& context,
-                                 std::vector<graph::Node*> nodes);
+                                 unsigned bLabel);
 
         /// \brief Applies the B-Rule onto all forests within the instance
         RuleReturnCode apply() override;
@@ -37,29 +37,19 @@ namespace solver
         /// \brief Reverses the B-Rule appliance on the instance
         void unapply() override;
 
-        /// \brief Helper Function used to identify if all elements of the parameter list entail true
-        /// \param list Boolean vector
-        static bool allBoolsSayTrue(const std::vector<bool>& list);
+        /// \brief Checks if for two param nodes there's a path of length 3 between them
+        /// \param aNode The first node
+        /// \param cNode The second node
+        /// \returns If there is a length 3 path, returns the sibling of the whichever node is lower within the tree, else it returns a nullptr
+        ///
+        static graph::Node* isA3Path(const graph::Node* aNode, const graph::Node* cNode);
 
-        /// \brief Helper Function used to identify if a node is contained within the root list of the forest parameter
-        /// \param node The node who's to be checked for
-        /// \param forest The forest instance in which the node resides
-        static bool checkIfContainedInRoot(const graph::Node* node, const std::shared_ptr<graph::Forest>& forest);
-
-        /// Helper function which checks if for two nodes the B-Rule condition is reached.
-        /// \param node1 the A-Node
-        /// \param node2 the C-Node
-        /// \param forest The Forest instance which contains both node1 and node2
-        /// \returns A Integer corresponding to the type of B-Rule-Structure identified given these parameters
-        static int bCheck(const graph::Node* node1, const graph::Node* node2,
-                          const std::shared_ptr<graph::Forest>& forest);
-
-        /// \brief Main Checking function that attempts to identify if the B-Rule is true for a node across all forests
-        /// within the instance.
-        /// \param instance The Instance in which all forests are listed
-        /// \param context The Information carried across rules for the instance parameter
+        /// \brief Main Function to identify if the B Rule is applicable to the current instance meant to be solved
+        /// \param instance the instance containing all the trees
+        /// \param context the respective information for the instance#
+        /// \returns A shared pointer containing the parameters as well as the b node in form of a label if the B Rule is true for the current instance, otherwise nullptr
         static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
-                                                           const std::shared_ptr<Context>& context);
+                                                            const std::shared_ptr<Context>& context);
         [[nodiscard]]
         std::string name() const override;
     };

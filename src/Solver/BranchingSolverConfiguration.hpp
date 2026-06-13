@@ -40,9 +40,9 @@ struct BranchingSolverConfiguration
         solver::CutBranchRule::isApplicable,
         solver::EqualForestsRule::isApplicable,
         solver::SingleVertexTreePropagationRule::isApplicable,
+        solver::ThreeTwoChainReductionRule::isApplicable,
         solver::PairUnconnectedBranchingRule::isApplicable,
         solver::PairEqualRule::isApplicable,
-        solver::ThreeTwoChainReductionRule::isApplicable,
         solver::PairPathBranchingRule::isApplicable,
         solver::DebugAssertFalseRule::isApplicable
         };
