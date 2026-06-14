@@ -97,22 +97,41 @@ solver::Case2BRule::isApplicable(const std::shared_ptr<graph::Instance>& instanc
                     graph::Node* c = fi->LabelToTerminal().at(cLabel);
                     graph::Node* x = fi->LabelToTerminal().at(xLabel);
 
+                    bool doShortCut = true;
+                    bool doLongCut = true;
+
+                    // block dealing with the shorter case
+                    if (not (a->parent != nullptr and a->parent->parent != nullptr))
+                    { // slightly redundant checking kept for readability
+                        doShortCut = false;
+                    }
+                    if (not (a->sibling == c and a->parent->sibling == x))
+                    {
+                        doShortCut = false;
+                    }
+                    // block over
+
+                    // block dealing with the longer case
                     if (not (a->parent != nullptr and a->parent->parent != nullptr and a->parent->parent->parent != nullptr and a->parent->parent->parent->parent != nullptr))
                     { // structure is not found
-                        doCut = false;
+                        doLongCut = false;
                     }
                     else if (not (a->parent->parent->sibling == c and a->parent->parent->parent->sibling == x))
                     { // node(s) c or x wrong
-                        doCut = false;
+                        doLongCut = false;
                     }
                     if (not (fi->TerminalToLabel().contains(a->sibling) and fi->TerminalToLabel().contains(a->parent->sibling)))
                     { // b1 or b2 aren't leaves
-                        doCut = false;
+                        doLongCut = false;
                     }
                     else if (not (fi->TerminalToLabel().at(a->sibling) == toCutLabelPair.first and fi->TerminalToLabel().at(a->parent->sibling) == toCutLabelPair.second))
                     { // leaves to be cut match those of previous forests
-                        doCut = false;
+                        doLongCut = false;
                     }
+                    // block over
+
+                    // cut still possible if either short or long cut applicable
+                    doCut = doShortCut or doLongCut;
                 }
 
                 if (doCut)
