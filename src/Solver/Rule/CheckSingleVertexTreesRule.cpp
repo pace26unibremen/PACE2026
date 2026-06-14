@@ -1,10 +1,9 @@
 #include "CheckSingleVertexTreesRule.hpp"
 
-#include <cassert>
 
 solver::CheckSingleVertexTreesRule::CheckSingleVertexTreesRule(const std::shared_ptr<graph::Instance>& instance,
                                      const std::shared_ptr<Context>& context) :
-    AbstractRule(instance,context, true)
+    AbstractRule(instance,context, false)
 {
 }
 

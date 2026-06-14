@@ -1,10 +1,8 @@
 #ifndef PACE2026_CHECK_SINGLE_VERTEX_TREES_RULE_HPP
 #define PACE2026_CHECK_SINGLE_VERTEX_TREES_RULE_HPP
 
-#include "../Action/CollapseSubtreeAction.hpp"
 #include "AbstractRule.hpp"
 
-#include <stack>
 
 namespace solver
 {
