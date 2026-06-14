@@ -7,7 +7,7 @@
 namespace solver
 {
 
-/// \brief Collapses subtree of a terminal pair if it is a pair in every forest of the instance.
+/// \brief Checks if the first forest of the instance consists of only leaves, i.e. single vertex trees.
 ///
 /// \see
 /// <a href="https://gitlab.informatik.uni-bremen.de/pace-2026/orga/-/wikis/Branching/CheckSingleVertexTreesRule">
@@ -24,7 +24,7 @@ class CheckSingleVertexTreesRule : public AbstractRule
                   const std::shared_ptr<Context>& context);
 
     /// \brief applies rule
-    /// \returns always \ref RuleReturnCode::Continue
+    /// \returns \ref RuleReturnCode::EndBranchWithSolutionCandidate if the first forest consists only of single vertex trees
     RuleReturnCode apply() override;
 
     void unapply() override;
