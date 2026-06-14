@@ -131,7 +131,8 @@ solver::Case2BRule::isApplicable(const std::shared_ptr<graph::Instance>& instanc
                     // block over
 
                     // cut still possible if either short or long cut applicable
-                    doCut = doShortCut or doLongCut;
+                    //TODO: restore this doCut = doShortCut or doLongCut;
+                    doCut = doLongCut;
                 }
 
                 if (doCut)
