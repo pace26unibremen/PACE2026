@@ -105,7 +105,7 @@ solver::Case2BRule::isApplicable(const std::shared_ptr<graph::Instance>& instanc
                     { // slightly redundant checking kept for readability
                         doShortCut = false;
                     }
-                    if (not (a->sibling == c and a->parent->sibling == x))
+                    else if (not (a->sibling == c and a->parent->sibling == x))
                     {
                         doShortCut = false;
                     }
