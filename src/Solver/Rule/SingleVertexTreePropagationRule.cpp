@@ -57,7 +57,7 @@ solver::SingleVertexTreePropagationRule::isApplicable(const std::shared_ptr<grap
 {
     auto labelsToBeReduced = std::unordered_set<unsigned int>();
 
-    for (unsigned int label = 1; label < instance->at(0)->LabelToTerminal().size() + 1; label++)
+    for (const auto& [_, label] : instance->at(0)->TerminalToLabel())
     {
         bool anySingleVertexTree = false;
         bool anyNotSingleVertexTree = false;
