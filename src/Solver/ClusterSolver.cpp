@@ -121,19 +121,14 @@ bool solver::ClusterSolver::solve()
     {
         auto c = cluster.at(i);
 
-        // graph::DotInstance(c, "../../res/cluster_" + std::to_string(i) + "_initial.dot"); // Todo
-        // graph::WriteInstance(c, "../../res/cluster_" + std::to_string(i) + "_initial.nw"); // Todo
-
         auto config = std::make_shared<solver::BranchingSolverConfiguration>();
         subSolver.emplace_back(c, config);
         auto& subS = subSolver[i];
-        // configuration->debPlugin = {std::make_shared<DebugPlugin>("../../res/cluster_" + std::to_string(i) + "_bs/")}; // Todo
 
         unsigned int clusterRootLabel = clusterToRootLabel.at(c);
 
         if (clusterRootLabel != 0)
         {
-            // std::cout << i << ": add cluster root label to context (" << clusterRootLabel << ")" << std::endl; // Todo
             subS.GetContext()->clusterRoot.insert(clusterRootLabel); // Todo
             subS.GetContext()->clusterRootLabel = clusterRootLabel;
         }
@@ -151,11 +146,8 @@ bool solver::ClusterSolver::solve()
             auto r = solver::SingleVertexTreePropagationRule(c,context,cutClusterTerminals);
             r.apply();
         }
-        // graph::DotInstance(c, "../../res/cluster_" + std::to_string(i) + "_removedClusterLabel.dot"); // Todo
 
         solved &= subS.solve();
-
-        // graph::DotInstance(c, "../../res/cluster_" + std::to_string(i) + "_solved.dot"); // Todo
 
         if (clusterRootLabel != 0)
         {
@@ -163,7 +155,6 @@ bool solver::ClusterSolver::solve()
             if (clusterRootNode->isTrueTerminal() and not clusterRootNode->parent)
             {
                 cuttedClusterRoots.insert(clusterRootLabel);
-                // std::cout << i << ": cluster root (" << clusterRootLabel << ") cutted" << std::endl; // Todo
             }
         }
     }
@@ -180,13 +171,10 @@ void solver::ClusterSolver::unapplyReductions()
     for (unsigned int i= 0; i < cluster.size(); i++)
     {
         subSolver[i].unapplyReductions();
-        // graph::DotInstance(cluster[i], "../../res/cluster_" + std::to_string(i) + "_unapplyReductions.dot"); // Todo
     }
 
     mergeCluster();
-    // graph::DotInstance(instance, "../../res/merged_cluster.dot"); // Todo
     clusterReductionRule->unapply();
-    // graph::DotInstance(instance, "../../res/unapplied_crr.dot"); // Todo
 }
 
 const std::vector<std::shared_ptr<graph::Instance>>& solver::ClusterSolver::SubProblems() const
