@@ -130,3 +130,8 @@ std::string solver::ThreeTwoChainReductionRule::name() const
 {
     return "ThreeTwoChainReductionRule";
 }
+
+std::shared_ptr<solver::AbstractRule> solver::ThreeTwoChainReductionRule::clone() const
+{
+    return std::make_shared<ThreeTwoChainReductionRule>(instance, context, bLabel);
+}
