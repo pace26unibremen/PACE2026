@@ -16,9 +16,7 @@ int main(int, char**)
      << "((((4,7),5),((6,14),(((12,1),(17,13)),(16,15)))),((((((8,10),11),2),(9,19)),(20,18)),3));" << endl;
     auto i = ReadInstance(sstream);
 
-    auto c = std::make_shared<solver::SolverConfiguration>();
-    c->subtreeReduction = true;
-    c->clusterReduction = true;
+    auto c = std::make_shared<solver::BranchingSolverConfiguration>();
     c->boundedDephtSearch = true;
     // c->debPlugin = std::make_shared<solver::DebugPlugin>(string(RES_DIR) + "debugPlugin/");
     c->activeRules =
@@ -32,7 +30,7 @@ int main(int, char**)
         solver::DebugAssertFalseRule::isApplicable
     };
 
-    auto rs = solver::ReductionSolver(i,c);
+    auto rs = solver::ReductionSolver(i);
     auto bs = solver::BranchingSolver(i,c);
 
     rs.solve();

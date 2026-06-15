@@ -1,6 +1,6 @@
 #include "CutBranchRule.hpp"
 
-#include "../SolverConfiguration.hpp"
+#include "../BranchingSolverConfiguration.hpp"
 
 #include <algorithm>
 #include <ranges>
@@ -34,7 +34,7 @@ solver::CutBranchRule::isApplicable(const std::shared_ptr<graph::Instance>& inst
                                     const std::shared_ptr<Context>& context)
 {
 
-    if (context->solverConfiguration->boundedDephtSearch)
+    if (context->branchingSolverConfiguration->boundedDephtSearch)
     {
         for (const auto& f : *instance)
         {

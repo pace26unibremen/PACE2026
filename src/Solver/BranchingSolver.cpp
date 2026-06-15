@@ -28,7 +28,7 @@ bool solver::BranchingSolver::rollBackBranch()
     // candidate has been stored.  Without one, keep rolling back and exploring
     // until the first EndBranchWithSolutionCandidate so the solver always
     // produces output within the POSIX grace period.
-    if (timeoutFlag && timeoutFlag->load(std::memory_order_relaxed) && solution != nullptr)
+    if (timeoutFlag && timeoutFlag->load(std::memory_order_relaxed) && not solutionBranch.empty())
         return true;
 
     // all rule suggestions can be discarded at the end of a branch
@@ -103,7 +103,7 @@ bool solver::BranchingSolver::solve()
         // On timeout, stop before starting a new iteration — but only once at
         // least one solution candidate has been found.  Without one, keep
         // searching so the solver always produces output within the grace period.
-        if (timeoutFlag && timeoutFlag->load(std::memory_order_relaxed) && solution != nullptr)
+        if (timeoutFlag && timeoutFlag->load(std::memory_order_relaxed) && not solutionBranch.empty())
             break;
 
         std::shared_ptr<AbstractRule> rule = nullptr;

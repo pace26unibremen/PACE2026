@@ -4,28 +4,19 @@ solver::ReductionSolver::ReductionSolver(const std::shared_ptr<graph::Instance>&
         AbstractSolver(instance)
 {}
 
-solver::ReductionSolver::ReductionSolver(const std::shared_ptr<graph::Instance>& instance,
-                                         const std::shared_ptr<solver::SolverConfiguration>& configuration) :
-        AbstractSolver(instance),
-        configuration(configuration)
-{}
-
 bool solver::ReductionSolver::solve()
 {
-    if (configuration->subtreeReduction)
+    subtreeReductionRule = solver::SubtreeReductionRule::isApplicable(instance, context);
+    if (subtreeReductionRule)
     {
-        subtreeReductionRule = solver::SubtreeReductionRule::isApplicable(instance, context);
-        if (subtreeReductionRule)
-        {
-            subtreeReductionRule->apply();
-        }
+        subtreeReductionRule->apply();
     }
     return false;
 }
 
 void solver::ReductionSolver::unapplyReductions()
 {
-    if (configuration->subtreeReduction and subtreeReductionRule)
+    if (subtreeReductionRule)
     {
         subtreeReductionRule->unapply();
     }

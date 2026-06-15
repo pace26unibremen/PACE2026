@@ -93,13 +93,9 @@ void solver::ClusterSolver::sortClusters()
     cluster = sorted;
 }
 
-solver::ClusterSolver::ClusterSolver(const std::shared_ptr<graph::Instance>& instance,
-                                             const std::shared_ptr<solver::SolverConfiguration>& configuration) :
-        AbstractSolver(instance),
-        configuration(configuration)
-{
-    this->context->solverConfiguration = this->configuration;
-}
+solver::ClusterSolver::ClusterSolver(const std::shared_ptr<graph::Instance>& instance) :
+        AbstractSolver(instance)
+{}
 
 bool solver::ClusterSolver::solve()
 {
@@ -128,7 +124,8 @@ bool solver::ClusterSolver::solve()
         graph::DotInstance(c, "../../res/cluster_" + std::to_string(i) + "_initial.dot"); // Todo
         graph::WriteInstance(c, "../../res/cluster_" + std::to_string(i) + "_initial.nw"); // Todo
 
-        subSolver.emplace_back(c,configuration);
+        auto config = std::make_shared<solver::BranchingSolverConfiguration>();
+        subSolver.emplace_back(c, config);
         auto& subS = subSolver[i];
         // configuration->debPlugin = {std::make_shared<DebugPlugin>("../../res/cluster_" + std::to_string(i) + "_bs/")}; // Todo
 
@@ -137,8 +134,8 @@ bool solver::ClusterSolver::solve()
         if (clusterRootLabel != 0)
         {
             // std::cout << i << ": add cluster root label to context (" << clusterRootLabel << ")" << std::endl; // Todo
-            subS.Cxt()->clusterRoot.insert(clusterRootLabel); // Todo
-            subS.Cxt()->clusterRootLabel = clusterRootLabel;
+            subS.GetContext()->clusterRoot.insert(clusterRootLabel); // Todo
+            subS.GetContext()->clusterRootLabel = clusterRootLabel;
         }
 
         std::unordered_set<unsigned int> cutClusterTerminals;

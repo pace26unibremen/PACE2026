@@ -3,7 +3,7 @@
 
 #include "AbstractSolver.hpp"
 #include "BranchingSolver.hpp"
-#include "SolverConfiguration.hpp"
+#include "BranchingSolverConfiguration.hpp"
 #include "Context.hpp"
 #include "Rule/ClusterReductionRule.hpp"
 
@@ -15,8 +15,6 @@ class ClusterSolver : public AbstractSolver
     std::vector<solver::BranchingSolver> subSolver;
 
     std::vector<std::shared_ptr<graph::Instance>> cluster;
-
-    const std::shared_ptr<solver::SolverConfiguration> configuration = std::make_shared<solver::SolverConfiguration>();
 
     const std::shared_ptr<solver::Context> context = std::make_shared<solver::Context>();
 
@@ -42,8 +40,7 @@ class ClusterSolver : public AbstractSolver
     void sortClusters();
 
   public:
-    explicit ClusterSolver(const std::shared_ptr<graph::Instance>& instance,
-                         const std::shared_ptr<solver::SolverConfiguration>& configuration);
+    explicit ClusterSolver(const std::shared_ptr<graph::Instance>& instance);
 
     ~ClusterSolver() override = default;
 
