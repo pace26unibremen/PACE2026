@@ -16,6 +16,14 @@ std::string formatDouble(double v)
     return ss.str();
 }
 
+/// Formats t float with 1 decimal places
+std::string formatWeight(float f)
+{
+    std::ostringstream ss;
+    ss << std::fixed << std::setprecision(1) << f;
+    return ss.str();
+}
+
 } // anonymous namespace
 
 std::string solver::plugin::AbstractStridePlugin::toSnakeCase(const std::string& camelCase)
@@ -76,7 +84,7 @@ std::string solver::plugin::AbstractStridePlugin::toJson(const std::vector<Snaps
         out += "{\"wtime\":";
         out += formatDouble(s.wtime);
         out += ",\"score\":";
-        out += std::to_string(s.weight);
+        out += formatWeight(s.weight);
         out += ",\"branch_opens\":";
         out += std::to_string(s.branchOpens);
         out += ",\"branch_closes\":";

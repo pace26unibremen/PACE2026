@@ -141,7 +141,7 @@ TEST_CASE("AbstractStridePlugin: toJson(vector<Snapshot>)", "[MetricsPlugin][JSO
         };
         const std::string json = StrideTestHelper::toJson(std::vector<solver::plugin::Snapshot>{s});
         // Rule name keys are converted to snake_case by toJson(Snapshot) at serialisation time.
-        CHECK(json == "[{\"wtime\":0.123,\"score\":4,\"branch_opens\":1,\"branch_closes\":1,"
+        CHECK(json == "[{\"wtime\":0.123,\"score\":4.0,\"branch_opens\":1,\"branch_closes\":1,"
                       "\"rule_counts\":{\"cut_branch_rule\":2},"
                       "\"rule_times_ms\":{\"cut_branch_rule\":7.500}}]");
     }
