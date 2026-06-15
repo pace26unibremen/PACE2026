@@ -70,7 +70,14 @@ struct Node
     /// \returns the smallest label
     [[nodiscard, maybe_unused]]
     unsigned int smallestTerminal() const;
-    
+
+    /// \bried checks whether the node is a true terminal (and not a collapsed node that represents a whole subtree)
+    [[nodiscard]]
+    bool isTrueTerminal() const;
+
+    /// \brief Calculates (!) all labels of the subtree as an unordered set.
+    /// \returns the set of all subtree labels
+    [[nodiscard]]
     std::unordered_set<unsigned int> SubtreeLabels() const;
 
 };

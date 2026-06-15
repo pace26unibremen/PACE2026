@@ -72,6 +72,29 @@ unsigned int graph::Node::smallestTerminal() const
     assert(false);
 }
 
+bool graph::Node::isTrueTerminal() const
+{
+    bool foundLabel = false;
+    for (unsigned long value : subtreeTerminals)
+    {
+        if (value == 0)
+        {
+            continue;
+        }
+        if (not foundLabel)
+        {
+            uint64_t t = value & -value;
+            value ^= t;
+            foundLabel = true;
+        }
+        if (value != 0)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 std::unordered_set<unsigned int> graph::Node::SubtreeLabels() const
 {
     std::unordered_set<unsigned int> result;
