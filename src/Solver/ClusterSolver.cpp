@@ -116,13 +116,13 @@ bool solver::ClusterSolver::solve()
 
     std::unordered_set<unsigned int> cuttedClusterRoots;
 
-    bool solved = false;
+    bool solved = true;
     for (unsigned int i = 0; i < cluster.size(); ++i)
     {
         auto c = cluster.at(i);
 
-        graph::DotInstance(c, "../../res/cluster_" + std::to_string(i) + "_initial.dot"); // Todo
-        graph::WriteInstance(c, "../../res/cluster_" + std::to_string(i) + "_initial.nw"); // Todo
+        // graph::DotInstance(c, "../../res/cluster_" + std::to_string(i) + "_initial.dot"); // Todo
+        // graph::WriteInstance(c, "../../res/cluster_" + std::to_string(i) + "_initial.nw"); // Todo
 
         auto config = std::make_shared<solver::BranchingSolverConfiguration>();
         subSolver.emplace_back(c, config);

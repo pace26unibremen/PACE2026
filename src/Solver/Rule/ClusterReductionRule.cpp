@@ -68,10 +68,10 @@ void solver::ClusterReductionRule::unapply()
     }
     isApplied = false;
 
-    while (not changes.empty())
+    while (not changesOnF0.empty())
     {
-        changes.top().undoAction();
-        changes.pop();
+        changesOnF0.top().undoAction();
+        changesOnF0.pop();
     }
 }
 
