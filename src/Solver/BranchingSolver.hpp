@@ -57,6 +57,14 @@ class BranchingSolver : public AbstractSolver
     explicit BranchingSolver(const std::shared_ptr<graph::Instance>& instance,
                              const std::shared_ptr<solver::BranchingSolverConfiguration>& configuration);
 
+    /// \brief Constructor for a branching solver.
+    /// \param instance to solve
+    /// \param configuration for the branching solver
+    /// \param context additional context for the instance
+    explicit BranchingSolver(const std::shared_ptr<graph::Instance>& instance,
+                             const std::shared_ptr<solver::BranchingSolverConfiguration>& configuration,
+                             const std::shared_ptr<solver::Context>& context);
+
     ~BranchingSolver() override = default;
 
     /// \brief starts the solver

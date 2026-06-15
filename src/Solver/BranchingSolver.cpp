@@ -17,6 +17,16 @@ solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>&
     this->context->branchingSolverConfiguration = this->configuration;
 }
 
+solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>& instance,
+                                         const std::shared_ptr<solver::BranchingSolverConfiguration>& configuration,
+                                         const std::shared_ptr<solver::Context>& context) :
+    AbstractSolver(instance),
+    configuration(configuration),
+    context(context)
+{
+    this->context->branchingSolverConfiguration = this->configuration;
+}
+
 void solver::BranchingSolver::setTimeoutFlag(std::atomic<bool>* flag)
 {
     timeoutFlag = flag;
