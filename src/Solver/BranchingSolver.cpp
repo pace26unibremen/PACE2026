@@ -69,6 +69,11 @@ void solver::BranchingSolver::unapplyReductions()
     }
 }
 
+const std::shared_ptr<solver::Context>& solver::BranchingSolver::GetContext()
+{
+    return context;
+}
+
 bool solver::BranchingSolver::solve()
 {
     if (configuration->debPlugin) configuration->debPlugin->init(instance);

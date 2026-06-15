@@ -60,6 +60,9 @@ class BranchingSolver : public AbstractSolver
 
     /// \brief Unapplies all reduction rules, that where applied to the instance.
     void unapplyReductions() override;
+
+    /// \brief Getter for the Context.
+    const std::shared_ptr<solver::Context>& GetContext();
 };
 
 }  //namespace solver
