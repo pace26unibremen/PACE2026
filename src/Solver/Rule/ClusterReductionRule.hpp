@@ -17,6 +17,8 @@ class ClusterReductionRule : public AbstractRule
 
     std::stack<DecoupleSubtreeAction> changes = std::stack<DecoupleSubtreeAction>();
 
+    std::stack<DecoupleSubtreeAction> changesOnF0 = std::stack<DecoupleSubtreeAction>();
+
   public:
     /// \param instance the problem instance
     /// \param context information about the instance and the solver state

@@ -23,7 +23,7 @@ solver::RuleReturnCode solver::ClusterReductionRule::apply()
 
     // because we introduce new labels, we may get out of range in the subtreeTerminals field of graph::Node.
     unsigned int numberOfNewLabels = 2 * pointsAndForests_PerCluster.size();
-    if ((numberOfNewLabels + maxLabel + 63) / 64 > (maxLabel + 63) / 64)
+    if ((maxLabel + numberOfNewLabels + 63) / 64 > (maxLabel + 63) / 64)
     {
         for (const auto& f : *instance)
         {
@@ -38,15 +38,21 @@ solver::RuleReturnCode solver::ClusterReductionRule::apply()
     {
         for (const auto& [f,n] : _cluster)
         {
-            changes.emplace(f,n,maxLabel+1,maxLabel+2);
-            changes.top().doAction();
-
-            context->protectedEdges.emplace(f->LabelToTerminal()[maxLabel+2]);
-            context->protectedEdges.emplace(f->LabelToTerminal()[maxLabel+2]->sibling);
+            if (f == instance->at(0))
+            {
+                changesOnF0.emplace(f,n,maxLabel+1,maxLabel+2);
+                changesOnF0.top().doAction();
+            }
+            else
+            {
+                changes.emplace(f,n,maxLabel+1,maxLabel+2);
+                changes.top().doAction();
+            }
         }
 
         // TODO should be removed in the unapply
         context->clusterLabel.insert(maxLabel+1);
+        context->clusterRoot.insert(maxLabel+2);
 
         maxLabel += 2;
     }

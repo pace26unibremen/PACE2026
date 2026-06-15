@@ -35,7 +35,7 @@ struct Context
     /// An edge is identified by the node it points to (the child-node).
     std::unordered_set<graph::Node*> protectedEdges = std::unordered_set<graph::Node*>();
 
-    /// \brief A set of newly created labels for clusters.
+    /// \brief A set of newly created labels which replace the clusters in the parent tree.
     std::unordered_set<unsigned int> clusterLabel = std::unordered_set<unsigned int>();
     /// \brief A set of newly created labels which mark cluster roots.
     std::unordered_set<unsigned int> clusterRoot = std::unordered_set<unsigned int>();
