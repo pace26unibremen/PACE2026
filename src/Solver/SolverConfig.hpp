@@ -74,6 +74,8 @@ struct SolverConfig
     enum class SolverType
     {
         Branching, ///< Branching + reduction rules solver (\ref BranchingSolver).
+        Reduction, ///< Subtree Reduction (\ref ReductionSolver).
+        Cluster,   ///< Cluster Reduction (\ref ClusterSolver).
     };
 
     // -----------------------------------------------------------------------
@@ -97,8 +99,8 @@ struct SolverConfig
     /// Default: \c false.
     bool enableSigterm = false;
 
-    /// \brief Which solver backend to use.  Default: \c Branching.
-    SolverType solverType = SolverType::Branching;
+    /// \brief Which solver backend to use.  Default: \c Reduction -> Cluster -> Branching.
+    std::vector<SolverType> solverPipeline = {SolverType::Reduction, SolverType::Cluster, SolverType::Branching};
 
     /// \brief Solver-specific options for the branching solver backend.
     ///
@@ -143,6 +145,7 @@ struct SolverConfig
     {
         SolverConfig c;
         c.track = Track::Heuristic;
+        c.solverPipeline = {SolverType::Reduction, SolverType::Branching};
         c.enableSigterm = true;
         return c;
     }
