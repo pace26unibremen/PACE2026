@@ -2,7 +2,6 @@
 #define PACE2026_REDUCTIONSOLVER_HPP
 
 #include "AbstractSolver.hpp"
-#include "Rule/ClusterReductionRule.hpp"
 #include "Rule/SubtreeReductionRule.hpp"
 #include "SolverConfiguration.hpp"
 
@@ -13,7 +12,6 @@ class ReductionSolver : public AbstractSolver
 {
 private:
     std::shared_ptr<solver::SolverConfiguration> configuration;
-    std::shared_ptr<solver::AbstractRule> clusterReductionRule = nullptr;
     std::shared_ptr<solver::AbstractRule> subtreeReductionRule = nullptr;
     std::shared_ptr<solver::Context> context = std::make_shared<solver::Context>();
 public:
@@ -28,10 +26,10 @@ public:
                              const std::shared_ptr<solver::SolverConfiguration>& configuration);
 
     /// \brief solve the instance
-    virtual bool solve() override;
+    bool solve() override;
 
     /// \brief Unapplies all reduction rules, that where applied to the instance.
-    virtual void unapplyReductions() override;
+    void unapplyReductions() override;
 
 };
 

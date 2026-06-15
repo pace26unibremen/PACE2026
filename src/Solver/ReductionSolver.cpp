@@ -20,25 +20,11 @@ bool solver::ReductionSolver::solve()
             subtreeReductionRule->apply();
         }
     }
-
-    if (configuration->clusterReduction)
-    {
-        // Try to apply the cluster reduction before starting the main solving process
-        clusterReductionRule = solver::ClusterReductionRule::isApplicable(instance, context);
-        if (clusterReductionRule)
-        {
-            clusterReductionRule->apply();
-        }
-    }
     return false;
 }
 
 void solver::ReductionSolver::unapplyReductions()
 {
-    if (configuration->clusterReduction and clusterReductionRule)
-    {
-        clusterReductionRule->unapply();
-    }
     if (configuration->subtreeReduction and subtreeReductionRule)
     {
         subtreeReductionRule->unapply();
