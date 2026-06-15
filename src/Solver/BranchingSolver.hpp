@@ -2,9 +2,10 @@
 #define PACE2026_BRANCHING_SOLVER_HPP
 
 #include "AbstractSolver.hpp"
+#include "BranchingSolverConfiguration.hpp"
 #include "Context.hpp"
-#include "SolverConfiguration.hpp"
 
+#include <atomic>
 #include <queue>
 
 namespace solver
@@ -16,8 +17,8 @@ class BranchingSolver : public AbstractSolver
 {
   protected:
     /// \brief The configuration of the branching solver.
-    const std::shared_ptr<SolverConfiguration>
-    configuration = std::make_shared<SolverConfiguration>();
+    const std::shared_ptr<BranchingSolverConfiguration>
+    configuration = std::make_shared<BranchingSolverConfiguration>();
 
     /// \brief stores all applied rules of the current branch in the order in which they were applied.
     std::list<std::shared_ptr<AbstractRule>> appliedRules = std::list<std::shared_ptr<AbstractRule>>();
@@ -27,6 +28,10 @@ class BranchingSolver : public AbstractSolver
 
     /// \brief Context information about the instance and the solver state
     std::shared_ptr<Context> context = std::make_shared<Context>();
+
+    /// \brief Timeout flag set by an external signal handler. When true, solve() stops at the
+    /// next branch rollback and returns whatever solution has been found so far. Null = disabled.
+    std::atomic<bool>* timeoutFlag = nullptr;
 
     /// \brief The branch that leads to the solution
     std::list<std::shared_ptr<AbstractRule>> solutionBranch =
@@ -50,7 +55,7 @@ class BranchingSolver : public AbstractSolver
     /// \param instance to solve
     /// \param configuration for the branching solver
     explicit BranchingSolver(const std::shared_ptr<graph::Instance>& instance,
-                             const std::shared_ptr<solver::SolverConfiguration>& configuration);
+                             const std::shared_ptr<solver::BranchingSolverConfiguration>& configuration);
 
     ~BranchingSolver() override = default;
 
@@ -63,6 +68,11 @@ class BranchingSolver : public AbstractSolver
 
     /// \brief Getter for the Context.
     const std::shared_ptr<solver::Context>& GetContext();
+
+    /// \brief Registers a timeout flag. When the flag is set to true (e.g. from a signal handler),
+    /// solve() stops at the next branch rollback and returns the best solution found so far.
+    /// Pass nullptr to disable. Returns false if no solution existed when the flag fired.
+    void setTimeoutFlag(std::atomic<bool>* flag);
 };
 
 }  //namespace solver
