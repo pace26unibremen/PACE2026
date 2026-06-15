@@ -45,6 +45,7 @@ class MockReductionRule : public solver::AbstractRule
     solver::RuleReturnCode apply() override { return solver::RuleReturnCode::Continue; }
     void unapply() override {}
     [[nodiscard]] std::string name() const override { return ruleName; }
+    std::shared_ptr<AbstractRule> clone() const override { return std::make_shared<MockReductionRule>(name()); }
 };
 
 class MockBranchingRule : public solver::AbstractBranchingRule
@@ -60,6 +61,7 @@ class MockBranchingRule : public solver::AbstractBranchingRule
     solver::RuleReturnCode apply() override { return solver::RuleReturnCode::Continue; }
     void unapply() override {}
     [[nodiscard]] std::string name() const override { return ruleName; }
+    std::shared_ptr<AbstractRule> clone() const override { return std::make_shared<MockBranchingRule>(name()); }
 };
 
 // ---------------------------------------------------------------------------
