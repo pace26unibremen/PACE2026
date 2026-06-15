@@ -38,7 +38,7 @@ class ConvergencePlugin : public AbstractStridePlugin
               const std::shared_ptr<solver::Context>& context) override;
 
     /// \brief Appends a snapshot of the current collector state to the trace.
-    void onNewBestSolution(std::size_t score) override;
+    void onNewBestSolution(float weight) override;
 
     /// \brief Emits `#s convergence [...]` to \ref out_.
     void onEnd() override;

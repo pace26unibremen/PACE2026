@@ -76,7 +76,7 @@ std::string solver::plugin::AbstractStridePlugin::toJson(const std::vector<Snaps
         out += "{\"wtime\":";
         out += formatDouble(s.wtime);
         out += ",\"score\":";
-        out += std::to_string(s.score);
+        out += std::to_string(s.weight);
         out += ",\"branch_opens\":";
         out += std::to_string(s.branchOpens);
         out += ",\"branch_closes\":";

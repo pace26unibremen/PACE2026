@@ -133,7 +133,7 @@ TEST_CASE("AbstractStridePlugin: toJson(vector<Snapshot>)", "[MetricsPlugin][JSO
     {
         solver::plugin::Snapshot s{
             .wtime        = 0.123,
-            .score        = 4,
+            .weight       = 4,
             .ruleCounts   = {{"CutBranchRule", 2}},
             .branchOpens  = 1,
             .branchCloses = 1,
@@ -148,8 +148,8 @@ TEST_CASE("AbstractStridePlugin: toJson(vector<Snapshot>)", "[MetricsPlugin][JSO
 
     SECTION("two snapshots are comma-separated")
     {
-        solver::plugin::Snapshot s1{.wtime = 0.1, .score = 5, .ruleCounts = {}, .branchOpens = 0, .branchCloses = 0, .ruleTimes_ms = {}};
-        solver::plugin::Snapshot s2{.wtime = 0.2, .score = 3, .ruleCounts = {}, .branchOpens = 1, .branchCloses = 1, .ruleTimes_ms = {}};
+        solver::plugin::Snapshot s1{.wtime = 0.1, .weight = 5, .ruleCounts = {}, .branchOpens = 0, .branchCloses = 0, .ruleTimes_ms = {}};
+        solver::plugin::Snapshot s2{.wtime = 0.2, .weight = 3, .ruleCounts = {}, .branchOpens = 1, .branchCloses = 1, .ruleTimes_ms = {}};
         const std::string json = StrideTestHelper::toJson(std::vector<solver::plugin::Snapshot>{s1, s2});
         CHECK(json.front() == '[');
         CHECK(json.back() == ']');

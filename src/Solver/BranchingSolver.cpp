@@ -63,6 +63,10 @@ void solver::BranchingSolver::checkSolutionCandidate()
     auto candidateWeight = context->weightFunction(instance->at(0));
     if (context->bestSolutionWeight > candidateWeight)
     {
+
+        for (const auto& plugin : configuration->plugins)
+            plugin->onNewBestSolution(candidateWeight);
+
         context->bestSolutionWeight = candidateWeight;
         auto branchCloneView = appliedRules | std::views::transform(
             [](const std::shared_ptr<AbstractRule>& r) { return r->clone(); });
