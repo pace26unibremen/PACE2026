@@ -111,7 +111,6 @@ void solver::DecoupleSubtreeAction::undoAction()
     // (the artificial terminal with the label newLabelSubtree) as a sibling to its root.
     // If decoupledSubtreeVirtualSibling has no sibling, we don't couple parent tree and subtree, but we cut the
     // decoupling point from the parent tree and forget it together with decoupledSubtreeVirtualSibling.
-    // [TODO we may could protect the edges from decoupledSubtreeVirtualRoot and ensure that this case will not happen]
     // Else we want to merge the decoupling point with the root denoted by the decoupledSubtreeVirtualSibling.
 
     // the decoupling point may have changed (especially due to another decoupled subtree)
