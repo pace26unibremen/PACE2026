@@ -2,23 +2,28 @@
 #define PACE2026_CLUSTER_SOLVER_HPP
 
 #include "../AbstractSolver.hpp"
-#include "../BranchingSolver.hpp"
-#include "../BranchingSolverConfiguration.hpp"
 #include "../Context.hpp"
 #include "../Rule/ClusterReductionRule.hpp"
 
 namespace solver
 {
 
+class ClusterRange;
+
 class ClusterSolver : public AbstractSolver
 {
-    std::vector<solver::BranchingSolver> subSolver;
+    friend ClusterRange;
+
+    std::shared_ptr<ClusterRange> clusterRange;
 
     std::vector<std::shared_ptr<graph::Instance>> cluster;
 
     const std::shared_ptr<solver::Context> context = std::make_shared<solver::Context>();
 
-    /// \brief the cluster reduction rule, that introduces
+    /// \brief A collection of all cluster roots that have been cutted.
+    std::unordered_set<unsigned int> cuttedClusterRoots;
+
+    /// \brief the cluster reduction rule
     std::shared_ptr<solver::ClusterReductionRule> clusterReductionRule;
 
     /// \brief Maps a cluster to the label that annotates its root.
@@ -48,7 +53,7 @@ class ClusterSolver : public AbstractSolver
 
     void unapplyReductions() override;
 
-    const std::vector<std::shared_ptr<graph::Instance>>& SubProblems() const;
+    ClusterRange& Clusters();
 };
 
 }  //namespace solver

@@ -1,4 +1,5 @@
 #include "ClusterSolver.hpp"
+#include "ClusterRange.hpp"
 
 std::shared_ptr<graph::Instance> solver::ClusterSolver::buildSingleCluster(unsigned int i)
 {
@@ -94,7 +95,8 @@ void solver::ClusterSolver::sortClusters()
 }
 
 solver::ClusterSolver::ClusterSolver(const std::shared_ptr<graph::Instance>& instance) :
-        AbstractSolver(instance)
+        AbstractSolver(instance),
+        clusterRange(std::make_shared<solver::ClusterRange>(this))
 {}
 
 bool solver::ClusterSolver::solve()
@@ -107,58 +109,15 @@ bool solver::ClusterSolver::solve()
     }
     else
     {
+        cluster = {instance};
+        clusterToRootLabel.insert({instance,0});
+        rootLabelToCluster.insert({0,instance});
+        clusterToClusterLabels.insert({instance,{}});
         return false;
     }
-
     splitInstance();
     sortClusters();
-
-
-    std::unordered_set<unsigned int> cuttedClusterRoots;
-
-    bool solved = true;
-    for (unsigned int i = 0; i < cluster.size(); ++i)
-    {
-        auto c = cluster.at(i);
-
-        auto config = std::make_shared<solver::BranchingSolverConfiguration>();
-        subSolver.emplace_back(c, config);
-        auto& subS = subSolver[i];
-
-        unsigned int clusterRootLabel = clusterToRootLabel.at(c);
-
-        if (clusterRootLabel != 0)
-        {
-            subS.GetContext()->clusterRoot.insert(clusterRootLabel); // Todo
-            subS.GetContext()->clusterRootLabel = clusterRootLabel;
-        }
-
-        std::unordered_set<unsigned int> cutClusterTerminals;
-        for (auto l : clusterToClusterLabels.at(c))
-        {
-            if (cuttedClusterRoots.contains(l+1))
-            {
-                cutClusterTerminals.insert(l);
-            }
-        }
-        if (not cutClusterTerminals.empty())
-        {
-            auto r = solver::SingleVertexTreePropagationRule(c,context,cutClusterTerminals);
-            r.apply();
-        }
-
-        solved &= subS.solve();
-
-        if (clusterRootLabel != 0)
-        {
-            auto clusterRootNode = c->at(0)->LabelToTerminal().at(clusterRootLabel);
-            if (clusterRootNode->isTrueTerminal() and not clusterRootNode->parent)
-            {
-                cuttedClusterRoots.insert(clusterRootLabel);
-            }
-        }
-    }
-    return solved;
+    return false;
 }
 
 void solver::ClusterSolver::unapplyReductions()
@@ -168,16 +127,11 @@ void solver::ClusterSolver::unapplyReductions()
         return;
     }
 
-    for (unsigned int i= 0; i < cluster.size(); i++)
-    {
-        subSolver[i].unapplyReductions();
-    }
-
     mergeCluster();
     clusterReductionRule->unapply();
 }
 
-const std::vector<std::shared_ptr<graph::Instance>>& solver::ClusterSolver::SubProblems() const
+solver::ClusterRange& solver::ClusterSolver::Clusters()
 {
-    return cluster;
+    return *clusterRange.get();
 }
