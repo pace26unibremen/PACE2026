@@ -68,6 +68,13 @@ class Forest
            std::shared_ptr<std::unordered_map<unsigned int, Node*>> labelToTerminal,
            std::shared_ptr<std::vector<Node*>> roots);
 
+    /// Todo clean up
+    /// \brief Constructor without sort children and collect subtree terminals
+    Forest(std::shared_ptr<std::vector<Node>> nodes,
+           std::shared_ptr<std::unordered_map<unsigned int, Node*>> labelToTerminal,
+           std::shared_ptr<std::unordered_map<Node*, unsigned int>> terminalToLabel,
+           std::shared_ptr<std::vector<Node*>> roots);
+
     /// \brief Constructor. Loads forest from a file in newick format.
     /// \param path to file
     /// \param numberOfTerminals number of leafs.

@@ -44,6 +44,16 @@ Forest::Forest(std::shared_ptr<std::vector<Node>> nodes,
     #endif
 }
 
+Forest::Forest(std::shared_ptr<std::vector<Node>> nodes,
+               std::shared_ptr<std::unordered_map<unsigned int, Node*>> labelToTerminal,
+               std::shared_ptr<std::unordered_map<Node*, unsigned int>> terminalToLabel,
+               std::shared_ptr<std::vector<Node*>> roots) :
+        nodes(std::move(nodes)),
+        terminalToLabel(std::move(terminalToLabel)),
+        labelToTerminal(std::move(labelToTerminal)),
+        roots(std::move(roots))
+{}
+
 Forest::Forest(const filesystem::path& path, int numberOfTerminals, int numberOfTrees)
 {
     if (path.empty())
@@ -481,7 +491,7 @@ void Forest::renderImage()
 void Forest::sortChildrenAndCollectTerminals()
 {
     // the number of elements in the `subtreeTerminals` vector of each node
-    const unsigned int numberOfEntries = (terminalToLabel->size() + 63) / 64;
+    const unsigned int numberOfEntries = (std::ranges::max(*labelToTerminal | std::views::keys) + 63) / 64;
 
     std::function<unsigned int(Node*)> orderSubtree = [&, numberOfEntries](Node* subtreePtr) -> unsigned int {
         subtreePtr->subtreeTerminals.resize(numberOfEntries,0);
