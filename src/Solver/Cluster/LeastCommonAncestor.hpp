@@ -5,7 +5,7 @@
 #ifndef PACE2026_LEASTCOMMONANCESTOR_HPP
 #define PACE2026_LEASTCOMMONANCESTOR_HPP
 
-#include "../Graph/Forest.hpp"
+#include "../../Graph/Forest.hpp"
 
 namespace cluster
 {

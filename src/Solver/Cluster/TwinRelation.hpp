@@ -5,7 +5,7 @@
 #ifndef PACE2026_TWINRELATION_HPP
 #define PACE2026_TWINRELATION_HPP
 
-#include "../Graph/Instance.hpp"
+#include "../../Graph/Instance.hpp"
 #include "LeastCommonAncestor.hpp"
 
 namespace cluster

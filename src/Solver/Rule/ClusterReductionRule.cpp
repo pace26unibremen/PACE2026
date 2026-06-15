@@ -1,6 +1,6 @@
 #include "ClusterReductionRule.hpp"
 
-#include "../../Cluster/ClusterPointGenerator.hpp"
+#include "../Cluster/ClusterPointGenerator.hpp"
 
 #include <algorithm>
 #include <ranges>
