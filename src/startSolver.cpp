@@ -1,5 +1,6 @@
 #include "Solver/BranchingSolver.hpp"
 #include "Solver/Cluster/ClusterSolver.hpp"
+#include "Solver/Cluster/ClusterRange.hpp"
 #include "Solver/Plugin/SigtermPlugin.hpp"
 #include "Solver/ReductionSolver.hpp"
 #include "Solver/SolverConfig.hpp"
@@ -63,13 +64,20 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
     const auto startTime = std::clock();
     const auto instance = graph::ReadInstance(in);
 
-    std::vector<std::shared_ptr<solver::AbstractSolver>> solverPipeline;
+    bool solved = false;
+
+    // all solvers that worked on the solutin
+    std::vector<std::shared_ptr<solver::AbstractSolver>> solverList;
+    // stores the cluster solver (and the access to the clusters) that may be part of the pipeline
+    solver::ClusterSolver* clusterSolver = nullptr;
+
     for (auto solverType : config.solverPipeline)
     {
         switch (solverType)
         {
             case solver::SolverConfig::SolverType::Branching:
             {
+
 #ifdef _POSIX_VERSION
                 if (config.enableSigterm) {
                     std::signal(SIGTERM, sigtermHandler);
@@ -77,27 +85,52 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
                         std::make_shared<solver::plugin::SigtermPlugin>(&g_timeout, out));
                 }
 #endif
-                auto branchingConfig = std::make_shared<solver::BranchingSolverConfiguration>(config.branchingConfig);
-                auto solver = std::make_shared<solver::BranchingSolver>(instance, branchingConfig);
-#ifdef   _POSIX_VERSION
-                if (config.enableSigterm)
+                if (clusterSolver)
                 {
-                    solver->setTimeoutFlag(&g_timeout);
-                }
+                    bool allClustersSolved = true;
+                    for (const auto& [cluster, context] : clusterSolver->Clusters())
+                    {
+                        auto branchingConfig = std::make_shared<solver::BranchingSolverConfiguration>(config.branchingConfig);
+                        auto solver = std::make_shared<solver::BranchingSolver>(cluster, branchingConfig, context);
+#ifdef   _POSIX_VERSION
+                        if (config.enableSigterm)
+                        {
+                            solver->setTimeoutFlag(&g_timeout);
+                        }
 #endif
-                solverPipeline.push_back(solver);
+                        solverList.push_back(solver);
+                        allClustersSolved &= solver->solve();
+                    }
+                    solved = allClustersSolved;
+                }
+                else
+                {
+                    auto branchingConfig = std::make_shared<solver::BranchingSolverConfiguration>(config.branchingConfig);
+                    auto solver = std::make_shared<solver::BranchingSolver>(instance, branchingConfig);
+#ifdef   _POSIX_VERSION
+                    if (config.enableSigterm)
+                    {
+                        solver->setTimeoutFlag(&g_timeout);
+                    }
+#endif
+                    solverList.push_back(solver);
+                    solved = solver->solve();
+                }
                 break;
             }
             case solver::SolverConfig::SolverType::Reduction:
             {
                 auto solver = std::make_shared<solver::ReductionSolver>(instance);
-                solverPipeline.push_back(solver);
+                solverList.push_back(solver);
+                solver->solve();
                 break;
             }
             case solver::SolverConfig::SolverType::Cluster:
             {
                 auto solver = std::make_shared<solver::ClusterSolver>(instance);
-                solverPipeline.push_back(solver);
+                solverList.push_back(solver);
+                solver->solve();
+                clusterSolver = solver.get();
                 break;
             }
             default:
@@ -108,20 +141,9 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
         }
     }
 
-    bool solved = false;
-    int i = 0;
-    for (;i < (int) solverPipeline.size(); ++i)
+    for (int i = solverList.size()-1; i >= 0; --i)
     {
-        solved = solverPipeline[i]->solve();
-        if (solved)
-        {
-            break;
-        }
-    }
-
-    for (;i >= 0; --i)
-    {
-        solverPipeline[i]->unapplyReductions();
+        solverList[i]->unapplyReductions();
     }
 
     if (!solved) {
