@@ -1,9 +1,12 @@
 #include <catch2/catch_test_macros.hpp>
-#include <algorithm>
 
 #include "../src/Graph/Forest.hpp"
+#include "../src/Graph/Instance.hpp"
+#include "../src/Solver/BranchingSolver.hpp"
 #include "../src/Solver/Rule/Case2BRule.hpp"
+#include "catch2/catch_config.hpp"
 
+#include <algorithm>
 
 using namespace graph;
 using namespace std;
@@ -66,21 +69,18 @@ TEST_CASE("Case2BRule tests", "[Forest, Case2BRule]")
     }
 }
 
-TEST_CASE("Case2BRule tests with instance 102cea936a3ca4590d7c6fe4b83256ae", "[Forest, Case2BRule]")
+TEST_CASE("Case2BRule tests with instance 10ca71f1637bc1d9a45e0966f60863d2", "[Forest, Case2BRule]")
 {
     SECTION("Three Trees")
     {
-        auto f1 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_9_example1.tree",9,1);
-        auto f2 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_9_example2.tree",9,1);
-        auto f3 = graph::Forest(std::string(TEST_EXAMPLES_DIR) + "tree_1_9_example3.tree",9,1);
+        auto config = std::make_shared<solver::BranchingSolverConfiguration>();
+        config->boundedDephtSearch = false;
+        auto instance = graph::ReadInstance(std::string(RES_DIR) + "tests/instance_3_11.nw");
+        auto solver = solver::BranchingSolver(instance, config);
+        auto solved = solver.solve();
 
-        auto instance = std::make_shared<std::vector<std::shared_ptr<Forest>>>();
-        instance->push_back(std::make_shared<Forest>(f1));
-        instance->push_back(std::make_shared<Forest>(f2));
-        instance->push_back(std::make_shared<Forest>(f3));
+        solver.unapplyReductions();
 
         auto rule = Case2BRule::isApplicable(instance, nullptr);
-
-
     }
 }
