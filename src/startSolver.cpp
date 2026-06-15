@@ -1,5 +1,5 @@
 #include "Solver/BranchingSolver.hpp"
-#include "Solver/ClusterSolver.hpp"
+#include "Solver/Cluster/ClusterSolver.hpp"
 #include "Solver/Plugin/SigtermPlugin.hpp"
 #include "Solver/ReductionSolver.hpp"
 #include "Solver/SolverConfig.hpp"

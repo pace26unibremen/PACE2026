@@ -1,11 +1,11 @@
 #ifndef PACE2026_CLUSTER_SOLVER_HPP
 #define PACE2026_CLUSTER_SOLVER_HPP
 
-#include "AbstractSolver.hpp"
-#include "BranchingSolver.hpp"
-#include "BranchingSolverConfiguration.hpp"
-#include "Context.hpp"
-#include "Rule/ClusterReductionRule.hpp"
+#include "../AbstractSolver.hpp"
+#include "../BranchingSolver.hpp"
+#include "../BranchingSolverConfiguration.hpp"
+#include "../Context.hpp"
+#include "../Rule/ClusterReductionRule.hpp"
 
 namespace solver
 {
