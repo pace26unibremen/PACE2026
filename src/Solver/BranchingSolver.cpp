@@ -48,21 +48,10 @@ bool solver::BranchingSolver::rollBackBranch()
 
 void solver::BranchingSolver::checkSolutionCandidate()
 {
-    auto numberClusterSingleVertexTrees = [&] {
-        std::unordered_set<graph::Node*> unique;
-        for (graph::Node* n : context->clusterLabel
-            | std::views::transform([&](unsigned int l) {return instance->at(0)->LabelToTerminal()[l];})
-            | std::views::filter([](const graph::Node* t) { return t->parent == nullptr; }))
-        {
-            unique.insert(n);
-        }
-        return unique.size();
-    }();
-    unsigned int candidateSolutionSize = instance->at(0)->Roots().size() - numberClusterSingleVertexTrees;
-
-    if (context->bestSolutionSize > candidateSolutionSize)
+    auto candidateWeight = context->weightFunction(instance->at(0));
+    if (context->bestSolutionWeight > candidateWeight)
     {
-        context->bestSolutionSize = candidateSolutionSize;
+        context->bestSolutionWeight = candidateWeight;
         auto branchCloneView = appliedRules | std::views::transform(
             [](const std::shared_ptr<AbstractRule>& r) { return r->clone(); });
         solutionBranch = {branchCloneView.begin(), branchCloneView.end()};

@@ -48,18 +48,7 @@ solver::CutBranchRule::isApplicable(const std::shared_ptr<graph::Instance>& inst
     {
         for (const auto& f : *instance)
         {
-            auto numberClusterSingleVertexTrees = [&] {
-                std::unordered_set<graph::Node*> unique;
-                for (graph::Node* n : context->clusterLabel
-                    | std::views::transform([&f](unsigned int l) {return f->LabelToTerminal()[l];})
-                    | std::views::filter([](graph::Node* n) { return n->parent == nullptr; }))
-                {
-                    unique.insert(n);
-                }
-                return unique.size();
-            }();
-
-            if (f->Roots().size() - numberClusterSingleVertexTrees >=  context->bestSolutionSize)
+            if (context->weightFunction(f) >= context->bestSolutionWeight)
             {
                 return std::make_shared<solver::CutBranchRule>(instance, context);
             }
