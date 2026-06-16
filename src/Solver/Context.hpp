@@ -35,11 +35,9 @@ struct Context
     /// An edge is identified by the node it points to (the child-node).
     std::unordered_set<graph::Node*> protectedEdges = std::unordered_set<graph::Node*>();
 
-    /// \brief A set of newly created labels which replace the clusters in the parent tree.
-    std::unordered_set<unsigned int> clusterLabel = std::unordered_set<unsigned int>();
-    /// \brief A set of newly created labels which mark cluster roots.
-    std::unordered_set<unsigned int> clusterRoot = std::unordered_set<unsigned int>();
-    /// \brief
+    /// \brief The label of the terminal that annotates the root of a cluster.
+    /// If the instance is not a cluster or is the root-cluster (and has no annotated root),
+    /// then the label is 0.
     unsigned int clusterRootLabel = 0;
 
     std::function<float(std::shared_ptr<graph::Forest>)> weightFunction =

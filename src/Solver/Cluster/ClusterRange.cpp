@@ -29,7 +29,6 @@ solver::ClusterRange::ClusterRangeIterator::value_type solver::ClusterRange::Clu
     unsigned int clusterRootLabel = solver->clusterToRootLabel.at(cluster);
     if (clusterRootLabel != 0)
     {
-        context->clusterRoot.insert(clusterRootLabel); // Todo redundant
         context->clusterRootLabel = clusterRootLabel;
     }
 

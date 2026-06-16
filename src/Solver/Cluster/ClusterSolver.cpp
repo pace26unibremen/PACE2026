@@ -1,6 +1,7 @@
 #include "ClusterSolver.hpp"
 
 #include "../Rule/SingleVertexTreePropagationRule.hpp"
+#include "../Context.hpp"
 #include "ClusterPointGenerator.hpp"
 #include "ClusterRange.hpp"
 
@@ -93,9 +94,8 @@ void solver::ClusterSolver::decoupleSubtrees()
             }
         }
 
-        // TODO should be removed in the unapply
-        context->clusterLabel.insert(maxLabel+1);
-        context->clusterRoot.insert(maxLabel+2);
+        clusterLabel.insert(maxLabel+1);
+        clusterRoot.insert(maxLabel+2);
 
         maxLabel += 2;
     }
@@ -133,7 +133,7 @@ void solver::ClusterSolver::splitInstance()
 
         // fill maps rootLabelToCluster, clusterToRootLabel, clusterToClusterLabels
         bool isRootCluster = true;
-        for (unsigned int l : context->clusterRoot)
+        for (unsigned int l : clusterRoot)
         {
             if (c->at(0)->LabelToTerminal().contains(l))
             {
@@ -149,7 +149,7 @@ void solver::ClusterSolver::splitInstance()
             rootLabelToCluster.insert({0,c});
         }
         clusterToClusterLabels.insert({c,{}});
-        for (unsigned int l : context->clusterLabel)
+        for (unsigned int l : clusterLabel)
         {
             if (c->at(0)->LabelToTerminal().contains(l))
             {
@@ -232,7 +232,7 @@ void solver::ClusterSolver::cutClusterTerminals(unsigned int index)
     }
     if (not cutClusterTerminals.empty())
     {
-        auto r = solver::SingleVertexTreePropagationRule(c,context,cutClusterTerminals);
+        auto r = solver::SingleVertexTreePropagationRule(c,std::make_shared<Context>(),cutClusterTerminals);
         r.apply();
     }
 }
