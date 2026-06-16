@@ -1,7 +1,7 @@
 #include "ClusterSolver.hpp"
 
-#include "../Rule/SingleVertexTreePropagationRule.hpp"
 #include "../Context.hpp"
+#include "../Rule/SingleVertexTreePropagationRule.hpp"
 #include "ClusterPointGenerator.hpp"
 #include "ClusterRange.hpp"
 
@@ -38,7 +38,7 @@ void solver::ClusterSolver::getClusterPoints()
     for (auto clusterPointOfFrontForest : cpg.clusterPoints)
     {
 
-        pointsAndForests_PerCluster.push_back({{instance->at(0),clusterPointOfFrontForest}});
+        pointsAndForests_PerCluster.push_back({{instance->at(0), clusterPointOfFrontForest}});
 
         // check to which forest the twin belongs
         for (auto twin : cpg.twinRelation.nodeToTwins[clusterPointOfFrontForest])
@@ -46,10 +46,10 @@ void solver::ClusterSolver::getClusterPoints()
             for (const auto& f : *instance)
             {
                 const graph::Node* begin = f->Nodes().data();
-                const graph::Node* end   = begin + f->Nodes().size();
-                if ( twin >= begin && twin < end)
+                const graph::Node* end = begin + f->Nodes().size();
+                if (twin >= begin && twin < end)
                 {
-                    pointsAndForests_PerCluster.back().emplace_back(f,twin);
+                    pointsAndForests_PerCluster.back().emplace_back(f, twin);
                     break;
                 }
             }
@@ -80,25 +80,78 @@ void solver::ClusterSolver::decoupleSubtrees()
     for (const auto& _cluster : pointsAndForests_PerCluster)
     {
 
-        for (const auto& [f,n] : _cluster)
+        for (const auto& [f, n] : _cluster)
         {
             if (f == instance->at(0))
             {
-                changesOnF0.emplace(f,n,maxLabel+1,maxLabel+2);
+                changesOnF0.emplace(f, n, maxLabel + 1, maxLabel + 2);
                 changesOnF0.top().doAction();
             }
             else
             {
-                changes.emplace(f,n,maxLabel+1,maxLabel+2);
+                changes.emplace(f, n, maxLabel + 1, maxLabel + 2);
                 changes.top().doAction();
             }
         }
 
-        clusterLabel.insert(maxLabel+1);
-        clusterRoot.insert(maxLabel+2);
+        clusterLabel.insert(maxLabel + 1);
+        clusterRoot.insert(maxLabel + 2);
 
         maxLabel += 2;
     }
+}
+
+void solver::ClusterSolver::splitInstance()
+{
+    for (unsigned int i = 0; i < instance->at(0)->Roots().size(); ++i)
+    {
+        auto c = buildSingleCluster(i);
+        cluster.push_back(c);
+
+        // fill maps rootLabelToCluster, clusterToRootLabel, clusterToClusterLabels
+        bool isRootCluster = true;
+        for (unsigned int l : clusterRoot)
+        {
+            if (c->at(0)->LabelToTerminal().contains(l))
+            {
+                clusterToRootLabel.insert({c, l});
+                rootLabelToCluster.insert({l, c});
+                isRootCluster = false;
+                break;
+            }
+        }
+        if (isRootCluster)
+        {
+            clusterToRootLabel.insert({c, 0});
+            rootLabelToCluster.insert({0, c});
+        }
+        clusterToClusterLabels.insert({c, {}});
+        for (unsigned int l : clusterLabel)
+        {
+            if (c->at(0)->LabelToTerminal().contains(l))
+            {
+                clusterToClusterLabels.at(c).insert(l);
+            }
+        }
+    }
+}
+
+void solver::ClusterSolver::sortClusters()
+{
+    std::function<void(std::shared_ptr<graph::Instance>, std::vector<std::shared_ptr<graph::Instance>>&)> dfs =
+        [this, &dfs](std::shared_ptr<graph::Instance> c, std::vector<std::shared_ptr<graph::Instance>>& r) {
+            for (auto childClusterLabel : clusterToClusterLabels.at(c))
+            {
+                auto childCluster = rootLabelToCluster.at(childClusterLabel + 1);
+                dfs(childCluster, r);
+            }
+            r.push_back(c);
+        };
+
+    std::vector<std::shared_ptr<graph::Instance>> sorted;
+    auto rootCluster = rootLabelToCluster.at(0);
+    dfs(rootCluster, sorted);
+    cluster = sorted;
 }
 
 void solver::ClusterSolver::mergeCluster()
@@ -106,7 +159,7 @@ void solver::ClusterSolver::mergeCluster()
     // we only need the first forest
     instance->erase(instance->begin() + 1, instance->end());
     instance->at(0)->Roots().clear();
-    for (auto & c : cluster)
+    for (auto& c : cluster)
     {
         instance->at(0)->Roots().insert(instance->at(0)->Roots().end(), c->at(0)->Roots().begin(),
                                         c->at(0)->Roots().end());
@@ -124,59 +177,37 @@ void solver::ClusterSolver::coupleSubtrees()
     }
 }
 
-void solver::ClusterSolver::splitInstance()
+void solver::ClusterSolver::collectCuttedClusterRoot(unsigned int index)
 {
-    for (unsigned int i = 0; i < instance->at(0)->Roots().size(); ++i)
+    auto c = cluster.at(index);
+    auto clusterRootLabel = clusterToRootLabel.at(c);
+    if (clusterRootLabel != 0)
     {
-        auto c = buildSingleCluster(i);
-        cluster.push_back(c);
-
-        // fill maps rootLabelToCluster, clusterToRootLabel, clusterToClusterLabels
-        bool isRootCluster = true;
-        for (unsigned int l : clusterRoot)
+        auto clusterRootNode = c->at(0)->LabelToTerminal().at(clusterRootLabel);
+        if (clusterRootNode->isTrueTerminal() and not clusterRootNode->parent)
         {
-            if (c->at(0)->LabelToTerminal().contains(l))
-            {
-                clusterToRootLabel.insert({c,l});
-                rootLabelToCluster.insert({l,c});
-                isRootCluster = false;
-                break;
-            }
-        }
-        if(isRootCluster)
-        {
-            clusterToRootLabel.insert({c,0});
-            rootLabelToCluster.insert({0,c});
-        }
-        clusterToClusterLabels.insert({c,{}});
-        for (unsigned int l : clusterLabel)
-        {
-            if (c->at(0)->LabelToTerminal().contains(l))
-            {
-                clusterToClusterLabels.at(c).insert(l);
-            }
+            cuttedClusterRoots.insert(clusterRootLabel);
         }
     }
 }
 
-void solver::ClusterSolver::sortClusters()
+void solver::ClusterSolver::cutClusterTerminals(unsigned int index)
 {
-    std::function<void(std::shared_ptr<graph::Instance>, std::vector<std::shared_ptr<graph::Instance>>&)> dfs =
-        [this, &dfs]
-        (std::shared_ptr<graph::Instance> c, std::vector<std::shared_ptr<graph::Instance>>& r)
-        {
-            for (auto childClusterLabel  : clusterToClusterLabels.at(c))
-            {
-                auto childCluster = rootLabelToCluster.at(childClusterLabel+1);
-                dfs(childCluster, r);
-            }
-            r.push_back(c);
-        };
+    auto c = cluster.at(index);
 
-    std::vector<std::shared_ptr<graph::Instance>> sorted;
-    auto rootCluster = rootLabelToCluster.at(0);
-    dfs(rootCluster, sorted);
-    cluster = sorted;
+    std::unordered_set<unsigned int> cutClusterTerminals;
+    for (auto l : clusterToClusterLabels.at(c))
+    {
+        if (cuttedClusterRoots.contains(l + 1))
+        {
+            cutClusterTerminals.insert(l);
+        }
+    }
+    if (not cutClusterTerminals.empty())
+    {
+        auto r = solver::SingleVertexTreePropagationRule(c, std::make_shared<Context>(), cutClusterTerminals);
+        r.apply();
+    }
 }
 
 solver::ClusterSolver::ClusterSolver(const std::shared_ptr<graph::Instance>& instance) :
@@ -197,9 +228,9 @@ bool solver::ClusterSolver::solve()
     else
     {
         cluster = {instance};
-        clusterToRootLabel.insert({instance,0});
-        rootLabelToCluster.insert({0,instance});
-        clusterToClusterLabels.insert({instance,{}});
+        clusterToRootLabel.insert({instance, 0});
+        rootLabelToCluster.insert({0, instance});
+        clusterToClusterLabels.insert({instance, {}});
     }
     return false;
 }
@@ -216,37 +247,4 @@ void solver::ClusterSolver::unapplyReductions()
 solver::ClusterRange& solver::ClusterSolver::Clusters()
 {
     return *clusterRange.get();
-}
-
-void solver::ClusterSolver::cutClusterTerminals(unsigned int index)
-{
-    auto c = cluster.at(index);
-
-    std::unordered_set<unsigned int> cutClusterTerminals;
-    for (auto l : clusterToClusterLabels.at(c))
-    {
-        if (cuttedClusterRoots.contains(l+1))
-        {
-            cutClusterTerminals.insert(l);
-        }
-    }
-    if (not cutClusterTerminals.empty())
-    {
-        auto r = solver::SingleVertexTreePropagationRule(c,std::make_shared<Context>(),cutClusterTerminals);
-        r.apply();
-    }
-}
-
-void solver::ClusterSolver::collectCuttedClusterRoot(unsigned int index)
-{
-    auto c = cluster.at(index);
-    auto clusterRootLabel = clusterToRootLabel.at(c);
-    if (clusterRootLabel != 0)
-    {
-        auto clusterRootNode = c->at(0)->LabelToTerminal().at(clusterRootLabel);
-        if (clusterRootNode->isTrueTerminal() and not clusterRootNode->parent)
-        {
-            cuttedClusterRoots.insert(clusterRootLabel);
-        }
-    }
 }
