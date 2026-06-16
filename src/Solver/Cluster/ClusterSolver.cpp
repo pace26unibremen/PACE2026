@@ -1,7 +1,10 @@
 #include "ClusterSolver.hpp"
-#include "ClusterRange.hpp"
 
 #include "../Rule/SingleVertexTreePropagationRule.hpp"
+#include "ClusterPointGenerator.hpp"
+#include "ClusterRange.hpp"
+
+#include <algorithm>
 
 std::shared_ptr<graph::Instance> solver::ClusterSolver::buildSingleCluster(unsigned int i)
 {
@@ -27,6 +30,77 @@ std::shared_ptr<graph::Instance> solver::ClusterSolver::buildSingleCluster(unsig
     return subInstance;
 }
 
+void solver::ClusterSolver::getClusterPoints()
+{
+    auto cpg = cluster::ClusterPointGenerator::wrappedConstructor(instance);
+
+    for (auto clusterPointOfFrontForest : cpg.clusterPoints)
+    {
+
+        pointsAndForests_PerCluster.push_back({{instance->at(0),clusterPointOfFrontForest}});
+
+        // check to which forest the twin belongs
+        for (auto twin : cpg.twinRelation.nodeToTwins[clusterPointOfFrontForest])
+        {
+            for (const auto& f : *instance)
+            {
+                const graph::Node* begin = f->Nodes().data();
+                const graph::Node* end   = begin + f->Nodes().size();
+                if ( twin >= begin && twin < end)
+                {
+                    pointsAndForests_PerCluster.back().emplace_back(f,twin);
+                    break;
+                }
+            }
+        }
+    }
+}
+
+void solver::ClusterSolver::resizeSubtreeTerminalsVector()
+{
+    // because we introduce new labels, we may get out of range in the subtreeTerminals field of graph::Node.
+    auto maxLabel = std::ranges::max(instance->at(0)->LabelToTerminal() | std::views::keys);
+    unsigned int numberOfNewLabels = 2 * pointsAndForests_PerCluster.size();
+    if ((maxLabel + numberOfNewLabels + 63) / 64 > (maxLabel + 63) / 64)
+    {
+        for (const auto& f : *instance)
+        {
+            for (auto& n : f->Nodes())
+            {
+                n.subtreeTerminals.resize((maxLabel + numberOfNewLabels + 63) / 64);
+            }
+        }
+    }
+}
+
+void solver::ClusterSolver::decoupleSubtrees()
+{
+    auto maxLabel = std::ranges::max(instance->at(0)->LabelToTerminal() | std::views::keys);
+    for (const auto& _cluster : pointsAndForests_PerCluster)
+    {
+
+        for (const auto& [f,n] : _cluster)
+        {
+            if (f == instance->at(0))
+            {
+                changesOnF0.emplace(f,n,maxLabel+1,maxLabel+2);
+                changesOnF0.top().doAction();
+            }
+            else
+            {
+                changes.emplace(f,n,maxLabel+1,maxLabel+2);
+                changes.top().doAction();
+            }
+        }
+
+        // TODO should be removed in the unapply
+        context->clusterLabel.insert(maxLabel+1);
+        context->clusterRoot.insert(maxLabel+2);
+
+        maxLabel += 2;
+    }
+}
+
 void solver::ClusterSolver::mergeCluster()
 {
     // we only need the first forest
@@ -39,6 +113,15 @@ void solver::ClusterSolver::mergeCluster()
     }
     std::sort(instance->at(0)->Roots().begin(), instance->at(0)->Roots().end(),
               [](graph::Node* r1, graph::Node* r2) { return r1->hasSmallestTerminal(r2); });
+}
+
+void solver::ClusterSolver::coupleSubtrees()
+{
+    while (not changesOnF0.empty())
+    {
+        changesOnF0.top().undoAction();
+        changesOnF0.pop();
+    }
 }
 
 void solver::ClusterSolver::splitInstance()
@@ -103,11 +186,13 @@ solver::ClusterSolver::ClusterSolver(const std::shared_ptr<graph::Instance>& ins
 
 bool solver::ClusterSolver::solve()
 {
-    auto rule = solver::ClusterReductionRule::isApplicable(instance, context);
-    clusterReductionRule = std::dynamic_pointer_cast<solver::ClusterReductionRule>(rule);
-    if (clusterReductionRule)
+    getClusterPoints();
+    if (not pointsAndForests_PerCluster.empty())
     {
-        clusterReductionRule->apply();
+        resizeSubtreeTerminalsVector();
+        decoupleSubtrees();
+        splitInstance();
+        sortClusters();
     }
     else
     {
@@ -115,22 +200,17 @@ bool solver::ClusterSolver::solve()
         clusterToRootLabel.insert({instance,0});
         rootLabelToCluster.insert({0,instance});
         clusterToClusterLabels.insert({instance,{}});
-        return false;
     }
-    splitInstance();
-    sortClusters();
     return false;
 }
 
 void solver::ClusterSolver::unapplyReductions()
 {
-    if (not clusterReductionRule)
+    if (not pointsAndForests_PerCluster.empty())
     {
-        return;
+        mergeCluster();
+        coupleSubtrees();
     }
-
-    mergeCluster();
-    clusterReductionRule->unapply();
 }
 
 solver::ClusterRange& solver::ClusterSolver::Clusters()

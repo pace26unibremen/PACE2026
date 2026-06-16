@@ -3,7 +3,10 @@
 
 #include "../AbstractSolver.hpp"
 #include "../Context.hpp"
-#include "../Rule/ClusterReductionRule.hpp"
+#include "../Action/DecoupleSubtreeAction.hpp"
+
+#include <list>
+#include <stack>
 
 namespace solver
 {
@@ -24,7 +27,10 @@ class ClusterSolver : public AbstractSolver
     std::unordered_set<unsigned int> cuttedClusterRoots;
 
     /// \brief the cluster reduction rule
-    std::shared_ptr<solver::ClusterReductionRule> clusterReductionRule;
+    // std::shared_ptr<solver::ClusterReductionRule> clusterReductionRule;
+
+    std::list<std::list<std::pair<std::shared_ptr<graph::Forest>, graph::Node*>>> pointsAndForests_PerCluster =
+        std::list<std::list<std::pair<std::shared_ptr<graph::Forest>, graph::Node*>>>();
 
     /// \brief Maps a cluster to the label that annotates its root.
     /// The root cluster without an annotated root maps to 0
@@ -36,13 +42,25 @@ class ClusterSolver : public AbstractSolver
 
     std::unordered_map<std::shared_ptr<graph::Instance>, std::unordered_set<unsigned int>> clusterToClusterLabels;
 
+    std::stack<DecoupleSubtreeAction> changes = std::stack<DecoupleSubtreeAction>();
+
+    std::stack<DecoupleSubtreeAction> changesOnF0 = std::stack<DecoupleSubtreeAction>();
+
     std::shared_ptr<graph::Instance> buildSingleCluster(unsigned int i);
 
-    void mergeCluster();
+    void getClusterPoints();
+
+    void resizeSubtreeTerminalsVector();
+
+    void decoupleSubtrees();
 
     void splitInstance();
 
     void sortClusters();
+
+    void mergeCluster();
+
+    void coupleSubtrees();
 
     void collectCuttedClusterRoot(unsigned int index);
 
