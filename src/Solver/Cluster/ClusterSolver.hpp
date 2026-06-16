@@ -44,6 +44,10 @@ class ClusterSolver : public AbstractSolver
 
     void sortClusters();
 
+    void collectCuttedClusterRoot(unsigned int index);
+
+    void cutClusterTerminals(unsigned int index);
+
   public:
     explicit ClusterSolver(const std::shared_ptr<graph::Instance>& instance);
 

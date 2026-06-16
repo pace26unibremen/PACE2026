@@ -1,6 +1,8 @@
 #include "ClusterSolver.hpp"
 #include "ClusterRange.hpp"
 
+#include "../Rule/SingleVertexTreePropagationRule.hpp"
+
 std::shared_ptr<graph::Instance> solver::ClusterSolver::buildSingleCluster(unsigned int i)
 {
     auto subInstance = std::make_shared<graph::Instance>();
@@ -134,4 +136,37 @@ void solver::ClusterSolver::unapplyReductions()
 solver::ClusterRange& solver::ClusterSolver::Clusters()
 {
     return *clusterRange.get();
+}
+
+void solver::ClusterSolver::cutClusterTerminals(unsigned int index)
+{
+    auto c = cluster.at(index);
+
+    std::unordered_set<unsigned int> cutClusterTerminals;
+    for (auto l : clusterToClusterLabels.at(c))
+    {
+        if (cuttedClusterRoots.contains(l+1))
+        {
+            cutClusterTerminals.insert(l);
+        }
+    }
+    if (not cutClusterTerminals.empty())
+    {
+        auto r = solver::SingleVertexTreePropagationRule(c,context,cutClusterTerminals);
+        r.apply();
+    }
+}
+
+void solver::ClusterSolver::collectCuttedClusterRoot(unsigned int index)
+{
+    auto c = cluster.at(index);
+    auto clusterRootLabel = clusterToRootLabel.at(c);
+    if (clusterRootLabel != 0)
+    {
+        auto clusterRootNode = c->at(0)->LabelToTerminal().at(clusterRootLabel);
+        if (clusterRootNode->isTrueTerminal() and not clusterRootNode->parent)
+        {
+            cuttedClusterRoots.insert(clusterRootLabel);
+        }
+    }
 }
