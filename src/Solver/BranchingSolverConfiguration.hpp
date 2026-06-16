@@ -1,7 +1,7 @@
 #ifndef PACE2026_BRANCHING_SOLVER_CONFIGURATION_HPP
 #define PACE2026_BRANCHING_SOLVER_CONFIGURATION_HPP
 
-#include "DebugPlugin.hpp"
+#include "Plugin/AbstractPlugin.hpp"
 #include "Rule/AbstractRule.hpp"
 #include "Rule/CutBranchRule.hpp"
 #include "Rule/EqualForestsRule.hpp"
@@ -9,11 +9,13 @@
 #include "Rule/PairPathBranchingRule.hpp"
 #include "Rule/PairUnconnectedBranchingRule.hpp"
 #include "Rule/SingleVertexTreePropagationRule.hpp"
-#include "Rule/DebugAssertFalseRule.hpp"
+#include "Rule/DebugAssertFalseRule.hpp" 
 #include "Rule/CheckSingleVertexTreesRule.hpp"
+#include "Rule/ThreeTwoChainReductionRule.hpp"
 
 #include <functional>
 #include <memory>
+#include <vector>
 
 namespace solver
 {
@@ -31,7 +33,7 @@ struct BranchingSolverConfiguration
     /// I.e. the solver searches only for solutions that are equal to or better than a given parameter.
     /// If the solver doesn't find any suitable solution, it increases the parameter.
     /// The corresponding parameter is stored in the \ref Context as \ref Context::maxSolutionSize.
-    bool boundedDephtSearch = true;
+    bool boundedDephtSearch = false;
 
     /// \brief vector of the isApplicable function of rules.
     /// It defines which rules are used and in which order they are checked for applicability.
@@ -39,14 +41,17 @@ struct BranchingSolverConfiguration
         solver::CutBranchRule::isApplicable,
         solver::CheckSingleVertexTreesRule::isApplicable,
         solver::SingleVertexTreePropagationRule::isApplicable,
+        solver::ThreeTwoChainReductionRule::isApplicable,
         solver::PairUnconnectedBranchingRule::isApplicable,
         solver::PairEqualRule::isApplicable,
         solver::PairPathBranchingRule::isApplicable,
         solver::DebugAssertFalseRule::isApplicable
         };
 
-    /// \brief A debug plugin, nullptr for no additional debug info
-    std::shared_ptr<DebugPlugin> debPlugin = nullptr;
+    /// \brief Plugins to run alongside the solver. Empty by default (no plugins active).
+    /// Add plugins here to observe solver events — see \ref solver::plugin::AbstractPlugin.
+    /// Example: plugins.push_back(std::make_shared<solver::plugin::VisualizationPlugin>("debugOutput/dot"));
+    std::vector<std::shared_ptr<solver::plugin::AbstractPlugin>> plugins = {};
 };
 
 } // namespace solver
