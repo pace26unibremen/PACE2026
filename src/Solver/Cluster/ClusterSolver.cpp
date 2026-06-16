@@ -6,6 +6,7 @@
 #include "ClusterRange.hpp"
 
 #include <algorithm>
+#include <ranges>
 
 std::shared_ptr<graph::Instance> solver::ClusterSolver::buildSingleCluster(unsigned int i)
 {
