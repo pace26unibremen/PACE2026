@@ -275,15 +275,7 @@ void solver::ChainReductionRule::updateSubtreeTerminals()
 
 solver::RuleReturnCode solver::ChainReductionRule::apply()
 {
-    //Goal: Deleting edges from the first and last chain node element to its not-terminal child and parent respectively
-    //Needs to do:
-    //Identify nodes within chainWithTrees that fit the description
-    //If they're the first chain node, then remove the edge to his not-terminal child
-    //  This is always there given the chain definition
-    //Else if it's the last node in the list, then remove his edge to the parent of his.
-    // Always there if the chain exists. At most the root of the tree.
-    //Respectively, this needs to happen to the other side of the edge, i.e. for x4 it must be done on x3,
-    //and on xn+1 for xn, as it's two-sided.
+
     if (this->isApplied)
     {
         throw std::invalid_argument("ChainReductionRule : apply : rule was already applied");
@@ -302,21 +294,6 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
     //stored due to being irrelevant
     if (chainWithTrees.second.size() == 2 && chainWithTrees.first.size() >= 2)
     {
-        // //Store all node connections by their index.
-        // for (int index = 0; index < chainWithTrees.second.front()->Nodes().size(); index++)
-        // {
-        //     storeNodeIndices(&chainWithTrees.second.front()->Nodes()[index], chainWithTrees.second.front());
-        //
-        // }
-        //
-        // for (int index = 0; index < chainWithTrees.second.back()->Nodes().size(); index++)
-        // {
-        //     storeNodeIndices(&chainWithTrees.second.back()->Nodes()[index], chainWithTrees.second.back());
-        // }
-        //
-        // //Store current Root Nodes
-        // storeRootNodes(chainWithTrees.second.front());
-        // storeRootNodes(chainWithTrees.second.back());
 
         // Acquire the notes required
         // Fetch x3
@@ -332,19 +309,6 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
 
         //Address the now seperated chain in T1 and T2 through the removal of the parent nodes of the terminals as well
         //as setting the terminals to be single tree vertices.
-
-        // //For xn to root, remove the terminal markers within their respective subtreeTerminals bitmask.
-        // updateSubtreeTerminals();
-        //
-        // for (int i = chainWithTrees.first.size()-1; i > 0; i--)
-        // {
-        //     //Every element of chainWithTrees.first is a parent of a terminal. Index cycles through each.
-        //     // removeConnectionOfTerminalNode(chainWithTrees.first[i].front(), chainWithTrees.second.front());
-        //     // chainWithTrees.first[i].front()->subtreeTerminals = {};
-        //     // removeConnectionOfTerminalNode(chainWithTrees.first[i].back(), chainWithTrees.second.back());
-        //     // chainWithTrees.first[i].back()->subtreeTerminals = {};
-        //
-        // }
 
         //Left side terminal - once one side is determined, it sticks since chain definition
         if (chainWithTrees.first[1].front()->leftChild->leftChild == nullptr &&
@@ -409,46 +373,6 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
         addedEdgeT1.doAction();
         addedEdgeT2.doAction();
 
-
-    // //Connect the sibling connections between top's terminal and bottom node parts
-    // // If left side is terminal
-    // if (topChainT1Parent->leftChild != nullptr &&
-    //     topChainT1Parent->leftChild->leftChild == nullptr &&
-    //     topChainT1Parent->leftChild->rightChild != nullptr)
-    //     {
-    //         bottomT1->sibling = topChainT1Parent->leftChild;
-    //         topChainT1Parent->rightChild = bottomT1;
-    //         topChainT1Parent->leftChild->sibling = bottomT1;
-    //     }
-    // else if (
-    //     topChainT1Parent->rightChild != nullptr &&
-    //     topChainT1Parent->rightChild->leftChild == nullptr &&
-    //     topChainT1Parent->rightChild->rightChild != nullptr)
-    //     {
-    //         bottomT1->sibling = topChainT1Parent->rightChild;
-    //         topChainT1Parent->leftChild = bottomT1;
-    //         topChainT1Parent->rightChild->sibling = bottomT1;
-    //     }
-    //
-    // if (topChainT2Parent->leftChild != nullptr &&
-    //     topChainT2Parent->leftChild->leftChild == nullptr &&
-    //     topChainT2Parent->leftChild->rightChild != nullptr)
-    //     {
-    //         bottomT2->sibling = topChainT2Parent->leftChild;
-    //         topChainT2Parent->rightChild = bottomT2;
-    //         topChainT2Parent->leftChild->sibling = bottomT2;
-    //     }
-    // else if (
-    //     topChainT2Parent->rightChild != nullptr &&
-    //     topChainT2Parent->rightChild->leftChild == nullptr &&
-    //     topChainT2Parent->rightChild->rightChild != nullptr)
-    //     {
-    //         bottomT2->sibling = topChainT2Parent->rightChild;
-    //         topChainT2Parent->leftChild = bottomT2;
-    //         topChainT2Parent->rightChild->sibling = bottomT2;
-    //     }
-    //    //Update the terminals
-    //    // updateSubtreeTerminals();
     }
     return RuleReturnCode::Continue;
 }
@@ -466,23 +390,6 @@ void solver::ChainReductionRule::unapply()
     }
     isApplied = false;
 
-    // DeleteEdgeAction forBottomT1(chainWithTrees.first[0].front(), chainWithTrees.second.front());
-    // DeleteEdgeAction forBottomT2(chainWithTrees.first[0].back(), chainWithTrees.second.back());
-    //
-    // forBottomT1.doAction();
-    // forBottomT2.doAction();
-    // auto bottomt1 = chainWithTrees.first[0].front();
-    // auto bottomt2 = chainWithTrees.first[0].back();
-    //
-    // bottomt1->parent = nullptr;
-    // bottomt2->parent = nullptr;
-
-    // updateSubtreeTerminals();
-
-    // if (topOfChainT1->leftChild == bottomt1) topOfChainT1->leftChild = chainWithTrees.first[chainWithTrees.first.size()-1].front();
-    // else topOfChainT1->rightChild = chainWithTrees.first[chainWithTrees.first.size()-1].front();
-    // if (topOfChainT2->leftChild == bottomt2) topOfChainT2->leftChild = chainWithTrees.first[chainWithTrees.first.size()-1].back();
-    // else topOfChainT2->rightChild = chainWithTrees.first[chainWithTrees.first.size()-1].back();
     addedEdgeT2.undoAction();
     addedEdgeT1.undoAction();
 
@@ -491,111 +398,6 @@ void solver::ChainReductionRule::unapply()
         changes.top().undoAction();
         changes.pop();
     }
-    // updateSubtreeTerminals();
-    // chainWithTrees.first[0].front()->parent = chainWithTrees.first[1].front();
-    // chainWithTrees.first[0].back()->parent = chainWithTrees.first[1].back();
-
-    // graph::Node* topChainT1Parent = chainWithTrees.first[chainWithTrees.first.size()-1].front()->parent;
-    // graph::Node* topChainT2Parent = chainWithTrees.first[chainWithTrees.first.size()-1].back()->parent;
-    //
-    // if (topChainT1Parent->leftChild == nullptr)
-    // {
-    //
-    // }
-    // else if (topChainT1Parent->rightChild == nullptr)
-    // {
-    //
-    // }
-    //
-    // if (topChainT2Parent->leftChild == nullptr)
-    // {
-    //
-    // }
-    // else if (topChainT2Parent->rightChild == nullptr)
-    // {
-    //
-    // }
-
-    // //For all potentially edited nodes out of T1, restore their old connections to other nodes by index
-    // for (int index = 0; index < deletedNodesT1Indices.first.size(); index++)
-    // {
-    //     if (deletedNodesT1Indices.first[index].empty() == false)
-    //     {
-    //         //parent
-    //         if (deletedNodesT1Indices.first[index][0] != -1)
-    //         {
-    //             nodesT1[index].parent = &nodesT1.at(deletedNodesT1Indices.first[index][0]);
-    //         }
-    //         //sibling
-    //         if (deletedNodesT1Indices.first[index][1] != -1)
-    //         {
-    //             nodesT1[index].sibling = &nodesT1.at(deletedNodesT1Indices.first[index][1]);
-    //         }
-    //         //left
-    //         if (deletedNodesT1Indices.first[index][2] != -1)
-    //         {
-    //             nodesT1[index].leftChild = &nodesT1.at(deletedNodesT1Indices.first[index][2]);
-    //         }
-    //         //right
-    //         if (deletedNodesT1Indices.first[index][3] != -1)
-    //         {
-    //             nodesT1[index].rightChild = &nodesT1.at(deletedNodesT1Indices.first[index][3]);
-    //         }
-    //
-    //         nodesT1[index].subtreeTerminals = deletedNodesT1Indices.second[index];
-    //     }
-    // }
-    // //For all potentially edited nodes out of T2, restore their old connections to other nodes by index
-    // for (int index = 0; index < deletedNodesT2Indices.first.size(); index++)
-    // {
-    //     if (deletedNodesT2Indices.first[index].empty() == false)
-    //     {
-    //         //parent
-    //         if (deletedNodesT2Indices.first[index][0] != -1)
-    //         {
-    //             nodesT2[index].parent = &nodesT2.at(deletedNodesT2Indices.first[index][0]);
-    //         }
-    //         //sibling
-    //         if (deletedNodesT2Indices.first[index][1] != -1)
-    //         {
-    //             nodesT2[index].sibling = &nodesT2.at(deletedNodesT2Indices.first[index][1]);
-    //         }
-    //         //left
-    //         if (deletedNodesT2Indices.first[index][2] != -1)
-    //         {
-    //             nodesT2[index].leftChild = &nodesT2.at(deletedNodesT2Indices.first[index][2]);
-    //         }
-    //         //right
-    //         if (deletedNodesT2Indices.first[index][3] != -1)
-    //         {
-    //             nodesT2[index].rightChild = &nodesT2.at(deletedNodesT2Indices.first[index][3]);
-    //         }
-    //
-    //         nodesT2[index].subtreeTerminals = deletedNodesT2Indices.second[index];
-    //     }
-    // }
-    //
-    // //Restore all root nodes in T1
-    // for (int index = 0; index < rootsT1Indices.first.size(); index++)
-    // {
-    //     if (rootsT1Indices.first[index][0] != -1)
-    //         rootsT1[index]->leftChild = &nodesT1.at(rootsT1Indices.first[index][0]);
-    //     if (rootsT1Indices.first[index][1] != -1)
-    //         rootsT1[index]->rightChild = &nodesT1.at(rootsT1Indices.first[index][1]);
-    // }
-    // //Remove all unnecessary root node entries?
-    // rootsT1.resize(rootsT1Indices.first.size());
-    //
-    // //Restore all root nodes in T2
-    // for (int index = 0; index < rootsT2Indices.first.size(); index++)
-    // {
-    //     if (rootsT2Indices.first[index][0] != -1)
-    //         rootsT2[index]->leftChild = &nodesT2.at(rootsT2Indices.first[index][0]);
-    //     if (rootsT2Indices.first[index][1] != -1)
-    //         rootsT2[index]->rightChild = &nodesT2.at(rootsT2Indices.first[index][1]);
-    // }
-    // rootsT2.resize(rootsT2Indices.first.size());
-
 }
 
 int solver::ChainReductionRule::identifyDistanceToRoot(graph::Node* node, std::shared_ptr<graph::Forest>& forest)
