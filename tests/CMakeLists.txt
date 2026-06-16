@@ -45,3 +45,8 @@ target_compile_definitions(PluginTests PRIVATE RES_DIR="${CMAKE_SOURCE_DIR}/res/
 add_executable(MetricsPluginTests MetricsPluginTests.cpp)
 target_link_libraries(MetricsPluginTests PRIVATE Solver Graph Catch2::Catch2WithMain)
 add_test(NAME MetricsPluginTests COMMAND $<TARGET_FILE:MetricsPluginTests>)
+
+add_executable(ChainReductionTests ChainReductionTests.cpp)
+target_link_libraries(ChainReductionTests PRIVATE Solver Graph Catch2::Catch2WithMain)
+add_test(NAME ChainReductionTests COMMAND $<TARGET_FILE:ChainReductionTests>)
+target_compile_definitions(ChainReductionTests PRIVATE TEST_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/res/tests/")
