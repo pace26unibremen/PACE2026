@@ -2,7 +2,7 @@
 #define PACE2026_CHAINREDUCTIONRULE_H
 #include "AbstractRule.hpp"
 #include "../Action/DeleteEdgeAction.hpp"
-
+#include "../Action/AddEdgeAction.hpp"
 #include <stack>
 #include <vector>
 
@@ -39,6 +39,9 @@ namespace solver
         /// \brief Stack of action that modify the instance,
         /// filled in the apply method and unfilled in the unapply method
         std::stack<DeleteEdgeAction> changes = std::stack<DeleteEdgeAction>();
+
+        AddEdgeAction addedEdgeT1;
+        AddEdgeAction addedEdgeT2;
 
     public:
         /// \brief Chain Reduction Rule implementation that identifies the first chain out of the two forests given

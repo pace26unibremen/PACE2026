@@ -1,6 +1,6 @@
 #include "ChainReductionRule.hpp"
 #include "../Action/DeleteEdgeAction.hpp"
-
+#include "../Action/AddEdgeAction.hpp"
 #include <algorithm>
 #include <unordered_map>
 #include <utility>
@@ -10,13 +10,16 @@ solver::ChainReductionRule::ChainReductionRule(
     std::pair<std::vector<std::vector<graph::Node*>>,std::vector<std::shared_ptr<graph::Forest>>> chainWithTrees,
     const std::shared_ptr<Context>& context
     ) :
-        AbstractRule(instance, context,true)
+        AbstractRule(instance, context, true),
+        addedEdgeT1(nullptr,nullptr,nullptr),
+        addedEdgeT2(nullptr,nullptr,nullptr)
 {
     //Copying of the Trees maybe irrelevant when doing this without const params. Not sure.
     this->chainWithTrees = std::move(chainWithTrees);
     rootsT1Indices = {};
     rootsT2Indices = {};
-
+    addedEdgeT1;
+    addedEdgeT2;
 }
 
 //Chain def:Let T be a rooted phylogenetic X-tree, and let C =
@@ -299,21 +302,21 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
     //stored due to being irrelevant
     if (chainWithTrees.second.size() == 2 && chainWithTrees.first.size() >= 2)
     {
-        //Store all node connections by their index.
-        for (int index = 0; index < chainWithTrees.second.front()->Nodes().size(); index++)
-        {
-            storeNodeIndices(&chainWithTrees.second.front()->Nodes()[index], chainWithTrees.second.front());
-
-        }
-
-        for (int index = 0; index < chainWithTrees.second.back()->Nodes().size(); index++)
-        {
-            storeNodeIndices(&chainWithTrees.second.back()->Nodes()[index], chainWithTrees.second.back());
-        }
-
-        //Store current Root Nodes
-        storeRootNodes(chainWithTrees.second.front());
-        storeRootNodes(chainWithTrees.second.back());
+        // //Store all node connections by their index.
+        // for (int index = 0; index < chainWithTrees.second.front()->Nodes().size(); index++)
+        // {
+        //     storeNodeIndices(&chainWithTrees.second.front()->Nodes()[index], chainWithTrees.second.front());
+        //
+        // }
+        //
+        // for (int index = 0; index < chainWithTrees.second.back()->Nodes().size(); index++)
+        // {
+        //     storeNodeIndices(&chainWithTrees.second.back()->Nodes()[index], chainWithTrees.second.back());
+        // }
+        //
+        // //Store current Root Nodes
+        // storeRootNodes(chainWithTrees.second.front());
+        // storeRootNodes(chainWithTrees.second.back());
 
         // Acquire the notes required
         // Fetch x3
@@ -391,12 +394,21 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                 changes.top().doAction();
             }
         }
+        //Last node in chain
+        changes.emplace(chainWithTrees.first[chainWithTrees.first.size()-1].front(), chainWithTrees.second.front());
+        changes.top().doAction();
 
-    // Connect the two parts of the now seperated trees
-        bottomT1->parent = topChainT1Parent;
-        bottomT2->parent = topChainT2Parent;
+        changes.emplace(chainWithTrees.first[chainWithTrees.first.size()-1].back(), chainWithTrees.second.back());
+        changes.top().doAction();
+        // Connect the two parts of the now seperated trees
+        // bottomT1->parent = topChainT1Parent;
+        // bottomT2->parent = topChainT2Parent;
+        addedEdgeT1 = AddEdgeAction(bottomT1,topChainT1Parent, chainWithTrees.second.front());
+        addedEdgeT2 = AddEdgeAction(bottomT2,topChainT2Parent, chainWithTrees.second.back());
 
-        updateSubtreeTerminals();
+        addedEdgeT1.doAction();
+        addedEdgeT2.doAction();
+
 
     // //Connect the sibling connections between top's terminal and bottom node parts
     // // If left side is terminal
@@ -459,11 +471,11 @@ void solver::ChainReductionRule::unapply()
     //
     // forBottomT1.doAction();
     // forBottomT2.doAction();
-    auto bottomt1 = chainWithTrees.first[0].front();
-    auto bottomt2 = chainWithTrees.first[0].back();
-
-    bottomt1->parent = nullptr;
-    bottomt2->parent = nullptr;
+    // auto bottomt1 = chainWithTrees.first[0].front();
+    // auto bottomt2 = chainWithTrees.first[0].back();
+    //
+    // bottomt1->parent = nullptr;
+    // bottomt2->parent = nullptr;
 
     // updateSubtreeTerminals();
 
@@ -471,6 +483,8 @@ void solver::ChainReductionRule::unapply()
     // else topOfChainT1->rightChild = chainWithTrees.first[chainWithTrees.first.size()-1].front();
     // if (topOfChainT2->leftChild == bottomt2) topOfChainT2->leftChild = chainWithTrees.first[chainWithTrees.first.size()-1].back();
     // else topOfChainT2->rightChild = chainWithTrees.first[chainWithTrees.first.size()-1].back();
+    addedEdgeT2.undoAction();
+    addedEdgeT1.undoAction();
 
     while (not changes.empty())
     {
