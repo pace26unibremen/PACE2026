@@ -30,12 +30,6 @@ class Forest
     /// \brief Node pointers to root Nodes.
     std::shared_ptr<std::vector<Node*>> roots;
 
-    /// \brief \b 1. Sorts the children of each node,
-    /// such that the left child
-    /// contains the minimum label of both children.\n
-    /// And \b 2. fills \c subtreeTerminals for each node.
-    void sortChildrenAndCollectTerminals();
-
     /// \brief Checks consistency relations in triples of parent and both children
     /// for all triples in the subtree of parent.
     /// \param parent the root node of the subtree
@@ -68,19 +62,18 @@ class Forest
            std::shared_ptr<std::unordered_map<unsigned int, Node*>> labelToTerminal,
            std::shared_ptr<std::vector<Node*>> roots);
 
-    /// Todo clean up
-    /// \brief Constructor without sort children and collect subtree terminals
-    Forest(std::shared_ptr<std::vector<Node>> nodes,
-           std::shared_ptr<std::unordered_map<unsigned int, Node*>> labelToTerminal,
-           std::shared_ptr<std::unordered_map<Node*, unsigned int>> terminalToLabel,
-           std::shared_ptr<std::vector<Node*>> roots);
-
     /// \brief Constructor. Loads forest from a file in newick format.
     /// \param path to file
     /// \param numberOfTerminals number of leafs.
     /// \param numberOfTrees number of trees.
     [[maybe_unused]]
     explicit Forest(const std::filesystem::path& path, int numberOfTerminals, int numberOfTrees);
+
+    /// \brief \b 1. Sorts the children of each node,
+    /// such that the left child
+    /// contains the minimum label of both children.\n
+    /// And \b 2. fills \c subtreeTerminals for each node.
+    void sortChildrenAndCollectTerminals();
 
     /// \brief Makes a deep copy of the forest.
     /// @return The copy

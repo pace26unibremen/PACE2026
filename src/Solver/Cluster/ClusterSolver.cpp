@@ -23,8 +23,8 @@ std::shared_ptr<graph::Instance> solver::ClusterSolver::buildSingleCluster(unsig
 
         auto forest =
             std::make_shared<graph::Forest>(std::make_shared<std::vector<graph::Node>>(f->Nodes()),
-                                            std::make_shared<std::unordered_map<unsigned int, graph::Node*>>(mapLT),
                                             std::make_shared<std::unordered_map<graph::Node*, unsigned int>>(mapTL),
+                                            std::make_shared<std::unordered_map<unsigned int, graph::Node*>>(mapLT),
                                             std::make_shared<std::vector<graph::Node*>>(roots));
         subInstance->push_back(forest);
     }
@@ -59,7 +59,7 @@ void solver::ClusterSolver::getClusterPoints()
 
 void solver::ClusterSolver::resizeSubtreeTerminalsVector()
 {
-    auto maxLabel = std::ranges::max(instance->at(0)->LabelToTerminal() | std::views::keys);
+    auto maxLabel = std::ranges::max(instance->at(0)->LabelToTerminal() | std::ranges::views::keys);
     unsigned int numberOfNewLabels = 2 * pointsAndForests_perCluster.size();
     if ((maxLabel + numberOfNewLabels + 63) / 64 > (maxLabel + 63) / 64)
     {
@@ -75,7 +75,7 @@ void solver::ClusterSolver::resizeSubtreeTerminalsVector()
 
 void solver::ClusterSolver::decoupleSubtrees()
 {
-    auto maxLabel = std::ranges::max(instance->at(0)->LabelToTerminal() | std::views::keys);
+    auto maxLabel = std::ranges::max(instance->at(0)->LabelToTerminal() | std::ranges::views::keys);
     for (const auto& _cluster : pointsAndForests_perCluster)
     {
 

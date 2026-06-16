@@ -48,7 +48,7 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
         Node* currentRoot = nullptr;
 
         // Helper function to create a new node and link it to the current parent and sibling.
-        std::function addNode = [&]() -> Node* {
+        std::function<graph::Node*(void)> addNode = [&](){
             // Create new internal node
             nodes->emplace_back();
             Node* terminal = &nodes->back();
@@ -202,7 +202,9 @@ Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int num
             sibling = nullptr;
         };
     }
-    return {nodes, terminalToLabel, labelToTerminal, roots};
+    auto f =  Forest(nodes, terminalToLabel, labelToTerminal, roots);
+    f.sortChildrenAndCollectTerminals();
+    return f;
 }
 
 void ForestIO::WriteNewick(const Forest& forest, std::ostream& stream)

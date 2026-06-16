@@ -37,22 +37,10 @@ Forest::Forest(std::shared_ptr<std::vector<Node>> nodes,
         labelToTerminal(std::move(labelToTerminal)),
         roots(std::move(roots))
 {
-    sortChildrenAndCollectTerminals();
-
     #ifdef DEBUG_IMAGE_VIEW_GRAPH
     renderImage();
     #endif
 }
-
-Forest::Forest(std::shared_ptr<std::vector<Node>> nodes,
-               std::shared_ptr<std::unordered_map<unsigned int, Node*>> labelToTerminal,
-               std::shared_ptr<std::unordered_map<Node*, unsigned int>> terminalToLabel,
-               std::shared_ptr<std::vector<Node*>> roots) :
-        nodes(std::move(nodes)),
-        terminalToLabel(std::move(terminalToLabel)),
-        labelToTerminal(std::move(labelToTerminal)),
-        roots(std::move(roots))
-{}
 
 Forest::Forest(const filesystem::path& path, int numberOfTerminals, int numberOfTrees)
 {
