@@ -38,7 +38,7 @@ void solver::ClusterSolver::getClusterPoints()
     for (auto clusterPointOfFrontForest : cpg.clusterPoints)
     {
 
-        pointsAndForests_PerCluster.push_back({{instance->at(0), clusterPointOfFrontForest}});
+        pointsAndForests_perCluster.push_back({{instance->at(0), clusterPointOfFrontForest}});
 
         // check to which forest the twin belongs
         for (auto twin : cpg.twinRelation.nodeToTwins[clusterPointOfFrontForest])
@@ -49,7 +49,7 @@ void solver::ClusterSolver::getClusterPoints()
                 const graph::Node* end = begin + f->Nodes().size();
                 if (twin >= begin && twin < end)
                 {
-                    pointsAndForests_PerCluster.back().emplace_back(f, twin);
+                    pointsAndForests_perCluster.back().emplace_back(f, twin);
                     break;
                 }
             }
@@ -59,9 +59,8 @@ void solver::ClusterSolver::getClusterPoints()
 
 void solver::ClusterSolver::resizeSubtreeTerminalsVector()
 {
-    // because we introduce new labels, we may get out of range in the subtreeTerminals field of graph::Node.
     auto maxLabel = std::ranges::max(instance->at(0)->LabelToTerminal() | std::views::keys);
-    unsigned int numberOfNewLabels = 2 * pointsAndForests_PerCluster.size();
+    unsigned int numberOfNewLabels = 2 * pointsAndForests_perCluster.size();
     if ((maxLabel + numberOfNewLabels + 63) / 64 > (maxLabel + 63) / 64)
     {
         for (const auto& f : *instance)
@@ -77,7 +76,7 @@ void solver::ClusterSolver::resizeSubtreeTerminalsVector()
 void solver::ClusterSolver::decoupleSubtrees()
 {
     auto maxLabel = std::ranges::max(instance->at(0)->LabelToTerminal() | std::views::keys);
-    for (const auto& _cluster : pointsAndForests_PerCluster)
+    for (const auto& _cluster : pointsAndForests_perCluster)
     {
 
         for (const auto& [f, n] : _cluster)
@@ -94,7 +93,7 @@ void solver::ClusterSolver::decoupleSubtrees()
             }
         }
 
-        clusterLabel.insert(maxLabel + 1);
+        clusterTerminal.insert(maxLabel + 1);
         clusterRoot.insert(maxLabel + 2);
 
         maxLabel += 2;
@@ -126,7 +125,7 @@ void solver::ClusterSolver::splitInstance()
             rootLabelToCluster.insert({0, c});
         }
         clusterToClusterLabels.insert({c, {}});
-        for (unsigned int l : clusterLabel)
+        for (unsigned int l : clusterTerminal)
         {
             if (c->at(0)->LabelToTerminal().contains(l))
             {
@@ -164,8 +163,8 @@ void solver::ClusterSolver::mergeCluster()
         instance->at(0)->Roots().insert(instance->at(0)->Roots().end(), c->at(0)->Roots().begin(),
                                         c->at(0)->Roots().end());
     }
-    std::sort(instance->at(0)->Roots().begin(), instance->at(0)->Roots().end(),
-              [](graph::Node* r1, graph::Node* r2) { return r1->hasSmallestTerminal(r2); });
+    std::ranges::sort(instance->at(0)->Roots(),
+              [](const graph::Node* r1, const graph::Node* r2) { return r1->hasSmallestTerminal(r2); });
 }
 
 void solver::ClusterSolver::coupleSubtrees()
@@ -218,7 +217,7 @@ solver::ClusterSolver::ClusterSolver(const std::shared_ptr<graph::Instance>& ins
 bool solver::ClusterSolver::solve()
 {
     getClusterPoints();
-    if (not pointsAndForests_PerCluster.empty())
+    if (not pointsAndForests_perCluster.empty())
     {
         resizeSubtreeTerminalsVector();
         decoupleSubtrees();
@@ -237,7 +236,7 @@ bool solver::ClusterSolver::solve()
 
 void solver::ClusterSolver::unapplyReductions()
 {
-    if (not pointsAndForests_PerCluster.empty())
+    if (not pointsAndForests_perCluster.empty())
     {
         mergeCluster();
         coupleSubtrees();
