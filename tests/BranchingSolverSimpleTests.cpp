@@ -2,6 +2,7 @@
 #include <catch2/benchmark/catch_benchmark.hpp>
 #include "../src/Graph/Instance.hpp"
 #include "../src/Solver/BranchingSolver.hpp"
+#include "../src/Solver/Plugin/VisualizationPlugin.hpp"
 
 std::unordered_map<std::string, unsigned int> instanceToSolutionSize =
 {
@@ -30,7 +31,7 @@ TEST_CASE("BranchingSolver on Tiny Test Set, unbounded depth search", "[Branchin
         {
             auto config = std::make_shared<solver::BranchingSolverConfiguration>();
             config->boundedDephtSearch = false;
-
+            config->plugins = {std::make_shared<solver::plugin::VisualizationPlugin>("../debug/")};
             auto instance = graph::ReadInstance(std::string(RES_DIR) + "tiny/" + f);
             auto solver = solver::BranchingSolver(instance, config);
             auto solved = solver.solve();

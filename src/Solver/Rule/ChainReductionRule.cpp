@@ -1,9 +1,13 @@
 #include "ChainReductionRule.hpp"
-#include "../Action/DeleteEdgeAction.hpp"
+
 #include "../Action/AddEdgeAction.hpp"
+#include "../Action/DeleteEdgeAction.hpp"
+
 #include <algorithm>
 #include <unordered_map>
 #include <utility>
+
+#include <assert.h>
 
 solver::ChainReductionRule::ChainReductionRule(
     const std::shared_ptr<graph::Instance>& instance,
@@ -282,16 +286,6 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
     }
     isApplied = true;
 
-    //Set the allowed memory of the set of to be deleted Nodes
-    //First for all nodes
-    deletedNodesT1Indices.first.resize(chainWithTrees.second.front()->Nodes().capacity());
-    deletedNodesT2Indices.first.resize(chainWithTrees.second.back()->Nodes().capacity());
-    //Then for all possible subtreeTerminals
-    deletedNodesT1Indices.second.resize(chainWithTrees.second.front()->Nodes().capacity());
-    deletedNodesT2Indices.second.resize(chainWithTrees.second.back()->Nodes().capacity());
-
-    //Repeat check for safety, latter >= 2 means that chain was indeed longer then 3 elements, as x1 and x2 are never
-    //stored due to being irrelevant
     if (chainWithTrees.second.size() == 2 && chainWithTrees.first.size() >= 2)
     {
 
@@ -359,19 +353,19 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
             }
         }
         //Last node in chain
-        changes.emplace(chainWithTrees.first[chainWithTrees.first.size()-1].front(), chainWithTrees.second.front());
-        changes.top().doAction();
-
-        changes.emplace(chainWithTrees.first[chainWithTrees.first.size()-1].back(), chainWithTrees.second.back());
-        changes.top().doAction();
+        // changes.emplace(chainWithTrees.first[chainWithTrees.first.size()-1].front(), chainWithTrees.second.front());
+        // changes.top().doAction();
+        //
+        // changes.emplace(chainWithTrees.first[chainWithTrees.first.size()-1].back(), chainWithTrees.second.back());
+        // changes.top().doAction();
         // Connect the two parts of the now seperated trees
         // bottomT1->parent = topChainT1Parent;
         // bottomT2->parent = topChainT2Parent;
-        addedEdgeT1 = AddEdgeAction(bottomT1,topChainT1Parent, chainWithTrees.second.front());
-        addedEdgeT2 = AddEdgeAction(bottomT2,topChainT2Parent, chainWithTrees.second.back());
-
-        addedEdgeT1.doAction();
-        addedEdgeT2.doAction();
+        // addedEdgeT1 = AddEdgeAction(bottomT1,topChainT1Parent, chainWithTrees.second.front());
+        // addedEdgeT2 = AddEdgeAction(bottomT2,topChainT2Parent, chainWithTrees.second.back());
+        //
+        // addedEdgeT1.doAction();
+        // addedEdgeT2.doAction();
 
     }
     return RuleReturnCode::Continue;
@@ -389,9 +383,9 @@ void solver::ChainReductionRule::unapply()
         throw std::invalid_argument("ChainReductionRule : unapply : rule is not applied");
     }
     isApplied = false;
-
-    addedEdgeT2.undoAction();
-    addedEdgeT1.undoAction();
+    //
+    // addedEdgeT2.undoAction();
+    // addedEdgeT1.undoAction();
 
     while (not changes.empty())
     {
@@ -622,11 +616,12 @@ solver::ChainReductionRule::isApplicable(
                         // Parent has indeed only one terminal on both trees
                         ((parentT1->leftChild == terminalT1.first && parentT1->rightChild == nullptr) ||
                         (parentT1->rightChild == terminalT1.first && parentT1->leftChild == nullptr))
-
                         && ((parentT2->leftChild == terminalT2.first && parentT2->rightChild == nullptr) ||
                         (parentT2->rightChild == terminalT2.first && parentT2->leftChild == nullptr))
+
                         // Parent of Parent of first terminal exists and...
                         && parentOfParentT1 != nullptr && parentOfParentT2 != nullptr
+
                         // parent of Parent has one terminal x2 on both trees
                         && ((parentOfParentT1->leftChild == parentT1
                         && T1->TerminalToLabel().contains(parentOfParentT1->rightChild))

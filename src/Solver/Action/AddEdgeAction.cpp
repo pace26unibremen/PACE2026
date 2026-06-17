@@ -22,7 +22,7 @@ void solver::AddEdgeAction::doAction()
     //Adds a new edge from the child to the parent
     //Assumption: The Edge is not present -> child has no parent and no sibling,
     //parent has at least one spot open
-    if (!parent->leftChild) parentFreeSideIsLeft = true;
+    if (parent->leftChild == child) parentFreeSideIsLeft = true;
     const unsigned int subtreeTerminalsSize = child->subtreeTerminals.size();
 
     if (parentFreeSideIsLeft)
