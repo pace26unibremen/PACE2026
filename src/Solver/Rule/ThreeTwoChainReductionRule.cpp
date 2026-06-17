@@ -116,6 +116,11 @@ solver::ThreeTwoChainReductionRule::isApplicable(const std::shared_ptr<graph::In
                 return nullptr;
             }
         }
+        else
+        {
+            // bNode is not a terminal
+            return nullptr;
+        }
     }
 
     if (b == 0)
