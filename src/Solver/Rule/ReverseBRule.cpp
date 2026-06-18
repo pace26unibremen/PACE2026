@@ -1,17 +1,17 @@
-#include "ReverseCaseBRule.hpp"
+#include "ReverseBRule.hpp"
 
-solver::ReverseCaseBRule::ReverseCaseBRule(const std::shared_ptr<graph::Instance>& instance,
+solver::ReverseBRule::ReverseBRule(const std::shared_ptr<graph::Instance>& instance,
                                      const std::shared_ptr<Context>& context,
                                      const unsigned int& toCutLabel) :
     AbstractRule(instance, context, false),
     toCutLabel(toCutLabel)
 {}
 
-solver::RuleReturnCode solver::ReverseCaseBRule::apply()
+solver::RuleReturnCode solver::ReverseBRule::apply()
 {
     if (this->isApplied)
     {
-        throw std::invalid_argument("ReverseCaseBRule : apply : rule is already applied");
+        throw std::invalid_argument("ReverseBRule : apply : rule is already applied");
     }
     isApplied = true;
 
@@ -25,11 +25,11 @@ solver::RuleReturnCode solver::ReverseCaseBRule::apply()
     return RuleReturnCode::Continue;
 }
 
-void solver::ReverseCaseBRule::unapply()
+void solver::ReverseBRule::unapply()
 {
     if (not this->isApplied)
     {
-        throw std::invalid_argument("ReverseCaseBRule : unapply : rule is not applied");
+        throw std::invalid_argument("ReverseBRule : unapply : rule is not applied");
     }
     isApplied = false;
 
@@ -41,7 +41,7 @@ void solver::ReverseCaseBRule::unapply()
 }
 
 std::shared_ptr<solver::AbstractRule>
-solver::ReverseCaseBRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,
+solver::ReverseBRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                     const std::shared_ptr<Context>& context)
 {
     unsigned int labelToCut;
@@ -88,11 +88,11 @@ solver::ReverseCaseBRule::isApplicable(const std::shared_ptr<graph::Instance>& i
 
                 if (cutN1)
                 {
-                    return std::make_shared<ReverseCaseBRule>(instance, context, n1Label);
+                    return std::make_shared<ReverseBRule>(instance, context, n1Label);
                 }
                 if (cutN2)
                 {
-                    return std::make_shared<ReverseCaseBRule>(instance, context, n2Label);
+                    return std::make_shared<ReverseBRule>(instance, context, n2Label);
                 }
             }
         }
@@ -102,7 +102,7 @@ solver::ReverseCaseBRule::isApplicable(const std::shared_ptr<graph::Instance>& i
     return nullptr;
 }
 
-std::string solver::ReverseCaseBRule::name() const
+std::string solver::ReverseBRule::name() const
 {
-    return "ReverseCaseBRule";
+    return "ReverseBRule";
 }

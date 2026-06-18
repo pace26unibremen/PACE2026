@@ -1,13 +1,13 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "../src/Graph/Forest.hpp"
-#include "../src/Solver/Rule/ReverseCaseBRule.hpp"
+#include "../src/Solver/Rule/ReverseBRule.hpp"
 
 using namespace graph;
 using namespace std;
 using namespace solver;
 
-TEST_CASE("ReverseCaseBRule - Two Trees", "[Forest, ReverseCaseBRule, AbstractRule]")
+TEST_CASE("ReverseBRule - Two Trees", "[Forest, ReverseBRule, AbstractRule]")
 {
     SECTION("Cut right sibling c")
     {
@@ -18,7 +18,7 @@ TEST_CASE("ReverseCaseBRule - Two Trees", "[Forest, ReverseCaseBRule, AbstractRu
         instance->push_back(std::make_shared<Forest>(f1));
         instance->push_back(std::make_shared<Forest>(f2));
 
-        auto rule = ReverseCaseBRule::isApplicable(instance, nullptr);
+        auto rule = ReverseBRule::isApplicable(instance, nullptr);
 
         REQUIRE(rule != nullptr);
 
@@ -57,7 +57,7 @@ TEST_CASE("ReverseCaseBRule - Two Trees", "[Forest, ReverseCaseBRule, AbstractRu
         instance->push_back(std::make_shared<Forest>(f1));
         instance->push_back(std::make_shared<Forest>(f2));
 
-        auto rule = ReverseCaseBRule::isApplicable(instance, nullptr);
+        auto rule = ReverseBRule::isApplicable(instance, nullptr);
 
         REQUIRE(rule != nullptr);
 
@@ -96,7 +96,7 @@ TEST_CASE("ReverseCaseBRule - Two Trees", "[Forest, ReverseCaseBRule, AbstractRu
         instance->push_back(std::make_shared<Forest>(f1));
         instance->push_back(std::make_shared<Forest>(f2));
 
-        auto rule = ReverseCaseBRule::isApplicable(instance, nullptr);
+        auto rule = ReverseBRule::isApplicable(instance, nullptr);
 
         REQUIRE(rule == nullptr);
     }

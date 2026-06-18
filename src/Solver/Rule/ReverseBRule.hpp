@@ -1,5 +1,5 @@
-#ifndef PACE2026_REVERSE_CASE_B_RULE_HPP
-#define PACE2026_REVERSE_CASE_B_RULE_HPP
+#ifndef PACE2026_REVERSE_B_RULE_HPP
+#define PACE2026_REVERSE_B_RULE_HPP
 
 #include "../Action/DeleteEdgeAction.hpp"
 #include "AbstractRule.hpp"
@@ -11,7 +11,7 @@ namespace solver
 
 /// \brief This rule does the reverse of rule B,
 /// cutting out the middle node without the need to branch.
-class ReverseCaseBRule : public  AbstractRule
+class ReverseBRule : public  AbstractRule
 {
   protected:
 
@@ -22,7 +22,7 @@ class ReverseCaseBRule : public  AbstractRule
     std::stack<DeleteEdgeAction> changes = std::stack<DeleteEdgeAction>();
 
 public:
-    ReverseCaseBRule(const std::shared_ptr<graph::Instance>& instance,
+    ReverseBRule(const std::shared_ptr<graph::Instance>& instance,
                   const std::shared_ptr<Context>& context,
                   const unsigned int& toCutLabel);
 
@@ -45,4 +45,4 @@ public:
 
 }  //namespace solver
 
-#endif  //PACE2026_REVERSE_CASE_B_RULE_HPP
+#endif  //PACE2026_REVERSE_B_RULE_HPP
