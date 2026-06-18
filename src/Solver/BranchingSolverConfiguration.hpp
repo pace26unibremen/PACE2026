@@ -9,9 +9,10 @@
 #include "Rule/PairPathBranchingRule.hpp"
 #include "Rule/PairUnconnectedBranchingRule.hpp"
 #include "Rule/SingleVertexTreePropagationRule.hpp"
-#include "Rule/DebugAssertFalseRule.hpp" 
 #include "Rule/CheckSingleVertexTreesRule.hpp"
 #include "Rule/ThreeTwoChainReductionRule.hpp"
+#include "Rule/Case2BRule.hpp"
+#include "Rule/DebugAssertFalseRule.hpp"
 
 #include <functional>
 #include <memory>
@@ -44,6 +45,7 @@ struct BranchingSolverConfiguration
         solver::ThreeTwoChainReductionRule::isApplicable,
         solver::PairUnconnectedBranchingRule::isApplicable,
         solver::PairEqualRule::isApplicable,
+        solver::Case2BRule::isApplicable,
         solver::PairPathBranchingRule::isApplicable,
         solver::DebugAssertFalseRule::isApplicable
         };
