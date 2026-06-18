@@ -19,7 +19,10 @@ workflow:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "web" && ($FORCE_RELEASE == "true" || $MANUAL_TAG != "")'
       when: on_success
-    - if: '$CI_COMMIT_BRANCH == "master" && $CI_COMMIT_MESSAGE =~ /See merge request/'
+    # Auto-release only applies to the actual merge pipeline (non-web source); manually
+    # triggered web pipelines on master (e.g. to run a specific benchmark) must not also
+    # trigger a release unless explicitly requested via FORCE_RELEASE/MANUAL_TAG above.
+    - if: '$CI_PIPELINE_SOURCE != "web" && $CI_COMMIT_BRANCH == "master" && $CI_COMMIT_MESSAGE =~ /See merge request/'
       when: on_success
     - when: never
 
@@ -502,12 +505,14 @@ run_quick_benchmark:
     STRIDE_RUN_NAME: "${CI_COMMIT_REF_NAME}_${CI_COMMIT_SHORT_SHA}_quick"
   extends: .run_stride_benchmark_template
   rules:
-    # Skip if this is a release pipeline (merge into master)
-    - if: '$CI_COMMIT_BRANCH == "master" && $CI_COMMIT_MESSAGE =~ /Merge request|See merge request/'
-      when: never
-    # If manually triggered from the web UI and the variable is set to quick or all, run the quick benchmark
+    # If manually triggered from the web UI and the variable is set to quick or all, run the
+    # quick benchmark — this explicit choice takes priority even if the last commit on master
+    # happens to be a merge commit (otherwise rule below would always deny it).
     - if: '$CI_PIPELINE_SOURCE == "web" && ($RUN_BENCHMARK == "quick" || $RUN_BENCHMARK == "all")'
       when: on_success
+    # Skip if this is a release pipeline (merge into master); full/exact benchmarks cover it
+    - if: '$CI_COMMIT_BRANCH == "master" && $CI_COMMIT_MESSAGE =~ /Merge request|See merge request/'
+      when: never
     # Run on all other pipelines (branches, MRs, direct master pushes)
     - if: '$CI_PIPELINE_SOURCE != "web"'
       when: on_success
