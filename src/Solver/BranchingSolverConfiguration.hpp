@@ -2,17 +2,18 @@
 #define PACE2026_BRANCHING_SOLVER_CONFIGURATION_HPP
 
 #include "Plugin/AbstractPlugin.hpp"
+#include "Rule/ABCBranchingRule.hpp"
+#include "Rule/ACBranchingRule.hpp"
 #include "Rule/AbstractRule.hpp"
-#include "Rule/CutBranchRule.hpp"
-#include "Rule/EqualForestsRule.hpp"
-#include "Rule/PairEqualRule.hpp"
-#include "Rule/PairPathBranchingRule.hpp"
-#include "Rule/PairUnconnectedBranchingRule.hpp"
-#include "Rule/SingleVertexTreePropagationRule.hpp"
+#include "Rule/BRule.hpp"
 #include "Rule/CheckSingleVertexTreesRule.hpp"
-#include "Rule/ThreeTwoChainReductionRule.hpp"
-#include "Rule/Case2BRule.hpp"
+#include "Rule/CutBranchRule.hpp"
 #include "Rule/DebugAssertFalseRule.hpp"
+#include "Rule/EqualForestsRule.hpp"
+#include "Rule/EqualPairReductionRule.hpp"
+#include "Rule/ReverseBRule.hpp"
+#include "Rule/SingleVertexTreePropagationRule.hpp"
+#include "Rule/TwoBRule.hpp"
 
 #include <functional>
 #include <memory>
@@ -42,11 +43,12 @@ struct BranchingSolverConfiguration
         solver::CutBranchRule::isApplicable,
         solver::CheckSingleVertexTreesRule::isApplicable,
         solver::SingleVertexTreePropagationRule::isApplicable,
-        solver::ThreeTwoChainReductionRule::isApplicable,
-        solver::PairUnconnectedBranchingRule::isApplicable,
-        solver::PairEqualRule::isApplicable,
-        solver::Case2BRule::isApplicable,
-        solver::PairPathBranchingRule::isApplicable,
+        solver::EqualPairReductionRule::isApplicable,
+        solver::BRule::isApplicable,
+        solver::ReverseBRule::isApplicable,
+        solver::TwoBRule::isApplicable,
+        solver::ACBranchingRule::isApplicable,
+        solver::ABCBranchingRule::isApplicable,
         solver::DebugAssertFalseRule::isApplicable
         };
 

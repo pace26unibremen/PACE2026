@@ -1,6 +1,5 @@
-#include "PairPathBranchingRule.hpp"
-
-#include "PairEqualRule.hpp"
+#include "ABCBranchingRule.hpp"
+#include "EqualPairReductionRule.hpp"
 
 #include <cassert>
 #include <list>
@@ -14,7 +13,7 @@ typedef std::tuple<
             std::unordered_map<std::shared_ptr<graph::Forest>, std::list<graph::Node*>>>
     cuts_type;
 
-solver::PairPathBranchingRule::PairPathBranchingRule(const std::shared_ptr<graph::Instance>& instance,
+solver::ABCBranchingRule::ABCBranchingRule(const std::shared_ptr<graph::Instance>& instance,
                                                      const std::shared_ptr<Context>& context,
                                                      const cuts_type& cuts) :
         AbstractBranchingRule(instance, context, 3),
@@ -23,15 +22,15 @@ solver::PairPathBranchingRule::PairPathBranchingRule(const std::shared_ptr<graph
         forestToPathDeletions(get<2>(cuts))
 {}
 
-solver::RuleReturnCode solver::PairPathBranchingRule::apply()
+solver::RuleReturnCode solver::ABCBranchingRule::apply()
 {
     if (this->isApplied)
     {
-        throw std::invalid_argument("PairPathBranchingRule : apply : rule is already applied");
+        throw std::invalid_argument("ABCBranchingRule : apply : rule is already applied");
     }
     if (this->branch >= 3)
     {
-        throw std::invalid_argument("PairPathBranchingRule : apply : all branches are already visited");
+        throw std::invalid_argument("ABCBranchingRule : apply : all branches are already visited");
     }
     isApplied = true;
     branch++;
@@ -81,22 +80,22 @@ solver::RuleReturnCode solver::PairPathBranchingRule::apply()
                 pairSubtrees.emplace(f,parent);
             }
 
-            auto nextRule = std::make_shared<solver::PairEqualRule>(instance, context, pairSubtrees);
+            auto nextRule = std::make_shared<solver::EqualPairReductionRule>(instance, context, pairSubtrees);
             nextRuleSuggestion = std::make_shared<std::list<std::shared_ptr<solver::AbstractRule>>>();
             nextRuleSuggestion->push_back(nextRule);
 
             return RuleReturnCode::ContinueWithRuleSuggestion;
         }
         default:
-            throw std::logic_error("PairPathBranchingRule : apply : undefined branch");
+            throw std::logic_error("ABCBranchingRule : apply : undefined branch");
     }
 }
 
-void solver::PairPathBranchingRule::unapply()
+void solver::ABCBranchingRule::unapply()
 {
     if (not this->isApplied)
     {
-        throw std::invalid_argument("PairPathBranchingRule : unapply : rule is not applied");
+        throw std::invalid_argument("ABCBranchingRule : unapply : rule is not applied");
     }
     isApplied = false;
 
@@ -108,7 +107,7 @@ void solver::PairPathBranchingRule::unapply()
 }
 
 std::shared_ptr<solver::AbstractRule>
-solver::PairPathBranchingRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,
+solver::ABCBranchingRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                             const std::shared_ptr<Context>& context)
 {
     auto c = cuts_type();
@@ -189,15 +188,15 @@ solver::PairPathBranchingRule::isApplicable(const std::shared_ptr<graph::Instanc
     {
         return nullptr;
     }
-    return std::make_shared<PairPathBranchingRule>(instance, context, c);
+    return std::make_shared<ABCBranchingRule>(instance, context, c);
 }
 
-std::shared_ptr<std::list<std::shared_ptr<solver::AbstractRule>>> solver::PairPathBranchingRule::NextRuleSuggestion()
+std::shared_ptr<std::list<std::shared_ptr<solver::AbstractRule>>> solver::ABCBranchingRule::NextRuleSuggestion()
 {
     return nextRuleSuggestion;
 }
 
-std::string solver::PairPathBranchingRule::name() const
+std::string solver::ABCBranchingRule::name() const
 {
-    return "PairPathBranchingRule";
+    return "ABCBranchingRule";
 }
