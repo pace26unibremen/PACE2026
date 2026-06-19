@@ -24,9 +24,9 @@ int main(int, char**)
         solver::CutBranchRule::isApplicable,
         solver::EqualForestsRule::isApplicable,
         solver::SingleVertexTreePropagationRule::isApplicable,
-        solver::PairUnconnectedBranchingRule::isApplicable,
-        solver::PairEqualRule::isApplicable,
-        solver::PairPathBranchingRule::isApplicable,
+        solver::EqualForestsRule::isApplicable,
+        solver::ACBranchingRule::isApplicable,
+        solver::ABCBranchingRule::isApplicable,
         solver::DebugAssertFalseRule::isApplicable
     };
 

@@ -46,6 +46,19 @@ target_link_libraries(BranchingSolverSimpleTests PRIVATE Solver Graph Catch2::Ca
 add_test(NAME BranchingSolverSimpleTests COMMAND $<TARGET_FILE:BranchingSolverSimpleTests>)
 target_compile_definitions(BranchingSolverSimpleTests PRIVATE RES_DIR="${CMAKE_SOURCE_DIR}/res/")
 
+add_executable(TwoBRuleTests TwoBRuleTests.cpp)
+target_link_libraries(TwoBRuleTests PRIVATE Solver Graph Catch2::Catch2WithMain)
+add_test(NAME TwoBRuleTests COMMAND $<TARGET_FILE:TwoBRuleTests>)
+target_compile_definitions(TwoBRuleTests PRIVATE RES_DIR="${CMAKE_SOURCE_DIR}/res/")
+target_compile_definitions(TwoBRuleTests PRIVATE TEST_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/res/tests/")
+
+add_executable(ReverseBRuleTests ReverseBRuleTests.cpp)
+target_link_libraries(ReverseBRuleTests PRIVATE Solver Graph Catch2::Catch2WithMain)
+add_test(NAME ReverseBRuleTests COMMAND $<TARGET_FILE:ReverseBRuleTests>)
+target_compile_definitions(ReverseBRuleTests PRIVATE RES_DIR="${CMAKE_SOURCE_DIR}/res/")
+target_compile_definitions(ReverseBRuleTests PRIVATE TEST_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/res/tests/")
+
+
 #add_executable(ClusterPointTests ClusterPointTests.cpp)
 #target_link_libraries(ClusterPointTests PRIVATE Solver Graph Cluster Catch2::Catch2WithMain)
 #add_test(NAME ClusterPointTests COMMAND $<TARGET_FILE:ClusterPointTests>)

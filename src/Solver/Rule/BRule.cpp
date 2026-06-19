@@ -2,40 +2,39 @@
 // Created by kaufm on 12.02.2026.
 //
 
-#include "ThreeTwoChainReductionRule.hpp"
+#include "BRule.hpp"
 
-solver::ThreeTwoChainReductionRule::ThreeTwoChainReductionRule(
-    const std::shared_ptr<graph::Instance>& instance,
-    const std::shared_ptr<Context>& context,
-    unsigned bLabel) :
-        AbstractRule(instance, context, false), bLabel(bLabel)
+solver::BRule::BRule(const std::shared_ptr<graph::Instance>& instance, const std::shared_ptr<Context>& context,
+                     unsigned bLabel) :
+        AbstractRule(instance, context, false),
+        bLabel(bLabel)
 {}
 
-solver::RuleReturnCode solver::ThreeTwoChainReductionRule::apply()
+solver::RuleReturnCode solver::BRule::apply()
 {
     if (this->isApplied)
     {
-        throw std::invalid_argument("ThreeTwoChainReductionRule : apply : rule was already applied");
+        throw std::invalid_argument("BRule : apply : rule was already applied");
     }
     isApplied = true;
 
     for (const auto& forest : *instance)
     {
         auto bNode = forest->LabelToTerminal().at(bLabel);
-        if (not bNode->parent) continue;
+        if (not bNode->parent)
+            continue;
         changes.emplace(bNode, forest);
         changes.top().doAction();
     }
 
     return solver::RuleReturnCode::Continue;
-
 }
 
-void solver::ThreeTwoChainReductionRule::unapply()
+void solver::BRule::unapply()
 {
     if (not this->isApplied)
     {
-        throw std::invalid_argument("ThreeTwoChainReductionRule : unapply : rule is not applied");
+        throw std::invalid_argument("BRule : unapply : rule is not applied");
     }
     isApplied = false;
 
@@ -46,7 +45,7 @@ void solver::ThreeTwoChainReductionRule::unapply()
     }
 }
 
-graph::Node* solver::ThreeTwoChainReductionRule::isA3Path(const graph::Node* aNode, const graph::Node* cNode)
+graph::Node* solver::BRule::isA3Path(const graph::Node* aNode, const graph::Node* cNode)
 {
     if (aNode->parent && aNode->parent->parent && aNode->parent->parent == cNode->parent)
     {
@@ -56,13 +55,12 @@ graph::Node* solver::ThreeTwoChainReductionRule::isA3Path(const graph::Node* aNo
     {
         return cNode->sibling;
     }
-    else return nullptr;
-
+    else
+        return nullptr;
 }
 
-std::shared_ptr<solver::AbstractRule>
-solver::ThreeTwoChainReductionRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,
-                                                 const std::shared_ptr<Context>& context)
+std::shared_ptr<solver::AbstractRule> solver::BRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,
+                                                                  const std::shared_ptr<Context>& context)
 {
     unsigned b = 0;
 
@@ -92,12 +90,14 @@ solver::ThreeTwoChainReductionRule::isApplicable(const std::shared_ptr<graph::In
         auto aNode = fi->LabelToTerminal()[a];
         auto cNode = fi->LabelToTerminal()[c];
 
-        if (aNode->sibling == cNode) continue;
+        if (aNode->sibling == cNode)
+            continue;
 
         auto bNode = isA3Path(aNode, cNode);
 
         // PairPathBranchingRule
-        if (not bNode) return nullptr;
+        if (not bNode)
+            return nullptr;
 
         if (fi->TerminalToLabel().contains(bNode))
         {
@@ -111,7 +111,7 @@ solver::ThreeTwoChainReductionRule::isApplicable(const std::shared_ptr<graph::In
             {
                 continue;
             }
-            else // b != bLabel
+            else  // b != bLabel
             {
                 return nullptr;
             }
@@ -128,15 +128,15 @@ solver::ThreeTwoChainReductionRule::isApplicable(const std::shared_ptr<graph::In
         //PairEqualRule
         return nullptr;
     }
-    return std::make_shared<ThreeTwoChainReductionRule>(instance, context, b);
+    return std::make_shared<BRule>(instance, context, b);
 }
 
-std::string solver::ThreeTwoChainReductionRule::name() const
+std::string solver::BRule::name() const
 {
-    return "ThreeTwoChainReductionRule";
+    return "BRule";
 }
 
-std::shared_ptr<solver::AbstractRule> solver::ThreeTwoChainReductionRule::clone() const
+std::shared_ptr<solver::AbstractRule> solver::BRule::clone() const
 {
-    return std::make_shared<ThreeTwoChainReductionRule>(instance, context, bLabel);
+    return std::make_shared<BRule>(instance, context, bLabel);
 }
