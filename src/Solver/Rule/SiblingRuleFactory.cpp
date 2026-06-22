@@ -1,17 +1,28 @@
 #include "SiblingRuleFactory.hpp"
 
-#include "ABCBranchingRule.hpp"
+#include "BRule.hpp"
+#include "ReverseBRule.hpp"
+#include "TwoBRule.hpp"
 #include "ACBranchingRule.hpp"
+#include "ABCBranchingRule.hpp"
 #include "EqualPairReductionRule.hpp"
 
-std::pair<unsigned int, unsigned int> solver::SiblingRuleFactory::getSiblings(const std::shared_ptr<graph::Instance>& instance)
+std::pair<unsigned int, unsigned int> solver::SiblingRuleFactory::getSiblings(
+    const std::shared_ptr<graph::Instance>& instance,
+    const std::shared_ptr<solver::Context>& context)
 {
     const auto& f = instance->at(0);
-    for (const auto& [node, label] : f->TerminalToLabel())
+    for (const auto& label : context->heuristicLabelOrder)
     {
+        if (not f->LabelToTerminal().contains(label))
+        {
+            continue;
+        }
+        const auto& node = f->LabelToTerminal().at(label);
+
         if (node->sibling != nullptr and f->TerminalToLabel().contains(node->sibling))
         {
-            return {label, f->TerminalToLabel().at(node->sibling)};
+            return {f->TerminalToLabel().at(node), f->TerminalToLabel().at(node->sibling)};
         }
     }
     return {0,0};
@@ -20,14 +31,14 @@ std::pair<unsigned int, unsigned int> solver::SiblingRuleFactory::getSiblings(co
 std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::basicRules(const std::shared_ptr<graph::Instance>& instance,
                                                                              const std::shared_ptr<solver::Context>& context)
 {
-    const auto& [aLabel, cLabel] = getSiblings(instance);
+    const auto& [aLabel, cLabel] = getSiblings(instance, context);
     auto forestWithBNodes = std::list<std::pair<std::shared_ptr<graph::Forest>, std::list<graph::Node*>>>();
 
     if (aLabel * cLabel == 0)
     {
+        // there is no sibling pair in f0
         return nullptr;
     }
-
 
     // if the siblings from f0 are siblings in every other forest.
     bool siblings = true;

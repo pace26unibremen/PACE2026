@@ -12,13 +12,16 @@ class SiblingRuleFactory
   private:
     /// \brief Selects a sibling pair from the first forest of the instance.
     /// \param instance
+    /// \param context
     /// \return The labels of a sibling pair
-    static std::pair<unsigned int, unsigned int> getSiblings(const std::shared_ptr<graph::Instance>& instance);
+    static std::pair<unsigned int, unsigned int>
+    getSiblings(const std::shared_ptr<graph::Instance>& instance,
+                const std::shared_ptr<solver::Context>& context);
 
   public:
-
     /// \brief Checks whether \ref EqualPairReductionRule, \ref ACBranchingRule or \ref ABCBranchingRule
-    /// applicable is and returns an instance of the rule, with the items prioritized in the following order:
+    /// can be applied and returns an instance of the best applicable rule,
+    /// with the rules prioritized in the following order:
     /// 1. \ref EqualPairReductionRule
     /// 2. \ref ACBranchingRule
     /// 3. \ref ABCBranchingRule.

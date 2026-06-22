@@ -1,6 +1,7 @@
 #ifndef PACE2026_CONTEXT_HPP
 #define PACE2026_CONTEXT_HPP
 
+#include <list>
 #include <memory>
 
 namespace solver
@@ -23,6 +24,10 @@ struct Context
     /// \brief The configuration of the branching solver.
     /// This should be set in the constructor of the branching solver.
     std::shared_ptr<BranchingSolverConfiguration> branchingSolverConfiguration = nullptr;
+
+    /// \brieg A heuristic order of labels for solver to find applicable rules.
+    /// It should be initialized by the solver.
+    std::list<unsigned int> heuristicLabelOrder = {};
 };
 
 }  //namespace solver
