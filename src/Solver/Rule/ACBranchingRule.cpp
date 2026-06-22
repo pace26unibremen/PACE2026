@@ -2,23 +2,14 @@
 
 #include <cassert>
 
-// 1. label1
-// 2. label2
-// 3. list of forests that are affected
-typedef std::tuple<
-        unsigned int,
-        unsigned int,
-        std::list<std::shared_ptr<graph::Forest>>>
-    affectedForests_type;
-
 solver::ACBranchingRule::ACBranchingRule(
     const std::shared_ptr<graph::Instance>& instance,
     const std::shared_ptr<Context>& context,
-    const affectedForests_type& affectedForests) :
+    unsigned int aLabel,
+    unsigned int cLabel) :
         AbstractBranchingRule(instance, context, 2),
-        label1(get<0>(affectedForests)),
-        label2(get<1>(affectedForests)),
-        forestsConnectedLabels(get<2>(affectedForests))
+        aLabel(aLabel),
+        cLabel(cLabel)
 {}
 
 solver::RuleReturnCode solver::ACBranchingRule::apply()
@@ -37,18 +28,20 @@ solver::RuleReturnCode solver::ACBranchingRule::apply()
     switch (branch)
     {
         case 1:
-            for(const auto& f : forestsConnectedLabels)
+            for(const auto& f : *instance)
             {
-                auto t1 = f->LabelToTerminal()[label1];
-                changes.emplace(t1, f);
+                auto aNode = f->LabelToTerminal().at(aLabel);
+                if (not aNode->parent) continue;
+                changes.emplace(aNode, f);
                 changes.top().doAction();
             }
             break;
         case 2:
-            for(const auto& f : forestsConnectedLabels)
+            for(const auto& f : *instance)
             {
-                auto t2 = f->LabelToTerminal()[label2];
-                changes.emplace(t2, f);
+                auto cNode = f->LabelToTerminal().at(cLabel);
+                if (not cNode->parent) continue;
+                changes.emplace(cNode, f);
                 changes.top().doAction();
             }
             break;
@@ -79,25 +72,25 @@ std::shared_ptr<solver::AbstractRule>
 solver::ACBranchingRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                    const std::shared_ptr<Context>& context)
 {
-    affectedForests_type af = affectedForests_type();
-    get<0>(af) = 0;
-    get<1>(af) = 0;
+    unsigned int aLabel = 0;
+    unsigned int cLabel = 0;
 
-    auto f = instance->at(0);
-    for (const auto& [label, node] : f->LabelToTerminal())
+    auto f0 = instance->at(0);
+    for (const auto& [node, label] : f0->TerminalToLabel())
     {
-        if (node->sibling != nullptr and f->TerminalToLabel().contains(node->sibling))
+        if (node->sibling != nullptr and f0->TerminalToLabel().contains(node->sibling))
         {
-            get<0>(af) = label;
-            get<1>(af) = node->sibling->smallestTerminal();
-            get<2>(af).push_back(f);
+            aLabel = label;
+            cLabel = f0->TerminalToLabel().at(node->sibling);
             break;
         }
     }
 
-    if (get<0>(af) == 0)
+    // check if we found a sibling pair in f0
+    if (aLabel == 0)
     {
         // we have a better rule for this case
+        // (CheckSingleVertexTreesRule, SingleVertexTreePropagationRule, EqualForestRule)
         return nullptr;
     }
 
@@ -105,25 +98,16 @@ solver::ACBranchingRule::isApplicable(const std::shared_ptr<graph::Instance>& in
     for (unsigned int i = 1; i < instance->size(); i++)
     {
         auto fi = instance->at(i);
-        auto t1 = fi->LabelToTerminal()[get<0>(af)];
-        auto t2 = fi->LabelToTerminal()[get<1>(af)];
-        auto root = fi->rootOf(t1);
-        if (not t2->hasSubsetTerminals(root))
+        auto aNode = fi->LabelToTerminal()[aLabel];
+        auto cNode = fi->LabelToTerminal()[cLabel];
+        auto aRoot = fi->rootOf(aNode);
+        if (not cNode->hasSubsetTerminals(aRoot))
         {
-            existsUnconnectedPair = true;
-        }
-        else
-        {
-            get<2>(af).push_back(fi);
+            return std::make_shared<ACBranchingRule>(instance, context, aLabel, cLabel);
         }
     }
 
-    if (not existsUnconnectedPair)
-    {
-        return nullptr;
-    }
-
-    return std::make_shared<ACBranchingRule>(instance, context, af);
+    return nullptr;
 }
 
 std::string solver::ACBranchingRule::name() const
