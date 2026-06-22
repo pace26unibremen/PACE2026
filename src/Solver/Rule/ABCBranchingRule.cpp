@@ -129,7 +129,7 @@ solver::ABCBranchingRule::isApplicable(const std::shared_ptr<graph::Instance>& i
             return nullptr;
         }
 
-        // moving upwards from aNode to lca - and collect all b-nodes
+        // moving upwards from aNode to lca - and collect b-nodes
         auto bNodes = std::list<graph::Node*>();
         graph::Node* lca;
         graph::Node* it = aNode;
@@ -145,7 +145,7 @@ solver::ABCBranchingRule::isApplicable(const std::shared_ptr<graph::Instance>& i
             it = it->parent;
         }
 
-        // moving upwards from cNode to lca - and collect all cut-away subtrees
+        // moving upwards from cNode to lca - and collect b-nodes
         it = cNode;
         while (true)
         {
