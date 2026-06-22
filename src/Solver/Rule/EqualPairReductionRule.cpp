@@ -54,7 +54,7 @@ solver::EqualPairReductionRule::isApplicable(const std::shared_ptr<graph::Instan
     unsigned int aLabel = 0;
     unsigned int cLabel = 0;
 
-    auto f0 = instance->at(0);
+    const auto& f0 = instance->at(0);
     for (const auto& [node, label] : f0->TerminalToLabel())
     {
         if (node->sibling != nullptr and f0->TerminalToLabel().contains(node->sibling))
@@ -74,10 +74,10 @@ solver::EqualPairReductionRule::isApplicable(const std::shared_ptr<graph::Instan
 
     for (unsigned int i = 1; i < instance->size(); i++)
     {
-        auto fi = instance->at(i);
-        auto aNode = fi->LabelToTerminal().at(aLabel);
-        auto cNode = fi->LabelToTerminal().at(cLabel);
-        if (aNode->sibling == cNode )
+        const auto& fi = instance->at(i);
+        const auto& aNode = fi->LabelToTerminal().at(aLabel);
+        const auto& cNode = fi->LabelToTerminal().at(cLabel);
+        if (aNode->sibling != cNode)
         {
             // we can not apply this rule for aLabel, cLabel
             return nullptr;

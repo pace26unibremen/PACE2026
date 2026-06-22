@@ -104,6 +104,7 @@ solver::ABCBranchingRule::isApplicable(const std::shared_ptr<graph::Instance>& i
         {
             aLabel = label;
             cLabel = f0->TerminalToLabel().at(node->sibling);
+            break;
         }
     }
 
@@ -120,9 +121,9 @@ solver::ABCBranchingRule::isApplicable(const std::shared_ptr<graph::Instance>& i
     for (unsigned int i = 1; i < instance->size(); i++)
     {
         const auto& fi = instance->at(i);
-        auto aNode = fi->LabelToTerminal().at(aLabel);
-        auto cNode = fi->LabelToTerminal().at(cLabel);
-        auto aRoot = fi->rootOf(aNode);
+        const auto& aNode = fi->LabelToTerminal().at(aLabel);
+        const auto& cNode = fi->LabelToTerminal().at(cLabel);
+        const auto& aRoot = fi->rootOf(aNode);
         if (not cNode->hasSubsetTerminals(aRoot))
         {
             // we have a better rule for this case (AC BranchingRule)

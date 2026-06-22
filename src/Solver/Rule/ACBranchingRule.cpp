@@ -75,7 +75,7 @@ solver::ACBranchingRule::isApplicable(const std::shared_ptr<graph::Instance>& in
     unsigned int aLabel = 0;
     unsigned int cLabel = 0;
 
-    auto f0 = instance->at(0);
+    const auto& f0 = instance->at(0);
     for (const auto& [node, label] : f0->TerminalToLabel())
     {
         if (node->sibling != nullptr and f0->TerminalToLabel().contains(node->sibling))
@@ -94,13 +94,12 @@ solver::ACBranchingRule::isApplicable(const std::shared_ptr<graph::Instance>& in
         return nullptr;
     }
 
-    bool existsUnconnectedPair = false;
     for (unsigned int i = 1; i < instance->size(); i++)
     {
-        auto fi = instance->at(i);
-        auto aNode = fi->LabelToTerminal()[aLabel];
-        auto cNode = fi->LabelToTerminal()[cLabel];
-        auto aRoot = fi->rootOf(aNode);
+        const auto& fi = instance->at(i);
+        const auto& aNode = fi->LabelToTerminal()[aLabel];
+        const auto& cNode = fi->LabelToTerminal()[cLabel];
+        const auto& aRoot = fi->rootOf(aNode);
         if (not cNode->hasSubsetTerminals(aRoot))
         {
             return std::make_shared<ACBranchingRule>(instance, context, aLabel, cLabel);
