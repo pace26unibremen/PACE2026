@@ -80,7 +80,10 @@ class ClusterSolver : public AbstractSolver
 
     /// \brief Building a new instance (a cluster) from the given instance,
     /// which just contains the i-th tree of each forest.
-    /// \param i the index of the root / component, that 
+    /// The new instance shares the \ref Forest::Nodes vectors with the original forests
+    /// and has independent roots vectors and independent label / terminal maps.
+    /// \param i the index of the root / component, from which the new instance is constructed.
+    /// \returns new sub instance
     std::shared_ptr<graph::Instance> buildSingleCluster(unsigned int i);
 
     /// Gets the cluster points from the cluster point generator and fills \ref pointsAndForests_perCluster
