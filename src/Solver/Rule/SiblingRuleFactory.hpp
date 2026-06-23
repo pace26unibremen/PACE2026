@@ -31,6 +31,21 @@ class SiblingRuleFactory
     /// \returns shared pointer to an instance of the best applicable rule
     static std::shared_ptr<AbstractRule> basicRules(const std::shared_ptr<graph::Instance>& instance,
                                                     const std::shared_ptr<solver::Context>& context);
+
+    /// \brief Checks whether a 'sibling rule' can be applied and returns an instance of the best applicable rule,
+    /// with the rules prioritized in the following order:
+    /// 1. \ref EqualPairReductionRule
+    /// 2. \ref BRule
+    /// 3. \ref ReverseBRule
+    /// 4. \ref TwoBRule
+    /// 5. \ref ACBranchingRule
+    /// 6. \ref ABCBranchingRule.
+    /// If none of the rules is applicable the method returns a null pointer.
+    /// \param instance on which the rule should be applied
+    /// \param context contains additional information to the instance and the solver state
+    /// \returns shared pointer to an instance of the best applicable rule
+    static std::shared_ptr<AbstractRule> allRules(const std::shared_ptr<graph::Instance>& instance,
+                                                  const std::shared_ptr<solver::Context>& context);
 };
 
 }  //namespace solver
