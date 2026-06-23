@@ -89,6 +89,7 @@ namespace solver
 
         /// \brief Helper function that updates the subtree terminal bitmasks of the nodes.
         void updateSubtreeTerminals();
+        void removeNodeOutOfRoot(graph::Node* node, std::vector<graph::Node*>& roots);
 
         void storeNode(const graph::Node* node, const std::shared_ptr<graph::Forest>& forest);
 

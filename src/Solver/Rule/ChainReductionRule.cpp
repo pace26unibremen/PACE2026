@@ -277,6 +277,17 @@ void solver::ChainReductionRule::updateSubtreeTerminals()
     //-> for all xn to root, the subtreeTerminal bitmask has been updated.
 }
 
+void solver::ChainReductionRule::removeNodeOutOfRoot(graph::Node* node, std::vector<graph::Node*>& roots)
+{
+    // const auto RootIterator = std::ranges::find(chainWithTrees.second.front()->Roots(), topChainT1Parent->rightChild);
+    // auto RootsIndex = std::distance(chainWithTrees.second.front()->Roots().begin(), RootIterator);
+    // chainWithTrees.second.front()->Roots().erase(chainWithTrees.second.front()->Roots().begin() + RootsIndex);
+
+    const auto RootIterator = std::ranges::find(roots, node);
+    auto RootsIndex = std::distance(roots.begin(), RootIterator);
+    roots.erase(roots.begin() + RootsIndex);
+}
+
 solver::RuleReturnCode solver::ChainReductionRule::apply()
 {
 
@@ -294,73 +305,285 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
         graph::Node* bottomT1 = chainWithTrees.first[0].front();
         graph::Node* bottomT2 = chainWithTrees.first[0].back();
 
+        graph::Node* topChainT1 = chainWithTrees.first[chainWithTrees.first.size()-1].front();
+        graph::Node* topChainT2 = chainWithTrees.first[chainWithTrees.first.size()-1].back();
+
         //Fetch xn's parent out of tree.
-        graph::Node* topChainT1Parent = chainWithTrees.first[chainWithTrees.first.size()-1].front()->parent;
-        graph::Node* topChainT2Parent = chainWithTrees.first[chainWithTrees.first.size()-1].back()->parent;
+        graph::Node* topChainT1Parent = topChainT1->parent;
+        graph::Node* topChainT2Parent = topChainT2->parent;
 
-        topOfChainT1 = topChainT1Parent;
-        topOfChainT2 = topChainT2Parent;
+        topOfChainT1 = topChainT1;
+        topOfChainT2 = topChainT2;
 
-        //Address the now seperated chain in T1 and T2 through the removal of the parent nodes of the terminals as well
-        //as setting the terminals to be single tree vertices.
+        std::ranges::borrowed_iterator_t<std::vector<graph::Node*>&> aboveChainT1;
+        std::ranges::borrowed_iterator_t<std::vector<graph::Node*>&> aboveChainT2;
+        std::ptrdiff_t rootEntryIndexT1;
+        std::ptrdiff_t rootEntryIndexT2;
+
+        //If Root ended the chain in isApplicable
+        if (!topChainT1Parent->parent && !topChainT1Parent->sibling)
+        {
+            aboveChainT1 = std::ranges::find(chainWithTrees.second.front()->Roots(), topChainT1Parent);
+            rootEntryIndexT1 = std::distance(chainWithTrees.second.front()->Roots().begin(), aboveChainT1);
+        }
+        if (!topChainT2Parent->parent && !topChainT2Parent->sibling)
+        {
+            aboveChainT2 =  std::ranges::find(chainWithTrees.second.back()->Roots(), topChainT2Parent);
+            rootEntryIndexT2 = std::distance(chainWithTrees.second.back()->Roots().begin(), aboveChainT2);
+        }
+
+
+        //Remove edge from the bottom of the to be removed part
+        changes.emplace(bottomT1,chainWithTrees.second.front());
+        changes.top().doAction();
+
+        changes.emplace(bottomT2, chainWithTrees.second.back());
+        changes.top().doAction();
+
+        //Remove edge from top of chain to its parent
+        changes.emplace(topChainT1,chainWithTrees.second.front());
+        changes.top().doAction();
+
+        changes.emplace(topChainT2, chainWithTrees.second.back());
+        changes.top().doAction();
+
+
+        if (topChainT1Parent->leftChild == topChainT1)
+        {
+            //Connect bottomT1 with topChainT1Parent
+            //Bottom
+            bottomT1->parent = topChainT1Parent;
+            bottomT1->sibling = topChainT1Parent->rightChild;
+            //Top
+            topChainT1Parent->leftChild = bottomT1;
+
+            removeNodeOutOfRoot(bottomT1,chainWithTrees.second.front()->Roots());
+
+            //If the other child got turned into a single vertex tree
+            if (!topChainT1Parent->rightChild->parent && !topChainT1Parent->rightChild->sibling)
+            {
+                //Delete it out of there
+                topChainT1Parent->rightChild->parent = topChainT1Parent;
+                topChainT1Parent->rightChild->sibling = bottomT1;
+                removeNodeOutOfRoot(topChainT1Parent->rightChild, chainWithTrees.second.front()->Roots());
+
+            }
+            //Store pos of topChain, as it does match the pos for its parent if it's a root
+            const auto topChainPosIterator = std::ranges::find(chainWithTrees.second.front()->Roots(), topChainT1);
+            auto topChainIndex = std::distance(chainWithTrees.second.front()->Roots().begin(), topChainPosIterator);
+
+            //Remove topChainT1 from the roots
+            removeNodeOutOfRoot(topChainT1,chainWithTrees.second.front()->Roots());
+
+            //Update subtree for topChainT1Parent and above
+            auto newSubtreeTerminals = bottomT1->subtreeTerminals;
+            for (int i = 0; i < newSubtreeTerminals.size(); i++)
+            {
+                newSubtreeTerminals[i] |= topChainT1Parent->rightChild->subtreeTerminals[i];
+            }
+            topChainT1Parent->subtreeTerminals = newSubtreeTerminals;
+
+            //All nodes above topChainT1Parent
+            if (topChainT1Parent->parent && topChainT1Parent->sibling)
+            {
+                newSubtreeTerminals = topChainT1Parent->subtreeTerminals;
+                auto previous = topChainT1Parent;
+                auto current = topChainT1Parent->parent;
+                while (current->parent)
+                {
+                    if (current->leftChild == previous)
+                    {
+                        for (int i = 0; i < newSubtreeTerminals.size(); i++)
+                        {
+                            newSubtreeTerminals[i] |= current->rightChild->subtreeTerminals[i];
+                            current->subtreeTerminals[i] = newSubtreeTerminals[i];
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < newSubtreeTerminals.size(); i++)
+                        {
+                            newSubtreeTerminals[i] |= current->leftChild->subtreeTerminals[i];
+                            current->subtreeTerminals[i] = newSubtreeTerminals[i];
+                        }
+                    }
+                    previous = previous->parent;
+                    newSubtreeTerminals = previous->subtreeTerminals;
+                    current = current->parent;
+                }
+            }
+            else //topChainT1Parent was root! -> Enter into Root
+            {
+                chainWithTrees.second.front()->
+                Roots().insert(chainWithTrees.second.front()->Roots().begin() + topChainIndex, topChainT1Parent);
+            }
+
+        }
+        else // right side is topChain
+        {
+            bottomT1->parent = topChainT1Parent;
+            bottomT1->sibling = topChainT1Parent->leftChild;
+            topChainT1Parent->rightChild = bottomT1;
+
+            removeNodeOutOfRoot(bottomT1,chainWithTrees.second.front()->Roots());
+
+            //If the other child got turned into a single vertex tree
+            if (!topChainT1Parent->leftChild->parent && !topChainT1Parent->leftChild->sibling)
+            {
+                //Delete it out of the Root and connect it
+                topChainT1Parent->leftChild->parent = topChainT1Parent;
+                topChainT1Parent->leftChild->sibling = bottomT1;
+                removeNodeOutOfRoot(topChainT1Parent->leftChild, chainWithTrees.second.front()->Roots());
+
+            }
+            //Store pos of topChain, as it does match the pos for its parent if it's a root
+            const auto topChainPosIterator = std::ranges::find(chainWithTrees.second.front()->Roots(), topChainT1);
+            auto topChainIndex = std::distance(chainWithTrees.second.front()->Roots().begin(), topChainPosIterator);
+
+            //Remove topChainT1 from the roots
+            removeNodeOutOfRoot(topChainT1,chainWithTrees.second.front()->Roots());
+
+            //Update subtree for topChainT1Parent and above
+            auto newSubtreeTerminals = bottomT1->subtreeTerminals;
+            for (int i = 0; i < newSubtreeTerminals.size(); i++)
+            {
+                newSubtreeTerminals[i] |= topChainT1Parent->rightChild->subtreeTerminals[i];
+            }
+            topChainT1Parent->subtreeTerminals = newSubtreeTerminals;
+
+            //All nodes above topChainT1Parent
+            if (topChainT1Parent->parent && topChainT1Parent->sibling)
+            {
+                newSubtreeTerminals = topChainT1Parent->subtreeTerminals;
+                auto previous = topChainT1Parent;
+                auto current = topChainT1Parent->parent;
+                while (current->parent)
+                {
+                    if (current->leftChild == previous)
+                    {
+                        for (int i = 0; i < newSubtreeTerminals.size(); i++)
+                        {
+                            newSubtreeTerminals[i] |= current->rightChild->subtreeTerminals[i];
+                            current->subtreeTerminals[i] = newSubtreeTerminals[i];
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < newSubtreeTerminals.size(); i++)
+                        {
+                            newSubtreeTerminals[i] |= current->leftChild->subtreeTerminals[i];
+                            current->subtreeTerminals[i] = newSubtreeTerminals[i];
+                        }
+                    }
+                    previous = previous->parent;
+                    newSubtreeTerminals = previous->subtreeTerminals;
+                    current = current->parent;
+                }
+            }
+            else //topChainT1Parent was root! -> Enter into Root
+            {
+                chainWithTrees.second.front()->
+                Roots().insert(chainWithTrees.second.front()->Roots().begin() + topChainIndex, topChainT1Parent);
+            }
+        }
+
+        if (topChainT2Parent->leftChild == topChainT2)
+        {
+
+        }
+        else // right side is topChain
+        {
+
+        }
+
+        //
+        // for (int i = chainWithTrees.first.size()-1; i > -1 ; i--)
+        // {
+        //     changes.emplace(chainWithTrees.first[i].front(),chainWithTrees.second.front());
+        //     changes.top().doAction();
+        //
+        //     changes.emplace(chainWithTrees.first[i].back(),chainWithTrees.second.back());
+        //     changes.top().doAction();
+        //
+        // }
+        //
+        //
+        // if (chainWithTrees.first[1].front()->leftChild->leftChild == nullptr &&
+        //      chainWithTrees.first[1].front()->leftChild->rightChild == nullptr)
+        // {
+        //     for (int i = chainWithTrees.first.size()-1; i > 0 ; i--)
+        //     {
+        //         changes.emplace(chainWithTrees.first[i].front()->leftChild,chainWithTrees.second.front());
+        //         changes.top().doAction();
+        //
+        //         changes.emplace(chainWithTrees.first[i].back()->leftChild,chainWithTrees.second.back());
+        //         changes.top().doAction();
+        //
+        //     }
+        // }
+        // else
+        // {
+        //     for(int i = chainWithTrees.first.size()-2; i > 0 ; i--)
+        //         {
+        //             changes.emplace(chainWithTrees.first[i].front()->rightChild,chainWithTrees.second.front());
+        //             changes.top().doAction();
+        //
+        //             changes.emplace(chainWithTrees.first[i].back()->rightChild,chainWithTrees.second.back());
+        //             changes.top().doAction();
+        //
+        //         }
+        // }
+
 
         //Left side terminal - once one side is determined, it sticks since chain definition
-        if (chainWithTrees.first[1].front()->leftChild->leftChild == nullptr &&
-            chainWithTrees.first[1].front()->leftChild->rightChild == nullptr)
-        {
-            for (int i = 1; i < chainWithTrees.first.size(); i++)
-            {
-                //Remove terminal
-                changes.emplace(chainWithTrees.first[i].front()->leftChild, chainWithTrees.second.front());
-                changes.top().doAction();
-
-                //Remove parent of terminal
-                changes.emplace(chainWithTrees.first[i-1].front(),chainWithTrees.second.front());
-                changes.top().doAction();
-            }
-            for (int i = 1; i < chainWithTrees.first.size(); i++)
-            {
-                //Remove terminal
-                changes.emplace(chainWithTrees.first[i].back()->leftChild, chainWithTrees.second.back());
-                changes.top().doAction();
-
-                //Remove parent of terminal
-                changes.emplace(chainWithTrees.first[i-1].back(),chainWithTrees.second.back());
-                changes.top().doAction();
-            }
-        }
-        else //right side
-        {
-            for (int i = 1; i < chainWithTrees.first.size(); i++)
-            {
-                //Remove terminal
-                changes.emplace(chainWithTrees.first[i].front()->rightChild, chainWithTrees.second.front());
-                changes.top().doAction();
-
-                //Remove parent of terminal
-                changes.emplace(chainWithTrees.first[i-1].front(),chainWithTrees.second.front());
-                changes.top().doAction();
-            }
-            for (int i = 1; i < chainWithTrees.first.size(); i++)
-            {
-                //Remove terminal
-                changes.emplace(chainWithTrees.first[i].back()->rightChild, chainWithTrees.second.back());
-                changes.top().doAction();
-
-                //Remove parent of terminal
-                changes.emplace(chainWithTrees.first[i-1].back(),chainWithTrees.second.back());
-                changes.top().doAction();
-            }
-        }
-        //Last node in chain
-        // changes.emplace(chainWithTrees.first[chainWithTrees.first.size()-1].front(), chainWithTrees.second.front());
-        // changes.top().doAction();
+        // if (chainWithTrees.first[1].front()->leftChild->leftChild == nullptr &&
+        //     chainWithTrees.first[1].front()->leftChild->rightChild == nullptr)
+        // {
+        //     for (int i = 1; i < chainWithTrees.first.size(); i++)
+        //     {
+        //         //Remove terminal
+        //         changes.emplace(chainWithTrees.first[i].front()->leftChild, chainWithTrees.second.front());
+        //         changes.top().doAction();
         //
-        // changes.emplace(chainWithTrees.first[chainWithTrees.first.size()-1].back(), chainWithTrees.second.back());
-        // changes.top().doAction();
-        // Connect the two parts of the now seperated trees
-        // bottomT1->parent = topChainT1Parent;
-        // bottomT2->parent = topChainT2Parent;
+        //         //Remove parent of terminal
+        //         changes.emplace(chainWithTrees.first[i-1].front(),chainWithTrees.second.front());
+        //         changes.top().doAction();
+        //     }
+        //     for (int i = 1; i < chainWithTrees.first.size(); i++)
+        //     {
+        //         //Remove terminal
+        //         changes.emplace(chainWithTrees.first[i].back()->leftChild, chainWithTrees.second.back());
+        //         changes.top().doAction();
+        //
+        //         //Remove parent of terminal
+        //         changes.emplace(chainWithTrees.first[i-1].back(),chainWithTrees.second.back());
+        //         changes.top().doAction();
+        //     }
+        // }
+        // else //right side
+        // {
+        //     for (int i = 1; i < chainWithTrees.first.size(); i++)
+        //     {
+        //         //Remove terminal
+        //         changes.emplace(chainWithTrees.first[i].front()->rightChild, chainWithTrees.second.front());
+        //         changes.top().doAction();
+        //
+        //         //Remove parent of terminal
+        //         changes.emplace(chainWithTrees.first[i-1].front(),chainWithTrees.second.front());
+        //         changes.top().doAction();
+        //     }
+        //     for (int i = 1; i < chainWithTrees.first.size(); i++)
+        //     {
+        //         //Remove terminal
+        //         changes.emplace(chainWithTrees.first[i].back()->rightChild, chainWithTrees.second.back());
+        //         changes.top().doAction();
+        //
+        //         //Remove parent of terminal
+        //         changes.emplace(chainWithTrees.first[i-1].back(),chainWithTrees.second.back());
+        //         changes.top().doAction();
+        //     }
+        // }
+
         // addedEdgeT1 = AddEdgeAction(bottomT1,topChainT1Parent, chainWithTrees.second.front());
         // addedEdgeT2 = AddEdgeAction(bottomT2,topChainT2Parent, chainWithTrees.second.back());
         //
