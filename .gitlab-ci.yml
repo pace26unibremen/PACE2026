@@ -14,6 +14,14 @@ workflow:
       when: never
     - when: always
 
+# FORCE_RELEASE/MANUAL_TAG have no default elsewhere, so without this they're undefined on
+# every pipeline that doesn't set them. Comparing an undefined variable with != "" is not
+# reliable in GitLab's rules engine, so declare them here to make sure they're always actually
+# defined as empty strings unless a manual run explicitly overrides them.
+variables:
+  FORCE_RELEASE: ""
+  MANUAL_TAG: ""
+
 # Shared anchor for reuse
 .release-rules: &release-rules
   rules:
