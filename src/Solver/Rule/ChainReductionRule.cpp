@@ -4,10 +4,9 @@
 #include "../Action/DeleteEdgeAction.hpp"
 
 #include <algorithm>
+#include <random>
 #include <unordered_map>
 #include <utility>
-
-#include <assert.h>
 
 solver::ChainReductionRule::ChainReductionRule(
     const std::shared_ptr<graph::Instance>& instance,
@@ -628,100 +627,6 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
             }
         }
 
-        //
-        // for (int i = chainWithTrees.first.size()-1; i > -1 ; i--)
-        // {
-        //     changes.emplace(chainWithTrees.first[i].front(),chainWithTrees.second.front());
-        //     changes.top().doAction();
-        //
-        //     changes.emplace(chainWithTrees.first[i].back(),chainWithTrees.second.back());
-        //     changes.top().doAction();
-        //
-        // }
-        //
-        //
-        // if (chainWithTrees.first[1].front()->leftChild->leftChild == nullptr &&
-        //      chainWithTrees.first[1].front()->leftChild->rightChild == nullptr)
-        // {
-        //     for (int i = chainWithTrees.first.size()-1; i > 0 ; i--)
-        //     {
-        //         changes.emplace(chainWithTrees.first[i].front()->leftChild,chainWithTrees.second.front());
-        //         changes.top().doAction();
-        //
-        //         changes.emplace(chainWithTrees.first[i].back()->leftChild,chainWithTrees.second.back());
-        //         changes.top().doAction();
-        //
-        //     }
-        // }
-        // else
-        // {
-        //     for(int i = chainWithTrees.first.size()-2; i > 0 ; i--)
-        //         {
-        //             changes.emplace(chainWithTrees.first[i].front()->rightChild,chainWithTrees.second.front());
-        //             changes.top().doAction();
-        //
-        //             changes.emplace(chainWithTrees.first[i].back()->rightChild,chainWithTrees.second.back());
-        //             changes.top().doAction();
-        //
-        //         }
-        // }
-
-
-        //Left side terminal - once one side is determined, it sticks since chain definition
-        // if (chainWithTrees.first[1].front()->leftChild->leftChild == nullptr &&
-        //     chainWithTrees.first[1].front()->leftChild->rightChild == nullptr)
-        // {
-        //     for (int i = 1; i < chainWithTrees.first.size(); i++)
-        //     {
-        //         //Remove terminal
-        //         changes.emplace(chainWithTrees.first[i].front()->leftChild, chainWithTrees.second.front());
-        //         changes.top().doAction();
-        //
-        //         //Remove parent of terminal
-        //         changes.emplace(chainWithTrees.first[i-1].front(),chainWithTrees.second.front());
-        //         changes.top().doAction();
-        //     }
-        //     for (int i = 1; i < chainWithTrees.first.size(); i++)
-        //     {
-        //         //Remove terminal
-        //         changes.emplace(chainWithTrees.first[i].back()->leftChild, chainWithTrees.second.back());
-        //         changes.top().doAction();
-        //
-        //         //Remove parent of terminal
-        //         changes.emplace(chainWithTrees.first[i-1].back(),chainWithTrees.second.back());
-        //         changes.top().doAction();
-        //     }
-        // }
-        // else //right side
-        // {
-        //     for (int i = 1; i < chainWithTrees.first.size(); i++)
-        //     {
-        //         //Remove terminal
-        //         changes.emplace(chainWithTrees.first[i].front()->rightChild, chainWithTrees.second.front());
-        //         changes.top().doAction();
-        //
-        //         //Remove parent of terminal
-        //         changes.emplace(chainWithTrees.first[i-1].front(),chainWithTrees.second.front());
-        //         changes.top().doAction();
-        //     }
-        //     for (int i = 1; i < chainWithTrees.first.size(); i++)
-        //     {
-        //         //Remove terminal
-        //         changes.emplace(chainWithTrees.first[i].back()->rightChild, chainWithTrees.second.back());
-        //         changes.top().doAction();
-        //
-        //         //Remove parent of terminal
-        //         changes.emplace(chainWithTrees.first[i-1].back(),chainWithTrees.second.back());
-        //         changes.top().doAction();
-        //     }
-        // }
-
-        // addedEdgeT1 = AddEdgeAction(bottomT1,topChainT1Parent, chainWithTrees.second.front());
-        // addedEdgeT2 = AddEdgeAction(bottomT2,topChainT2Parent, chainWithTrees.second.back());
-        //
-        // addedEdgeT1.doAction();
-        // addedEdgeT2.doAction();
-
     }
     return RuleReturnCode::Continue;
 }
@@ -738,10 +643,57 @@ void solver::ChainReductionRule::unapply()
         throw std::invalid_argument("ChainReductionRule : unapply : rule is not applied");
     }
     isApplied = false;
-    //
-    // addedEdgeT2.undoAction();
-    // addedEdgeT1.undoAction();
 
+    // Get the three roots back into their spots, undo the edge between bottom and topChainParent and restore any other
+    // changes
+
+    //Undo edge
+    graph::Node* bottomT1 = chainWithTrees.first[0].front();
+    graph::Node* bottomT2 = chainWithTrees.first[0].back();
+
+    graph::Node* topChainParentT1 = bottomT1->parent;
+    graph::Node* topChainParentT2 = bottomT2->parent;
+
+    graph::Node* topChainT1 = chainWithTrees.first[chainWithTrees.first.size()-1].front();
+    graph::Node* topChainT2 = chainWithTrees.first[chainWithTrees.first.size()-1].back();
+
+    if (topChainParentT1->leftChild == bottomT1)
+    {
+        topChainParentT1->leftChild = topChainT1;
+        //Erase subtrees of bottomT1, add those of topChainT1
+        for (int i = 0; i < topChainT1->subtreeTerminals.size(); i++)
+        {
+            topChainParentT1->subtreeTerminals[i] ^= bottomT1->subtreeTerminals[i];
+            topChainParentT1->subtreeTerminals[i] |= topChainT1->subtreeTerminals[i];
+        }
+        bottomT1->parent = nullptr;
+        bottomT1->sibling = nullptr;
+
+
+    }
+    else
+    {
+
+    }
+
+    if (topChainParentT2->leftChild == bottomT2)
+    {
+        topChainParentT2->leftChild = topChainT2;
+        for (int i = 0; i < topChainT2->subtreeTerminals.size(); i++)
+        {
+            topChainParentT2->subtreeTerminals[i] ^= bottomT2->subtreeTerminals[i];
+            topChainParentT2->subtreeTerminals[i] |= topChainT2->subtreeTerminals[i];
+        }
+        bottomT2->parent = nullptr;
+        bottomT2->sibling = nullptr;
+    }
+    else
+    {
+
+    }
+
+
+    //The edge removal undos at last
     while (not changes.empty())
     {
         changes.top().undoAction();
@@ -818,7 +770,7 @@ solver::ChainReductionRule::isApplicable(
 
                 for (auto& terminalT2 : termIndexTreeTwo)
                 {   //T2
-                    //std::cout << "terminalT2: " << terminalT2.second << std::endl;
+
                     //Determine Structure
                     graph::Node* parentT2 = terminalT2.first->parent;
 
@@ -905,15 +857,6 @@ solver::ChainReductionRule::isApplicable(
                                 //and the current parent node isn't a root node
                                 && not isNodeInNodeVector(case1T1Parent, T1->Roots())
                                 && not isNodeInNodeVector(case1T2Parent, T2->Roots())
-
-                                // && std::find(T1->Roots().begin(), T1->Roots().end(), case1T1Parent)
-                                // == T1->Roots().end()
-                                // && std::find(T2->Roots().begin(), T2->Roots().end(), case1T2Parent)
-                                // == T2->Roots().end()
-                                //
-                                // //and the current looked at parent isn't a or the root node of the forest
-                                // && case1T1Parent != *T1->Roots().end()
-                                // && case1T2Parent != *T2->Roots().end()
                                 )
                                 {
                                     //Push the identified chain element into the chain list
@@ -1005,7 +948,6 @@ solver::ChainReductionRule::isApplicable(
                         && structureToRootT1 == structureToRootT2
                         )
                         {
-                            //std::cout << "case 2" << std::endl;
                             //Chain for both trees, parent nodes of x1, x2, x3
                             std::vector<std::vector<graph::Node*>> chainT1T2 = {
                                 {parentOfParentT1->parent,parentOfParentT2->parent}};
@@ -1042,7 +984,6 @@ solver::ChainReductionRule::isApplicable(
                             //Determine x4,... of chain
                             while (case2check)
                             {
-                                //std::cout << chainT1T2.size() << std::endl;
                                 //Siblings and Parent exist
                                 if (case2T1Sibling != nullptr && case2T2Sibling != nullptr
                                 && case2T1Parent != nullptr && case2T2Parent != nullptr
