@@ -447,7 +447,7 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
             auto newSubtreeTerminals = bottomT1->subtreeTerminals;
             for (int i = 0; i < newSubtreeTerminals.size(); i++)
             {
-                newSubtreeTerminals[i] |= topChainT1Parent->rightChild->subtreeTerminals[i];
+                newSubtreeTerminals[i] |= topChainT1Parent->leftChild->subtreeTerminals[i];
             }
             topChainT1Parent->subtreeTerminals = newSubtreeTerminals;
 
@@ -489,11 +489,143 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
 
         if (topChainT2Parent->leftChild == topChainT2)
         {
+            //Connect bottomT1 with topChainT1Parent
+            //Bottom
+            bottomT2->parent = topChainT2Parent;
+            bottomT2->sibling = topChainT2Parent->rightChild;
+            //Top
+            topChainT2Parent->leftChild = bottomT2;
 
+            removeNodeOutOfRoot(bottomT2,chainWithTrees.second.back()->Roots());
+
+            //If the other child got turned into a single vertex tree
+            if (!topChainT2Parent->rightChild->parent && !topChainT2Parent->rightChild->sibling)
+            {
+                //Delete it out of there
+                topChainT2Parent->rightChild->parent = topChainT2Parent;
+                topChainT2Parent->rightChild->sibling = bottomT2;
+                removeNodeOutOfRoot(topChainT2Parent->rightChild, chainWithTrees.second.back()->Roots());
+
+            }
+            //Store pos of topChain, as it does match the pos for its parent if it's a root
+            const auto topChainPosIterator = std::ranges::find(chainWithTrees.second.back()->Roots(), topChainT2);
+            auto topChainIndex = std::distance(chainWithTrees.second.back()->Roots().begin(), topChainPosIterator);
+
+            //Remove topChainT1 from the roots
+            removeNodeOutOfRoot(topChainT2,chainWithTrees.second.back()->Roots());
+
+            //Update subtree for topChainT1Parent and above
+            auto newSubtreeTerminals = bottomT2->subtreeTerminals;
+            for (int i = 0; i < newSubtreeTerminals.size(); i++)
+            {
+                newSubtreeTerminals[i] |= topChainT2Parent->rightChild->subtreeTerminals[i];
+            }
+            topChainT2Parent->subtreeTerminals = newSubtreeTerminals;
+
+            //All nodes above topChainT1Parent
+            if (topChainT2Parent->parent && topChainT2Parent->sibling)
+            {
+                newSubtreeTerminals = topChainT2Parent->subtreeTerminals;
+                auto previous = topChainT2Parent;
+                auto current = topChainT2Parent->parent;
+                while (current->parent)
+                {
+                    if (current->leftChild == previous)
+                    {
+                        for (int i = 0; i < newSubtreeTerminals.size(); i++)
+                        {
+                            newSubtreeTerminals[i] |= current->rightChild->subtreeTerminals[i];
+                            current->subtreeTerminals[i] = newSubtreeTerminals[i];
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < newSubtreeTerminals.size(); i++)
+                        {
+                            newSubtreeTerminals[i] |= current->leftChild->subtreeTerminals[i];
+                            current->subtreeTerminals[i] = newSubtreeTerminals[i];
+                        }
+                    }
+                    previous = previous->parent;
+                    newSubtreeTerminals = previous->subtreeTerminals;
+                    current = current->parent;
+                }
+            }
+            else //topChainT2Parent was root! -> Enter into Root
+            {
+                chainWithTrees.second.back()->
+                Roots().insert(chainWithTrees.second.back()->Roots().begin() + topChainIndex, topChainT2Parent);
+            }
         }
         else // right side is topChain
         {
+            //Connect bottomT1 with topChainT1Parent
+            //Bottom
+            bottomT2->parent = topChainT2Parent;
+            bottomT2->sibling = topChainT2Parent->leftChild;
+            //Top
+            topChainT2Parent->rightChild = bottomT2;
 
+            removeNodeOutOfRoot(bottomT2,chainWithTrees.second.back()->Roots());
+
+            //If the other child got turned into a single vertex tree
+            if (!topChainT2Parent->leftChild->parent && !topChainT2Parent->leftChild->sibling)
+                {
+                    //Delete it out of there
+                    topChainT2Parent->leftChild->parent = topChainT2Parent;
+                    topChainT2Parent->leftChild->sibling = bottomT2;
+                    removeNodeOutOfRoot(topChainT2Parent->leftChild, chainWithTrees.second.back()->Roots());
+
+                }
+            //Store pos of topChain, as it does match the pos for its parent if it's a root
+            const auto topChainPosIterator = std::ranges::find(chainWithTrees.second.back()->Roots(), topChainT2);
+            auto topChainIndex = std::distance(chainWithTrees.second.back()->Roots().begin(), topChainPosIterator);
+
+            //Remove topChainT1 from the roots
+            removeNodeOutOfRoot(topChainT2,chainWithTrees.second.back()->Roots());
+
+            //Update subtree for topChainT1Parent and above
+            auto newSubtreeTerminals = bottomT2->subtreeTerminals;
+            for (int i = 0; i < newSubtreeTerminals.size(); i++)
+            {
+                    newSubtreeTerminals[i] |= topChainT2Parent->leftChild->subtreeTerminals[i];
+            }
+            topChainT2Parent->subtreeTerminals = newSubtreeTerminals;
+
+            //All nodes above topChainT1Parent
+            if (topChainT2Parent->parent && topChainT2Parent->sibling)
+            {
+                newSubtreeTerminals = topChainT2Parent->subtreeTerminals;
+                auto previous = topChainT2Parent;
+                auto current = topChainT2Parent->parent;
+                while (current->parent)
+                {
+                    if (current->leftChild == previous)
+                    {
+                        for (int i = 0; i < newSubtreeTerminals.size(); i++)
+                        {
+                            newSubtreeTerminals[i] |= current->rightChild->subtreeTerminals[i];
+                            current->subtreeTerminals[i] = newSubtreeTerminals[i];
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < newSubtreeTerminals.size(); i++)
+                        {
+                            newSubtreeTerminals[i] |= current->leftChild->subtreeTerminals[i];
+                            current->subtreeTerminals[i] = newSubtreeTerminals[i];
+                        }
+                    }
+                    previous = previous->parent;
+                    newSubtreeTerminals = previous->subtreeTerminals;
+                    current = current->parent;
+                }
+            }
+            else //topChainT2Parent was root! -> Enter into Root
+            {
+                chainWithTrees.second.back()->
+                Roots().insert(chainWithTrees.second.back()->Roots().begin() + topChainIndex, topChainT2Parent);
+            }
         }
 
         //
