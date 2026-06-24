@@ -24,7 +24,7 @@ class LeastCommonAncestor
 
       std::vector<int> preorderToInternalPreorder = std::vector<int>();
       std::vector<graph::Node*> preorderToNode = std::vector<graph::Node*>();
-      std::vector<std::vector<int> > RangeMinimumQuery = std::vector<std::vector<int>>();
+      std::vector<std::vector<int> > rangeMinimumQuery = std::vector<std::vector<int>>();
 
       int generatePreorderNumbers(graph::Node* node, int preorderNumber);
 

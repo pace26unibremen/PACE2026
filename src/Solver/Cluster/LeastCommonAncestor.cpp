@@ -74,7 +74,7 @@ void LeastCommonAncestor::eulerTour(graph::Node* node, const int depth)
 
 void LeastCommonAncestor::precomputeRangeMinimumQuery()
 {
-    RangeMinimumQuery.push_back(preorderNumbers);
+    rRangeMinimumQuery.push_back(preorderNumbers);
 
     for (unsigned long length = 1; length < preorderNumbers.size(); length *= 2)
     {
@@ -84,13 +84,13 @@ void LeastCommonAncestor::precomputeRangeMinimumQuery()
         {
             buffer.push_back(computeRangeMinimumQuery(start, start + length));
         }
-        RangeMinimumQuery.push_back(buffer);
+        rangeMinimumQuery.push_back(buffer);
     }
 }
 
 int LeastCommonAncestor::computeRangeMinimumQuery(const unsigned long i, const unsigned long j) const
 {
-    // This scurrilous construction is a remnant of the reimplementation of rSPR. It will be changed in the future.
+    // This scurrilous construction is a remnant of the reimplementation of rSPR.
 
     if (i == j)
         return preorderNumbers[i];
@@ -106,17 +106,17 @@ int LeastCommonAncestor::computeRangeMinimumQuery(const unsigned long i, const u
         length = 31 - __builtin_clz(length);
     }
 
-    const int rmq1 = RangeMinimumQuery[length+1][i];
+    const int rmq1 = rangeMinimumQuery[length+1][i];
 
     int rmq2;
 
     if (length >= 0)
     {
-        rmq2 = RangeMinimumQuery[length+1][j - (1 << (length))];
+        rmq2 = rangeMinimumQuery[length+1][j - (1 << (length))];
     }
     else
     {
-        rmq2 = RangeMinimumQuery[length+1][j];
+        rmq2 = rangeMinimumQuery[length+1][j];
     }
 
     if (rmq1 < rmq2)
