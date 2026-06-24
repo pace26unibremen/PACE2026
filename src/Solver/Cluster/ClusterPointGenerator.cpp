@@ -68,18 +68,19 @@ bool ClusterPointGenerator::trueEquivalenceClass(graph::Node* node) const
 
 bool ClusterPointGenerator::leafEquivalent(graph::Node* node) const
 {
-    bool isLeafEquivalent = true;
+    const auto& classOfTwins = twinRelation.nodeToTwins.at(node);
 
-    auto classOfTwins = twinRelation.nodeToTwins.at(node);
     for (const auto& twin : classOfTwins)
     {
-        isLeafEquivalent &= node->hasSameTerminals(twin);
+        if (!node->hasSameTerminals(twin))
+            return false;
 
         for (const auto& twinOfTwin : twinRelation.nodeToTwins.at(twin))
-            isLeafEquivalent &= node->hasSameTerminals(twinOfTwin);
+            if (!node->hasSameTerminals(twinOfTwin))
+                return false;
     }
 
-    return isLeafEquivalent;
+    return true;
 }
 
 
