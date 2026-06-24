@@ -74,7 +74,7 @@ void LeastCommonAncestor::eulerTour(graph::Node* node, const int depth)
 
 void LeastCommonAncestor::precomputeRangeMinimumQuery()
 {
-    rRangeMinimumQuery.push_back(preorderNumbers);
+    rangeMinimumQuery.push_back(preorderNumbers);
 
     for (unsigned long length = 1; length < preorderNumbers.size(); length *= 2)
     {
