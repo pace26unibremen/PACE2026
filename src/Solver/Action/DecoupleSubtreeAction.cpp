@@ -48,8 +48,8 @@ void solver::DecoupleSubtreeAction::doAction()
     decoupledSubtreeRoot = *decouplingPoint;
     decoupledSubtreeRoot.parent = &decoupledSubtreeVirtualRoot;
     decoupledSubtreeRoot.sibling = &decoupledSubtreeVirtualSibling;
-    decoupledSubtreeRoot.leftChild->parent = &decoupledSubtreeRoot;
-    decoupledSubtreeRoot.rightChild->parent = &decoupledSubtreeRoot;
+    if (decoupledSubtreeRoot.leftChild) decoupledSubtreeRoot.leftChild->parent = &decoupledSubtreeRoot;
+    if (decoupledSubtreeRoot.rightChild) decoupledSubtreeRoot.rightChild->parent = &decoupledSubtreeRoot;
 
     decoupledSubtreeVirtualSibling.parent = &decoupledSubtreeVirtualRoot;
     decoupledSubtreeVirtualSibling.sibling = &decoupledSubtreeRoot;
@@ -153,13 +153,11 @@ void solver::DecoupleSubtreeAction::undoWithSubtreeRoot()
     }
 
     // manage root vector: remove decoupledSubtreeVirtualRoot and  if necessary rearrange root of parent tree
-    auto parentTreeRootIt = std::find_if(forest->Roots().begin(), forest->Roots().end(),
+    auto parentTreeRootIt = std::ranges::find_if(forest->Roots(),
                                       [&](const graph::Node* r) { return r->hasTerminal(newLabelParentTree); });
-    // TODO maybe search for decoupledSubtreeVirtualRoot
-    auto subtreeRootIt = std::find_if(forest->Roots().begin(), forest->Roots().end(),
-                                      [&](const graph::Node* r) { return r->hasTerminal(newLabelSubtree); });
+    auto subtreeRootIt = std::ranges::find(forest->Roots(), &decoupledSubtreeVirtualRoot);
 
-    if (*subtreeRootIt != &decoupledSubtreeVirtualRoot)
+    if (subtreeRootIt == forest->Roots().end())
     {
         throw std::runtime_error("decoupledSubtreeVirtualRoot is not correct root of subtreePartRoot / decoupledSubtreeVirtualSibling");
     }
@@ -269,7 +267,8 @@ void solver::DecoupleSubtreeAction::undoWithoutSubtreeRoot()
     forest->TerminalToLabel().erase(decouplingPoint);
 
 
-    // swap decouplingPoint and decouplingPoint
+    // swap decouplingPoint and decoupledSubtreeRoot
+    // so that decoupledSubtreeRoot gets the valid memory in the nodes vector
     auto decoupledSubtreeRootIt = std::find(forest->Roots().begin(), forest->Roots().end(), &decoupledSubtreeRoot);
     std::swap(*decouplingPoint, decoupledSubtreeRoot);
     if (decoupledSubtreeRootIt != forest->Roots().end())
