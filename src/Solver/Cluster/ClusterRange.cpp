@@ -8,15 +8,15 @@ solver::ClusterRange::ClusterRange(solver::ClusterSolver* solver) :
 
 solver::ClusterRange::ClusterRangeIterator solver::ClusterRange::begin()
 {
-    return ClusterRangeIterator(0, solver);
+    return {0, solver};
 }
 
 solver::ClusterRange::ClusterRangeIterator solver::ClusterRange::end()
 {
-    return ClusterRangeIterator(solver->cluster.size(), solver);
+    return {(unsigned int) solver->cluster.size(), solver};
 }
 
-solver::ClusterRange::ClusterRangeIterator::ClusterRangeIterator(unsigned int currentIndex, ClusterSolver* solver) :
+solver::ClusterRange::ClusterRangeIterator::ClusterRangeIterator(const unsigned int currentIndex, ClusterSolver* solver) :
         currentIndex(currentIndex),
         solver(solver)
 {}
@@ -27,8 +27,7 @@ solver::ClusterRange::ClusterRangeIterator::value_type solver::ClusterRange::Clu
     auto cluster = solver->cluster.at(currentIndex);
 
     // add the label of the cluster root the context
-    unsigned int clusterRootLabel = solver->clusterToRootLabel.at(cluster);
-    if (clusterRootLabel != 0)
+    if (unsigned int clusterRootLabel = solver->clusterToRootLabel.at(cluster); clusterRootLabel != 0)
     {
         context->clusterRootLabel = clusterRootLabel;
     }
@@ -52,7 +51,7 @@ solver::ClusterRange::ClusterRangeIterator& solver::ClusterRange::ClusterRangeIt
 
 solver::ClusterRange::ClusterRangeIterator solver::ClusterRange::ClusterRangeIterator::operator++(int)
 {
-    ClusterRangeIterator tmp = *this;
+    const ClusterRangeIterator tmp = *this;
     ++(*this);
     return tmp;
 }
