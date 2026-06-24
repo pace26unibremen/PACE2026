@@ -230,8 +230,8 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
             const auto& c2Node = fi->LabelToTerminal().at(c2Label);
             // (not c2 'is uncle of' a) and
             // (not c2 'is uncle of' c1)
-            if ((not aNode->parent or aNode->parent->sibling == c2Node) and
-                (not c1Node->parent or c1Node->parent->sibling == c2Node))
+            if ((not aNode->parent or aNode->parent->sibling != c2Node) and
+                (not c1Node->parent or c1Node->parent->sibling != c2Node))
             {
                 twoBRUle = false;
             }
