@@ -18,7 +18,7 @@ solver::RuleReturnCode solver::ReverseBRule::apply()
     for (const auto& f : *instance)
     {
         const auto toCutNode = f->LabelToTerminal().at(toCutLabel);
-        if (toCutNode->parent)
+        if (not toCutNode->parent)
             continue;
         changes.emplace(toCutNode, f);
         changes.top().doAction();
