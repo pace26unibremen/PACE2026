@@ -1,7 +1,3 @@
-//
-// Created by user on 3/8/26.
-//
-
 #include "ClusterPointGenerator.hpp"
 
 namespace cluster
