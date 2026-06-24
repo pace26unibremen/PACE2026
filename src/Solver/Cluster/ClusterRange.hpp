@@ -25,7 +25,7 @@ class ClusterRange
 
   public:
     /// \brief constructor
-    /// @param solver underlying cluster solver
+    /// \param solver underlying cluster solver
     explicit ClusterRange(ClusterSolver* solver);
 
     /// \brief The iterator class for the cluster range

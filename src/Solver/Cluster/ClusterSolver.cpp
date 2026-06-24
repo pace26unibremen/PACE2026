@@ -138,6 +138,8 @@ void solver::ClusterSolver::splitInstance()
 
 void solver::ClusterSolver::sortClusters()
 {
+    // Post-order DFS: children are pushed before their parent,
+    // ensuring bottom-up processing order in \ref cluster.
     std::function<void(std::shared_ptr<graph::Instance>, std::vector<std::shared_ptr<graph::Instance>>&)> dfs =
         [this, &dfs](std::shared_ptr<graph::Instance> c, std::vector<std::shared_ptr<graph::Instance>>& r) {
             for (auto childClusterLabel : clusterToClusterLabels.at(c))
@@ -225,6 +227,7 @@ bool solver::ClusterSolver::solve()
         splitInstance();
         sortClusters();
     }
+    // If there are no clusters, create a dummy cluster, so the instance can be solved on that.
     else
     {
         cluster = {instance};

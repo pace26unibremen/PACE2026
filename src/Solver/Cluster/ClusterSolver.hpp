@@ -50,6 +50,20 @@ class ClusterSolver : public AbstractSolver
 
     /// \brief A list with an entry for each cluster.
     /// Each entry is itself a list that holds for each forest of the instance, the forest and the cluster point.
+    ///
+    /// The structure is organized as follows:
+    /// \code
+    /// pointsAndForests_perCluster
+    /// ├── Cluster 0
+    /// │   ├── (shared_ptr<Forest>, Node*)  — forest and its cluster point
+    /// │   ├── (shared_ptr<Forest>, Node*)
+    /// │   └── ...
+    /// ├── Cluster 1
+    /// │   ├── (shared_ptr<Forest>, Node*)
+    /// │   └── ...
+    /// └── ...
+    /// \endcode
+
     std::list<std::list<std::pair<std::shared_ptr<graph::Forest>, graph::Node*>>> pointsAndForests_perCluster =
         std::list<std::list<std::pair<std::shared_ptr<graph::Forest>, graph::Node*>>>();
 
@@ -102,7 +116,10 @@ class ClusterSolver : public AbstractSolver
     /// member fields.
     void splitInstance();
 
-    /// \brief Sorting the \ref cluster vector.
+    /// \brief Sorts \ref cluster in post-order (children before parents) via DFS.
+    ///
+    /// Traverses the cluster tree starting at root label 0. The resulting order
+    /// ensures every cluster is processed before its parent.
     void sortClusters();
 
     /// \brief Merge the cluster and valid instance.

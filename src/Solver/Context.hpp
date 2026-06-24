@@ -17,7 +17,7 @@ struct BranchingSolverConfiguration;
 struct Context
 {
     /// \brief The weight of the best solution, that the solver found so far.
-    /// (i.g. this mostly than the number of components int the agreement forest.)
+    /// (i.e., this is mostly equal to the number of components in the agreement forest.)
     /// \see weightFunction
     /// Default value is +infinity
     float bestSolutionWeight = INFINITY;

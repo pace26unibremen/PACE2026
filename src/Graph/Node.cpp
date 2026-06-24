@@ -74,6 +74,7 @@ unsigned int graph::Node::smallestTerminal() const
 
 bool graph::Node::isTrueTerminal() const
 {
+    // If the Node is a true terminal, it'll have exactly one label.
     bool foundLabel = false;
     for (unsigned long value : subtreeTerminals)
     {
@@ -83,10 +84,15 @@ bool graph::Node::isTrueTerminal() const
         }
         if (not foundLabel)
         {
+            // isolate lowest set bit. 
+            // spoken in bits the negative flips all bits and add +1.
+            // Using the bitwise and only the lowest set bit will be left. 
             uint64_t t = value & -value;
+            // Now use xor, to clear the lowest bit
             value ^= t;
             foundLabel = true;
         }
+        // If the value does not equal to 0, then there is more then a single label
         if (value != 0)
         {
             return false;

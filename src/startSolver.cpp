@@ -66,7 +66,7 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
 
     bool solved = false;
 
-    // all solvers that worked on the solutin
+    // all solvers that worked on the solution
     std::vector<std::shared_ptr<solver::AbstractSolver>> solverList;
     // stores the cluster solver (and the access to the clusters) that may be part of the pipeline
     solver::ClusterSolver* clusterSolver = nullptr;
