@@ -1,7 +1,3 @@
-//
-// Created by user on 3/8/26.
-//
-
 #ifndef PACE2026_CLUSTERPOINTGENERATOR_HPP
 #define PACE2026_CLUSTERPOINTGENERATOR_HPP
 
