@@ -5,6 +5,8 @@
 namespace cluster
 {
 
+/// \brief This class recursively sieves through each point and checks whether one point is a cluster point
+/// through checking label equivalence and twin equivalence. Refer to the dissertation of C. Whidden.
 class ClusterPointGenerator
 {
   private:
@@ -13,7 +15,6 @@ class ClusterPointGenerator
 
     void generateClusterPoints(graph::Node* node);
 
-    static int checkHeightOfNode(graph::Node* node);
 
     bool trueEquivalenceClass(graph::Node* node) const;
 
@@ -21,9 +22,9 @@ class ClusterPointGenerator
 
   public:
     /// \brief This is the constructor of the ClusterPointGenerator.
-    /// \param instance The instance for which we want to generate cluster points for.
+    /// \param instance The instance for which we want to generate cluster points.
     /// \param twinRelation The table that links each note to their corresponding twins.
-    /// \note A node is a cluster point iff they're: not the root, not a leaf, have both children
+    /// \note A node is a cluster point if, and only if, they're: not the root, not a leaf, have both children
     /// & are in a true equivalence class.
     ClusterPointGenerator(const std::shared_ptr<graph::Instance>& instance, const cluster::TwinRelation& twinRelation);
 

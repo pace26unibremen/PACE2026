@@ -35,17 +35,7 @@ ClusterPointGenerator::ClusterPointGenerator(const std::shared_ptr<graph::Instan
     generateClusterPoints(instance->front()->Roots().front());
 }
 
-// This must be called after checking if the parent of the node really isn't null. (See constructor)
-int ClusterPointGenerator::checkHeightOfNode(graph::Node* node)
-{
-    int distanceToRoot = 0;
-    graph::Node* bufferNode = node;
 
-    while ((bufferNode = bufferNode->parent) != nullptr)
-        distanceToRoot += 1;
-
-    return distanceToRoot;
-}
 
 
 bool ClusterPointGenerator::trueEquivalenceClass(graph::Node* node) const
