@@ -29,9 +29,6 @@ void ClusterPointGenerator::generateClusterPoints(graph::Node* node) {
 ClusterPointGenerator::ClusterPointGenerator(const std::shared_ptr<graph::Instance>& instance, const cluster::TwinRelation& twinRelation)
     : twinRelation(twinRelation)
 {
-    for (const std::shared_ptr<graph::Forest>& forest : *instance)
-        rootToForest[forest->Roots().front()] = forest;
-
     generateClusterPoints(instance->front()->Roots().front());
 }
 

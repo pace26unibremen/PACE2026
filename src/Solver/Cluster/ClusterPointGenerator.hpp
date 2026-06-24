@@ -10,8 +10,7 @@ namespace cluster
 class ClusterPointGenerator
 {
   private:
-    std::unordered_map<graph::Node*, std::shared_ptr<graph::Forest>> rootToForest =
-        std::unordered_map<graph::Node*, std::shared_ptr<graph::Forest>>();
+
 
     void generateClusterPoints(graph::Node* node);
 
