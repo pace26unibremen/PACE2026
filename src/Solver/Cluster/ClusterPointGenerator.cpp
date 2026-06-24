@@ -51,23 +51,18 @@ int ClusterPointGenerator::checkHeightOfNode(graph::Node* node)
 bool ClusterPointGenerator::trueEquivalenceClass(graph::Node* node) const
 {
     // Generate the reference set: The cluster point node and its twins.
-    std::set<graph::Node*> referenceSet = std::set<graph::Node*>();
+    const auto& setOfTwins = twinRelation.nodeToTwins.at(node); 
+
+    std::set<graph::Node*> referenceSet(setOfTwins);
     referenceSet.insert(node);
-    auto setOfTwins = twinRelation.nodeToTwins.at(node);
-    for (const auto& twin : setOfTwins) referenceSet.insert(twin);
 
-    // Generate comparison set: The union of the twins of the twins, for each twin of the cluster point.
-    std::set<graph::Node*> comparisonSet = std::set<graph::Node*>();
-    comparisonSet.insert(node);
-
+    // The equivalence holds if every twin-of-twin is already in referenceSet.
     for (const auto& twin : setOfTwins)
-    {
-        comparisonSet.insert(twin);
         for (const auto& twinOfTwin : twinRelation.nodeToTwins.at(twin))
-            comparisonSet.insert(twinOfTwin);
-    }
+            if (!referenceSet.contains(twinOfTwin))
+                return false; // early exit
 
-    return referenceSet == comparisonSet;
+    return true;
 }
 
 
