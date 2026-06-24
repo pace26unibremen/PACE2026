@@ -1,7 +1,3 @@
-//
-// Created by user on 3/7/26.
-//
-
 #include "TwinRelation.hpp"
 #include "LeastCommonAncestor.hpp"
 #include <ranges>
