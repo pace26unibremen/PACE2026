@@ -46,8 +46,6 @@ void solver::TwoBRule::unapply()
     {
         changes.top().undoAction();
         changes.pop();
-        changes.top().undoAction();
-        changes.pop();
     }
 }
 
