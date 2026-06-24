@@ -3,7 +3,7 @@
 #include "ClusterSolver.hpp"
 
 solver::ClusterRange::ClusterRange(solver::ClusterSolver* solver) :
-    solver(solver)
+        solver(solver)
 {}
 
 solver::ClusterRange::ClusterRangeIterator solver::ClusterRange::begin()
@@ -16,8 +16,9 @@ solver::ClusterRange::ClusterRangeIterator solver::ClusterRange::end()
     return ClusterRangeIterator(solver->cluster.size(), solver);
 }
 
-solver::ClusterRange::ClusterRangeIterator::ClusterRangeIterator(unsigned int currentIndex, ClusterSolver* solver)
-    : currentIndex(currentIndex), solver(solver)
+solver::ClusterRange::ClusterRangeIterator::ClusterRangeIterator(unsigned int currentIndex, ClusterSolver* solver) :
+        currentIndex(currentIndex),
+        solver(solver)
 {}
 
 solver::ClusterRange::ClusterRangeIterator::value_type solver::ClusterRange::ClusterRangeIterator::operator*() const

@@ -1,5 +1,5 @@
-#ifndef PACE2026_CLUSTERPOINTGENERATOR_HPP
-#define PACE2026_CLUSTERPOINTGENERATOR_HPP
+#ifndef PACE2026_CLUSTER_POINT_GENERATOR_HPP
+#define PACE2026_CLUSTER_POINT_GENERATOR_HPP
 
 #include "TwinRelation.hpp"
 namespace cluster
@@ -10,10 +10,7 @@ namespace cluster
 class ClusterPointGenerator
 {
   private:
-
-
     void generateClusterPoints(graph::Node* node);
-
 
     bool trueEquivalenceClass(graph::Node* node) const;
 
@@ -42,4 +39,5 @@ class ClusterPointGenerator
 };
 
 }  //namespace cluster
-#endif  //PACE2026_CLUSTERPOINTGENERATOR_HPP
+
+#endif  //PACE2026_CLUSTER_POINT_GENERATOR_HPP

@@ -13,14 +13,11 @@ LeastCommonAncestor::LeastCommonAncestor(const std::shared_ptr<graph::Forest>& f
     precomputeRangeMinimumQuery();
 }
 
-
-
-
 int LeastCommonAncestor::generatePreorderNumbers(graph::Node* node, const int preorderNumber)
 {
     nodesToPreorderNumber[node] = preorderNumber;
 
-    int current = preorderNumber+1;
+    int current = preorderNumber + 1;
     if (node->leftChild)
         current = generatePreorderNumbers(node->leftChild, current);
 
@@ -38,7 +35,7 @@ void LeastCommonAncestor::eulerTour(graph::Node* node, const int depth)
 
     preorderToNode.push_back(node);
 
-    if ( preorderToInternalPreorder.size() <= nodesToPreorderNumber[node])
+    if (preorderToInternalPreorder.size() <= nodesToPreorderNumber[node])
         preorderToInternalPreorder.resize(nodesToPreorderNumber[node] + 1, -1);
 
     preorderToInternalPreorder[nodesToPreorderNumber.at(node)] = preorderNumber;
@@ -46,9 +43,6 @@ void LeastCommonAncestor::eulerTour(graph::Node* node, const int depth)
     firstOccurences.push_back(eulerNumber);
     levelOfEulerTours.push_back(depth);
     preorderNumbers.push_back(preorderNumber);
-
-
-
 
     if (const auto leftChild = node->leftChild)
     {
@@ -63,9 +57,6 @@ void LeastCommonAncestor::eulerTour(graph::Node* node, const int depth)
         levelOfEulerTours.push_back(depth);
         preorderNumbers.push_back(preorderNumber);
     }
-
-
-
 }
 
 void LeastCommonAncestor::precomputeRangeMinimumQuery()
@@ -102,17 +93,17 @@ int LeastCommonAncestor::computeRangeMinimumQuery(const unsigned long i, const u
         length = 31 - __builtin_clz(length);
     }
 
-    const int rmq1 = rangeMinimumQuery[length+1][i];
+    const int rmq1 = rangeMinimumQuery[length + 1][i];
 
     int rmq2;
 
     if (length >= 0)
     {
-        rmq2 = rangeMinimumQuery[length+1][j - (1 << (length))];
+        rmq2 = rangeMinimumQuery[length + 1][j - (1 << (length))];
     }
     else
     {
-        rmq2 = rangeMinimumQuery[length+1][j];
+        rmq2 = rangeMinimumQuery[length + 1][j];
     }
 
     if (rmq1 < rmq2)
@@ -120,9 +111,6 @@ int LeastCommonAncestor::computeRangeMinimumQuery(const unsigned long i, const u
 
     return rmq2;
 }
-
-
-
 
 graph::Node* LeastCommonAncestor::getLeastCommonAncestor(graph::Node* firstNode, graph::Node* secondNode)
 {
@@ -136,7 +124,7 @@ graph::Node* LeastCommonAncestor::getLeastCommonAncestor(graph::Node* firstNode,
 
     int leastCommonAncestorIndex;
 
-    if (preorderA <= preorderB) // This if / else actually defines LCA(A,B) = LCA(B,A)
+    if (preorderA <= preorderB)  // This if / else actually defines LCA(A,B) = LCA(B,A)
     {
         leastCommonAncestorIndex = computeRangeMinimumQuery(firstOccurences[preorderA], firstOccurences[preorderB]);
     }
@@ -146,7 +134,6 @@ graph::Node* LeastCommonAncestor::getLeastCommonAncestor(graph::Node* firstNode,
     }
 
     return preorderToNode[leastCommonAncestorIndex];
-
 }
 
-}
+}  //namespace cluster

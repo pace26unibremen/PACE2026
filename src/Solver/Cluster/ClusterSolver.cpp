@@ -167,7 +167,7 @@ void solver::ClusterSolver::mergeCluster()
                                         c->at(0)->Roots().end());
     }
     std::ranges::sort(instance->at(0)->Roots(),
-              [](const graph::Node* r1, const graph::Node* r2) { return r1->hasSmallestTerminal(r2); });
+                      [](const graph::Node* r1, const graph::Node* r2) { return r1->hasSmallestTerminal(r2); });
 }
 
 void solver::ClusterSolver::coupleSubtrees()

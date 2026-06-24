@@ -1,5 +1,5 @@
-#ifndef PACE2026_TWINRELATION_HPP
-#define PACE2026_TWINRELATION_HPP
+#ifndef PACE2026_TWIN_RELATION_HPP
+#define PACE2026_TWIN_RELATION_HPP
 
 #include "../../Graph/Instance.hpp"
 #include "LeastCommonAncestor.hpp"
@@ -17,13 +17,13 @@ class TwinRelation
 
     std::unordered_map<graph::Node*, graph::Node*> nodeToTwinBuffer = std::unordered_map<graph::Node*, graph::Node*>();
 
-
-    void generateInteriorTwinRelation(graph::Node *givenNode , const std::shared_ptr<cluster::LeastCommonAncestor>& foreignLCA);
+    void generateInteriorTwinRelation(graph::Node* givenNode,
+                                      const std::shared_ptr<cluster::LeastCommonAncestor>& foreignLCA);
 
     void fuseTwinBufferToSets();
 
-    void prepareLeafTwins(const std::shared_ptr<graph::Forest>& homeForest, const std::shared_ptr<graph::Forest>& foreignForest);
-
+    void prepareLeafTwins(const std::shared_ptr<graph::Forest>& homeForest,
+                          const std::shared_ptr<graph::Forest>& foreignForest);
 
   public:
     /// \brief Returns a pointer to a map which maps each node to their twins.
@@ -36,10 +36,12 @@ class TwinRelation
     /// Also, the term "true equivalence class" is made up.
     // I am fully aware of the performance implications of a map mapping nodes to sets and the performance implications
     // of the set in general. Shall this cause issues confirmed through profiling we'll implement an arena that handles
-    // bulk allocation. Additionally, an instance of this table should theoretically cost around 1 to 2 MB of RAM? (extreme overestimation)
-    std::unordered_map<graph::Node*, std::set<graph::Node*>> nodeToTwins = std::unordered_map<graph::Node*, std::set<graph::Node*>>();
+    // bulk allocation. Additionally, an instance of this table should theoretically cost around 1 to 2 MB of RAM?
+    // (extreme overestimation)
+    std::unordered_map<graph::Node*, std::set<graph::Node*>> nodeToTwins =
+        std::unordered_map<graph::Node*, std::set<graph::Node*>>();
 };
 
-}
+}  //namespace cluster
 
-#endif  //PACE2026_TWINRELATION_HPP
+#endif  //PACE2026_TWIN_RELATION_HPP
