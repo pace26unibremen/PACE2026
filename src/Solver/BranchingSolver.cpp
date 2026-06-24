@@ -32,14 +32,34 @@ void solver::BranchingSolver::setTimeoutFlag(std::atomic<bool>* flag)
     timeoutFlag = flag;
 }
 
+void solver::BranchingSolver::unwindAppliedRules()
+{
+    applyNext = std::queue<std::shared_ptr<AbstractRule>>();
+    while (not appliedRules.empty())
+    {
+        auto rule = appliedRules.back();
+        rule->unapply();
+        for (const auto& plugin : configuration->plugins) plugin->onUnapply(rule);
+        appliedRules.pop_back();
+    }
+}
+
 bool solver::BranchingSolver::rollBackBranch()
 {
     // Stop this branch on timeout — but only once at least one solution
     // candidate has been stored.  Without one, keep rolling back and exploring
     // until the first EndBranchWithSolutionCandidate so the solver always
     // produces output within the POSIX grace period.
+    //
+    // solutionBranch is replayed against the instance once solve() returns
+    // (see below), so the currently in-progress branch must be fully unwound
+    // first — otherwise the replay applies its cloned rules on top of a
+    // half-cut, abandoned branch and corrupts the tree.
     if (timeoutFlag && timeoutFlag->load(std::memory_order_relaxed) && not solutionBranch.empty())
+    {
+        unwindAppliedRules();
         return true;
+    }
 
     // all rule suggestions can be discarded at the end of a branch
     applyNext = std::queue<std::shared_ptr<AbstractRule>>();
@@ -118,7 +138,10 @@ bool solver::BranchingSolver::solve()
         // least one solution candidate has been found.  Without one, keep
         // searching so the solver always produces output within the grace period.
         if (timeoutFlag && timeoutFlag->load(std::memory_order_relaxed) && not solutionBranch.empty())
+        {
+            unwindAppliedRules();
             break;
+        }
 
         std::shared_ptr<AbstractRule> rule = nullptr;
 

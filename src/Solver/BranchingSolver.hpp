@@ -41,6 +41,12 @@ class BranchingSolver : public AbstractSolver
     /// \returns Whether all rules are unapplied. (Means there is no branching possibility left)
     bool rollBackBranch();
 
+    /// \brief Unconditionally unapplies every rule in \ref appliedRules, restoring the instance
+    /// to the state it had before the current (abandoned) branch started.
+    /// \note Used on timeout: \ref solutionBranch is replayed against the instance afterwards,
+    /// so the instance must be back to its pristine state first, or the replay corrupts the tree.
+    void unwindAppliedRules();
+
     /// \brief Checks whether the current instance is a better solution than the current candidate.
     /// If true, it restores all temporal changes on the instance and writes a copy in the solution field.
     /// \note Assumes that the current instance is a solution.
