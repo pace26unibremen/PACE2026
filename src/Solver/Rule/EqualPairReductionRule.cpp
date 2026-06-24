@@ -93,3 +93,8 @@ std::string solver::EqualPairReductionRule::name() const
 {
     return "EqualPairReductionRule";
 }
+
+std::shared_ptr<solver::AbstractRule> solver::EqualPairReductionRule::clone() const
+{
+    return std::make_shared<EqualPairReductionRule>(instance, context, forestToSubtree);
+}

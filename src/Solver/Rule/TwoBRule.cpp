@@ -156,3 +156,8 @@ std::string solver::TwoBRule::name() const
 {
     return "TwoBRule";
 }
+
+std::shared_ptr<solver::AbstractRule> solver::TwoBRule::clone() const
+{
+    return std::make_shared<TwoBRule>(instance, context, std::pair(toCutLabel1, toCutLabel2));
+}

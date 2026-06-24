@@ -40,6 +40,10 @@ solver::RuleReturnCode solver::ACBranchingRule::apply()
             for(const auto& f : forestsConnectedLabels)
             {
                 auto t1 = f->LabelToTerminal()[label1];
+                if (context->protectedEdges.contains(t1))
+                {
+                    return RuleReturnCode::CutBranch;
+                }
                 changes.emplace(t1, f);
                 changes.top().doAction();
             }
@@ -48,8 +52,21 @@ solver::RuleReturnCode solver::ACBranchingRule::apply()
             for(const auto& f : forestsConnectedLabels)
             {
                 auto t2 = f->LabelToTerminal()[label2];
+                if (context->protectedEdges.contains(t2))
+                {
+                    return RuleReturnCode::CutBranch;
+                }
                 changes.emplace(t2, f);
                 changes.top().doAction();
+
+                // we can protect edges to t1
+                // because we already tested all cases where t1 is cut in branch 1
+                const auto t1 = f->LabelToTerminal()[label1];
+                if (not context->protectedEdges.contains(t1))
+                {
+                    edgeProtections.emplace(t1);
+                    context->protectedEdges.emplace(t1);
+                }
             }
             break;
         default:
@@ -71,6 +88,15 @@ void solver::ACBranchingRule::unapply()
     {
         changes.top().undoAction();
         changes.pop();
+    }
+
+    if (branch == 2)
+    {
+        for (const auto& t : edgeProtections)
+        {
+            context->protectedEdges.erase(t);
+        }
+        edgeProtections.clear();
     }
 }
 
@@ -129,4 +155,12 @@ solver::ACBranchingRule::isApplicable(const std::shared_ptr<graph::Instance>& in
 std::string solver::ACBranchingRule::name() const
 {
     return "ACBranchingRule";
+}
+
+std::shared_ptr<solver::AbstractRule> solver::ACBranchingRule::clone() const
+{
+    affectedForests_type af = {label1, label2, forestsConnectedLabels};
+    auto clone = std::make_shared<ACBranchingRule>(instance, context, af);
+    clone->branch = isApplied ? branch - 1 : branch;
+    return clone;
 }

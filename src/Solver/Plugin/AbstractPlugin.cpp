@@ -21,7 +21,7 @@ void solver::plugin::AbstractPlugin::onReductionUnapply(const std::shared_ptr<so
 
 void solver::plugin::AbstractPlugin::onReductionReapply(const std::shared_ptr<solver::AbstractRule>&) {}
 
-void solver::plugin::AbstractPlugin::onNewBestSolution(std::size_t) {}
+void solver::plugin::AbstractPlugin::onNewBestSolution(float) {}
 
 void solver::plugin::AbstractPlugin::onBranchEnd() {}
 

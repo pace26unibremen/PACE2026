@@ -30,12 +30,6 @@ class Forest
     /// \brief Node pointers to root Nodes.
     std::shared_ptr<std::vector<Node*>> roots;
 
-    /// \brief \b 1. Sorts the children of each node,
-    /// such that the left child
-    /// contains the minimum label of both children.\n
-    /// And \b 2. fills \c subtreeTerminals for each node.
-    void sortChildrenAndCollectTerminals();
-
     /// \brief Checks consistency relations in triples of parent and both children
     /// for all triples in the subtree of parent.
     /// \param parent the root node of the subtree
@@ -74,6 +68,12 @@ class Forest
     /// \param numberOfTrees number of trees.
     [[maybe_unused]]
     explicit Forest(const std::filesystem::path& path, int numberOfTerminals, int numberOfTrees);
+
+    /// \brief \b 1. Sorts the children of each node,
+    /// such that the left child
+    /// contains the minimum label of both children.\n
+    /// And \b 2. fills \c subtreeTerminals for each node.
+    void sortChildrenAndCollectTerminals();
 
     /// \brief Makes a deep copy of the forest.
     /// @return The copy

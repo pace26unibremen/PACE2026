@@ -55,8 +55,8 @@ class AbstractPlugin
     virtual void onReductionReapply(const std::shared_ptr<solver::AbstractRule>& rule);
 
     /// \brief Called when a new best solution is found.
-    /// \param score number of roots (trees) in the new best solution
-    virtual void onNewBestSolution(std::size_t score);
+    /// \param weight of the new best solution
+    virtual void onNewBestSolution(float weight);
 
     /// \brief Called when the current search branch reaches a terminal state.
     ///

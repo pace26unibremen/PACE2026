@@ -15,11 +15,11 @@ void solver::plugin::ConvergencePlugin::init(const std::shared_ptr<graph::Instan
     collector->startTime = std::chrono::steady_clock::now();
 }
 
-void solver::plugin::ConvergencePlugin::onNewBestSolution(std::size_t score)
+void solver::plugin::ConvergencePlugin::onNewBestSolution(float weight)
 {
     snapshots.push_back(Snapshot{
         .wtime        = collector->elapsedSeconds(),
-        .score        = score,
+        .weight        = weight,
         .ruleCounts   = collector->ruleCounts,
         .branchOpens  = collector->branchOpens,
         .branchCloses = collector->branchCloses,

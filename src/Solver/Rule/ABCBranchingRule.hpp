@@ -42,6 +42,10 @@ class ABCBranchingRule : public AbstractBranchingRule
     std::shared_ptr<std::list<std::shared_ptr<AbstractRule>>> nextRuleSuggestion =
         std::make_shared<std::list<std::shared_ptr<AbstractRule>>>();
 
+    /// \brief A set of all edges that get protection in branch 3.
+    /// An edge is identified by the node it points to (the child-node).
+    std::unordered_set<graph::Node*> edgeProtections = std::unordered_set<graph::Node*>();
+
   public:
     /// \param instance the problem instance
     /// \param context information about the instance and the solver state
@@ -76,6 +80,9 @@ class ABCBranchingRule : public AbstractBranchingRule
 
     [[nodiscard]]
     std::string name() const override;
+
+    [[nodiscard]]
+    std::shared_ptr<AbstractRule> clone() const override;
 };
 
 }  //namespace solver

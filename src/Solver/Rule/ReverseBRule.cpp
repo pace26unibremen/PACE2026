@@ -106,3 +106,8 @@ std::string solver::ReverseBRule::name() const
 {
     return "ReverseBRule";
 }
+
+std::shared_ptr<solver::AbstractRule> solver::ReverseBRule::clone() const
+{
+    return std::make_shared<ReverseBRule>(instance, context, toCutLabel);
+}
