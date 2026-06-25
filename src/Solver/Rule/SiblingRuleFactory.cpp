@@ -232,43 +232,41 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
 
         // reverse B rule: we need to check if a-node and c2-node are a sibling pair
         //     f0             f i      /    fi
-        //   ┌──┴──┐                  /              reveresBNode ==  a  or
-        // ┌─┴─┐   c2       ┌─┴─┐    /    ┌─┴─┐      reveresBNode == c1
+        //   ┌──┴──┐                  /              siblingNode == a  and reverseBNode == c1 (left)
+        // ┌─┴─┐   c2       ┌─┴─┐    /    ┌─┴─┐      siblingNode == c1 and reverseBNode == a  (right)
         // a   c1           a   c2  /    c1   c2
         if (reverseBRule)
         {
             const auto& c2Node = fi->LabelToTerminal().at(c2Label);
             if (not c2Node->sibling)
                 reverseBRule = false;
-            const auto& reversedBNode = c2Node->sibling;
+            const auto& siblingNode = c2Node->sibling;
 
-            // 3 cass: reversedBNode == aNode, reversedBNode == c1Node, else
-            if (reversedBNode == aNode)
+            // 3 cass: siblingNode == aNode, siblingNode == c1Node, siblingNode == other
+            if (siblingNode == aNode)
             {
-                // case reversedBNode == aNode
                 // if we have not decided, if aNode or c1Node is the reversed b
                 // we can do this now.
-                // otherwise we must ensure, that we decided for the a-label.
-                if (reverseBLabel == 0)
-                    reverseBLabel = aLabel;
-                else if (reverseBLabel != aLabel)
-                    reverseBRule = false;
-            }
-            else if (reversedBNode == c1Node)
-            {
-                // case reversedBNode == c1Node
-                // if we have not decided, if aNode or c1Node is the reversed b
-                // we can do this now.
-                // otherwise we must ensure, that we decided for c1-label.
+                // otherwise we must ensure, that we decided for the c1-label.
                 if (reverseBLabel == 0)
                     reverseBLabel = c1Label;
                 else if (reverseBLabel != c1Label)
                     reverseBRule = false;
             }
+            else if (siblingNode == c1Node)
+            {
+                // if we have not decided, if aNode or c1Node is the reversed b
+                // we can do this now.
+                // otherwise we must ensure, that we decided for a-label.
+                if (reverseBLabel == 0)
+                    reverseBLabel = aLabel;
+                else if (reverseBLabel != aLabel)
+                    reverseBRule = false;
+            }
             else
             {
-                // case else
                 // we cannot apply reverse B rule
+                // if the sibling of c2 is not a-node or c1 node
                 reverseBRule = false;
             }
         }
