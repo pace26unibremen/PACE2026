@@ -183,7 +183,11 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
 
     // if a-node and c2-node are a sibling pair in at least one forest
     // and the other forests have the same subtree ((a c1) c2) as f0.
-    bool reverseB = (c2Label != 0);
+    bool reverseBRule = (c2Label != 0);
+
+    // label for the potential nodes that will be cutted by the reversed B rule.
+    // This label is either aLabel or c1Label. We will decide later which one.
+    unsigned int reverseBLabel = 0;
 
     // if a-node and c1-node are separated by one pendant subtree and that this subtree is b1 or b2
     bool bRule = true;
@@ -203,13 +207,13 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
             //   ┌──┴──┐
             // ┌─┴─┐   c2 ?
             // a   c1
-            if (twoBRule or reverseB)
+            if (twoBRule or reverseBRule)
             {
                 if ((not fi->TerminalToLabel().contains(aNode->parent->sibling)) or
                     (fi->TerminalToLabel().at(aNode->parent->sibling) != c2Label))
                 {
                     twoBRule = false;
-                    reverseB = false;
+                    reverseBRule = false;
                 }
             }
             // we can move to next forest
@@ -225,22 +229,51 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
         {
             return std::make_shared<ACBranchingRule>(instance, context, aLabel, c1Label);
         }
+
         // reverse B rule: we need to check if a-node and c2-node are a sibling pair
-        //     f0              fi
-        //   ┌──┴──┐
-        // ┌─┴─┐   c2       ┌─┴─┐
-        // a   c1           a   c2
-        // TODO c1 and c2 would be possible as well if we stay consistent over all forests
-        if (reverseB)
+        //     f0             f i      /    fi
+        //   ┌──┴──┐                  /              reveresBNode ==  a  or
+        // ┌─┴─┐   c2       ┌─┴─┐    /    ┌─┴─┐      reveresBNode == c1
+        // a   c1           a   c2  /    c1   c2
+        if (reverseBRule)
         {
             const auto& c2Node = fi->LabelToTerminal().at(c2Label);
-            if (aNode->sibling != c2Node)
+            if (not c2Node->sibling)
+                reverseBRule = false;
+            const auto& reversedBNode = c2Node->sibling;
+
+            // 3 cass: reversedBNode == aNode, reversedBNode == c1Node, else
+            if (reversedBNode == aNode)
             {
-                reverseB = false;
+                // case reversedBNode == aNode
+                // if we have not decided, if aNode or c1Node is the reversed b
+                // we can do this now.
+                // otherwise we must ensure, that we decided for the a-label.
+                if (reverseBLabel == 0)
+                    reverseBLabel = aLabel;
+                else if (reverseBLabel != aLabel)
+                    reverseBRule = false;
+            }
+            else if (reversedBNode == c1Node)
+            {
+                // case reversedBNode == c1Node
+                // if we have not decided, if aNode or c1Node is the reversed b
+                // we can do this now.
+                // otherwise we must ensure, that we decided for c1-label.
+                if (reverseBLabel == 0)
+                    reverseBLabel = c1Label;
+                else if (reverseBLabel != c1Label)
+                    reverseBRule = false;
+            }
+            else
+            {
+                // case else
+                // we cannot apply reverse B rule
+                reverseBRule = false;
             }
         }
 
-        // 2B rule: we need to check that c2 is an uncle of a or c1.
+        // 2B rule: we need to check that c2 is an uncle of a-node or c1-node.
         if (twoBRule)
         {
             const auto& c2Node = fi->LabelToTerminal().at(c2Label);
@@ -429,10 +462,7 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
             it = it->parent;
         }
 
-        if (not bNodes.empty())
-        {
-            forestWithBNodes.emplace_back(fi, bNodes);
-        }
+        forestWithBNodes.emplace_back(fi, bNodes);
     }
 
     if (equalPairRule)
@@ -443,9 +473,9 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
     {
         return std::make_shared<BRule>(instance, context, b1Label);
     }
-    if (reverseB)
+    if (reverseBRule)
     {
-        return std::make_shared<ReverseBRule>(instance, context, c1Label);
+        return std::make_shared<ReverseBRule>(instance, context, reverseBLabel);
     }
     if (twoBRule)
     {
