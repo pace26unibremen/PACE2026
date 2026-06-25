@@ -147,3 +147,8 @@ std::string solver::BRule::name() const
 {
     return "BRule";
 }
+
+std::shared_ptr<solver::AbstractRule> solver::BRule::clone() const
+{
+    return std::make_shared<BRule>(instance, context, b1Label, b2Label);
+}

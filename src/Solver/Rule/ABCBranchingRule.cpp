@@ -34,10 +34,24 @@ solver::RuleReturnCode solver::ABCBranchingRule::apply()
         {
             for (const auto& f: *instance)
             {
-                const auto aNode = f->LabelToTerminal()[aLabel];
-                if (not aNode->parent) continue;
+                const auto aNode = f->LabelToTerminal().at(aLabel);
+                if (not aNode->parent)
+                    continue;
+                if (context->protectedEdges.contains(aNode))
+                    return RuleReturnCode::CutBranch;
                 changes.emplace(aNode, f);
                 changes.top().doAction();
+
+
+                // we can protect edges to cNode
+                // because we already tested all cases where t2 is cut in the other branches
+                const auto cNode = f->LabelToTerminal().at(cLabel);
+                if (not context->protectedEdges.contains(cNode))
+                {
+                    edgeProtections.emplace(cNode);
+                    context->protectedEdges.emplace(cNode);
+                }
+
             }
             return RuleReturnCode::Continue;
         }
@@ -45,8 +59,11 @@ solver::RuleReturnCode solver::ABCBranchingRule::apply()
         {
             for (const auto& f : *instance)
             {
-                const auto cNode = f->LabelToTerminal()[cLabel];
-                if (not cNode->parent) continue;
+                const auto cNode = f->LabelToTerminal().at(cLabel);
+                if (not cNode->parent)
+                    continue;
+                if (context->protectedEdges.contains(cNode))
+                    return RuleReturnCode::CutBranch;
                 changes.emplace(cNode, f);
                 changes.top().doAction();
             }
@@ -58,6 +75,8 @@ solver::RuleReturnCode solver::ABCBranchingRule::apply()
             {
                 for (auto bNode : bNodes)
                 {
+                    if (context->protectedEdges.contains(bNode))
+                        return RuleReturnCode::CutBranch;
                     changes.emplace(bNode, f);
                     changes.top().doAction();
                 }
@@ -86,6 +105,15 @@ void solver::ABCBranchingRule::unapply()
     {
         changes.top().undoAction();
         changes.pop();
+    }
+
+    if (branch == 3)
+    {
+        for (const auto& t : edgeProtections)
+        {
+            context->protectedEdges.erase(t);
+        }
+        edgeProtections.clear();
     }
 }
 
@@ -182,4 +210,11 @@ std::shared_ptr<std::list<std::shared_ptr<solver::AbstractRule>>> solver::ABCBra
 std::string solver::ABCBranchingRule::name() const
 {
     return "ABCBranchingRule";
+}
+
+std::shared_ptr<solver::AbstractRule> solver::ABCBranchingRule::clone() const
+{
+    auto clone = std::make_shared<ABCBranchingRule>(instance, context, aLabel,cLabel, forestWithBNodes);
+    clone->branch = isApplied ? branch - 1 : branch;
+    return clone;
 }

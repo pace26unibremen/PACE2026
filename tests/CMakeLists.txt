@@ -57,3 +57,14 @@ target_link_libraries(ReverseBRuleTests PRIVATE Solver Graph Catch2::Catch2WithM
 add_test(NAME ReverseBRuleTests COMMAND $<TARGET_FILE:ReverseBRuleTests>)
 target_compile_definitions(ReverseBRuleTests PRIVATE RES_DIR="${CMAKE_SOURCE_DIR}/res/")
 target_compile_definitions(ReverseBRuleTests PRIVATE TEST_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/res/tests/")
+
+
+#add_executable(ClusterPointTests ClusterPointTests.cpp)
+#target_link_libraries(ClusterPointTests PRIVATE Solver Graph Cluster Catch2::Catch2WithMain)
+#add_test(NAME ClusterPointTests COMMAND $<TARGET_FILE:ClusterPointTests>)
+#target_compile_definitions(ClusterPointTests PRIVATE TEST_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/res/tests/")
+#
+#add_executable(MiscellaneousTests MiscellaneousTests.cpp)
+#target_link_libraries(MiscellaneousTests PRIVATE Solver Graph Cluster Catch2::Catch2WithMain)
+#add_test(NAME MiscellaneousTests COMMAND $<TARGET_FILE:MiscellaneousTests>)
+#target_compile_definitions(MiscellaneousTests PRIVATE TEST_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/res/tests/")

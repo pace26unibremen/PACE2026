@@ -31,7 +31,10 @@ solver::RuleReturnCode solver::ACBranchingRule::apply()
             for(const auto& f : *instance)
             {
                 auto aNode = f->LabelToTerminal().at(aLabel);
-                if (not aNode->parent) continue;
+                if (not aNode->parent)
+                    continue;
+                if (context->protectedEdges.contains(aNode))
+                    return RuleReturnCode::CutBranch;
                 changes.emplace(aNode, f);
                 changes.top().doAction();
             }
@@ -40,9 +43,21 @@ solver::RuleReturnCode solver::ACBranchingRule::apply()
             for(const auto& f : *instance)
             {
                 auto cNode = f->LabelToTerminal().at(cLabel);
-                if (not cNode->parent) continue;
+                if (not cNode->parent)
+                    continue;
+                if (context->protectedEdges.contains(cNode))
+                    return RuleReturnCode::CutBranch;
                 changes.emplace(cNode, f);
                 changes.top().doAction();
+
+                // we can protect edges to a-Node
+                // because we already tested all cases where a-Node is cut in branch 1
+                const auto aNode = f->LabelToTerminal().at(aLabel);
+                if (not context->protectedEdges.contains(aNode))
+                {
+                    edgeProtections.emplace(aNode);
+                    context->protectedEdges.emplace(aNode);
+                }
             }
             break;
         default:
@@ -64,6 +79,15 @@ void solver::ACBranchingRule::unapply()
     {
         changes.top().undoAction();
         changes.pop();
+    }
+
+    if (branch == 2)
+    {
+        for (const auto& t : edgeProtections)
+        {
+            context->protectedEdges.erase(t);
+        }
+        edgeProtections.clear();
     }
 }
 
@@ -112,4 +136,11 @@ solver::ACBranchingRule::isApplicable(const std::shared_ptr<graph::Instance>& in
 std::string solver::ACBranchingRule::name() const
 {
     return "ACBranchingRule";
+}
+
+std::shared_ptr<solver::AbstractRule> solver::ACBranchingRule::clone() const
+{
+    auto clone = std::make_shared<ACBranchingRule>(instance, context, aLabel, cLabel);
+    clone->branch = isApplied ? branch - 1 : branch;
+    return clone;
 }

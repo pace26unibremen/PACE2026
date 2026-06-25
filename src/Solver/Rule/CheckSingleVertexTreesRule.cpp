@@ -46,3 +46,8 @@ std::string solver::CheckSingleVertexTreesRule::name() const
 {
     return "CheckSingleVertexTreesRule";
 }
+
+std::shared_ptr<solver::AbstractRule> solver::CheckSingleVertexTreesRule::clone() const
+{
+    return std::make_shared<CheckSingleVertexTreesRule>(instance, context);
+}

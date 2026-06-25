@@ -1,5 +1,8 @@
 #include "Solver/BranchingSolver.hpp"
+#include "Solver/Cluster/ClusterSolver.hpp"
+#include "Solver/Cluster/ClusterRange.hpp"
 #include "Solver/Plugin/SigtermPlugin.hpp"
+#include "Solver/ReductionSolver.hpp"
 #include "Solver/SolverConfig.hpp"
 
 #include <atomic>
@@ -61,24 +64,88 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
     const auto startTime = std::clock();
     const auto instance = graph::ReadInstance(in);
 
+    bool solved = false;
+
+    // all solvers that worked on the solution
+    std::vector<std::shared_ptr<solver::AbstractSolver>> solverList;
+    // stores the cluster solver (and the access to the clusters) that may be part of the pipeline
+    solver::ClusterSolver* clusterSolver = nullptr;
+
+    for (auto solverType : config.solverPipeline)
+    {
+        switch (solverType)
+        {
+            case solver::SolverConfig::SolverType::Branching:
+            {
+
 #ifdef _POSIX_VERSION
-    if (config.enableSigterm) {
-        std::signal(SIGTERM, sigtermHandler);
-        config.branchingConfig.plugins.push_back(
-            std::make_shared<solver::plugin::SigtermPlugin>(&g_timeout, out));
-    }
+                if (config.enableSigterm) {
+                    std::signal(SIGTERM, sigtermHandler);
+                    config.branchingConfig.plugins.push_back(
+                        std::make_shared<solver::plugin::SigtermPlugin>(&g_timeout, out));
+                }
 #endif
-
-    auto branchingConfig = std::make_shared<solver::BranchingSolverConfiguration>(config.branchingConfig);
-    auto solver = solver::BranchingSolver(instance, branchingConfig);
-
-#ifdef _POSIX_VERSION
-    if (config.enableSigterm) {
-        solver.setTimeoutFlag(&g_timeout);
-    }
+                if (clusterSolver)
+                {
+                    bool allClustersSolved = true;
+                    for (const auto& [cluster, context] : clusterSolver->Clusters())
+                    {
+                        auto branchingConfig = std::make_shared<solver::BranchingSolverConfiguration>(config.branchingConfig);
+                        auto solver = std::make_shared<solver::BranchingSolver>(cluster, branchingConfig, context);
+#ifdef   _POSIX_VERSION
+                        if (config.enableSigterm)
+                        {
+                            solver->setTimeoutFlag(&g_timeout);
+                        }
 #endif
+                        solverList.push_back(solver);
+                        allClustersSolved &= solver->solve();
+                    }
+                    solved = allClustersSolved;
+                }
+                else
+                {
+                    auto branchingConfig = std::make_shared<solver::BranchingSolverConfiguration>(config.branchingConfig);
+                    auto solver = std::make_shared<solver::BranchingSolver>(instance, branchingConfig);
+#ifdef   _POSIX_VERSION
+                    if (config.enableSigterm)
+                    {
+                        solver->setTimeoutFlag(&g_timeout);
+                    }
+#endif
+                    solverList.push_back(solver);
+                    solved = solver->solve();
+                }
+                break;
+            }
+            case solver::SolverConfig::SolverType::Reduction:
+            {
+                auto solver = std::make_shared<solver::ReductionSolver>(instance);
+                solverList.push_back(solver);
+                solver->solve();
+                break;
+            }
+            case solver::SolverConfig::SolverType::Cluster:
+            {
+                auto solver = std::make_shared<solver::ClusterSolver>(instance);
+                solverList.push_back(solver);
+                solver->solve();
+                clusterSolver = solver.get();
+                break;
+            }
+            default:
+            {
+                std::clog << "Solver pipeline contains unknown solver\n";
+                return;
+            }
+        }
+    }
 
-    const bool solved = solver.solve();
+    for (int i = solverList.size()-1; i >= 0; --i)
+    {
+        solverList[i]->unapplyReductions();
+    }
+
     if (!solved) {
         // Only reachable when SIGTERM fires before the very first solution
         // candidate — i.e. within the first few milliseconds of a run on an
@@ -89,15 +156,13 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
         return;
     }
 
-    solver.unapplyReductions();
-
     const auto endTime = std::clock();
     const double time_delta_ms = static_cast<double>(endTime - startTime)
                                  / (static_cast<double>(CLOCKS_PER_SEC) / 1000.0);
 
     out << "# t " << time_delta_ms << "\n"
-        << "# s " << solver.Instance()->at(0)->Roots().size() << "\n";
-    solver.Instance()->at(0)->write(out);
+        << "# s " << instance->at(0)->Roots().size() << "\n";
+    instance->at(0)->write(out);
 }
 
 // ============================================================
