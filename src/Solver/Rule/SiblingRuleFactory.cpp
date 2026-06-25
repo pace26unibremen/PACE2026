@@ -323,12 +323,6 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
             const auto possibleBLabel = fi->TerminalToLabel().at(b1Node);
             if (possibleBLabel == b1Label or possibleBLabel == b2Label)
             {
-                //TODO i think b rule can be generalized to accept two different b labels
-                if (possibleBLabel == b2Label)  //
-                {                               //  remove for generalization
-                    bRule = false;              //
-                }                               //
-
                 // if the possibleBLabel matches the stored labels for b1 or for b2 everything is fine
                 continue;
             }
@@ -343,7 +337,6 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
             {
                 // if we have not decided on the label of b2 until now,
                 // we can assign the label of the current b node
-                bRule = false; // TODO  remove for b rule generalization
                 b2Label = possibleBLabel;
                 continue;
             }
@@ -469,7 +462,7 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
     }
     if (bRule)
     {
-        return std::make_shared<BRule>(instance, context, b1Label);
+        return std::make_shared<BRule>(instance, context, b1Label, b2Label);
     }
     if (reverseBRule)
     {

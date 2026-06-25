@@ -4,10 +4,13 @@
 
 #include "BRule.hpp"
 
-solver::BRule::BRule(const std::shared_ptr<graph::Instance>& instance, const std::shared_ptr<Context>& context,
-                     unsigned bLabel) :
+solver::BRule::BRule(const std::shared_ptr<graph::Instance>& instance,
+                     const std::shared_ptr<Context>& context,
+                     unsigned int b1Label,
+                     unsigned int b2Label) :
         AbstractRule(instance, context, false),
-        bLabel(bLabel)
+        b1Label(b1Label),
+        b2Label(b2Label)
 {}
 
 solver::RuleReturnCode solver::BRule::apply()
@@ -20,11 +23,20 @@ solver::RuleReturnCode solver::BRule::apply()
 
     for (const auto& forest : *instance)
     {
-        auto bNode = forest->LabelToTerminal().at(bLabel);
+        auto bNode = forest->LabelToTerminal().at(b1Label);
         if (not bNode->parent)
             continue;
         changes.emplace(bNode, forest);
         changes.top().doAction();
+
+        if (b2Label != 0)
+        {
+            auto b2Node = forest->LabelToTerminal().at(b2Label);
+            if (not b2Node->parent)
+                continue;
+            changes.emplace(b2Node, forest);
+            changes.top().doAction();
+        }
     }
 
     return solver::RuleReturnCode::Continue;
@@ -128,7 +140,7 @@ std::shared_ptr<solver::AbstractRule> solver::BRule::isApplicable(const std::sha
         //PairEqualRule
         return nullptr;
     }
-    return std::make_shared<BRule>(instance, context, b);
+    return std::make_shared<BRule>(instance, context, b, 0);
 }
 
 std::string solver::BRule::name() const
