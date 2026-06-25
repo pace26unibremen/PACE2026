@@ -538,6 +538,20 @@ run_full_benchmark:
     # If manually triggered from the web UI and the variable is set to full or all, run the full benchmark
     - if: '$CI_PIPELINE_SOURCE == "web" && ($RUN_BENCHMARK == "full" || $RUN_BENCHMARK == "all")'
       when: on_success
+    - when: never
+
+run_3h_benchmark:
+  variables:
+    INSTANCES_LST: "all.lst"
+    SLURM_SCRIPT: "3h_run.slurm"
+    STRIDE_TIMEOUT: 900
+    STRIDE_GRACE: 10
+    STRIDE_RUN_NAME: "${CI_COMMIT_REF_NAME}_${CI_COMMIT_SHORT_SHA}_3h"
+  extends: .run_stride_benchmark_template
+  rules:
+    # If manually triggered from the web UI and the variable is set to 3h or all, run the 3h benchmark
+    - if: '$CI_PIPELINE_SOURCE == "web" && ($RUN_BENCHMARK == "3h" || $RUN_BENCHMARK == "all")'
+      when: on_success
     - !reference [ .release-rules, rules ]
     - when: never
 
