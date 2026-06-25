@@ -18,6 +18,19 @@ class SiblingRuleFactory
     getSiblings(const std::shared_ptr<graph::Instance>& instance,
                 const std::shared_ptr<solver::Context>& context);
 
+    /// \brief For two nodes \ref aNode and \ref cNode if they are part of a local pendant chain.
+    /// - case 1: aNode and cNode are separated by one subtree with subtree root b
+    /// - case 2: aNode and cNode are separated by two subtrees with subtree roots b1 and b2
+    /// - case 3: else
+    /// \param aNode
+    /// \param cNode
+    /// \returns A pair of the two possible subtree roots between \ref aNode and \ref cNode
+    /// - case 1: {b, nullptr}
+    /// - case 2: {b1, b2}
+    /// - case 3: {nullptr, nullptr}
+    static std::pair<graph::Node*, graph::Node*>
+    checkBNodes(graph::Node* const & aNode, graph::Node* const & cNode);
+
   public:
     /// \brief Checks whether \ref EqualPairReductionRule, \ref ACBranchingRule or \ref ABCBranchingRule
     /// can be applied and returns an instance of the best applicable rule,

@@ -104,7 +104,8 @@ solver::SiblingRuleFactory::basicRules(const std::shared_ptr<graph::Instance>& i
 }
 
 
-std::pair<graph::Node*, graph::Node*> checkBNodes(graph::Node* const & aNode, graph::Node* const & cNode)
+std::pair<graph::Node*, graph::Node*>
+solver::SiblingRuleFactory::checkBNodes(graph::Node* const & aNode, graph::Node* const & cNode)
 {
     if (aNode->parent and aNode->parent->sibling == cNode)
     {
@@ -151,9 +152,10 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
         return nullptr;
     }
 
-    // c2 is the potential uncle of the sibling pair
+    // c2 is the potential uncle of the sibling pair in f0
     // which corresponds to the c-node for the reversed B rule after Whidden
-    // and for the 2B Rule it would correspond to the x-node after Whidden.
+    // and for the 2B rule it would correspond to the x-node after Whidden.
+    // However, throughout this method, we will continue to use the symbol 'c2'.
     const unsigned int c2Label = [&instance, &aLabel]() -> unsigned int
     {
         const auto& f0 = instance->at(0);
@@ -164,57 +166,71 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
         }
         return 0;
     }();
+
+    // label for one of the potential b nodes for the B rule or the 2B Rule
+    // It remains zero until we reach the point where we have to decide on the value.
     unsigned int b1Label = 0;
+    // label for one of the potential b nodes for the B rule or the 2B Rule
+    // It remains zero until we reach the point where we have to decide on the value.
     unsigned int b2Label = 0;
 
     // if the siblings from f0 are siblings in every other forest.
-    bool siblings = true;
+    bool equalPairRule = true;
 
     // if the checked subtree always have c2 has uncle
-    // and that a and c1+c2 are separated by the same pendant subtree b1 / b2
-    bool twoBRUle = (c2Label != 0);
+    // and that the a-node and c1+c2 are separated by the same pendant subtrees b1 / b2
+    bool twoBRule = (c2Label != 0);
 
-    // if a and c2 are a sibling pair in at least one forest
+    // if a-node and c2-node are a sibling pair in at least one forest
     // and the other forests have the same subtree ((a c1) c2) as f0.
     bool reverseB = (c2Label != 0);
 
-    // if a and c1 are separated by one pendant subtree and that this subtree is b1 or b2
+    // if a-node and c1-node are separated by one pendant subtree and that this subtree is b1 or b2
     bool bRule = true;
 
+    // We check now how the a-node and c1-node are distributed in the other forests
     for (unsigned int i = 1; i < instance->size(); i++)
     {
         const auto& fi = instance->at(i);
         const auto& aNode = fi->LabelToTerminal().at(aLabel);
         const auto& c1Node = fi->LabelToTerminal().at(c1Label);
 
-        // check if we have the same sibling pair in fi
+        // check if we have the same sibling pair in fi as in f0
         if (aNode->sibling == c1Node)
         {
             // if 2B rule or reverse B rule are still in the race
             // we need to check that the sibling pair's uncle is c2
-            if (twoBRUle or reverseB)
+            //   ┌──┴──┐
+            // ┌─┴─┐   c2 ?
+            // a   c1
+            if (twoBRule or reverseB)
             {
                 if ((not fi->TerminalToLabel().contains(aNode->parent->sibling)) or
                     (fi->TerminalToLabel().at(aNode->parent->sibling) != c2Label))
                 {
-                    twoBRUle = false;
+                    twoBRule = false;
                     reverseB = false;
                 }
             }
-            // and then we can move to next forest
+            // we can move to next forest
             continue;
         }
-        // From here on, we have the case that a and c1 are no sibling pairs in fi.
-        siblings = false;
+        // From here on, we have the case that a-node and c1-node are no sibling pairs in fi.
+        equalPairRule = false;
 
-        // If a and c are in different components in at least one forest, then AC Branching Rule is the only option.
+        // If a-node and c1-node are in different components in at least one forest,
+        // then AC Branching Rule is the only option.
         const auto& aRoot = fi->rootOf(aNode);
         if (not c1Node->hasSubsetTerminals(aRoot))
         {
             return std::make_shared<ACBranchingRule>(instance, context, aLabel, c1Label);
         }
-
-        // reverse B rule: we need to check if a and c2 are a sibling pair
+        // reverse B rule: we need to check if a-node and c2-node are a sibling pair
+        //     f0              fi
+        //   ┌──┴──┐
+        // ┌─┴─┐   c2       ┌─┴─┐
+        // a   c1           a   c2
+        // TODO c1 and c2 would be possible as well if we stay consistent over all forests
         if (reverseB)
         {
             const auto& c2Node = fi->LabelToTerminal().at(c2Label);
@@ -225,7 +241,7 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
         }
 
         // 2B rule: we need to check that c2 is an uncle of a or c1.
-        if (twoBRUle)
+        if (twoBRule)
         {
             const auto& c2Node = fi->LabelToTerminal().at(c2Label);
             // (not c2 'is uncle of' a) and
@@ -233,19 +249,20 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
             if ((not aNode->parent or aNode->parent->sibling != c2Node) and
                 (not c1Node->parent or c1Node->parent->sibling != c2Node))
             {
-                twoBRUle = false;
+                twoBRule = false;
             }
         }
 
-        // B rule and 2B rule: we need to check the b node
-        // it follows a long block where b1Label and b2Label are assigned
+        // B rule and 2B rule: we need to check the b nodes.
+        // What follows is a long block where b1Label and b2Label are assigned
+        // and/or the labels for of the potential b-nodes in the current forest are verified.
         const auto& [b1Node, b2Node] = checkBNodes(aNode, c1Node);
         if (not b1Node)
         {
             // current case:
             // a and c1 are connected, but there are more than two subtrees 'between' a and c1
             bRule = false;
-            twoBRUle = false;
+            twoBRule = false;
         }
         else if (not b2Node)
         {
@@ -255,11 +272,11 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
             // a   b1Node  /  c1   b1Node
             // at this point we don't checked anything about the label of the b1 Node
 
-            // fill the b Nodes list for the ACB Branching rule
+            // we can fill the b-nodes list for the ACB Branching rule
             forestWithBNodes.push_back({fi,{b1Node}});
 
-            // from here on, we check B rule and 2B rule stuff, so if none of them is possible anymore -> skip
-            if (not twoBRUle and not bRule)
+            // from here on, we check B rule and 2B rule stuff, so if none of them is possible anymore -> next forest
+            if (not twoBRule and not bRule)
             {
                 continue;
             }
@@ -268,55 +285,61 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
             {
                 // b1Node is not a terminal
                 bRule = false;
-                twoBRUle = false;
+                twoBRule = false;
                 continue;
             }
 
             const auto possibleBLabel = fi->TerminalToLabel().at(b1Node);
             if (possibleBLabel == b1Label or possibleBLabel == b2Label)
             {
-                //TODO i think b rule can be generalized accept two different b labels
+                //TODO i think b rule can be generalized to accept two different b labels
                 if (possibleBLabel == b2Label)  //
                 {                               //  remove for generalization
                     bRule = false;              //
                 }                               //
 
-                // if the b1 Nodes matches the stored labels for b1 or b2
+                // if the possibleBLabel matches the stored labels for b1 or for b2 everything is fine
                 continue;
             }
             if (b1Label == 0)
             {
-                // if b1 was not assigned until now, we can do this now
+                // if we have not decided on the label of b1 until now,
+                // we can assign the label of the current b node
                 b1Label = possibleBLabel;
                 continue;
             }
             if (b2Label == 0)
             {
-                // if b2 was not assigned until now, we can do this now
+                // if we have not decided on the label of b2 until now,
+                // we can assign the label of the current b node
                 bRule = false; // TODO  remove for b rule generalization
                 b2Label = possibleBLabel;
                 continue;
             }
+            // if we have already decided on the values of b1 and b2 and
+            // if the current b label does not match the stored values for b1 and b2
+            // then we can not apply B and 2B rule.
             bRule = false;
-            twoBRUle = false;
+            twoBRule = false;
             continue;
         }
         else
         {
-            // fill the b Nodes list for the ACB Branching rule
-            forestWithBNodes.push_back({fi,{b1Node, b2Node}});
             // current case:
             //       ┌───┴──┐     /          ┌───┴──┐
             //    ┌──┴─┐    c1   /        ┌──┴─┐    a
             //  ┌─┴─┐  b2       /       ┌─┴─┐  b2
             //  a  b1          /       c1   b1
-            // at this point we don't checked anything about the label of the b1 Node
+            // at this point we don't checked anything about the label of the b1 and b2 Node
 
-            // b rule can not be applied anymore
+            // we fill the b-nodes list for the ACB branching rule
+            forestWithBNodes.push_back({fi,{b1Node, b2Node}});
+
+            // B rule can not be applied anymore
             bRule = false;
 
-            // from here on, we only check 2 B rule stuff, so if 2 B is not possible, we can skip this
-            if (not twoBRUle)
+            // from here on, we only check 2B rule stuff, so if 2  is not possible, we can skip this
+            if (not twoBRule)
             {
                 continue;
             }
@@ -325,7 +348,7 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
                 not fi->TerminalToLabel().contains(b2Node))
             {
                 // b1Node or b2Node is not a terminal
-                twoBRUle = false;
+                twoBRule = false;
                 continue;
             }
             const auto possibleB1Label = fi->TerminalToLabel().at(b1Node);
@@ -347,12 +370,12 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
             else
             {
                 // possibleB1Label didn't match previous assignments for b1Label/b2Label.
-                twoBRUle = false;
+                twoBRule = false;
                 continue;
             }
 
             // check now possibleB2Label:
-            if (possibleB2Label == b1Label and possibleB2Label == b2Label)
+            if (possibleB2Label == b1Label or possibleB2Label == b2Label)
             {
                 continue;
             }
@@ -369,15 +392,16 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
                 continue;
             }
             // possibleB1Label didn't match previous assignments for b1/b2.
-            twoBRUle = false;
+            twoBRule = false;
             continue;
         }
+        // Here ends the block for the B / 2B rule. :)
 
         // The current situation in fi is:
         // a and c1 are connected, but there are more than two subtrees 'between' a and c1.
-        // (see first condition of b1Label-b2Label block)
+        // (see first condition of previous B/2B block)
         // This is the ABC branching rule case, so we collect all b-nodes between a and c1.
-        //
+
         // moving upwards from aNode to lca - and collect b-nodes
         auto bNodes = std::list<graph::Node*>();
         graph::Node* lca;
@@ -411,7 +435,7 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
         }
     }
 
-    if (siblings)
+    if (equalPairRule)
     {
         return std::make_shared<EqualPairReductionRule>(instance, context, aLabel, c1Label);
     }
@@ -423,13 +447,20 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
     {
         return std::make_shared<ReverseBRule>(instance, context, c1Label);
     }
-    if (twoBRUle)
+    if (twoBRule)
     {
         // there is an edge case, that we didn't checked until now:
         // b1 or b2 could be c2.
         // This is because when we checked that c2 is an uncle of the subtree
-        // we actually checked if it's an uncle of the a-node (logical-) or c1-node
+        // we actually only checked if it's an uncle of the a-node or an uncle of the c1-node
         // regardless which one is the higher node.
+        // Essentially, twoBRule could be true in this situation:
+        //       ┌─────┴────┐
+        //    ┌──┴────┐     c1
+        //  ┌─┴─┐   b2==c2        -> c2 is the uncle of a, but we need c2 to be an uncle of c1
+        //  a   b1
+        // But 2B is not applicable, c2 should be the uncle of c1 for B2 rule
+
         if (b1Label != c2Label and b2Label != c2Label)
         {
             return std::make_shared<TwoBRule>(instance, context, std::pair(b1Label, b2Label));
