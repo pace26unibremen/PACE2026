@@ -23,7 +23,7 @@ std::shared_ptr<graph::Instance> solver::ClusterSolver::buildSingleCluster(unsig
         std::erase_if(mapLT, [root](const auto& entry) { return not root->hasTerminal(entry.first); });
 
         auto forest =
-            std::make_shared<graph::Forest>(std::make_shared<std::vector<graph::Node>>(f->Nodes()),
+            std::make_shared<graph::Forest>(f->Nodes(),
                                             std::make_shared<std::unordered_map<graph::Node*, unsigned int>>(mapTL),
                                             std::make_shared<std::unordered_map<unsigned int, graph::Node*>>(mapLT),
                                             std::make_shared<std::vector<graph::Node*>>(roots));
@@ -46,8 +46,8 @@ void solver::ClusterSolver::getClusterPoints()
         {
             for (const auto& f : *instance)
             {
-                const graph::Node* begin = f->Nodes().data();
-                const graph::Node* end = begin + f->Nodes().size();
+                const graph::Node* begin = f->Nodes()->data();
+                const graph::Node* end = begin + f->Nodes()->size();
                 if (twin >= begin && twin < end)
                 {
                     pointsAndForests_perCluster.back().emplace_back(f, twin);
@@ -66,7 +66,7 @@ void solver::ClusterSolver::resizeSubtreeTerminalsVector()
     {
         for (const auto& f : *instance)
         {
-            for (auto& n : f->Nodes())
+            for (auto& n : *f->Nodes())
             {
                 n.subtreeTerminals.resize((maxLabel + numberOfNewLabels + 63) / 64);
             }
