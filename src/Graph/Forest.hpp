@@ -109,12 +109,12 @@ class Forest
     /// \brief Reference to nodes vector.
     /// \property Nodes
     [[nodiscard, maybe_unused]]
-    std::vector<Node>& Nodes();
+    std::shared_ptr<std::vector<Node>>& Nodes();
 
     /// \brief \c const reference to nodes vector.
     /// \property Nodes
     [[nodiscard, maybe_unused]]
-    const std::vector<Node>& Nodes() const;
+    const std::shared_ptr<std::vector<Node>>& Nodes() const;
 
     /// \brief Reference terminals to label map.
     /// It maps a pointer of a terminal node to its label.

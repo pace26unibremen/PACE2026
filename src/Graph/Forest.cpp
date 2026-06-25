@@ -96,14 +96,14 @@ void Forest::dot(const string& path) const
 // ---- access to member fields -------------------------------- //
 // ------------------------------------------------------------- //
 
-vector<Node>& Forest::Nodes()
+std::shared_ptr<std::vector<Node>>& Forest::Nodes()
 {
-    return *this->nodes;
+    return this->nodes;
 }
 
-const vector<Node>& Forest::Nodes() const
+const std::shared_ptr<std::vector<Node>>& Forest::Nodes() const
 {
-    return *this->nodes;
+    return this->nodes;
 }
 
 std::unordered_map<Node*, unsigned int>& Forest::TerminalToLabel()
