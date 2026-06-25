@@ -26,6 +26,8 @@ solver::RuleReturnCode solver::BRule::apply()
         auto bNode = forest->LabelToTerminal().at(b1Label);
         if (not bNode->parent)
             continue;
+        if (context->protectedEdges.contains(bNode))
+            return RuleReturnCode::CutBranch;
         changes.emplace(bNode, forest);
         changes.top().doAction();
 
@@ -34,6 +36,8 @@ solver::RuleReturnCode solver::BRule::apply()
             auto b2Node = forest->LabelToTerminal().at(b2Label);
             if (not b2Node->parent)
                 continue;
+            if (context->protectedEdges.contains(b2Node))
+                return RuleReturnCode::CutBranch;
             changes.emplace(b2Node, forest);
             changes.top().doAction();
         }
@@ -67,8 +71,7 @@ graph::Node* solver::BRule::isA3Path(const graph::Node* aNode, const graph::Node
     {
         return cNode->sibling;
     }
-    else
-        return nullptr;
+    return nullptr;
 }
 
 std::shared_ptr<solver::AbstractRule> solver::BRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,

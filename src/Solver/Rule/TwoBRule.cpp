@@ -18,14 +18,19 @@ solver::RuleReturnCode solver::TwoBRule::apply()
     for (const auto& f : *instance)
     {
         const auto toCutNode1 = f->LabelToTerminal().at(toCutLabel1);
-        const auto toCutNode2 = f->LabelToTerminal().at(toCutLabel2);
         if (toCutNode1->parent)
         {
+            if (context->protectedEdges.contains(toCutNode1))
+                return RuleReturnCode::CutBranch;
             changes.emplace(toCutNode1, f);
             changes.top().doAction();
         }
+
+        const auto toCutNode2 = f->LabelToTerminal().at(toCutLabel2);
         if (toCutNode2->parent)
         {
+            if (context->protectedEdges.contains(toCutNode2))
+                return RuleReturnCode::CutBranch;
             changes.emplace(toCutNode2, f);
             changes.top().doAction();
         }
