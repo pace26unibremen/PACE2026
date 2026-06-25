@@ -33,15 +33,18 @@ namespace solver
         /// \brief Indices for all root nodes prior to applying the rule for the second tree
          std::pair<std::vector<std::vector<int>>, std::vector<std::vector<uint64_t>>> rootsT2Indices;
 
-        graph::Node* topOfChainT1;
-        graph::Node* topOfChainT2;
-
         /// \brief Stack of action that modify the instance,
         /// filled in the apply method and unfilled in the unapply method
         std::stack<DeleteEdgeAction> changes = std::stack<DeleteEdgeAction>();
 
-        AddEdgeAction addedEdgeT1;
-        AddEdgeAction addedEdgeT2;
+        std::ptrdiff_t bottomRootIndexT1 = -1;
+        std::ptrdiff_t bottomRootIndexT2 = -1;
+
+        std::ptrdiff_t topChainIndexT1 = -1;
+        std::ptrdiff_t topChainIndexT2 = -1;
+
+        std::ptrdiff_t otherNodeIndexT1 = -1;
+        std::ptrdiff_t otherNodeIndexT2 = -1;
 
     public:
         /// \brief Chain Reduction Rule implementation that identifies the first chain out of the two forests given
@@ -75,23 +78,14 @@ namespace solver
         /// \param forest The forest from which the node originates.
         void removeConnectionOfTerminalNode(graph::Node* node, std::shared_ptr<graph::Forest>& forest);
 
-        /// \brief Helper function that determinates on which side from the viewpoint of the root node
-        /// the parameter node is within its tree.
-        /// \param node The node from which its side position is to be determined
-        /// \return 0 if the node is on the left side, 1 if the node is on the right side
-        int determineSideOfChain(graph::Node* node);
-
         std::vector<uint64_t> eraseTerminals(std::vector<uint64_t> target, std::vector<uint64_t> toBeErased);
 
         static int identifyDistanceToRoot(graph::Node* node, std::shared_ptr<graph::Forest>& forest);
 
-        static std::vector<int> structureToRoot(graph::Node* node, std::shared_ptr<graph::Forest>& forest);
+        static std::vector<int> structureToRoot(graph::Node* node);
 
         /// \brief Helper function that updates the subtree terminal bitmasks of the nodes.
         void updateSubtreeTerminals();
-        void removeNodeOutOfRoot(graph::Node* node, std::vector<graph::Node*>& roots);
-
-        void storeNode(const graph::Node* node, const std::shared_ptr<graph::Forest>& forest);
 
         /// \brief Apply the Chain Reduction rule onto the two Trees
         RuleReturnCode apply() override;
@@ -103,7 +97,7 @@ namespace solver
         static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                       const std::shared_ptr<Context>& context);
 
-        std::string name() const override;
+        [[nodiscard]] std::string name() const override;
     };
 
 

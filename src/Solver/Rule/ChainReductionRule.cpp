@@ -13,16 +13,10 @@ solver::ChainReductionRule::ChainReductionRule(
     std::pair<std::vector<std::vector<graph::Node*>>,std::vector<std::shared_ptr<graph::Forest>>> chainWithTrees,
     const std::shared_ptr<Context>& context
     ) :
-        AbstractRule(instance, context, true),
-        addedEdgeT1(nullptr,nullptr,nullptr),
-        addedEdgeT2(nullptr,nullptr,nullptr)
+        AbstractRule(instance, context, true)
 {
     //Copying of the Trees maybe irrelevant when doing this without const params. Not sure.
     this->chainWithTrees = std::move(chainWithTrees);
-    rootsT1Indices = {};
-    rootsT2Indices = {};
-    addedEdgeT1;
-    addedEdgeT2;
 }
 
 //Chain def:Let T be a rooted phylogenetic X-tree, and let C =
@@ -276,17 +270,6 @@ void solver::ChainReductionRule::updateSubtreeTerminals()
     //-> for all xn to root, the subtreeTerminal bitmask has been updated.
 }
 
-void solver::ChainReductionRule::removeNodeOutOfRoot(graph::Node* node, std::vector<graph::Node*>& roots)
-{
-    // const auto RootIterator = std::ranges::find(chainWithTrees.second.front()->Roots(), topChainT1Parent->rightChild);
-    // auto RootsIndex = std::distance(chainWithTrees.second.front()->Roots().begin(), RootIterator);
-    // chainWithTrees.second.front()->Roots().erase(chainWithTrees.second.front()->Roots().begin() + RootsIndex);
-
-    const auto RootIterator = std::ranges::find(roots, node);
-    auto RootsIndex = std::distance(roots.begin(), RootIterator);
-    roots.erase(roots.begin() + RootsIndex);
-}
-
 solver::RuleReturnCode solver::ChainReductionRule::apply()
 {
 
@@ -311,13 +294,12 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
         graph::Node* topChainT1Parent = topChainT1->parent;
         graph::Node* topChainT2Parent = topChainT2->parent;
 
-        topOfChainT1 = topChainT1;
-        topOfChainT2 = topChainT2;
-
         std::ranges::borrowed_iterator_t<std::vector<graph::Node*>&> aboveChainT1;
         std::ranges::borrowed_iterator_t<std::vector<graph::Node*>&> aboveChainT2;
+
         std::ptrdiff_t rootEntryIndexT1;
         std::ptrdiff_t rootEntryIndexT2;
+
 
         //If Root ended the chain in isApplicable
         if (!topChainT1Parent->parent && !topChainT1Parent->sibling)
@@ -356,7 +338,9 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
             //Top
             topChainT1Parent->leftChild = bottomT1;
 
-            removeNodeOutOfRoot(bottomT1,chainWithTrees.second.front()->Roots());
+            const auto BottomRootIterator = std::ranges::find(chainWithTrees.second.front()->Roots(), bottomT1);
+            bottomRootIndexT1 = std::distance(chainWithTrees.second.front()->Roots().begin(), BottomRootIterator);
+            chainWithTrees.second.front()->Roots().erase(chainWithTrees.second.front()->Roots().begin() + bottomRootIndexT1);
 
             //If the other child got turned into a single vertex tree
             if (!topChainT1Parent->rightChild->parent && !topChainT1Parent->rightChild->sibling)
@@ -364,15 +348,18 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                 //Delete it out of there
                 topChainT1Parent->rightChild->parent = topChainT1Parent;
                 topChainT1Parent->rightChild->sibling = bottomT1;
-                removeNodeOutOfRoot(topChainT1Parent->rightChild, chainWithTrees.second.front()->Roots());
 
+                const auto otherNodeIterator = std::ranges::find(chainWithTrees.second.front()->Roots(), topChainT1Parent->rightChild);
+                otherNodeIndexT1 = std::distance(chainWithTrees.second.front()->Roots().begin(), otherNodeIterator);
+                chainWithTrees.second.front()->Roots().erase(chainWithTrees.second.front()->Roots().begin() + otherNodeIndexT1);
             }
+
             //Store pos of topChain, as it does match the pos for its parent if it's a root
             const auto topChainPosIterator = std::ranges::find(chainWithTrees.second.front()->Roots(), topChainT1);
-            auto topChainIndex = std::distance(chainWithTrees.second.front()->Roots().begin(), topChainPosIterator);
+            topChainIndexT1 = std::distance(chainWithTrees.second.front()->Roots().begin(), topChainPosIterator);
 
             //Remove topChainT1 from the roots
-            removeNodeOutOfRoot(topChainT1,chainWithTrees.second.front()->Roots());
+            chainWithTrees.second.front()->Roots().erase(chainWithTrees.second.front()->Roots().begin() + topChainIndexT1);
 
             //Update subtree for topChainT1Parent and above
             auto newSubtreeTerminals = bottomT1->subtreeTerminals;
@@ -414,7 +401,7 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
             else //topChainT1Parent was root! -> Enter into Root
             {
                 chainWithTrees.second.front()->
-                Roots().insert(chainWithTrees.second.front()->Roots().begin() + topChainIndex, topChainT1Parent);
+                Roots().insert(chainWithTrees.second.front()->Roots().begin() + topChainIndexT1, topChainT1Parent);
             }
 
         }
@@ -424,7 +411,9 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
             bottomT1->sibling = topChainT1Parent->leftChild;
             topChainT1Parent->rightChild = bottomT1;
 
-            removeNodeOutOfRoot(bottomT1,chainWithTrees.second.front()->Roots());
+            const auto bottomRootIterator = std::ranges::find(chainWithTrees.second.front()->Roots(), bottomT1);
+            bottomRootIndexT1 = std::distance(chainWithTrees.second.front()->Roots().begin(), bottomRootIterator);
+            chainWithTrees.second.front()->Roots().erase(chainWithTrees.second.front()->Roots().begin() + bottomRootIndexT1);
 
             //If the other child got turned into a single vertex tree
             if (!topChainT1Parent->leftChild->parent && !topChainT1Parent->leftChild->sibling)
@@ -432,15 +421,18 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                 //Delete it out of the Root and connect it
                 topChainT1Parent->leftChild->parent = topChainT1Parent;
                 topChainT1Parent->leftChild->sibling = bottomT1;
-                removeNodeOutOfRoot(topChainT1Parent->leftChild, chainWithTrees.second.front()->Roots());
 
+                const auto otherNodeIterator = std::ranges::find(chainWithTrees.second.front()->Roots(), topChainT1Parent->leftChild);
+                otherNodeIndexT1 = std::distance(chainWithTrees.second.front()->Roots().begin(), otherNodeIterator);
+                chainWithTrees.second.front()->Roots().erase(chainWithTrees.second.front()->Roots().begin() + otherNodeIndexT1);
             }
+
             //Store pos of topChain, as it does match the pos for its parent if it's a root
             const auto topChainPosIterator = std::ranges::find(chainWithTrees.second.front()->Roots(), topChainT1);
-            auto topChainIndex = std::distance(chainWithTrees.second.front()->Roots().begin(), topChainPosIterator);
+            topChainIndexT1 = std::distance(chainWithTrees.second.front()->Roots().begin(), topChainPosIterator);
 
             //Remove topChainT1 from the roots
-            removeNodeOutOfRoot(topChainT1,chainWithTrees.second.front()->Roots());
+            chainWithTrees.second.front()->Roots().erase(chainWithTrees.second.front()->Roots().begin() + topChainIndexT1);
 
             //Update subtree for topChainT1Parent and above
             auto newSubtreeTerminals = bottomT1->subtreeTerminals;
@@ -482,7 +474,7 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
             else //topChainT1Parent was root! -> Enter into Root
             {
                 chainWithTrees.second.front()->
-                Roots().insert(chainWithTrees.second.front()->Roots().begin() + topChainIndex, topChainT1Parent);
+                Roots().insert(chainWithTrees.second.front()->Roots().begin() + topChainIndexT1, topChainT1Parent);
             }
         }
 
@@ -495,7 +487,10 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
             //Top
             topChainT2Parent->leftChild = bottomT2;
 
-            removeNodeOutOfRoot(bottomT2,chainWithTrees.second.back()->Roots());
+            const auto BottomRootIterator = std::ranges::find(chainWithTrees.second.back()->Roots(), bottomT2);
+            bottomRootIndexT2 = std::distance(chainWithTrees.second.back()->Roots().begin(), BottomRootIterator);
+            chainWithTrees.second.back()->Roots()
+            .erase(chainWithTrees.second.back()->Roots().begin() + bottomRootIndexT2);
 
             //If the other child got turned into a single vertex tree
             if (!topChainT2Parent->rightChild->parent && !topChainT2Parent->rightChild->sibling)
@@ -503,17 +498,20 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                 //Delete it out of there
                 topChainT2Parent->rightChild->parent = topChainT2Parent;
                 topChainT2Parent->rightChild->sibling = bottomT2;
-                removeNodeOutOfRoot(topChainT2Parent->rightChild, chainWithTrees.second.back()->Roots());
+
+                const auto otherNodeIterator = std::ranges::find(chainWithTrees.second.back()->Roots(), topChainT2Parent->rightChild);
+                otherNodeIndexT2 = std::distance(chainWithTrees.second.back()->Roots().begin(), otherNodeIterator);
+                chainWithTrees.second.back()->Roots().erase(chainWithTrees.second.back()->Roots().begin() + otherNodeIndexT2);
 
             }
             //Store pos of topChain, as it does match the pos for its parent if it's a root
             const auto topChainPosIterator = std::ranges::find(chainWithTrees.second.back()->Roots(), topChainT2);
-            auto topChainIndex = std::distance(chainWithTrees.second.back()->Roots().begin(), topChainPosIterator);
+            topChainIndexT2 = std::distance(chainWithTrees.second.back()->Roots().begin(), topChainPosIterator);
 
-            //Remove topChainT1 from the roots
-            removeNodeOutOfRoot(topChainT2,chainWithTrees.second.back()->Roots());
+            //Remove topChainT2 from the roots
+            chainWithTrees.second.back()->Roots().erase(chainWithTrees.second.back()->Roots().begin() + topChainIndexT2);
 
-            //Update subtree for topChainT1Parent and above
+            //Update subtree for topChainT2Parent and above
             auto newSubtreeTerminals = bottomT2->subtreeTerminals;
             for (int i = 0; i < newSubtreeTerminals.size(); i++)
             {
@@ -521,7 +519,7 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
             }
             topChainT2Parent->subtreeTerminals = newSubtreeTerminals;
 
-            //All nodes above topChainT1Parent
+            //All nodes above topChainT2Parent
             if (topChainT2Parent->parent && topChainT2Parent->sibling)
             {
                 newSubtreeTerminals = topChainT2Parent->subtreeTerminals;
@@ -553,7 +551,7 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
             else //topChainT2Parent was root! -> Enter into Root
             {
                 chainWithTrees.second.back()->
-                Roots().insert(chainWithTrees.second.back()->Roots().begin() + topChainIndex, topChainT2Parent);
+                Roots().insert(chainWithTrees.second.back()->Roots().begin() + topChainIndexT2, topChainT2Parent);
             }
         }
         else // right side is topChain
@@ -565,7 +563,9 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
             //Top
             topChainT2Parent->rightChild = bottomT2;
 
-            removeNodeOutOfRoot(bottomT2,chainWithTrees.second.back()->Roots());
+            const auto bottomRootIterator = std::ranges::find(chainWithTrees.second.back()->Roots(), bottomT2);
+            bottomRootIndexT2 = std::distance(chainWithTrees.second.back()->Roots().begin(), bottomRootIterator);
+            chainWithTrees.second.back()->Roots().erase(chainWithTrees.second.back()->Roots().begin() + bottomRootIndexT2);
 
             //If the other child got turned into a single vertex tree
             if (!topChainT2Parent->leftChild->parent && !topChainT2Parent->leftChild->sibling)
@@ -573,15 +573,18 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
                     //Delete it out of there
                     topChainT2Parent->leftChild->parent = topChainT2Parent;
                     topChainT2Parent->leftChild->sibling = bottomT2;
-                    removeNodeOutOfRoot(topChainT2Parent->leftChild, chainWithTrees.second.back()->Roots());
+
+                    const auto otherNodeIterator = std::ranges::find(chainWithTrees.second.back()->Roots(), topChainT2Parent->leftChild);
+                    otherNodeIndexT2 = std::distance(chainWithTrees.second.back()->Roots().begin(), otherNodeIterator);
+                    chainWithTrees.second.back()->Roots().erase(chainWithTrees.second.back()->Roots().begin() + otherNodeIndexT2);
 
                 }
             //Store pos of topChain, as it does match the pos for its parent if it's a root
             const auto topChainPosIterator = std::ranges::find(chainWithTrees.second.back()->Roots(), topChainT2);
-            auto topChainIndex = std::distance(chainWithTrees.second.back()->Roots().begin(), topChainPosIterator);
+            topChainIndexT2 = std::distance(chainWithTrees.second.back()->Roots().begin(), topChainPosIterator);
 
             //Remove topChainT1 from the roots
-            removeNodeOutOfRoot(topChainT2,chainWithTrees.second.back()->Roots());
+            chainWithTrees.second.back()->Roots().erase(chainWithTrees.second.back()->Roots().begin() + topChainIndexT2);
 
             //Update subtree for topChainT1Parent and above
             auto newSubtreeTerminals = bottomT2->subtreeTerminals;
@@ -623,7 +626,7 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
             else //topChainT2Parent was root! -> Enter into Root
             {
                 chainWithTrees.second.back()->
-                Roots().insert(chainWithTrees.second.back()->Roots().begin() + topChainIndex, topChainT2Parent);
+                Roots().insert(chainWithTrees.second.back()->Roots().begin() + topChainIndexT2, topChainT2Parent);
             }
         }
 
@@ -657,6 +660,9 @@ void solver::ChainReductionRule::unapply()
     graph::Node* topChainT1 = chainWithTrees.first[chainWithTrees.first.size()-1].front();
     graph::Node* topChainT2 = chainWithTrees.first[chainWithTrees.first.size()-1].back();
 
+    auto T1 = chainWithTrees.second.front();
+    auto T2 = chainWithTrees.second.back();
+
     if (topChainParentT1->leftChild == bottomT1)
     {
         topChainParentT1->leftChild = topChainT1;
@@ -669,10 +675,51 @@ void solver::ChainReductionRule::unapply()
         bottomT1->parent = nullptr;
         bottomT1->sibling = nullptr;
 
+        //Add back bottom to roots
+        T1->Roots().insert(T1->Roots().begin() + bottomRootIndexT1, bottomT1);
 
+        //TopChain was definitely cut-> restore it
+        //It's at pos of TopChainParent -> Remove and restore
+        T1->Roots().erase(T1->Roots().begin() + topChainIndexT1);
+        T1->Roots().insert(T1->Roots().begin() + topChainIndexT1, topChainT1);
+
+        if (otherNodeIndexT1 != -1)
+        {
+            //Other node was deleted, reinsert it into the roots
+            auto otherNode = topChainParentT1->rightChild;
+            otherNode->parent = nullptr;
+            otherNode->sibling = nullptr;
+            T1->Roots().insert(T1->Roots().begin() + otherNodeIndexT1, otherNode);
+        }
     }
     else
     {
+        topChainParentT1->rightChild = topChainT1;
+        //Erase subtrees of bottomT1, add those of topChainT1
+        for (int i = 0; i < topChainT1->subtreeTerminals.size(); i++)
+        {
+            topChainParentT1->subtreeTerminals[i] ^= bottomT1->subtreeTerminals[i];
+            topChainParentT1->subtreeTerminals[i] |= topChainT1->subtreeTerminals[i];
+        }
+        bottomT1->parent = nullptr;
+        bottomT1->sibling = nullptr;
+
+        //Add back bottom to roots
+        T1->Roots().insert(T1->Roots().begin() + bottomRootIndexT1, bottomT1);
+
+        //TopChain was definitely cut-> restore it
+        //It's at pos of TopChainParent -> Remove and restore
+        T1->Roots().erase(T1->Roots().begin() + topChainIndexT1);
+        T1->Roots().insert(T1->Roots().begin() + topChainIndexT1, topChainT1);
+
+        if (otherNodeIndexT1 != -1)
+        {
+            //Other node was deleted, reinsert it into the roots
+            auto otherNode = topChainParentT1->leftChild;
+            otherNode->parent = nullptr;
+            otherNode->sibling = nullptr;
+            T1->Roots().insert(T1->Roots().begin() + otherNodeIndexT1, otherNode);
+        }
 
     }
 
@@ -686,13 +733,50 @@ void solver::ChainReductionRule::unapply()
         }
         bottomT2->parent = nullptr;
         bottomT2->sibling = nullptr;
+
+        T2->Roots().insert(T2->Roots().begin() + bottomRootIndexT2, bottomT2);
+
+        //TopChain was definitely cut-> restore it
+        //It's at pos of TopChainParent -> Remove and restore
+        T2->Roots().erase(T2->Roots().begin() + topChainIndexT2);
+        T2->Roots().insert(T2->Roots().begin() + topChainIndexT2, topChainT2);
+
+        if (otherNodeIndexT1 != -1)
+        {
+            //Other node was deleted, reinsert it into the roots
+            auto otherNode = topChainParentT1->rightChild;
+            otherNode->parent = nullptr;
+            otherNode->sibling = nullptr;
+            T2->Roots().insert(T2->Roots().begin() + otherNodeIndexT2, otherNode);
+        }
     }
     else
     {
+        topChainParentT2->rightChild = topChainT2;
+        for (int i = 0; i < topChainT2->subtreeTerminals.size(); i++)
+        {
+            topChainParentT2->subtreeTerminals[i] ^= bottomT2->subtreeTerminals[i];
+            topChainParentT2->subtreeTerminals[i] |= topChainT2->subtreeTerminals[i];
+        }
+        bottomT2->parent = nullptr;
+        bottomT2->sibling = nullptr;
 
+        T2->Roots().insert(T2->Roots().begin() + bottomRootIndexT2, bottomT2);
+
+        //TopChain was definitely cut-> restore it
+        //It's at pos of TopChainParent -> Remove and restore
+        T2->Roots().erase(T2->Roots().begin() + topChainIndexT2);
+        T2->Roots().insert(T2->Roots().begin() + topChainIndexT2, topChainT2);
+
+        if (otherNodeIndexT1 != -1)
+        {
+            //Other node was deleted, reinsert it into the roots
+            auto otherNode = topChainParentT1->leftChild;
+            otherNode->parent = nullptr;
+            otherNode->sibling = nullptr;
+            T2->Roots().insert(T2->Roots().begin() + otherNodeIndexT2, otherNode);
+        }
     }
-
-
     //The edge removal undos at last
     while (not changes.empty())
     {
@@ -714,7 +798,7 @@ int solver::ChainReductionRule::identifyDistanceToRoot(graph::Node* node, std::s
         }
 }
 
-std::vector<int> solver::ChainReductionRule::structureToRoot(graph::Node* node, std::shared_ptr<graph::Forest>& forest)
+std::vector<int> solver::ChainReductionRule::structureToRoot(graph::Node* node)
 {
     std::vector<int> result = {};
     graph::Node* current = node;
@@ -781,8 +865,8 @@ solver::ChainReductionRule::isApplicable(
                     {
                         //Determine x3 for case 2 for chain def in T2
                         graph::Node* parentOfParentT2 = parentT2->parent;
-                        std::vector structureToRootT1 = structureToRoot(terminalT1.first, T1);
-                        std::vector structureToRootT2 = structureToRoot(terminalT2.first,T2);
+                        std::vector structureToRootT1 = structureToRoot(terminalT1.first);
+                        std::vector structureToRootT2 = structureToRoot(terminalT2.first);
 
                         //Case 1: if the parent of x1 coincides with the parent of x2 for both trees T1 and T2
                         if (terminalT1.first->parent->leftChild != nullptr
