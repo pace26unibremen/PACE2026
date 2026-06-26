@@ -24,12 +24,13 @@ solver::RuleReturnCode solver::BRule::apply()
     for (const auto& forest : *instance)
     {
         auto bNode = forest->LabelToTerminal().at(b1Label);
-        if (not bNode->parent)
-            continue;
-        if (context->protectedEdges.contains(bNode))
-            return RuleReturnCode::CutBranch;
-        changes.emplace(bNode, forest);
-        changes.top().doAction();
+        if (bNode->parent)
+        {
+            if (context->protectedEdges.contains(bNode))
+                return RuleReturnCode::CutBranch;
+            changes.emplace(bNode, forest);
+            changes.top().doAction();
+        }
 
         if (b2Label != 0)
         {
