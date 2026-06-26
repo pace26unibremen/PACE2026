@@ -35,8 +35,8 @@ class SiblingRuleFactory
     /// \brief Checks whether \ref EqualPairReductionRule, \ref ACBranchingRule or \ref ABCBranchingRule
     /// can be applied and returns an instance of the best applicable rule,
     /// with the rules prioritized in the following order:
-    /// 1. \ref EqualPairReductionRule
-    /// 2. \ref ACBranchingRule
+    /// 1. \ref ACBranchingRule
+    /// 2. \ref EqualPairReductionRule
     /// 3. \ref ABCBranchingRule.
     /// If none of the rules is applicable the method returns a null pointer.
     /// \param instance on which the rule should be applied
@@ -47,11 +47,11 @@ class SiblingRuleFactory
 
     /// \brief Checks whether a 'sibling rule' can be applied and returns an instance of the best applicable rule,
     /// with the rules prioritized in the following order:
-    /// 1. \ref EqualPairReductionRule
-    /// 2. \ref BRule
-    /// 3. \ref ReverseBRule
-    /// 4. \ref TwoBRule
-    /// 5. \ref ACBranchingRule
+    /// 1. \ref ACBranchingRule
+    /// 2. \ref EqualPairReductionRule
+    /// 3. \ref BRule
+    /// 4. \ref ReverseBRule
+    /// 5. \ref TwoBRule
     /// 6. \ref ABCBranchingRule.
     /// If none of the rules is applicable the method returns a null pointer.
     /// \param instance on which the rule should be applied
