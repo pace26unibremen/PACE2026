@@ -52,6 +52,7 @@ solver::SiblingRuleFactory::basicRules(const std::shared_ptr<graph::Instance>& i
         const auto& aNode = fi->LabelToTerminal().at(aLabel);
         const auto& cNode = fi->LabelToTerminal().at(cLabel);
 
+        // If the nodes are siblings, we can continue, as neither the AC, nor bNodes for the ABC rule can be found
         if (aNode->sibling == cNode)
         {
             continue;
@@ -377,23 +378,24 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
             const auto possibleB2Label = fi->TerminalToLabel().at(b2Node);
 
             // check possibleB1Label first:
-            if (possibleB1Label == b1Label or possibleB1Label == b2Label)
-            {}
-            else if (b1Label == 0)
+            if (possibleB1Label != b1Label and possibleB1Label != b2Label)
             {
-                // if b1 was not assigned until now, we can do this now
-                b1Label = possibleB1Label;
-            }
-            else if (b2Label == 0)
-            {
-                // if b2 was not assigned until now, we can do this now
-                b2Label = possibleB1Label;
-            }
-            else
-            {
-                // possibleB1Label didn't match previous assignments for b1Label/b2Label.
-                twoBRule = false;
-                continue;
+                if (b1Label == 0)
+                {
+                    // if b1 was not assigned until now, we can do this now
+                    b1Label = possibleB1Label;
+                }
+                else if (b2Label == 0)
+                {
+                    // if b2 was not assigned until now, we can do this now
+                    b2Label = possibleB1Label;
+                }
+                else
+                {
+                    // possibleB1Label didn't match previous assignments for b1Label/b2Label.
+                    twoBRule = false;
+                    continue;
+                }
             }
 
             // check now possibleB2Label:
