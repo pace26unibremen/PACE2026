@@ -88,11 +88,7 @@ solver::SiblingRuleFactory::basicRules(const std::shared_ptr<graph::Instance>& i
             bNodes.push_back(it->sibling);
             it = it->parent;
         }
-
-        if (not bNodes.empty())
-        {
-            forestWithBNodes.emplace_back(fi, bNodes);
-        }
+        forestWithBNodes.emplace_back(fi, bNodes);
     }
 
     if (siblings)
