@@ -144,7 +144,7 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
     const auto& [aLabel, c1Label] = getSiblings(instance, context);
     auto forestWithBNodes = std::list<std::pair<std::shared_ptr<graph::Forest>, std::list<graph::Node*>>>();
 
-    if (aLabel * c1Label == 0)
+    if (aLabel == 0 and c1Label == 0)
     {
         // there is no sibling pair in f0
         return nullptr;
