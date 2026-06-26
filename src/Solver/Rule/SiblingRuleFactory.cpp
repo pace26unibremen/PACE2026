@@ -1,11 +1,13 @@
 #include "SiblingRuleFactory.hpp"
 
+#include "ABCBranchingRule.hpp"
+#include "ACBranchingRule.hpp"
 #include "BRule.hpp"
+#include "EqualPairReductionRule.hpp"
 #include "ReverseBRule.hpp"
 #include "TwoBRule.hpp"
-#include "ACBranchingRule.hpp"
-#include "ABCBranchingRule.hpp"
-#include "EqualPairReductionRule.hpp"
+
+#include <cassert>
 
 std::pair<unsigned int, unsigned int> solver::SiblingRuleFactory::getSiblings(
     const std::shared_ptr<graph::Instance>& instance,
