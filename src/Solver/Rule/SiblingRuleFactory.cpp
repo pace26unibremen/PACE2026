@@ -35,7 +35,7 @@ solver::SiblingRuleFactory::basicRules(const std::shared_ptr<graph::Instance>& i
     const auto& [aLabel, cLabel] = getSiblings(instance, context);
     auto forestWithBNodes = std::list<std::pair<std::shared_ptr<graph::Forest>, std::list<graph::Node*>>>();
 
-    if (aLabel * cLabel == 0)
+    if (aLabel == 0 or cLabel == 0)
     {
         // there is no sibling pair in f0
         return nullptr;
@@ -173,7 +173,7 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
     // if the siblings from f0 are siblings in every other forest.
     bool equalPairRule = true;
 
-    // if the checked subtree always have c2 has uncle
+    // if the checked subtree always have c2 as uncle
     // and that the a-node and c1+c2 are separated by the same pendant subtrees b1 / b2
     bool twoBRule = (c2Label != 0);
 
@@ -297,7 +297,7 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
             //   ┌──┴──┐     /   ┌──┴──┐
             // ┌─┴─┐   c1   /  ┌─┴─┐   a
             // a   b1Node  /  c1   b1Node
-            // at this point we don't checked anything about the label of the b1 Node
+            // at this point, we haven't checked anything about the label of the b1 Node
 
             // we can fill the b-nodes list for the ACB Branching rule
             forestWithBNodes.push_back({fi,{b1Node}});
@@ -350,7 +350,7 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
             //    ┌──┴─┐    c1   /        ┌──┴─┐    a
             //  ┌─┴─┐  b2       /       ┌─┴─┐  b2
             //  a  b1          /       c1   b1
-            // at this point we don't checked anything about the label of the b1 and b2 Node
+            // at this point, we haven't checked anything about the label of the b1 Node
 
             // we fill the b-nodes list for the ACB branching rule
             forestWithBNodes.push_back({fi,{b1Node, b2Node}});
@@ -428,6 +428,7 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
         graph::Node* it = aNode;
         while (true)
         {
+            assert(it->parent != nullptr);
             if (c1Node->hasSubsetTerminals(it->parent))
             {
                 lca = it->parent;
@@ -441,6 +442,7 @@ std::shared_ptr<solver::AbstractRule> solver::SiblingRuleFactory::allRules(const
         it = c1Node;
         while (true)
         {
+            assert(it->parent != nullptr);
             if (it->parent == lca)
             {
                 break;

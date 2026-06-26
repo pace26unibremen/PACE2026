@@ -65,6 +65,7 @@ solver::EqualPairReductionRule::isApplicable(const std::shared_ptr<graph::Instan
         }
     }
 
+    // check if we found a sibling pair in f0
     if (aLabel == 0)
     {
         // we have a better rule for this case
