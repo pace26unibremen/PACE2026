@@ -1,5 +1,5 @@
-#ifndef PACE2026_PAIR_EQUAL_RULE_HPP
-#define PACE2026_PAIR_EQUAL_RULE_HPP
+#ifndef PACE2026_EQUAL_PAIR_REDUCTION_RULE_HPP
+#define PACE2026_EQUAL_PAIR_REDUCTION_RULE_HPP
 
 #include "../Action/CollapseSubtreeAction.hpp"
 #include "AbstractRule.hpp"
@@ -16,24 +16,27 @@ namespace solver
 /// GitLab Documentation
 
 /// </a>
-class PairEqualRule : public AbstractRule
+class EqualPairReductionRule : public AbstractRule
 {
   protected:
-    /// \brief A mapping of each forest to the subtree in this forest that can be collapsed
-    std::unordered_map<std::shared_ptr<graph::Forest>, graph::Node*> forestToSubtree;
-
     /// \brief Stack of action that modify the instance,
     /// filled in the apply method and unfilled in the unapply method
     std::stack<CollapseSubtreeAction> changes = std::stack<solver::CollapseSubtreeAction>();
 
-  public:
+    /// \brief label of one sibling nodes
+    unsigned int aLabel;
+    /// \brief label of the other sibling node
+    unsigned int cLabel;
+
+public:
     /// \param instance the problem instance
     /// \param context information about the instance and the solver state
-    /// \param forestToSubtree the position where the rule can be applied,\n
-    /// which is a mapping of each forest to the subtree in this forest that can be collapsed
-    PairEqualRule(const std::shared_ptr<graph::Instance>& instance,
+    /// \param aLabel label of one sibling nodes
+    /// \param cLabel label of the other sibling node
+    EqualPairReductionRule(const std::shared_ptr<graph::Instance>& instance,
                   const std::shared_ptr<Context>& context,
-                  const std::unordered_map<std::shared_ptr<graph::Forest>, graph::Node*>& forestToSubtree);
+                  unsigned int aLabel,
+                  unsigned int cLabel);
 
     /// \brief applies rule
     /// \returns always \ref RuleReturnCode::Continue
@@ -41,19 +44,22 @@ class PairEqualRule : public AbstractRule
 
     void unapply() override;
 
-    /// \brief It checks whether the PairEqualRule is applicable and generates an instance of this rule if so.
-    /// This method only considers the PairEqualRule applicable if the first pair found in forest 1
+    /// \brief It checks whether the EqualPairReductionRule is applicable and generates an instance of this rule if so.
+    /// This method only considers the EqualPairReductionRule applicable if the first pair found in forest 1
     /// has a corresponding pair of terminals in each of the other forests.
     /// \param instance on which the rule should be applied
     /// \param context contains additional information to the instance and the solver state
-    /// \returns shared_pointer to PairEqualRule if rule is applicable, elso null pointer
+    /// \returns shared_pointer to EqualPairReductionRule if rule is applicable, elso null pointer
     static std::shared_ptr<AbstractRule> isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                       const std::shared_ptr<Context>& context);
 
     [[nodiscard]]
     std::string name() const override;
+
+    [[nodiscard]]
+    std::shared_ptr<AbstractRule> clone() const override;
 };
 
 }  //namespace solver
 
-#endif  //PACE2026_PAIR_EQUAL_RULE_HPP
+#endif  //PACE2026_EQUAL_PAIR_REDUCTION_RULE_HPP

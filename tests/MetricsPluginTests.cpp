@@ -45,6 +45,7 @@ class MockReductionRule : public solver::AbstractRule
     solver::RuleReturnCode apply() override { return solver::RuleReturnCode::Continue; }
     void unapply() override {}
     [[nodiscard]] std::string name() const override { return ruleName; }
+    std::shared_ptr<AbstractRule> clone() const override { return std::make_shared<MockReductionRule>(name()); }
 };
 
 class MockBranchingRule : public solver::AbstractBranchingRule
@@ -60,6 +61,7 @@ class MockBranchingRule : public solver::AbstractBranchingRule
     solver::RuleReturnCode apply() override { return solver::RuleReturnCode::Continue; }
     void unapply() override {}
     [[nodiscard]] std::string name() const override { return ruleName; }
+    std::shared_ptr<AbstractRule> clone() const override { return std::make_shared<MockBranchingRule>(name()); }
 };
 
 // ---------------------------------------------------------------------------
@@ -131,7 +133,7 @@ TEST_CASE("AbstractStridePlugin: toJson(vector<Snapshot>)", "[MetricsPlugin][JSO
     {
         solver::plugin::Snapshot s{
             .wtime        = 0.123,
-            .score        = 4,
+            .weight       = 4,
             .ruleCounts   = {{"CutBranchRule", 2}},
             .branchOpens  = 1,
             .branchCloses = 1,
@@ -139,15 +141,15 @@ TEST_CASE("AbstractStridePlugin: toJson(vector<Snapshot>)", "[MetricsPlugin][JSO
         };
         const std::string json = StrideTestHelper::toJson(std::vector<solver::plugin::Snapshot>{s});
         // Rule name keys are converted to snake_case by toJson(Snapshot) at serialisation time.
-        CHECK(json == "[{\"wtime\":0.123,\"score\":4,\"branch_opens\":1,\"branch_closes\":1,"
+        CHECK(json == "[{\"wtime\":0.123,\"score\":4.0,\"branch_opens\":1,\"branch_closes\":1,"
                       "\"rule_counts\":{\"cut_branch_rule\":2},"
                       "\"rule_times_ms\":{\"cut_branch_rule\":7.500}}]");
     }
 
     SECTION("two snapshots are comma-separated")
     {
-        solver::plugin::Snapshot s1{.wtime = 0.1, .score = 5, .ruleCounts = {}, .branchOpens = 0, .branchCloses = 0, .ruleTimes_ms = {}};
-        solver::plugin::Snapshot s2{.wtime = 0.2, .score = 3, .ruleCounts = {}, .branchOpens = 1, .branchCloses = 1, .ruleTimes_ms = {}};
+        solver::plugin::Snapshot s1{.wtime = 0.1, .weight = 5, .ruleCounts = {}, .branchOpens = 0, .branchCloses = 0, .ruleTimes_ms = {}};
+        solver::plugin::Snapshot s2{.wtime = 0.2, .weight = 3, .ruleCounts = {}, .branchOpens = 1, .branchCloses = 1, .ruleTimes_ms = {}};
         const std::string json = StrideTestHelper::toJson(std::vector<solver::plugin::Snapshot>{s1, s2});
         CHECK(json.front() == '[');
         CHECK(json.back() == ']');

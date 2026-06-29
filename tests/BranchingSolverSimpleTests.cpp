@@ -38,7 +38,7 @@ TEST_CASE("BranchingSolver on Tiny Test Set, unbounded depth search", "[Branchin
             CHECK(solved);
             solver.unapplyReductions();
             CHECK(solver.Instance()->at(0)->Roots().size() == instanceToSolutionSize[f]);
-        };
+        }
     }
 }
 
@@ -58,7 +58,7 @@ TEST_CASE("BranchingSolver on Tiny Test Set, bounded depth search", "[BranchingS
             CHECK(solved);
             solver.unapplyReductions();
             CHECK(solver.Instance()->at(0)->Roots().size() == instanceToSolutionSize[f]);
-        };
+        }
     }
 }
 

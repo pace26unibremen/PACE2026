@@ -35,7 +35,11 @@ class ForestIO
     /// \param forest the instance to write
     /// \param stream the outstream
     /// \param subgraphParams additional parameter to configure the subgraph in dot syntax. (e.g. "style=dotted;\n")
-    static void WriteDotSubgraph(const Forest& forest, std::ostream& stream, std::string subgraphParams = "");
+    /// \param verbose whether the dot graph contains address information
+    static void WriteDotSubgraph(const Forest& forest,
+                                 std::ostream& stream,
+                                 std::string subgraphParams = "",
+                                 bool verbose = false);
 };
 
 }  // namespace graph

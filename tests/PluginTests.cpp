@@ -24,7 +24,7 @@ class MockPlugin : public solver::plugin::AbstractPlugin
     void onUnapply(const std::shared_ptr<solver::AbstractRule>&) override   { calls.push_back("onUnapply"); }
     void onReductionUnapply(const std::shared_ptr<solver::AbstractRule>&, bool) override { calls.push_back("onReductionUnapply"); }
     void onReductionReapply(const std::shared_ptr<solver::AbstractRule>&) override       { calls.push_back("onReductionReapply"); }
-    void onNewBestSolution(std::size_t) override                            { calls.push_back("onNewBestSolution"); }
+    void onNewBestSolution(float) override                            { calls.push_back("onNewBestSolution"); }
     void onBranchEnd() override                                                  { calls.push_back("onBranchEnd"); }
     void onEnd() override                                                   { calls.push_back("onEnd"); }
 

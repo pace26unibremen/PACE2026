@@ -18,7 +18,7 @@ namespace solver::plugin
 struct Snapshot
 {
     double wtime;                               ///< Wall-clock seconds elapsed since solving started
-    std::size_t score;                          ///< Number of roots in the current best solution
+    float weight;                               ///< Weight of the current best solution, i.e. number of components
     std::map<std::string, int> ruleCounts;      ///< Cumulative rule-application counts
     int branchOpens;                            ///< Cumulative branching-rule applications (internal nodes opened)
     int branchCloses;                           ///< Cumulative terminal branches reached (leaves closed)

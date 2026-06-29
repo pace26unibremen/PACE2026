@@ -1,13 +1,12 @@
 #include "BranchingSolver.hpp"
 
-#include "Rule/SubtreeReductionRule.hpp"
-
+#include <algorithm>
 #include <ranges>
 
 solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>& instance)
     : AbstractSolver(instance)
 {
-    this->context->branchingSolverConfiguration = this->configuration;
+    initializeContext();
 }
 
 solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>& instance,
@@ -15,12 +14,34 @@ solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>&
     AbstractSolver(instance),
     configuration(configuration)
 {
-    this->context->branchingSolverConfiguration = this->configuration;
+    initializeContext();
+}
+
+solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>& instance,
+                                         const std::shared_ptr<solver::BranchingSolverConfiguration>& configuration,
+                                         const std::shared_ptr<solver::Context>& context) :
+    AbstractSolver(instance),
+    configuration(configuration),
+    context(context)
+{
+    initializeContext();
 }
 
 void solver::BranchingSolver::setTimeoutFlag(std::atomic<bool>* flag)
 {
     timeoutFlag = flag;
+}
+
+void solver::BranchingSolver::unwindAppliedRules()
+{
+    applyNext = std::queue<std::shared_ptr<AbstractRule>>();
+    while (not appliedRules.empty())
+    {
+        auto rule = appliedRules.back();
+        rule->unapply();
+        for (const auto& plugin : configuration->plugins) plugin->onUnapply(rule);
+        appliedRules.pop_back();
+    }
 }
 
 bool solver::BranchingSolver::rollBackBranch()
@@ -29,8 +50,16 @@ bool solver::BranchingSolver::rollBackBranch()
     // candidate has been stored.  Without one, keep rolling back and exploring
     // until the first EndBranchWithSolutionCandidate so the solver always
     // produces output within the POSIX grace period.
-    if (timeoutFlag && timeoutFlag->load(std::memory_order_relaxed) && solution != nullptr)
+    //
+    // solutionBranch is replayed against the instance once solve() returns
+    // (see below), so the currently in-progress branch must be fully unwound
+    // first — otherwise the replay applies its cloned rules on top of a
+    // half-cut, abandoned branch and corrupts the tree.
+    if (timeoutFlag && timeoutFlag->load(std::memory_order_relaxed) && not solutionBranch.empty())
+    {
+        unwindAppliedRules();
         return true;
+    }
 
     // all rule suggestions can be discarded at the end of a branch
     applyNext = std::queue<std::shared_ptr<AbstractRule>>();
@@ -51,7 +80,7 @@ bool solver::BranchingSolver::rollBackBranch()
         {
             if (not branchingRule->isFullyExplored())
             {
-                // to enter the next branch we have to apply the branching rule again
+                // to enter the next branch, we have to apply the branching rule again
                 applyNext.emplace(branchingRule);
                 return false;
             }
@@ -61,26 +90,41 @@ bool solver::BranchingSolver::rollBackBranch()
 
 void solver::BranchingSolver::checkSolutionCandidate()
 {
-    if (solution == nullptr or instance->at(0)->Roots().size() < solution->Roots().size())
+    auto candidateWeight = context->weightFunction(instance->at(0));
+    if (context->bestSolutionWeight > candidateWeight)
     {
-        // update context (we have a better solution)
-        context->bestSolutionSize = instance->at(0)->Roots().size();
 
-        unapplyReductions();
+        for (const auto& plugin : configuration->plugins)
+            plugin->onNewBestSolution(candidateWeight);
 
-        // notify plugins now that the instance is fully expanded (reductions undone)
-        for (const auto& plugin : configuration->plugins) plugin->onNewBestSolution(context->bestSolutionSize);
+        context->bestSolutionWeight = candidateWeight;
+        auto branchCloneView = appliedRules | std::views::transform(
+            [](const std::shared_ptr<AbstractRule>& r) { return r->clone(); });
+        solutionBranch = {branchCloneView.begin(), branchCloneView.end()};
+    }
+}
 
-        // write out the solution
-        solution = std::make_shared<graph::Forest>(instance->at(0)->copy());
+void solver::BranchingSolver::initializeContext()
+{
+    // set configuration
+    this->context->branchingSolverConfiguration = this->configuration;
 
-        // apply all reduction rules again to restore state of the solver
-        for (const auto& reductionRule : appliedRules
-            | std::views::filter([](const std::shared_ptr<AbstractRule>& r){ return r->IsReduction();}))
+    // define label order
+    std::function<void(graph::Node*)> collectTerminalsDFS = [this, &collectTerminalsDFS](graph::Node* const & n)
+    {
+        if (n->leftChild)
         {
-            reductionRule->apply();
-            for (const auto& plugin : configuration->plugins) plugin->onReductionReapply(reductionRule);
+            collectTerminalsDFS(n->leftChild);
+            collectTerminalsDFS(n->rightChild);
         }
+        else
+        {
+            context->heuristicLabelOrder.push_back(this->instance->at(0)->TerminalToLabel().at(n));
+        }
+    };
+    for (const auto& r : instance->at(0)->Roots())
+    {
+        collectTerminalsDFS(r);
     }
 }
 
@@ -102,28 +146,26 @@ void solver::BranchingSolver::unapplyReductions()
     }
 }
 
+const std::shared_ptr<solver::Context>& solver::BranchingSolver::GetContext()
+{
+    return context;
+}
+
 bool solver::BranchingSolver::solve()
 {
     for (const auto& plugin : configuration->plugins) plugin->init(instance, context);
 
-    // Try to apply the subtree reduction before starting the main solving process
-    auto subtreeReduction = solver::SubtreeReductionRule::isApplicable(instance, context);
-    if (subtreeReduction)
-    {
-        for (const auto& plugin : configuration->plugins) plugin->beforeApply(subtreeReduction);
-        subtreeReduction->apply();
-        for (const auto& plugin : configuration->plugins) plugin->onApply(subtreeReduction);
-        appliedRules.push_back(subtreeReduction);
-    }
-
-    // apply rules repeatedly until a return is triggered
+    // apply rules repeatedly until a return is triggerd
     while (true)
     {
         // On timeout, stop before starting a new iteration — but only once at
         // least one solution candidate has been found.  Without one, keep
         // searching so the solver always produces output within the grace period.
-        if (timeoutFlag && timeoutFlag->load(std::memory_order_relaxed) && solution != nullptr)
+        if (timeoutFlag && timeoutFlag->load(std::memory_order_relaxed) && not solutionBranch.empty())
+        {
+            unwindAppliedRules();
             break;
+        }
 
         std::shared_ptr<AbstractRule> rule = nullptr;
 
@@ -194,8 +236,6 @@ bool solver::BranchingSolver::solve()
             }
             else
             {
-                // Fully explored (or timeout cut the search short). Fall through to
-                // the output path below.
                 break;
             }
         }
@@ -204,8 +244,16 @@ bool solver::BranchingSolver::solve()
     // Reached when the search space is fully explored (unbounded depth) or when the
     // timeout flag fires. Write out the best solution found, if any.
     // solution may be nullptr when SIGTERM arrives before any candidate is found.
+
+    // apply solution branch
+    if (not solutionBranch.empty())
+    {
+        for (const auto& r : solutionBranch)
+        {
+            appliedRules.push_back(r);
+            r->apply();
+        }
+    }
     for (const auto& plugin : configuration->plugins) plugin->onEnd();
-    if (solution != nullptr)
-        *instance = {solution};
-    return solution != nullptr;
+    return not solutionBranch.empty();
 }

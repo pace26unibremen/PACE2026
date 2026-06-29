@@ -14,12 +14,23 @@ workflow:
       when: never
     - when: always
 
+# FORCE_RELEASE/MANUAL_TAG have no default elsewhere, so without this they're undefined on
+# every pipeline that doesn't set them. Comparing an undefined variable with != "" is not
+# reliable in GitLab's rules engine, so declare them here to make sure they're always actually
+# defined as empty strings unless a manual run explicitly overrides them.
+variables:
+  FORCE_RELEASE: ""
+  MANUAL_TAG: ""
+
 # Shared anchor for reuse
 .release-rules: &release-rules
   rules:
     - if: '$CI_PIPELINE_SOURCE == "web" && ($FORCE_RELEASE == "true" || $MANUAL_TAG != "")'
       when: on_success
-    - if: '$CI_COMMIT_BRANCH == "master" && $CI_COMMIT_MESSAGE =~ /See merge request/'
+    # Auto-release only applies to the actual merge pipeline (non-web source); manually
+    # triggered web pipelines on master (e.g. to run a specific benchmark) must not also
+    # trigger a release unless explicitly requested via FORCE_RELEASE/MANUAL_TAG above.
+    - if: '$CI_PIPELINE_SOURCE != "web" && $CI_COMMIT_BRANCH == "master" && $CI_COMMIT_MESSAGE =~ /See merge request/'
       when: on_success
     - when: never
 
@@ -364,7 +375,7 @@ build_stride:
     - build-solver
     - build_stride
   variables:
-    RUN_BENCHMARK: "none"   # none, quick, full, exact, all
+    RUN_BENCHMARK: "none"   # none, quick, full, exact, heuristic, lower-bound, all
     RUN_SUFFIX: "" # Can be used on manual runs to change the run name
     INSTANCES_LST: "all.lst"  # Or full
     SLURM_SCRIPT: "quick_run.slurm"
@@ -502,12 +513,14 @@ run_quick_benchmark:
     STRIDE_RUN_NAME: "${CI_COMMIT_REF_NAME}_${CI_COMMIT_SHORT_SHA}_quick"
   extends: .run_stride_benchmark_template
   rules:
-    # Skip if this is a release pipeline (merge into master)
-    - if: '$CI_COMMIT_BRANCH == "master" && $CI_COMMIT_MESSAGE =~ /Merge request|See merge request/'
-      when: never
-    # If manually triggered from the web UI and the variable is set to quick or all, run the quick benchmark
+    # If manually triggered from the web UI and the variable is set to quick or all, run the
+    # quick benchmark — this explicit choice takes priority even if the last commit on master
+    # happens to be a merge commit (otherwise rule below would always deny it).
     - if: '$CI_PIPELINE_SOURCE == "web" && ($RUN_BENCHMARK == "quick" || $RUN_BENCHMARK == "all")'
       when: on_success
+    # Skip if this is a release pipeline (merge into master); full/exact benchmarks cover it
+    - if: '$CI_COMMIT_BRANCH == "master" && $CI_COMMIT_MESSAGE =~ /Merge request|See merge request/'
+      when: never
     # Run on all other pipelines (branches, MRs, direct master pushes)
     - if: '$CI_PIPELINE_SOURCE != "web"'
       when: on_success
@@ -522,8 +535,22 @@ run_full_benchmark:
     STRIDE_RUN_NAME: "${CI_COMMIT_REF_NAME}_${CI_COMMIT_SHORT_SHA}_full"
   extends: .run_stride_benchmark_template
   rules:
-    # If manually triggered from the web UI and the variable is set to full or all, run the quick benchmark
+    # If manually triggered from the web UI and the variable is set to full or all, run the full benchmark
     - if: '$CI_PIPELINE_SOURCE == "web" && ($RUN_BENCHMARK == "full" || $RUN_BENCHMARK == "all")'
+      when: on_success
+    - when: never
+
+run_3h_benchmark:
+  variables:
+    INSTANCES_LST: "all.lst"
+    SLURM_SCRIPT: "3h_run.slurm"
+    STRIDE_TIMEOUT: 900
+    STRIDE_GRACE: 10
+    STRIDE_RUN_NAME: "${CI_COMMIT_REF_NAME}_${CI_COMMIT_SHORT_SHA}_3h"
+  extends: .run_stride_benchmark_template
+  rules:
+    # If manually triggered from the web UI and the variable is set to 3h or all, run the 3h benchmark
+    - if: '$CI_PIPELINE_SOURCE == "web" && ($RUN_BENCHMARK == "3h" || $RUN_BENCHMARK == "all")'
       when: on_success
     - !reference [ .release-rules, rules ]
     - when: never
@@ -535,10 +562,43 @@ run_exact-track_benchmark:
     STRIDE_TIMEOUT: 1800
     STRIDE_GRACE: 10
     STRIDE_RUN_NAME: "${CI_COMMIT_REF_NAME}_${CI_COMMIT_SHORT_SHA}_exact"
+    PACE_TRACK: "pipeline" # Use the "pipeline" track for now, as this includes all plugin metrics
   extends: .run_stride_benchmark_template
   rules:
-    # If manually triggered from the web UI and the variable is set to exact or all, run the quick benchmark
+    # If manually triggered from the web UI and the variable is set to exact or all, run the exact benchmark
     - if: '$CI_PIPELINE_SOURCE == "web" && ($RUN_BENCHMARK == "exact" || $RUN_BENCHMARK == "all")'
+      when: on_success
+    - !reference [ .release-rules, rules ]
+    - when: never
+
+run_heuristic-track_benchmark:
+  variables:
+    INSTANCES_LST: "pace26_heuristic_pub_v2.lst"
+    SLURM_SCRIPT: "release_run.slurm"
+    STRIDE_TIMEOUT: 300
+    STRIDE_GRACE: 10
+    STRIDE_RUN_NAME: "${CI_COMMIT_REF_NAME}_${CI_COMMIT_SHORT_SHA}_heuristic"
+    PACE_TRACK: "pipeline" # Use the "pipeline" track for now, as this includes all plugin metrics
+  extends: .run_stride_benchmark_template
+  rules:
+    # If manually triggered from the web UI and the variable is set to heuristic or all, run the heuristic benchmark
+    - if: '$CI_PIPELINE_SOURCE == "web" && ($RUN_BENCHMARK == "heuristic" || $RUN_BENCHMARK == "all")'
+      when: on_success
+    - !reference [ .release-rules, rules ]
+    - when: never
+
+run_lower-bound-track_benchmark:
+  variables:
+    INSTANCES_LST: "pace26_lower_pub_v3.lst"
+    SLURM_SCRIPT: "release_run.slurm"
+    STRIDE_TIMEOUT: 600
+    STRIDE_GRACE: 10
+    STRIDE_RUN_NAME: "${CI_COMMIT_REF_NAME}_${CI_COMMIT_SHORT_SHA}_lower-bound"
+    PACE_TRACK: "pipeline" # Use the "pipeline" track for now, as this includes all plugin metrics
+  extends: .run_stride_benchmark_template
+  rules:
+    # If manually triggered from the web UI and the variable is set to lower-bound or all, run the lower-bound benchmark
+    - if: '$CI_PIPELINE_SOURCE == "web" && ($RUN_BENCHMARK == "lower-bound" || $RUN_BENCHMARK == "all")'
       when: on_success
     - !reference [ .release-rules, rules ]
     - when: never
