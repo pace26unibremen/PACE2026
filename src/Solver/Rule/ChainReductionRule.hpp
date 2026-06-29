@@ -46,6 +46,11 @@ namespace solver
         std::ptrdiff_t otherNodeIndexT1 = -1;
         std::ptrdiff_t otherNodeIndexT2 = -1;
 
+        std::vector<graph::Node*> disconnectedTerminalsT1 = {};
+        std::vector<graph::Node*> disconnectedTerminalsT2 = {};
+
+        int beOneIfTerminalIsRightSide = -1;
+
     public:
         /// \brief Chain Reduction Rule implementation that identifies the first chain out of the two forests given
         /// \param instance The problem instance
