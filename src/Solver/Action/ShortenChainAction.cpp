@@ -136,14 +136,14 @@ namespace solver
          //lower parent
          // ┌─┴─┐
          //    lower
-         auto& lowerNode = forest->LabelToTerminal().at(lower);
+         auto lowerNode = forest->LabelToTerminal().at(lower);
          graph::Node* root;
 
          if (lowerNode->parent && lowerNode->parent->parent)
          {
-             auto& lowerParent = lowerNode->parent;
-             auto& chainParent = lowerParent->parent;
-             auto& chainSibling = lowerParent->sibling;
+             auto lowerParent = lowerNode->parent;
+             auto chainParent = lowerParent->parent;
+             auto chainSibling = lowerParent->sibling;
 
 
              lowerUncle->sibling = lowerParent;
@@ -162,11 +162,9 @@ namespace solver
              if (chainParent->leftChild == chainSibling) chainParent->rightChild = upperParent;
              else chainParent->leftChild = upperParent;
 
-             root = forest->rootOf(upperParent);
+             root = forest->rootOf(lowerNode);
              auto rootIterator = std::ranges::find(forest->Roots(), root);
              forest->Roots().erase(rootIterator,rootIterator+1);
-
-
          }
          //case 2:
          //
