@@ -4,6 +4,7 @@
 #include "../src/Graph/ForestIO.hpp"
 #include "../src/Graph/Instance.hpp"
 #include "../src/Solver/BranchingSolver.hpp"
+#include "../src/Solver/Rule/ChainReductionRule.hpp"
 
 #include <iostream>
 
