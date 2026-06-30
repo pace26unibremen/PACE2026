@@ -1,5 +1,7 @@
 #include "ReductionSolver.hpp"
 
+#include "Rule/ChainReductionRule.hpp"
+
 solver::ReductionSolver::ReductionSolver(const std::shared_ptr<graph::Instance>& instance) :
         AbstractSolver(instance)
 {}
@@ -11,6 +13,13 @@ bool solver::ReductionSolver::solve()
     {
         subtreeReductionRule->apply();
     }
+
+    chainReductionRule = solver::ChainReductionRule::isApplicable(instance, context);
+    if (chainReductionRule)
+    {
+        chainReductionRule->apply();
+    }
+
     return false;
 }
 
@@ -19,5 +28,10 @@ void solver::ReductionSolver::unapplyReductions()
     if (subtreeReductionRule)
     {
         subtreeReductionRule->unapply();
+    }
+
+    if (chainReductionRule)
+    {
+        chainReductionRule->unapply();
     }
 }
