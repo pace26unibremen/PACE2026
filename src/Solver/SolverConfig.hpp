@@ -166,8 +166,11 @@ struct SolverConfig
         SolverConfig c;
         c.track = Track::Pipeline;
         c.enableSigterm = true;
-        for (auto& p : solver::plugin::MetricsPlugins::makeAll(out))
-            c.branchingConfig.plugins.push_back(p);
+        auto collector = std::make_shared<solver::plugin::MetricsCollector>();
+        c.branchingConfig.plugins.push_back(
+            std::make_shared<solver::plugin::BranchCountPlugin>(collector, out));
+        c.branchingConfig.plugins.push_back(
+            std::make_shared<solver::plugin::RuleStatsPlugin>(collector, true, out));
         return c;
     }
 
