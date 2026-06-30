@@ -15,6 +15,7 @@
 #include "Rule/SiblingRuleFactory.hpp"
 #include "Rule/SingleVertexTreePropagationRule.hpp"
 #include "Rule/TwoBRule.hpp"
+#include "Rule/ChainReductionRule.hpp"
 
 #include <functional>
 #include <memory>
@@ -44,6 +45,7 @@ struct BranchingSolverConfiguration
         solver::CutBranchRule::isApplicable,
         solver::CheckSingleVertexTreesRule::isApplicable,
         solver::SingleVertexTreePropagationRule::isApplicable,
+        solver::ChainReductionRule::isApplicable,
         solver::SiblingRuleFactory::allRules,
         solver::DebugAssertFalseRule::isApplicable
         };
