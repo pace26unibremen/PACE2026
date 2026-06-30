@@ -11,70 +11,33 @@ using namespace graph;
 using namespace std;
 using namespace solver;
 
-TEST_CASE("Reduce Chain - Tree 1", "[Forest, DeleteNodeActionInChains, AbstractAction]")
+TEST_CASE("ChainReductionTest - Example instance")
 {
-    SECTION("Section 1 - It actually executes")
+    std::stringstream newick;
+    newick << "#p 2 11" << endl;
+    newick << "((((((((1,2),(3,4)),5),6),10),11),(7,8)),9);" << endl;
+    newick << "(((7,9),8),(((((((2,3),1),5),6),10),11),4));" << endl;
+
+    auto instance = graph::ReadInstance(newick);
+
+    auto config = std::make_shared<solver::BranchingSolverConfiguration>();
+    config->activeRules = {solver::CutBranchRule::isApplicable,
+                           solver::CheckSingleVertexTreesRule::isApplicable,
+                           solver::SingleVertexTreePropagationRule::isApplicable,
+                           solver::ChainReductionRule::isApplicable,
+                           solver::SiblingRuleFactory::allRules,
+                           solver::DebugAssertFalseRule::isApplicable};
+
+    auto solver = solver::BranchingSolver(instance, config);
+    auto solved = solver.solve();
+    solver.unapplyReductions();
+
+    REQUIRE(solved);
+    REQUIRE(instance->at(0)->isValid());
+    CHECK(instance->at(0)->Roots().size() == 4);
+    for (int i = 1; i < 12; i++)
     {
-        auto i = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_2_8_mirrored_chain.tree");
-        auto rule = ChainReductionRule::isApplicable(i,std::make_shared<Context>());
-        INFO("Apply ChainReductionRule on Tree");
-        REQUIRE(rule);
-        rule->apply();
-        REQUIRE(rule->IsApplied());
+        CHECK(instance->at(0)->LabelToTerminal().contains(i));
     }
 
-    SECTION("Section 2 - Unapply leads to initial state")
-    {
-        auto i = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_2_8_mirrored_chain.tree");
-        auto j = graph::ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_2_8_mirrored_chain.tree");
-        // for(auto forest : *i)
-        // {
-        //     forest->write(cout);
-        // }
-        auto rule = ChainReductionRule::isApplicable(i,std::make_shared<Context>());
-        REQUIRE(rule);
-        rule->apply();
-        REQUIRE(rule->IsApplied());
-        // for(auto forest : *i)
-        // {
-        //     forest->write(cout);
-        // }
-        rule->unapply();
-        REQUIRE(not rule->IsApplied());
-        REQUIRE(i->size() == j->size());
-        for (int k = 0; k < i->size(); k++)
-        {
-            REQUIRE(i->at(k)->Roots().size() == j->at(k)->Roots().size());
-            REQUIRE(i->at(k)->TerminalToLabel().size() == j->at(k)->TerminalToLabel().size());
-            REQUIRE(i->at(k)->LabelToTerminal().size() == j->at(k)->LabelToTerminal().size());
-            REQUIRE(i->at(k)->Nodes().size() == j->at(k)->Nodes().size());
-            for (int n = 0; n < i->at(k)->Nodes().size(); n++)
-            {
-                REQUIRE(i->at(k)->Nodes().at(n).subtreeTerminals == j->at(k)->Nodes().at(n).subtreeTerminals);
-            }
-        }
-
-        // for(auto forest : *i)
-        // {
-        //     forest->write(cout);
-        // }
-    }
-
-    // SECTION("Section 3 - Overall Test")
-    // {
-    //     auto i = ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_2_8_mirrored_chain.tree");
-    //     // for(auto forest : *i)
-    //     // {
-    //     //     forest->write(cout);
-    //     // }
-    //     auto j = ReadInstance(std::string(TEST_EXAMPLES_DIR) + "forest_2_8_mirrored_chain.tree");
-    //     INFO("Test the Functionally within Branching Solver");
-    //     auto solver = BranchingSolver(i);
-    //     auto e = solver.solve();
-    //     for (auto forest : *i)
-    //     {
-    //         REQUIRE(e != forest);
-    //     }
-    //     // e->write(cout);
-    // }
 }
