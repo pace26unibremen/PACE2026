@@ -17,7 +17,16 @@ namespace solver
         unsigned int upper;
         std::shared_ptr<graph::Forest> forest;
 
-        void propagateBitmaskToRoot(const std::vector<uint64_t> bitmask, graph::Node* node) const;
+        graph::Node* upperParent;
+        graph::Node* lowerUncle;
+
+        std::unordered_map<unsigned int, graph::Node*> reductedLabelToNode;
+
+        std::vector<uint64_t> bitmaskReduceSubtreeTerminals;
+
+        void propagateBitmaskToRoot(graph::Node* node) const;
+
+        unsigned int recalculateChainSubtreeTerminals(graph::Node* upperNode, graph::Node* lowerNode);
 
     public:
         ShortenChainAction(unsigned int lower, unsigned int upper, const std::shared_ptr<graph::Forest>& forest);
