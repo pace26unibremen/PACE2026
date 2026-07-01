@@ -166,8 +166,11 @@ struct SolverConfig
         SolverConfig c;
         c.track = Track::Pipeline;
         c.enableSigterm = true;
-        for (auto& p : solver::plugin::MetricsPlugins::makeAll(out))
-            c.branchingConfig.plugins.push_back(p);
+        auto collector = std::make_shared<solver::plugin::MetricsCollector>();
+        c.branchingConfig.plugins.push_back(
+            std::make_shared<solver::plugin::BranchCountPlugin>(collector, out));
+        c.branchingConfig.plugins.push_back(
+            std::make_shared<solver::plugin::RuleStatsPlugin>(collector, true, out));
         return c;
     }
 
@@ -198,9 +201,13 @@ struct SolverConfig
     /// added (issue #55).
     ///
     /// \throws std::logic_error always.
-    [[noreturn]] static SolverConfig lowerBoundTrack()
+    static SolverConfig lowerBoundTrack()
     {
-        throw std::logic_error("SolverConfig::lowerBoundTrack() is not yet implemented");
+        SolverConfig c;
+        c.track = Track::LowerBound;
+        c.solverPipeline = {SolverType::Reduction, SolverType::Branching};
+        c.enableSigterm = true;
+        return c;
     }
 };
 
