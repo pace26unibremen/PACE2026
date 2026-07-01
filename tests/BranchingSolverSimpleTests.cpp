@@ -21,17 +21,14 @@ std::unordered_map<std::string, unsigned int> instanceToSolutionSize =
 
 TEST_CASE("BranchingSolver on Tiny Test Set, unbounded depth search", "[BranchingSolver, Tiny]")
 {
-    /**
-    *"tiny01.nw","tiny02.nw","tiny03.nw","tiny04.nw","tiny05.nw",
-                             "tiny06.nw","tiny07.nw","tiny08.nw","tiny09.nw","tiny10.nw"
-     */
-    for (const std::string& f : {"tiny04.nw"})
+
+    for (const std::string& f : {"tiny01.nw","tiny02.nw","tiny03.nw","tiny04.nw","tiny05.nw",
+                                "tiny06.nw","tiny07.nw","tiny08.nw","tiny09.nw","tiny10.nw"})
     {
         SECTION("solve " + f)
         {
             auto config = std::make_shared<solver::BranchingSolverConfiguration>();
             config->boundedDephtSearch = false;
-            config->plugins = {std::make_shared<solver::plugin::VisualizationPlugin>("../debug/")};
             auto instance = graph::ReadInstance(std::string(RES_DIR) + "tiny/" + f);
             auto solver = solver::BranchingSolver(instance, config);
             auto solved = solver.solve();
@@ -44,8 +41,8 @@ TEST_CASE("BranchingSolver on Tiny Test Set, unbounded depth search", "[Branchin
 
 TEST_CASE("BranchingSolver on Tiny Test Set, bounded depth search", "[BranchingSolver, Tiny]")
 {
-    for (const std::string& f : {"tiny01.nw","tiny02.nw","tiny03.nw","tiny04.nw","tiny07.nw","tiny08.nw","tiny05.nw",
-                             "tiny06.nw","tiny09.nw","tiny10.nw"})
+    for (const std::string& f : {"tiny01.nw","tiny02.nw","tiny03.nw","tiny04.nw","tiny05.nw",
+                                "tiny06.nw","tiny07.nw","tiny08.nw","tiny09.nw","tiny10.nw"})
     {
         SECTION("solve " + f)
         {
