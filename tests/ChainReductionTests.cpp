@@ -5,12 +5,20 @@
 #include "../src/Graph/Instance.hpp"
 #include "../src/Solver/BranchingSolver.hpp"
 #include "../src/Solver/Rule/ChainReductionRule.hpp"
+#include "../src/Solver/Plugin/RuleStatsPlugin.hpp"
 
 #include <iostream>
 
 using namespace graph;
 using namespace std;
 using namespace solver;
+
+class NullBuffer : public std::streambuf {
+public:
+    int overflow(int c) override {
+        return traits_type::not_eof(c);
+    }
+};
 
 TEST_CASE("ChainReductionTest - Example instance")
 {
@@ -29,6 +37,12 @@ TEST_CASE("ChainReductionTest - Example instance")
                            solver::SiblingRuleFactory::allRules,
                            solver::DebugAssertFalseRule::isApplicable};
 
+    NullBuffer nullBuffer;
+    std::ostream nullStream(&nullBuffer);
+    auto collector = std::make_shared<solver::plugin::MetricsCollector>();
+    auto plugin = std::make_shared<solver::plugin::RuleStatsPlugin>(collector, false, nullStream);
+    config->plugins = {plugin};
+
     auto solver = solver::BranchingSolver(instance, config);
     auto solved = solver.solve();
     solver.unapplyReductions();
@@ -40,5 +54,5 @@ TEST_CASE("ChainReductionTest - Example instance")
     {
         CHECK(instance->at(0)->LabelToTerminal().contains(i));
     }
-
+    CHECK(collector->ruleCounts.at("ChainReductionRule") >= 1);
 }
