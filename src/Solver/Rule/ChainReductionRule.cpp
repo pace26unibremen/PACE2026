@@ -60,6 +60,43 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Instance>&
         startToChain.insert({label, {label}});
         visitedLabels.insert(label);
 
+        // if we have a sibling pair with label = l1 in at least one forest
+        // then several cases are relevant:
+        //
+        // the sibling pair (l1,l2), with uncle l3
+        //     ┌──┴──┐
+        //   ┌─┴─┐   l3
+        //  l1   l2
+        //
+        // case: another sibling pair  | case: chain with l1 /2       |  case: chain l1/l2 and uncle
+        //                             |                              |        as sibling pair
+        //       ┌──┴──┐               |     ┌──┴──┐                  |        ┌──┴──┐
+        //     ┌─┴─┐   x               |   ┌─┴─┐   l3                 |    ┌───┴─┐   x
+        //    l1   l2                  | ┌─┴┐  l1/l2                  |  l1/l2   l3
+        // -> equal pair rule          |  -> chain (l1, l3, ...)      |  -> chain (l1, l3, ...)
+        //
+        //  case: chain starting with both
+        //        ┌──┴──┐
+        //     ┌──┴──┐   l3
+        //   ┌─┴─┐   l1/l2
+        // ┌─┴┐  l2/l1
+        // -> chain (l1, l2, l3, ...)
+        //
+        // in some of these subvariants of these cases we should also consider B-, RB- and 2B-Rule
+
+        // for now, we exclude the case where a chain starts with a sibling pair
+        bool siblingStart = false;
+        for (const auto& forest : *instance)
+        {
+            graph::Node* chainStart = forest->LabelToTerminal().at(label);
+            if (forest->TerminalToLabel().contains(chainStart->sibling));
+            {
+                siblingStart = true;
+            }
+        }
+        if (siblingStart)
+            continue;
+
         unsigned int chainElement = label;
 
         while (true)
