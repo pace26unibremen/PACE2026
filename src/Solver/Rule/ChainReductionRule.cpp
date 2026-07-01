@@ -67,28 +67,33 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Instance>&
             bool ongoingChain = true;
             unsigned int nextChainElement = 0;
 
+            //     ┌───┴─────┐
+            //   ┌─┴─┐      nextChainElement
+            //    chainElement
+
             for (const auto& forest : *instance)
             {
                 graph::Node* chainElementNode = forest->LabelToTerminal().at(chainElement);
-                if (!chainElementNode->parent)
+
+                // for an ongoing chain we need an uncle
+                // and the parent of the uncle shouldn't be a root node
+                if (not chainElementNode->parent or                   // guard: we have parent
+                    not chainElementNode->parent->sibling or          // guard: the parent has a sibling (uncle)
+                    not chainElementNode->parent->parent->parent)     // guard: the grandparent is not a root
                 {
                     ongoingChain = false;
                     break;
                 }
 
-                if (!chainElementNode->parent->sibling)
-                {
-                    ongoingChain = false;
-                    break;
-                }
+                // the uncle must be a terminal
                 auto uncle = chainElementNode->parent->sibling;
-
-                if (!forest->TerminalToLabel().contains(uncle))
+                if (not forest->TerminalToLabel().contains(uncle))
                 {
                     ongoingChain = false;
                     break;
                 }
 
+                // the uncle must have the same label as the corresponding uncles in the other forests
                 unsigned int uncleLabel = forest->TerminalToLabel().at(uncle);
                 if (nextChainElement == 0)
                 {

@@ -69,13 +69,13 @@ namespace solver
 
     void ShortenChainAction::doAction()
     {
-         auto& upperNode = forest->LabelToTerminal().at(upper);
-         auto& lowerNode = forest->LabelToTerminal().at(lower);
+         auto upperNode = forest->LabelToTerminal().at(upper);
+         auto lowerNode = forest->LabelToTerminal().at(lower);
 
-         auto& chainParent = upperNode->parent->parent;
-         auto& chainSibling = upperNode->parent->sibling;
+         auto chainParent = upperNode->parent->parent;
+         auto chainSibling = upperNode->parent->sibling;
 
-         auto& lowerParent = lowerNode->parent;
+         auto lowerParent = lowerNode->parent;
 
          upperParent = upperNode->parent;
          lowerUncle = lowerParent->sibling;

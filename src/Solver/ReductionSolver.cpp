@@ -25,13 +25,12 @@ bool solver::ReductionSolver::solve()
 
 void solver::ReductionSolver::unapplyReductions()
 {
-    if (subtreeReductionRule)
-    {
-        subtreeReductionRule->unapply();
-    }
-
     if (chainReductionRule)
     {
         chainReductionRule->unapply();
+    }
+    if (subtreeReductionRule)
+    {
+        subtreeReductionRule->unapply();
     }
 }
