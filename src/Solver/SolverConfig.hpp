@@ -201,9 +201,13 @@ struct SolverConfig
     /// added (issue #55).
     ///
     /// \throws std::logic_error always.
-    [[noreturn]] static SolverConfig lowerBoundTrack()
+    static SolverConfig lowerBoundTrack()
     {
-        throw std::logic_error("SolverConfig::lowerBoundTrack() is not yet implemented");
+        SolverConfig c;
+        c.track = Track::LowerBound;
+        c.solverPipeline = {SolverType::Reduction, SolverType::Branching};
+        c.enableSigterm = true;
+        return c;
     }
 };
 
