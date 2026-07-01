@@ -1,4 +1,5 @@
 #include "ChainReductionRule.hpp"
+#include <ranges>
 
 solver::ChainReductionRule::ChainReductionRule(const std::shared_ptr<graph::Instance>& instance,
                                                const std::shared_ptr<Context>& context,
@@ -47,28 +48,36 @@ std::shared_ptr<solver::AbstractRule>
 solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                          const std::shared_ptr<Context>& context)
 {
-    /// S. Kelk et al. states that for multilpe tree s
-    /// we can shorten chains to r := min{max{k, 3}, t + 1}
-    /// where t is the number of trees and k is solution size.
-    /// Since we don't know the solution size,
-    /// we use t+1 as upper bound on r.
-    ///
-    /// TODO we can also use our current upper bound on k
+    // S. Kelk et al. states that for multiple tree s
+    // we can shorten chains to r := min{max{k, 3}, t + 1}
+    // where t is the number of trees and k is solution size.
+    // Since we don't know the solution size,
+    // we use t+1 as upper bound on r.
+    //
+    // TODO we can also use our current upper bound on k
 
-    unsigned int lengthReducedChain = instance->size() + 1;
+    const unsigned int lengthReducedChain = instance->size() + 1;
 
+    // all labels that we already visisted
     std::unordered_set<unsigned int> visitedLabels;
+
+    // maps labels, which are the starts point of a chains to their chains.
+    // a chain is represented as a list of labels.
     std::unordered_map<unsigned int, std::list<unsigned int>> startToChain;
 
-    for (const auto& [_, label] : instance->at(0)->TerminalToLabel())
+    // we iterate over labels, a try to build chains with the current label as starting point
+    for (const auto& label : instance->at(0)->TerminalToLabel() | std::views::values)
     {
         if (visitedLabels.contains(label))
             continue;
 
-        startToChain.insert({label, {label}});
+        // insert label with a very trivial chain, that consist only of 'label'
         visitedLabels.insert(label);
+        startToChain.insert({label, {label}});
 
-        // if we have a sibling pair with label = l1 in at least one forest
+        // For now, we exclude the case where a chain starts with a sibling pair and concentrate
+        // on the case, where the chain starts in the middle of the forests.
+        // But, if we would have a sibling pair with in at least one forest
         // then several cases are relevant:
         //
         // the sibling pair (l1,l2), with uncle l3
@@ -92,7 +101,7 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Instance>&
         //
         // in some of these subvariants of these cases we should also consider B-, RB- and 2B-Rule
 
-        // for now, we exclude the case where a chain starts with a sibling pair
+        // As said before, for now, we exclude the case where a chain starts with a sibling pair
         bool siblingStart = false;
         for (const auto& forest : *instance)
         {
@@ -105,8 +114,8 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Instance>&
         if (siblingStart)
             continue;
 
-        unsigned int chainElement = label;
-
+        // we try know to traverse the tree upwards and collect new chain elements (labels)
+        unsigned int currentChainElement = label;
         while (true)
         {
             bool ongoingChain = true;
@@ -116,9 +125,10 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Instance>&
             //   ┌─┴─┐      nextChainElement
             //    chainElement
 
+            // we have to check the nextChainElement for each forests in our instance
             for (const auto& forest : *instance)
             {
-                graph::Node* chainElementNode = forest->LabelToTerminal().at(chainElement);
+                graph::Node* chainElementNode = forest->LabelToTerminal().at(currentChainElement);
 
                 // for an ongoing chain we need an uncle
                 // and the parent of the uncle shouldn't be a root node
@@ -166,9 +176,9 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Instance>&
                 {
                     // if nextChainElement does not start a new chain, we just add nextChainElement
                     // and continue building up this chain.
-                    chainElement = nextChainElement;
-                    startToChain.at(label).push_back(chainElement);
-                    visitedLabels.insert(chainElement);
+                    currentChainElement = nextChainElement;
+                    startToChain.at(label).push_back(currentChainElement);
+                    visitedLabels.insert(currentChainElement);
                 }
             }
             else
