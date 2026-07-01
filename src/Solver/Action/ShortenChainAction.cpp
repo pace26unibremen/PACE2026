@@ -16,12 +16,9 @@ namespace solver
 
     void ShortenChainAction::propagateBitmaskToRoot(graph::Node* node) const
     {
-         graph::Node* root = nullptr;
-
          // Traverse up to the root, updating subtreeTerminals and sorting children
          while (node != nullptr)
          {
-             root = node;
              // Update subtreeTerminals by removing child's terminals
              for (unsigned int i = 0; i < bitmaskReduceSubtreeTerminals.size(); i++)
              {
@@ -45,26 +42,34 @@ namespace solver
 
     unsigned int ShortenChainAction::recalculateChainSubtreeTerminals(graph::Node* upperNode, graph::Node* lowerNode)
      {
+         // recursive function
+
+         // end of recursion: if we reach a terminal or lowerNode
          if (!upperNode->leftChild || upperNode == lowerNode)
          {
              return upperNode->smallestTerminal();
          }
 
+         // recursion calls
          unsigned int leftMinLabel = recalculateChainSubtreeTerminals(upperNode->leftChild, lowerNode);
          unsigned int rightMinLabel = recalculateChainSubtreeTerminals(upperNode->rightChild, lowerNode);
 
+         // order siblings
          if (leftMinLabel > rightMinLabel)
          {
              std::swap(upperNode->leftChild, upperNode->rightChild);
          }
-            for(unsigned int i = 0; i < upperNode->subtreeTerminals.size(); i++)
+
+         // recalculate subtreeTerminals as bitwise or of both children
+         for(unsigned int i = 0; i < upperNode->subtreeTerminals.size(); i++)
          {
              upperNode->subtreeTerminals[i] =
                  upperNode->leftChild->subtreeTerminals[i] |
                  upperNode->rightChild->subtreeTerminals[i];
          }
-         return std::min(leftMinLabel, rightMinLabel);
 
+         // propagate the smallest label
+         return std::min(leftMinLabel, rightMinLabel);
      }
 
     void ShortenChainAction::doAction()
@@ -77,8 +82,20 @@ namespace solver
 
          auto lowerParent = lowerNode->parent;
 
-         upperParent = upperNode->parent;
-         lowerUncle = lowerParent->sibling;
+         upperParent = upperNode->parent;    // we store these nodes to get the reduced chain elements back
+         lowerUncle = lowerParent->sibling;  // in the undoAction method
+
+         //                        chainParent
+         //                       ┌───┴─────┐
+         //                   ┌───┴─────┐   chainSibling
+         //               ┌───┴─────┐   upper (last reduced chain element)
+         //           ┌───┴─────┐
+         //       ┌───┴─────┐
+         //  lowerParent   lowerUncle (first reduced chain element)
+         //   ┌───┴─┐
+         //        lower
+
+         // We want to cut at lowerParent and upperParent glue chainParent and lowerParent together
 
          lowerParent->sibling = chainSibling;
          lowerParent->parent = chainParent;
@@ -88,14 +105,15 @@ namespace solver
          if (chainParent->leftChild == chainSibling) chainParent->rightChild = lowerParent;
          else chainParent->leftChild = lowerParent;
 
+         // take care of the subtreeTerminals
          bitmaskReduceSubtreeTerminals = lowerParent->subtreeTerminals;
-
          for (unsigned int i = 0; i < bitmaskReduceSubtreeTerminals.size(); i++)
          {
              bitmaskReduceSubtreeTerminals[i] ^= upperNode->parent->subtreeTerminals[i];
          }
          propagateBitmaskToRoot(chainParent);
 
+         // take care of the ordering in the roots vector
          auto root = forest->rootOf(chainParent);
          auto root_Iterator = std::ranges::find(forest->Roots(), root);
          forest->Roots().erase(root_Iterator, root_Iterator+1);
@@ -104,6 +122,7 @@ namespace solver
                              [&](const graph::Node* a, const graph::Node* b) { return a->hasSmallestTerminal(b); });
          forest->Roots().insert(root_Iterator, root);
 
+         // get all labels that we removed
          std::unordered_set<unsigned int> chainLabels;
          for (size_t block = 0; block < bitmaskReduceSubtreeTerminals.size(); ++block) {
              uint64_t value = bitmaskReduceSubtreeTerminals[block];
@@ -117,25 +136,36 @@ namespace solver
              }
          }
 
+         // store all entries from LabelToTerminal and TerminalToLabel the we will remove
          for (auto label : chainLabels)
          {
-             reductedLabelToNode.emplace(label, forest->LabelToTerminal().at(label));
+             reducedLabelToTerminal.emplace(label, forest->LabelToTerminal().at(label));
+             auto n = forest->LabelToTerminal().at(label);
+             reducedTerminalToLabel.emplace(n, forest->TerminalToLabel().at(n));
          }
 
-         //erase chain terminals out of maps in forest
+         // remove the reduced labels / terminals from the maps
          std::erase_if(forest->TerminalToLabel(), [chainLabels](const auto& entry){return chainLabels.contains(entry.second);});
          std::erase_if(forest->LabelToTerminal(), [chainLabels](const auto& entry){return chainLabels.contains(entry.first);});
-
     }
 
     void ShortenChainAction::undoAction()
     {
-         //case 1
-         //   chain parent
-         //     ┌──-┴---──┐
-         //lower parent
-         // ┌─┴─┐
-         //    lower
+         // case 'lower has a parent and a grandparent'
+         //        chain parent
+         //      ┌───┴─────┐
+         // lower parent   chain Sibling
+         //  ┌───┴─┐
+         //      lower
+         //
+         // We want to insert the chain above lower parent and below chain parent.
+         //
+         // The highest chain element (upperParent) will be connected with chainParent (child-parent)
+         // and with chainSibling (sibling-sibling).
+         //
+         // The lowest REDUCED chain element (lowerUncle / 'lower+1') will be connected with lowerParent
+         // (sibling-sibling), accordingly lowerParent will be connected to the parent of lowerUncle (child-parent).
+
          auto lowerNode = forest->LabelToTerminal().at(lower);
          graph::Node* root;
 
@@ -162,15 +192,25 @@ namespace solver
              if (chainParent->leftChild == chainSibling) chainParent->rightChild = upperParent;
              else chainParent->leftChild = upperParent;
 
+             // We remove the root here, because it may does not satisfy the order of the roots vector.
+             // We will reinsert the root later at the correct position.
              root = forest->rootOf(lowerNode);
              auto rootIterator = std::ranges::find(forest->Roots(), root);
              forest->Roots().erase(rootIterator,rootIterator+1);
          }
-         //case 2:
+         // case 'lower has a parent and this parent is a root'
          //
-         //lower parent
-         // ┌─┴─┐
-         //    lower
+         // lower parent
+         //  ┌─┴─┐
+         //     lower
+         //
+         // We want to insert the chain above lower parent.
+         //
+         // The highest chain element (upper->parent) becomes a root.
+
+         // The lowest REDUCED chain element (lowerUncle / 'lower+1') will be connected with lowerParent
+         // (sibling-sibling), accordingly lowerParent will be connected to the parent of lowerUncle (child-parent).
+
          else if (lowerNode->parent)
          {
              auto& lowerParent = lowerNode->parent;
@@ -185,14 +225,23 @@ namespace solver
              upperParent->parent = nullptr;
              upperParent->sibling = nullptr;
 
-             //First subtree changes, then root changes
-
+             // We remove the root here, because it may does not satisfy the order of the roots vector.
+             // We will reinsert the root later at the correct position.
              root = upperParent;
              auto rootIterator = std::ranges::find(forest->Roots(), lowerParent);
              forest->Roots().erase(rootIterator,rootIterator+1);
          }
-         else // lower is single vertex
+         else
          {
+             // case 'lower is a single vertex tree'
+             //
+             // We want to insert the chain above lower.
+             //
+             // The highest chain element (upper->parent) becomes a root.
+             //
+             // The lowest REDUCED chain element (lowerUncle / 'lower+1') will be connected with lower
+             // (sibling-sibling), accordingly lower will be connected to the parent of lowerUncle (child-parent).
+
              lowerNode->sibling = lowerUncle;
              lowerNode->parent = lowerUncle->parent;
              lowerUncle->sibling = lowerNode;
@@ -202,23 +251,27 @@ namespace solver
              upperParent->parent = nullptr;
              upperParent->sibling = nullptr;
 
+             // We remove the root here, because it may does not satisfy the order of the roots vector.
+             // We will reinsert the root later at the correct position.
              root = upperParent;
              auto rootIterator = std::ranges::find(forest->Roots(), lowerNode);
              forest->Roots().erase(rootIterator,rootIterator+1);
          }
 
+         // take care of the subtree terminals and the ordering of children
          recalculateChainSubtreeTerminals(upperParent,lowerUncle->sibling);
          propagateBitmaskToRoot(upperParent->parent);
 
+         // reinsert the root
          auto rootIterator = std::lower_bound(forest->Roots().begin(), forest->Roots().end(), root,
                              [&](const graph::Node* a, const graph::Node* b) { return a->hasSmallestTerminal(b); });
          forest->Roots().insert(rootIterator, root);
 
-         for (const auto& [label,node] : reductedLabelToNode)
-         {
+         // reinsert the removed entries to LabelToTerminal and TerminalToLabel
+         for (const auto& [label,node] : reducedLabelToTerminal)
              forest->LabelToTerminal().insert({label,node});
+         for (const auto& [node, label] : reducedTerminalToLabel)
              forest->TerminalToLabel().insert({node,label});
-         }
     }
 
 
