@@ -1,7 +1,5 @@
 #include "ChainReductionRule.hpp"
 
-#include <iostream>
-
 solver::ChainReductionRule::ChainReductionRule(const std::shared_ptr<graph::Instance>& instance,
                                                const std::shared_ptr<Context>& context,
                                                const std::list<std::pair<unsigned int, unsigned>>& reducedChains) :
@@ -166,25 +164,13 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Instance>&
 
     std::list<std::pair<unsigned int, unsigned int>> reducedChainsStartEnd;
 
-    std::clog << "MinLen" << lengthReducedChain << std::endl;
-
     for (const auto& [_, chain] : startToChain)
     {
-        for (auto e : chain)
-        {
-            std::clog << e << " ";
-        }
         if (chain.size() <= lengthReducedChain)
-        {
-            std::clog << std::endl;
             continue;
-        }
 
         auto start = chain.begin();
         std::advance(start, lengthReducedChain - 1);
-
-        std::clog << " ~> " << *start << " " << chain.back() << std::endl;
-
         reducedChainsStartEnd.emplace_back(*start, chain.back());
     }
 
