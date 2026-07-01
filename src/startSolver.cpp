@@ -230,6 +230,7 @@ static void printHelp(std::string_view prog)
         << "                Use for CI runs and the PACE stride harness.\n"
         << "    exact       No plugins, no SIGTERM. Use for the exact competition track.\n"
         << "    heuristic   No metrics, SIGTERM armed. Use for the heuristic track.\n"
+        << "    lower-bound No metrics, SIGTERM armed. Use for the lower-bound track.\n"
         << "  --help, -h  Print this message and exit.\n"
         << "\n"
         << "Stdin / stdout mode:\n"
@@ -255,9 +256,10 @@ static void printHelp(std::string_view prog)
 /// \throws std::invalid_argument for unknown names.
 static solver::SolverConfig resolveConfig(const std::string& name, std::ostream& out)
 {
-    if (name == "exact")     return solver::SolverConfig::exactTrack();
-    if (name == "heuristic") return solver::SolverConfig::heuristicTrack();
-    if (name == "pipeline")  return solver::SolverConfig::pipeline(out);
+    if (name == "exact")       return solver::SolverConfig::exactTrack();
+    if (name == "heuristic")   return solver::SolverConfig::heuristicTrack();
+    if (name == "lower-bound") return solver::SolverConfig::lowerBoundTrack();
+    if (name == "pipeline")    return solver::SolverConfig::pipeline(out);
     throw std::invalid_argument(
         "Unknown --track value: \"" + name + "\". "
         "Valid values: exact, heuristic, pipeline.");
