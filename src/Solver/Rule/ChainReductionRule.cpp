@@ -15,11 +15,11 @@ solver::RuleReturnCode solver::ChainReductionRule::apply()
     }
     isApplied = true;
 
-    for (const auto& [start, end] : reducedChains)
+    for (const auto& [lower, upper] : reducedChains)
     {
         for (const auto& forest : *instance)
         {
-            changes.emplace(start,end,forest);
+            changes.emplace(lower,upper,forest);
             changes.top().doAction();
         }
 
@@ -47,6 +47,14 @@ std::shared_ptr<solver::AbstractRule>
 solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                          const std::shared_ptr<Context>& context)
 {
+    /// S. Kelk et al. states that for multilpe tree s
+    /// we can shorten chains to r := min{max{k, 3}, t + 1}
+    /// where t is the number of trees and k is solution size.
+    /// Since we don't know the solution size,
+    /// we use t+1 as upper bound on r.
+    ///
+    /// TODO we can also use our current upper bound on k
+
     unsigned int lengthReducedChain = instance->size() + 1;
 
     std::unordered_set<unsigned int> visitedLabels;
@@ -144,21 +152,31 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Instance>&
             }
             if (ongoingChain)
             {
+                // ongoing chain: nextChainElement can be added to the current chain
+
                 if (startToChain.contains(nextChainElement))
                 {
+                    // if we already have a chain that starts with nextChainElement, we merge both chains.
                     startToChain.at(label).splice(startToChain.at(label).end(), startToChain.at(nextChainElement));
                     startToChain.erase(nextChainElement);
+                    // the current chain is finished after the merge (because the nextChainElement was finished)
                     break;
                 }
                 else
                 {
+                    // if nextChainElement does not start a new chain, we just add nextChainElement
+                    // and continue building up this chain.
                     chainElement = nextChainElement;
                     startToChain.at(label).push_back(chainElement);
                     visitedLabels.insert(chainElement);
                 }
             }
             else
+            {
+                // if chain is not ongoing we continue with the next unseen label
+                // to check if this next label starts a chain.
                 break;
+            }
         }
     }
 
@@ -169,6 +187,8 @@ solver::ChainReductionRule::isApplicable(const std::shared_ptr<graph::Instance>&
         if (chain.size() <= lengthReducedChain)
             continue;
 
+        // for the shortenChainAction we only need the last element that remains in the graph
+        // and the last element of the chain.
         auto start = chain.begin();
         std::advance(start, lengthReducedChain - 1);
         reducedChainsStartEnd.emplace_back(*start, chain.back());
