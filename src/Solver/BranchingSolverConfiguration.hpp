@@ -45,6 +45,7 @@ struct BranchingSolverConfiguration
         solver::CutBranchRule::isApplicable,
         solver::CheckSingleVertexTreesRule::isApplicable,
         solver::SingleVertexTreePropagationRule::isApplicable,
+        solver::ChainReductionRule::isApplicable,
         solver::SiblingRuleFactory::allRules,
         solver::DebugAssertFalseRule::isApplicable
         };
