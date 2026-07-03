@@ -80,8 +80,8 @@ void TwinRelation::prepareLeafTwins(const std::shared_ptr<graph::Forest>& homeFo
                                     const std::shared_ptr<graph::Forest>& foreignForest)
 {
 
-    for (const auto& label : homeForest->LabelToTerminal() | std::views::keys)
-        nodeToTwinBuffer[homeForest->LabelToTerminal()[label]] = foreignForest->LabelToTerminal()[label];
+    for (const auto& [label, homeNode] : homeForest->LabelToTerminal())
+        nodeToTwinBuffer[homeNode] = foreignForest->LabelToTerminal()[label];
 }
 
 }  //namespace cluster

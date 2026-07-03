@@ -1,6 +1,7 @@
 #ifndef PACE2026_FOREST_HPP
 #define PACE2026_FOREST_HPP
 
+#include "LabelToTerminalMap.hpp"
 #include "Node.hpp"
 
 #include <filesystem>
@@ -25,7 +26,7 @@ class Forest
     std::shared_ptr<std::unordered_map<Node*, unsigned int>> terminalToLabel;
 
     /// \brief A map that stores all leaf labels with corresponding terminal Pointers.
-    std::shared_ptr<std::unordered_map<unsigned int, Node*>> labelToTerminal;
+    std::shared_ptr<LabelToTerminalMap> labelToTerminal;
 
     /// \brief Node pointers to root Nodes.
     std::shared_ptr<std::vector<Node*>> roots;
@@ -59,7 +60,7 @@ class Forest
     /// \brief Constructor.
     Forest(std::shared_ptr<std::vector<Node>> nodes,
            std::shared_ptr<std::unordered_map<Node*, unsigned int>> terminalToLabel,
-           std::shared_ptr<std::unordered_map<unsigned int, Node*>> labelToTerminal,
+           std::shared_ptr<LabelToTerminalMap> labelToTerminal,
            std::shared_ptr<std::vector<Node*>> roots);
 
     /// \brief Constructor. Loads forest from a file in newick format.
@@ -136,13 +137,13 @@ class Forest
     /// It maps a label to the associated terminal pointer.
     /// \property LabelToTerminal.
     [[nodiscard, maybe_unused]]
-    std::unordered_map<unsigned int, Node*>& LabelToTerminal();
+    LabelToTerminalMap& LabelToTerminal();
 
     /// \brief \c const reference to label to terminal map.
     /// It maps a label to the associated terminal pointer.
     /// \property LabelToTerminal.
     [[nodiscard, maybe_unused]]
-    const std::unordered_map<unsigned int, Node*>& LabelToTerminal() const;
+    const LabelToTerminalMap& LabelToTerminal() const;
 
     /// \brief Reference vector of root node pointer.
     /// \property Roots
