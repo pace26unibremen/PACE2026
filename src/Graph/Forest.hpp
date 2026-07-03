@@ -107,15 +107,19 @@ class Forest
     // ---- access to member fields -------------------------------- //
     // ------------------------------------------------------------- //
 
+    // These accessors are trivial one-liners kept inline in the header so callers
+    // in other translation units can inline them (there is no LTO in the build);
+    // out-of-line they showed up as real call overhead in the branching hot path.
+
     /// \brief Reference to nodes vector.
     /// \property Nodes
     [[nodiscard, maybe_unused]]
-    std::shared_ptr<std::vector<Node>>& Nodes();
+    std::shared_ptr<std::vector<Node>>& Nodes() { return this->nodes; }
 
     /// \brief \c const reference to nodes vector.
     /// \property Nodes
     [[nodiscard, maybe_unused]]
-    const std::shared_ptr<std::vector<Node>>& Nodes() const;
+    const std::shared_ptr<std::vector<Node>>& Nodes() const { return this->nodes; }
 
     /// \brief Reference terminals to label map.
     /// It maps a pointer of a terminal node to its label.
@@ -123,7 +127,7 @@ class Forest
     /// the map should return the smallest one.
     /// \property TerminalToLabel.
     [[nodiscard, maybe_unused]]
-    std::unordered_map<Node*, unsigned int>& TerminalToLabel();
+    std::unordered_map<Node*, unsigned int>& TerminalToLabel() { return *this->terminalToLabel; }
 
     /// \brief \c const reference to terminals to label map.
     /// It maps a pointer of a terminal node to its label.
@@ -131,29 +135,29 @@ class Forest
     /// the map should return the smallest one.
     /// \property TerminalToLabel.
     [[nodiscard, maybe_unused]]
-    const std::unordered_map<Node*, unsigned int>& TerminalToLabel() const;
+    const std::unordered_map<Node*, unsigned int>& TerminalToLabel() const { return *this->terminalToLabel; }
 
     /// \brief Reference to label to terminal map.
     /// It maps a label to the associated terminal pointer.
     /// \property LabelToTerminal.
     [[nodiscard, maybe_unused]]
-    LabelToTerminalMap& LabelToTerminal();
+    LabelToTerminalMap& LabelToTerminal() { return *this->labelToTerminal; }
 
     /// \brief \c const reference to label to terminal map.
     /// It maps a label to the associated terminal pointer.
     /// \property LabelToTerminal.
     [[nodiscard, maybe_unused]]
-    const LabelToTerminalMap& LabelToTerminal() const;
+    const LabelToTerminalMap& LabelToTerminal() const { return *this->labelToTerminal; }
 
     /// \brief Reference vector of root node pointer.
     /// \property Roots
     [[nodiscard, maybe_unused]]
-    std::vector<Node*>& Roots();
+    std::vector<Node*>& Roots() { return *this->roots; }
 
     /// \brief \c const reference vector of root node pointer.
     /// \property Roots
     [[nodiscard, maybe_unused]]
-    const std::vector<Node*>& Roots() const;
+    const std::vector<Node*>& Roots() const { return *this->roots; }
 
     /// \brief returns a pointer to the root node, that has \c node in its subtree
     /// \param node pointer to node

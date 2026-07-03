@@ -95,46 +95,8 @@ void Forest::dot(const string& path) const
 // ------------------------------------------------------------- //
 // ---- access to member fields -------------------------------- //
 // ------------------------------------------------------------- //
-
-std::shared_ptr<std::vector<Node>>& Forest::Nodes()
-{
-    return this->nodes;
-}
-
-const std::shared_ptr<std::vector<Node>>& Forest::Nodes() const
-{
-    return this->nodes;
-}
-
-std::unordered_map<Node*, unsigned int>& Forest::TerminalToLabel()
-{
-    return *this->terminalToLabel;
-}
-
-const std::unordered_map<Node*, unsigned int>& Forest::TerminalToLabel() const
-{
-    return *this->terminalToLabel;
-}
-
-LabelToTerminalMap& Forest::LabelToTerminal()
-{
-    return *this->labelToTerminal;
-}
-
-const LabelToTerminalMap& Forest::LabelToTerminal() const
-{
-    return *this->labelToTerminal;
-}
-
-std::vector<Node*>& Forest::Roots()
-{
-    return *this->roots;
-}
-
-const std::vector<Node*>& Forest::Roots() const
-{
-    return *this->roots;
-}
+// Trivial field accessors (Nodes / TerminalToLabel / LabelToTerminal / Roots)
+// are defined inline in Forest.hpp so they inline at their call sites.
 
 Node* Forest::rootOf(Node* node) const
 {
