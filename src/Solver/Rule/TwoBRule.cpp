@@ -22,7 +22,7 @@ solver::RuleReturnCode solver::TwoBRule::apply()
         {
             if (context->protectedEdges.contains(toCutNode1))
                 return RuleReturnCode::CutBranch;
-            changes.emplace(toCutNode1, f);
+            changes.emplace(toCutNode1, f, context.get());
             changes.top().doAction();
         }
 
@@ -31,7 +31,7 @@ solver::RuleReturnCode solver::TwoBRule::apply()
         {
             if (context->protectedEdges.contains(toCutNode2))
                 return RuleReturnCode::CutBranch;
-            changes.emplace(toCutNode2, f);
+            changes.emplace(toCutNode2, f, context.get());
             changes.top().doAction();
         }
     }
