@@ -1,6 +1,5 @@
 #include "ReductionSolver.hpp"
 
-#include "Rule/SubtreeReductionRule.hpp"
 #include "Rule/ChainReductionRule.hpp"
 
 solver::ReductionSolver::ReductionSolver(const std::shared_ptr<graph::Instance>& instance) :
@@ -9,24 +8,16 @@ solver::ReductionSolver::ReductionSolver(const std::shared_ptr<graph::Instance>&
 
 bool solver::ReductionSolver::solve()
 {
-    bool progress = true;
-    while (progress)
+    subtreeReductionRule = solver::SubtreeReductionRule::isApplicable(instance, context);
+    if (subtreeReductionRule)
     {
-        progress = false;
+        subtreeReductionRule->apply();
+    }
 
-        if (auto rule = solver::SubtreeReductionRule::isApplicable(instance, context))
-        {
-            rule->apply();
-            appliedRules.push_back(rule);
-            progress = true;
-        }
-
-        if (auto rule = solver::ChainReductionRule::isApplicable(instance, context))
-        {
-            rule->apply();
-            appliedRules.push_back(rule);
-            progress = true;
-        }
+    chainReductionRule = solver::ChainReductionRule::isApplicable(instance, context);
+    if (chainReductionRule)
+    {
+        chainReductionRule->apply();
     }
 
     return false;
@@ -34,7 +25,12 @@ bool solver::ReductionSolver::solve()
 
 void solver::ReductionSolver::unapplyReductions()
 {
-    for (auto it = appliedRules.rbegin(); it != appliedRules.rend(); ++it)
-        (*it)->unapply();
-    appliedRules.clear();
+    if (chainReductionRule)
+    {
+        chainReductionRule->unapply();
+    }
+    if (subtreeReductionRule)
+    {
+        subtreeReductionRule->unapply();
+    }
 }
