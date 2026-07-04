@@ -31,12 +31,6 @@ struct Node
     /// \note Since there is no label '0', the bit (1 << i) encodes 'i+1', not 'i'.
     std::vector<uint64_t> subtreeTerminals = {};
 
-    /// \brief The terminal label of this node, or 0 if the node is not currently a
-    /// terminal (an internal node). For a collapsed node this is the smallest label
-    /// of the collapsed subtree. This replaces the old terminalToLabel map; access
-    /// it through Forest::TerminalToLabel() (a \ref graph::TerminalToLabelView).
-    unsigned int label = 0;
-
     /// \brief Constructor.
     /// \param parent Pointer to parent.
     /// \param sibling Pointer to the sibling.

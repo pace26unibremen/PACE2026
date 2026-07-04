@@ -72,9 +72,9 @@ void solver::DecoupleSubtreeAction::doAction()
 
     // update label-terminal maps
     forest->LabelToTerminal()[newLabelParentTree] = decouplingPoint;
-    forest->TerminalToLabel().setLabel(decouplingPoint, newLabelParentTree);
+    forest->TerminalToLabel()[decouplingPoint] = newLabelParentTree;
     forest->LabelToTerminal()[newLabelSubtree] = &decoupledSubtreeVirtualSibling;
-    forest->TerminalToLabel().setLabel(&decoupledSubtreeVirtualSibling, newLabelSubtree);
+    forest->TerminalToLabel()[&decoupledSubtreeVirtualSibling] = newLabelSubtree;
 
     // manage the root vector: insert new root at correct position, if necessary rearrange root of parent tree
 
@@ -120,7 +120,7 @@ void solver::DecoupleSubtreeAction::undoAction()
     {
         throw std::runtime_error("newLabelSubtree has not decoupledSubtreeVirtualSibling as terminal");
     }
-    if(forest->TerminalToLabel().at(&decoupledSubtreeVirtualSibling) != newLabelSubtree)
+    if(forest->TerminalToLabel()[&decoupledSubtreeVirtualSibling] != newLabelSubtree)
     {
         throw std::runtime_error("decoupledSubtreeVirtualSibling has not newLabelSubtree as label");
     }
@@ -186,10 +186,10 @@ void solver::DecoupleSubtreeAction::undoWithSubtreeRoot()
     // if the subtree part is a single vertex tree, then decoupling point becomes a terminal again
     if (forest->TerminalToLabel().contains(subtreePartRoot))
     {
-        unsigned int label = forest->TerminalToLabel().at(subtreePartRoot);
+        unsigned int label = forest->TerminalToLabel()[subtreePartRoot];
         forest->TerminalToLabel().erase(subtreePartRoot);
 
-        forest->TerminalToLabel().setLabel(decouplingPoint, label);
+        forest->TerminalToLabel()[decouplingPoint] = label;
         forest->LabelToTerminal()[label] = decouplingPoint;
     }
 
@@ -284,8 +284,8 @@ void solver::DecoupleSubtreeAction::undoWithoutSubtreeRoot()
         }
         if (forest->TerminalToLabel().contains(&decoupledSubtreeRoot))
         {
-            forest->TerminalToLabel().setLabel(decouplingPoint, forest->TerminalToLabel().at(&decoupledSubtreeRoot));
-            forest->LabelToTerminal()[forest->TerminalToLabel().at(&decoupledSubtreeRoot)] = decouplingPoint;
+            forest->TerminalToLabel()[decouplingPoint] = forest->TerminalToLabel()[&decoupledSubtreeRoot];
+            forest->LabelToTerminal()[forest->TerminalToLabel()[&decoupledSubtreeRoot]] = decouplingPoint;
             forest->TerminalToLabel().erase(&decoupledSubtreeRoot);
         }
     }

@@ -126,13 +126,12 @@ solver::ABCBranchingRule::isApplicable(const std::shared_ptr<graph::Instance>& i
     auto forestWithBNodes = std::list<std::pair<std::shared_ptr<graph::Forest>, std::list<graph::Node*>>>();
 
     const auto& f0 = instance->at(0);
-    for (const graph::Node& terminal : *f0->Nodes())
+    for (const auto& [node, label] : f0->TerminalToLabel())
     {
-        if (terminal.label == 0) { continue; }  // iterate terminals only
-        if (terminal.sibling != nullptr and terminal.sibling->label != 0)
+        if (node->sibling != nullptr and f0->TerminalToLabel().contains(node->sibling))
         {
-            aLabel = terminal.label;
-            cLabel = terminal.sibling->label;
+            aLabel = label;
+            cLabel = f0->TerminalToLabel().at(node->sibling);
             break;
         }
     }

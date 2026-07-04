@@ -7,7 +7,6 @@
 
 #include <algorithm>
 #include <ranges>
-#include <unordered_set>
 
 std::shared_ptr<graph::Instance> solver::ClusterSolver::buildSingleCluster(unsigned int i)
 {
@@ -15,28 +14,22 @@ std::shared_ptr<graph::Instance> solver::ClusterSolver::buildSingleCluster(unsig
     for (const auto& f : *instance)
     {
         graph::Node* root = f->Roots()[i];
+        std::unordered_map<graph::Node*, unsigned int> mapTL = f->TerminalToLabel();
         std::vector<graph::Node*> roots;
+
         roots.push_back(root);
+        std::erase_if(mapTL, [root](const auto& entry) { return not root->hasTerminal(entry.second); });
 
         // Keep only the labels whose terminals live in this cluster's root subtree.
-        // The distinct terminal nodes among those labels give the cluster's terminal
-        // count (a collapsed node maps from several labels; decoupling can also add
-        // virtual terminal nodes that are not in f->Nodes() -- both are covered here).
         auto mapLT = std::make_shared<graph::LabelToTerminalMap>();
-        std::unordered_set<graph::Node*> clusterTerminals;
         for (const auto& [label, node] : f->LabelToTerminal())
         {
-            if (root->hasTerminal(label))
-            {
-                mapLT->emplace(label, node);
-                clusterTerminals.insert(node);
-            }
+            if (root->hasTerminal(label)) mapLT->emplace(label, node);
         }
-        const std::size_t terminalCount = clusterTerminals.size();
 
         auto forest =
             std::make_shared<graph::Forest>(f->Nodes(),
-                                            std::make_shared<graph::TerminalToLabelView>(terminalCount),
+                                            std::make_shared<std::unordered_map<graph::Node*, unsigned int>>(mapTL),
                                             mapLT,
                                             std::make_shared<std::vector<graph::Node*>>(roots));
         subInstance->push_back(forest);

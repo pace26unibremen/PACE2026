@@ -29,7 +29,7 @@ namespace graph
 // ------------------------------------------------------------- //
 
 Forest::Forest(std::shared_ptr<std::vector<Node>> nodes,
-               std::shared_ptr<TerminalToLabelView> terminalToLabel,
+               std::shared_ptr<std::unordered_map<Node*, unsigned int>> terminalToLabel,
                std::shared_ptr<LabelToTerminalMap> labelToTerminal,
                std::shared_ptr<std::vector<Node*>> roots) :
         nodes(std::move(nodes)),
@@ -142,17 +142,8 @@ bool Forest::isValid() const
         }
         lastSmallestTerminal = smallestTerminal;
     }
-    // Check terminal -> label: every reachable leaf must carry its label and the
-    // terminal count must match the reachable leaves exactly.
-    bool terminalToLabelMatches = (terminalToLabel->size() == totalLeafs.size());
-    for (const auto& [leaf, leafLabel] : totalLeafs)
-    {
-        if (leaf->label != leafLabel)
-        {
-            terminalToLabelMatches = false;
-        }
-    }
-    if (not terminalToLabelMatches)
+    // Check terminal -> label
+    if (*terminalToLabel != totalLeafs)
     {
         std::clog << "Forest: isValid: unreachable leafs in terminalToLabel:\n"
                      "   List Leafs? \n"
@@ -495,11 +486,8 @@ std::vector<Node*> Forest::maximumCommonSubforestRoots(const Forest& other)
 
     unordered_set<unsigned int> visitedLeaves;
 
-    for (Node& leafNode : *nodes)
+    for (auto& [leafPtr, leafLabel] : *terminalToLabel)
     {
-        if (leafNode.label == 0) { continue; }  // not a terminal
-        Node* const leafPtr = &leafNode;
-        const unsigned int leafLabel = leafNode.label;
         if (visitedLeaves.contains(leafLabel)){continue;}
         Node* t1CurrentNodePtr = leafPtr;
         Node* t2CurrentNodePtr = (*other.labelToTerminal)[leafLabel];
@@ -599,12 +587,11 @@ Forest Forest::copy() const
 
     // initialize the member fields of the copy forest with correct capacity
     auto nodes_copy = std::make_shared<std::vector<Node>>();
-    // Node::label rides along when the nodes are copied below, so the terminal
-    // labels are reproduced for free; the view only needs the same terminal count.
-    auto terminalToLabel_copy = std::make_shared<TerminalToLabelView>(terminalToLabel->size());
+    auto terminalToLabel_copy = std::make_shared<std::unordered_map<Node*, unsigned int>>();
     auto labelToTerminal_copy = std::make_shared<LabelToTerminalMap>();
     auto roots_copy = std::make_shared<std::vector<Node*>>();
     nodes_copy->reserve(nodes->capacity());
+    terminalToLabel_copy->reserve(terminalToLabel->size());
     labelToTerminal_copy->reserve(labelToTerminal->size());
     roots_copy->reserve(roots->capacity());
 
@@ -624,6 +611,10 @@ Forest Forest::copy() const
         node.rightChild = newPointerLookup[node.rightChild];
     }
 
+    for ( auto [terminal, label] : *terminalToLabel)
+    {
+        terminalToLabel_copy->emplace(newPointerLookup[terminal], label);
+    }
     for (auto [label, terminal] : *labelToTerminal)
     {
         labelToTerminal_copy->emplace(label, newPointerLookup[terminal]);

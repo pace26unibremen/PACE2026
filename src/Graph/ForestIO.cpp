@@ -12,7 +12,7 @@ using namespace graph;
 
 Forest ForestIO::ReadNewick(std::istream& stream, int numberOfTerminals, int numberOfTrees)
 {
-    auto terminalToLabel = make_shared<TerminalToLabelView>();
+    auto terminalToLabel = make_shared<unordered_map<Node*, unsigned int>>();
     auto labelToTerminal = make_shared<LabelToTerminalMap>();
     auto nodes = make_shared<vector<Node>>();
     auto roots = make_shared<vector<Node*>>();
