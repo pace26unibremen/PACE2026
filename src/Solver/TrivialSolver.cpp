@@ -10,13 +10,15 @@ bool solver::TrivialSolver::solve()
 
     auto nodes = std::make_shared<std::vector<graph::Node>>(numberOfTerminals);
     auto roots = std::make_shared<std::vector<graph::Node*>>(numberOfTerminals);
-    auto terminalToLabel = std::make_shared<std::unordered_map<graph::Node*, unsigned int>>(numberOfTerminals);
+    auto terminalToLabel = std::make_shared<graph::TerminalToLabelView>();
     auto labelToTerminal = std::make_shared<graph::LabelToTerminalMap>();
     labelToTerminal->reserve(numberOfTerminals);
 
     int index = 0;
-    for(const auto & [_, label] : instance->at(0)->TerminalToLabel())
+    for (graph::Node& originalTerminal : *instance->at(0)->Nodes())
     {
+        if (originalTerminal.label == 0) { continue; }  // iterate the original's terminals
+        const unsigned int label = originalTerminal.label;
         graph::Node& node = nodes->at(index);
         node= {nullptr,nullptr,nullptr,nullptr};
         roots->at(index) = &node;

@@ -100,12 +100,13 @@ solver::ACBranchingRule::isApplicable(const std::shared_ptr<graph::Instance>& in
     unsigned int cLabel = 0;
 
     const auto& f0 = instance->at(0);
-    for (const auto& [node, label] : f0->TerminalToLabel())
+    for (const graph::Node& terminal : *f0->Nodes())
     {
-        if (node->sibling != nullptr and f0->TerminalToLabel().contains(node->sibling))
+        if (terminal.label == 0) { continue; }  // iterate terminals only
+        if (terminal.sibling != nullptr and terminal.sibling->label != 0)
         {
-            aLabel = label;
-            cLabel = f0->TerminalToLabel().at(node->sibling);
+            aLabel = terminal.label;
+            cLabel = terminal.sibling->label;
             break;
         }
     }

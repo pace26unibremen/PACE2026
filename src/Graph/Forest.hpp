@@ -3,6 +3,7 @@
 
 #include "LabelToTerminalMap.hpp"
 #include "Node.hpp"
+#include "TerminalToLabelView.hpp"
 
 #include <filesystem>
 #include <unordered_map>
@@ -22,8 +23,8 @@ class Forest
     /// \brief Vector that stores all nodes of the forest.
     std::shared_ptr<std::vector<Node>> nodes;
 
-    /// \brief A map that stores all pointers to terminals with corresponding terminal labels.
-    std::shared_ptr<std::unordered_map<Node*, unsigned int>> terminalToLabel;
+    /// \brief View over Node::label presenting the terminal -> label mapping.
+    std::shared_ptr<TerminalToLabelView> terminalToLabel;
 
     /// \brief A map that stores all leaf labels with corresponding terminal Pointers.
     std::shared_ptr<LabelToTerminalMap> labelToTerminal;
@@ -59,7 +60,7 @@ class Forest
 
     /// \brief Constructor.
     Forest(std::shared_ptr<std::vector<Node>> nodes,
-           std::shared_ptr<std::unordered_map<Node*, unsigned int>> terminalToLabel,
+           std::shared_ptr<TerminalToLabelView> terminalToLabel,
            std::shared_ptr<LabelToTerminalMap> labelToTerminal,
            std::shared_ptr<std::vector<Node*>> roots);
 
@@ -127,7 +128,7 @@ class Forest
     /// the map should return the smallest one.
     /// \property TerminalToLabel.
     [[nodiscard, maybe_unused]]
-    std::unordered_map<Node*, unsigned int>& TerminalToLabel() { return *this->terminalToLabel; }
+    TerminalToLabelView& TerminalToLabel() { return *this->terminalToLabel; }
 
     /// \brief \c const reference to terminals to label map.
     /// It maps a pointer of a terminal node to its label.
@@ -135,7 +136,7 @@ class Forest
     /// the map should return the smallest one.
     /// \property TerminalToLabel.
     [[nodiscard, maybe_unused]]
-    const std::unordered_map<Node*, unsigned int>& TerminalToLabel() const { return *this->terminalToLabel; }
+    const TerminalToLabelView& TerminalToLabel() const { return *this->terminalToLabel; }
 
     /// \brief Reference to label to terminal map.
     /// It maps a label to the associated terminal pointer.

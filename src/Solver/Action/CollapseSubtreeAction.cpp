@@ -34,7 +34,7 @@ void solver::CollapseSubtreeAction::doAction()
             graph::Node* oldNode = forest->LabelToTerminal()[label];
             collapsedLabelToTerminals.emplace(label, oldNode);
             forest->LabelToTerminal()[label] = node;
-            if (forest->TerminalToLabel().contains(oldNode) and forest->TerminalToLabel()[oldNode] == label)
+            if (forest->TerminalToLabel().contains(oldNode) and forest->TerminalToLabel().at(oldNode) == label)
             {
                 collapsedTerminals.emplace(oldNode, label);
             }
@@ -83,7 +83,7 @@ void solver::CollapseSubtreeAction::undoAction()
     }
     for ( const auto& [oldNode, label] : collapsedTerminals)
     {
-        forest->TerminalToLabel()[oldNode] = label;
+        forest->TerminalToLabel().setLabel(oldNode, label);
     }
 
     forest->TerminalToLabel().erase(node);
