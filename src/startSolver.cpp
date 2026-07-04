@@ -89,6 +89,15 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
         return {std::move(branch), size};
     };
 
+    // Stride/pipeline metrics line: the honest whole-instance approximation size. Run the same
+    // in-place approximation on the still-pristine instance (before the Reduction/Cluster stages
+    // decouple it) and discard the branch — it rolls straight back off the instance, so the real
+    // solve below is unaffected. Summing the per-cluster approximation sizes would instead double-
+    // count every shared cluster boundary (and can even exceed the leaf count).
+    std::optional<unsigned int> approxSize;
+    if (config.track == solver::SolverConfig::Track::Pipeline)
+        approxSize = seedFromApproximation(instance).second;
+
     bool solved = false;
 
     // all solvers that worked on the solution
@@ -110,7 +119,6 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
                         std::make_shared<solver::plugin::SigtermPlugin>(&g_timeout, out));
                 }
 #endif
-                unsigned int approxSize = 0;
                 if (clusterSolver)
                 {
                     // Each cluster is an independent sub-instance solved by its own BranchingSolver;
@@ -120,7 +128,6 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
                     for (const auto& [cluster, context] : clusterSolver->Clusters())
                     {
                         auto [branch, size] = seedFromApproximation(cluster);
-                        approxSize += size;  // whole-instance approx = sum over independent clusters
 
                         auto branchingConfig = std::make_shared<solver::BranchingSolverConfiguration>(config.branchingConfig);
                         auto solver = std::make_shared<solver::BranchingSolver>(cluster, branchingConfig, context);
@@ -139,7 +146,6 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
                 else
                 {
                     auto [branch, size] = seedFromApproximation(instance);
-                    approxSize = size;
 
                     auto branchingConfig = std::make_shared<solver::BranchingSolverConfiguration>(config.branchingConfig);
                     auto solver = std::make_shared<solver::BranchingSolver>(instance, branchingConfig);
@@ -155,11 +161,11 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
                 }
 
                 // Pipeline/CI runs report the approximation size next to the exact solution so the
-                // stride harness can track approximation quality. Reuses the size already computed for
-                // seeding (no separate recomputation).
+                // stride harness can track approximation quality. Measured on the pristine instance
+                // above, before the pipeline reduced/decoupled it.
                 if (config.track == solver::SolverConfig::Track::Pipeline)
                 {
-                    out << "#s approx {\"size\":" << approxSize
+                    out << "#s approx {\"size\":" << approxSize.value_or(0)
                         << ",\"trees\":" << instance->size()
                         << ",\"applicable\":true}\n";
                     out.flush();
