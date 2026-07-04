@@ -92,6 +92,20 @@ target_link_libraries(GreedyCherryCutRuleTests PRIVATE Solver Graph Catch2::Catc
 add_test(NAME GreedyCherryCutRuleTests COMMAND $<TARGET_FILE:GreedyCherryCutRuleTests>)
 target_compile_definitions(GreedyCherryCutRuleTests PRIVATE RES_DIR="${CMAKE_SOURCE_DIR}/res/")
 
+add_executable(ClusterBudgetTests ClusterBudgetTests.cpp)
+target_link_libraries(ClusterBudgetTests PRIVATE Solver Graph Catch2::Catch2WithMain)
+add_test(NAME ClusterBudgetTests COMMAND $<TARGET_FILE:ClusterBudgetTests>)
+
+add_executable(BranchingSolverDeadlineTests BranchingSolverDeadlineTests.cpp)
+target_link_libraries(BranchingSolverDeadlineTests PRIVATE Solver Graph Catch2::Catch2WithMain)
+add_test(NAME BranchingSolverDeadlineTests COMMAND $<TARGET_FILE:BranchingSolverDeadlineTests>)
+target_compile_definitions(BranchingSolverDeadlineTests PRIVATE RES_DIR="${CMAKE_SOURCE_DIR}/res/")
+
+add_executable(ClusterSolverCountTests ClusterSolverCountTests.cpp)
+target_link_libraries(ClusterSolverCountTests PRIVATE Solver Graph Catch2::Catch2WithMain)
+add_test(NAME ClusterSolverCountTests COMMAND $<TARGET_FILE:ClusterSolverCountTests>)
+target_compile_definitions(ClusterSolverCountTests PRIVATE RES_DIR="${CMAKE_SOURCE_DIR}/res/")
+
 #add_executable(ClusterPointTests ClusterPointTests.cpp)
 #target_link_libraries(ClusterPointTests PRIVATE Solver Graph Cluster Catch2::Catch2WithMain)
 #add_test(NAME ClusterPointTests COMMAND $<TARGET_FILE:ClusterPointTests>)

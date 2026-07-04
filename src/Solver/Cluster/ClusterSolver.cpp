@@ -22,11 +22,10 @@ std::shared_ptr<graph::Instance> solver::ClusterSolver::buildSingleCluster(unsig
         std::erase_if(mapTL, [root](const auto& entry) { return not root->hasTerminal(entry.second); });
         std::erase_if(mapLT, [root](const auto& entry) { return not root->hasTerminal(entry.first); });
 
-        auto forest =
-            std::make_shared<graph::Forest>(f->Nodes(),
-                                            std::make_shared<std::unordered_map<graph::Node*, unsigned int>>(mapTL),
-                                            std::make_shared<std::unordered_map<unsigned int, graph::Node*>>(mapLT),
-                                            std::make_shared<std::vector<graph::Node*>>(roots));
+        auto forest = std::make_shared<graph::Forest>(
+            f->Nodes(), std::make_shared<std::unordered_map<graph::Node*, unsigned int>>(mapTL),
+            std::make_shared<std::unordered_map<unsigned int, graph::Node*>>(mapLT),
+            std::make_shared<std::vector<graph::Node*>>(roots));
         subInstance->push_back(forest);
     }
     return subInstance;
@@ -251,4 +250,9 @@ void solver::ClusterSolver::unapplyReductions()
 solver::ClusterRange& solver::ClusterSolver::Clusters()
 {
     return *clusterRange.get();
+}
+
+unsigned int solver::ClusterSolver::clusterCount() const
+{
+    return static_cast<unsigned int>(cluster.size());
 }

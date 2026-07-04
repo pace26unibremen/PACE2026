@@ -149,6 +149,11 @@ class ClusterSolver : public AbstractSolver
     /// \brief Provides the intended way to iterate over the cluster and solve them.
     /// \returns the cluster range, an iterable container that manages intermediate steps.
     ClusterRange& Clusters();
+
+    /// \brief Number of clusters produced by \ref solve (always >= 1).
+    /// \returns the size of the \ref cluster vector, i.e. how many sub-instances
+    ///          \ref Clusters will iterate over. Used to divide a time budget across them.
+    [[nodiscard]] unsigned int clusterCount() const;
 };
 
 }  //namespace solver
