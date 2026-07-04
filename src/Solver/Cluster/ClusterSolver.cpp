@@ -256,3 +256,10 @@ unsigned int solver::ClusterSolver::clusterCount() const
 {
     return static_cast<unsigned int>(cluster.size());
 }
+
+unsigned int solver::ClusterSolver::clusterWeight(unsigned int index) const
+{
+    // Leaf count of the first tree is our difficulty proxy: MAF branching cost grows with the
+    // number of terminals, so this weights the time budget toward the clusters that need it.
+    return static_cast<unsigned int>(cluster.at(index)->at(0)->TerminalToLabel().size());
+}

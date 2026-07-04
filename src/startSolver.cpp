@@ -20,6 +20,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 // ============================================================
 //  Default preset
@@ -123,15 +124,22 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
                     // cluster. No Forest::copy, so this is safe on the cluster's fragile pointers.
                     bool allClustersSolved = true;
                     // Time-slice the total budget across clusters so a single hard cluster
-                    // cannot consume the whole run and starve the rest.  Each cluster gets an
-                    // equal share of the time still remaining, so time left unused by clusters
-                    // that finish early rolls forward.  A deadline only bites once a cluster has
-                    // a first candidate (see BranchingSolver), so today it caps clusters that
-                    // already produced a solution; it becomes fully effective once every cluster
-                    // is seeded with a feasible incumbent.  Disabled when timeBudgetSeconds <= 0.
+                    // cannot consume the whole run and starve the rest.  Each cluster gets a
+                    // share of the time still remaining that is proportional to its size (leaf
+                    // count), so time left unused by clusters that finish early rolls forward and
+                    // larger/harder clusters are budgeted more than trivial ones.  A deadline only
+                    // bites once a cluster has a first candidate (see BranchingSolver); since every
+                    // cluster is seeded with the approximation below, that is immediate.  Disabled
+                    // when timeBudgetSeconds <= 0.
                     const bool sliceBudget = config.timeBudgetSeconds > 0.0;
+                    std::vector<double> clusterWeights;
+                    clusterWeights.reserve(clusterSolver->clusterCount());
+                    for (unsigned int i = 0; i < clusterSolver->clusterCount(); ++i)
+                    {
+                        clusterWeights.push_back(static_cast<double>(clusterSolver->clusterWeight(i)));
+                    }
                     const solver::ClusterBudget clusterBudget(std::chrono::steady_clock::now(),
-                                                              config.timeBudgetSeconds, clusterSolver->clusterCount());
+                                                              config.timeBudgetSeconds, std::move(clusterWeights));
                     unsigned int clusterIndex = 0;
                     for (const auto& [cluster, context] : clusterSolver->Clusters())
                     {

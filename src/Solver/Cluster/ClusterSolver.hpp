@@ -154,6 +154,13 @@ class ClusterSolver : public AbstractSolver
     /// \returns the size of the \ref cluster vector, i.e. how many sub-instances
     ///          \ref Clusters will iterate over. Used to divide a time budget across them.
     [[nodiscard]] unsigned int clusterCount() const;
+
+    /// \brief Difficulty weight of the cluster at \p index, used to size its time budget.
+    /// \returns the number of leaves (terminals) in the cluster's first tree — a cheap proxy
+    ///          for branch-and-bound difficulty. Larger clusters therefore get a larger share
+    ///          of the wall-clock budget than trivial ones (see \ref ClusterBudget).
+    /// \param index of the cluster in the \ref cluster vector; must be < \ref clusterCount.
+    [[nodiscard]] unsigned int clusterWeight(unsigned int index) const;
 };
 
 }  //namespace solver
