@@ -14,21 +14,11 @@ bool solver::ReductionSolver::solve()
         subtreeReductionRule->apply();
     }
 
-    chainReductionRule = solver::ChainReductionRule::isApplicable(instance, context);
-    if (chainReductionRule)
-    {
-        chainReductionRule->apply();
-    }
-
     return false;
 }
 
 void solver::ReductionSolver::unapplyReductions()
 {
-    if (chainReductionRule)
-    {
-        chainReductionRule->unapply();
-    }
     if (subtreeReductionRule)
     {
         subtreeReductionRule->unapply();
