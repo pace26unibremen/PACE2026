@@ -153,7 +153,7 @@ struct SolverConfig
     {
         SolverConfig c;
         c.track = Track::Heuristic;
-        c.solverPipeline = {SolverType::Reduction, SolverType::Branching};
+        c.solverPipeline = {SolverType::Reduction, SolverType::Cluster, SolverType::Branching};
         c.enableSigterm = true;
         c.timeBudgetSeconds = 300.0;  // heuristic-track wall-clock limit; used to slice a Cluster stage
         return c;
@@ -210,7 +210,7 @@ struct SolverConfig
     {
         SolverConfig c;
         c.track = Track::LowerBound;
-        c.solverPipeline = {SolverType::Reduction, SolverType::Branching};
+        c.solverPipeline = {SolverType::Reduction, SolverType::Cluster, SolverType::Branching};
         c.enableSigterm = true;
         c.timeBudgetSeconds = 600.0;  // lower-bound-track wall-clock limit; used to slice a Cluster stage
         return c;
