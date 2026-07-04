@@ -58,6 +58,17 @@ add_test(NAME ReverseBRuleTests COMMAND $<TARGET_FILE:ReverseBRuleTests>)
 target_compile_definitions(ReverseBRuleTests PRIVATE RES_DIR="${CMAKE_SOURCE_DIR}/res/")
 target_compile_definitions(ReverseBRuleTests PRIVATE TEST_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/res/tests/")
 
+add_executable(ShortenChainActionTests ShortenChainActionTests.cpp)
+target_link_libraries(ShortenChainActionTests PRIVATE Solver Graph Catch2::Catch2WithMain)
+add_test(NAME ShortenChainActionTests COMMAND $<TARGET_FILE:ShortenChainActionTests>)
+target_compile_definitions(ShortenChainActionTests PRIVATE RES_DIR="${CMAKE_SOURCE_DIR}/res/")
+target_compile_definitions(ShortenChainActionTests PRIVATE TEST_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/res/tests/")
+
+add_executable(ChainReductionTests ChainReductionTests.cpp)
+target_link_libraries(ChainReductionTests PRIVATE Solver Graph Catch2::Catch2WithMain)
+add_test(NAME ChainReductionTests COMMAND $<TARGET_FILE:ChainReductionTests>)
+target_compile_definitions(ChainReductionTests PRIVATE RES_DIR="${CMAKE_SOURCE_DIR}/res/")
+target_compile_definitions(ChainReductionTests PRIVATE TEST_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/res/tests/")
 
 #add_executable(ClusterPointTests ClusterPointTests.cpp)
 #target_link_libraries(ClusterPointTests PRIVATE Solver Graph Cluster Catch2::Catch2WithMain)

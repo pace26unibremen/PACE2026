@@ -15,6 +15,7 @@
 #include "Rule/SiblingRuleFactory.hpp"
 #include "Rule/SingleVertexTreePropagationRule.hpp"
 #include "Rule/TwoBRule.hpp"
+#include "Rule/ChainReductionRule.hpp"
 
 #include <functional>
 #include <memory>
