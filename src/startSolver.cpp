@@ -11,10 +11,13 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <list>
+#include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 
 // ============================================================
 //  Default preset
@@ -64,6 +67,37 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
     const auto startTime = std::clock();
     const auto instance = graph::ReadInstance(in);
 
+    // ---- Approximation-seeded branch & bound ------------------------------------------------
+    // Before the real branch-and-bound search on an instance (or cluster), run the approximation
+    // (BranchingSolverConfiguration::approximationRules) on it *in place*, remember its solution
+    // branch, and roll that branch back off the instance. The solution size seeds the incumbent
+    // (Context::bestSolutionWeight, so CutBranchRule prunes from the very first node), and the branch
+    // is handed to the real solver as its initial best solution — so if the search never beats it, or
+    // a SIGTERM fires before its own first leaf, the solver still emits that valid agreement forest.
+    // Running in place (no Forest::copy) is what makes this safe on decoupled cluster sub-instances.
+    auto seedFromApproximation = [](const std::shared_ptr<graph::Instance>& inst)
+        -> std::pair<std::list<std::shared_ptr<solver::AbstractRule>>, unsigned int>
+    {
+        auto approxConfig = std::make_shared<solver::BranchingSolverConfiguration>(
+            solver::BranchingSolverConfiguration::approximationRules());
+        auto approxSolver = std::make_shared<solver::BranchingSolver>(inst, approxConfig);
+        approxSolver->solve();
+        // The solution is applied, so the component count is the constructed agreement-forest size.
+        const unsigned int size = static_cast<unsigned int>(inst->at(0)->Roots().size());
+        auto branch = approxSolver->SolutionBranch();  // copy the (currently applied) solution rules
+        approxSolver->unapplySolutionBranch();         // roll the approximation back off the instance
+        return {std::move(branch), size};
+    };
+
+    // Stride/pipeline metrics line: the honest whole-instance approximation size. Run the same
+    // in-place approximation on the still-pristine instance (before the Reduction/Cluster stages
+    // decouple it) and discard the branch — it rolls straight back off the instance, so the real
+    // solve below is unaffected. Summing the per-cluster approximation sizes would instead double-
+    // count every shared cluster boundary (and can even exceed the leaf count).
+    std::optional<unsigned int> approxSize;
+    if (config.track == solver::SolverConfig::Track::Pipeline)
+        approxSize = seedFromApproximation(instance).second;
+
     bool solved = false;
 
     // all solvers that worked on the solution
@@ -90,11 +124,17 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
 #endif
                 if (clusterSolver)
                 {
+                    // Each cluster is an independent sub-instance solved by its own BranchingSolver;
+                    // seed each one from an in-place approximation on that (already reduced & decoupled)
+                    // cluster. No Forest::copy, so this is safe on the cluster's fragile pointers.
                     bool allClustersSolved = true;
                     for (const auto& [cluster, context] : clusterSolver->Clusters())
                     {
+                        auto [branch, size] = seedFromApproximation(cluster);
+
                         auto branchingConfig = std::make_shared<solver::BranchingSolverConfiguration>(config.branchingConfig);
                         auto solver = std::make_shared<solver::BranchingSolver>(cluster, branchingConfig, context);
+                        solver->seedSolution(std::move(branch), static_cast<float>(size));
 #ifdef   _POSIX_VERSION
                         if (config.enableSigterm)
                         {
@@ -108,8 +148,11 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
                 }
                 else
                 {
+                    auto [branch, size] = seedFromApproximation(instance);
+
                     auto branchingConfig = std::make_shared<solver::BranchingSolverConfiguration>(config.branchingConfig);
                     auto solver = std::make_shared<solver::BranchingSolver>(instance, branchingConfig);
+                    solver->seedSolution(std::move(branch), static_cast<float>(size));
 #ifdef   _POSIX_VERSION
                     if (config.enableSigterm)
                     {
@@ -118,6 +161,17 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
 #endif
                     solverList.push_back(solver);
                     solved = solver->solve();
+                }
+
+                // Pipeline/CI runs report the approximation size next to the exact solution so the
+                // stride harness can track approximation quality. Measured on the pristine instance
+                // above, before the pipeline reduced/decoupled it.
+                if (config.track == solver::SolverConfig::Track::Pipeline)
+                {
+                    out << "#s approx {\"size\":" << approxSize.value_or(0)
+                        << ",\"trees\":" << instance->size()
+                        << ",\"applicable\":true}\n";
+                    out.flush();
                 }
                 break;
             }
@@ -150,11 +204,9 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
     }
 
     if (!solved) {
-        // Only reachable when SIGTERM fires before the very first solution
-        // candidate — i.e. within the first few milliseconds of a run on an
-        // instance where even reaching a leaf takes longer than the grace
-        // period.  In normal heuristic-track usage the solver keeps searching
-        // until at least one candidate is found, so this path should be rare.
+        // With the approximation seeded as the initial solution, a branching solver should always
+        // have a forest to emit (its own, or the seed). Reaching here means even the approximation
+        // produced no solution branch — only possible on a degenerate/empty instance.
         std::clog << "Solver stopped without producing a solution\n";
         return;
     }

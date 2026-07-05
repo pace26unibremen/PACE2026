@@ -3,6 +3,7 @@
 #include "../src/Graph/Forest.hpp"
 #include "../src/Graph/Instance.hpp"
 #include "../src/Solver/BranchingSolver.hpp"
+#include "../src/Solver/Context.hpp"
 #include "../src/Solver/Plugin/MetricsPlugins.hpp"
 #include "../src/Solver/Rule/TwoBRule.hpp"
 #include "catch2/catch_config.hpp"
@@ -26,7 +27,8 @@ TEST_CASE("TwoBRule tests", "[Forest, TwoBRule]")
         instance->push_back(std::make_shared<Forest>(f1));
         instance->push_back(std::make_shared<Forest>(f2));
 
-        auto rule = TwoBRule::isApplicable(instance, nullptr);
+        auto context = std::make_shared<solver::Context>();
+        auto rule = TwoBRule::isApplicable(instance, context);
 
         REQUIRE(rule != nullptr);
 
