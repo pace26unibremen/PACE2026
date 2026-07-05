@@ -3,8 +3,14 @@
 
 #include "../../Graph/Instance.hpp"
 
+#include <chrono>
+
 namespace solver
 {
+
+/// A wall-clock deadline for the (slow) 2-approx dual. The default is "never", i.e. run to completion.
+using Deadline = std::chrono::steady_clock::time_point;
+inline Deadline noDeadline() { return Deadline::max(); }
 
 /// \brief A certified lower bound L on the MAF optimum k* (in component units): every maximum
 /// agreement forest has at least L components. It is derived from a feasible dual solution of an LP
@@ -38,14 +44,20 @@ long computeDual3ApproxLowerBound(const graph::Instance& instance);
 /// than two forests the max over ordered forest pairs is returned (k*(all) >= k*(pair)).
 ///
 /// Runs on internal clones of the forests and does not mutate \p instance. For a single forest the
-/// trivial bound L = 1 is returned. NOTE: currently ~O(k^4) so slow on large instances.
-/// \return a certified lower bound L >= 1 with L <= k*.
-long computeDual2ApproxLowerBound(const graph::Instance& instance);
+/// trivial bound L = 1 is returned.
+///
+/// \param deadline optional wall-clock cap. If the computation would run past it, it aborts and returns
+///        0 (the "did not finish in time" sentinel) rather than a partial -- hence invalid -- bound.
+///        With the default \ref noDeadline it always runs to completion and returns L >= 1.
+/// \return a certified lower bound L >= 1 with L <= k*, or 0 if the deadline was hit before finishing.
+long computeDual2ApproxLowerBound(const graph::Instance& instance, Deadline deadline = noDeadline());
 
-/// \brief The best certified lower bound available: max of the 3-approx and 2-approx duals. Both are
-/// always valid (<= k*), so their maximum is valid too and never worse than either. This is what
-/// callers should use for the lower-bound track.
-long computeCertifiedLowerBound(const graph::Instance& instance);
+/// \brief The best certified lower bound available, staged: always the fast 3-approx dual, plus the
+/// tighter 2-approx dual when it finishes within \p deadline. Both are valid (<= k*), so their maximum
+/// is valid too and never worse than the 3-approx. If the 2-approx hits the deadline it is simply
+/// dropped and the 3-approx bound is returned -- so the lower-bound track never wastes its time budget
+/// on the expensive dual for a huge instance. This is what callers should use.
+long computeCertifiedLowerBound(const graph::Instance& instance, Deadline deadline = noDeadline());
 
 }  // namespace solver
 

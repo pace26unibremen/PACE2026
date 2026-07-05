@@ -9,6 +9,7 @@
 
 #include <atomic>
 #include <cassert>
+#include <chrono>
 #include <csignal>
 #include <cstdlib>
 #include <fstream>
@@ -86,7 +87,14 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
     if (config.track == solver::SolverConfig::Track::LowerBound
         && lowerBoundContext->a >= 1.0 && lowerBoundContext->b >= 0)
     {
-        const long L = solver::computeCertifiedLowerBound(*instance);
+        // Staged: the fast 3-approx dual is always computed; the tighter but slower 2-approx (Red-Blue)
+        // dual is given a small wall-clock budget and dropped if it would not finish in time, so the
+        // certification threshold is never bought at the cost of the track's overall time budget on a
+        // large instance. The budget is deliberately a few seconds -- a rounding error against the
+        // track limit -- so easy instances get the tighter bound and huge ones fall back cheaply.
+        constexpr auto twoApproxBudget = std::chrono::seconds(10);
+        const long L = solver::computeCertifiedLowerBound(*instance,
+                                                          std::chrono::steady_clock::now() + twoApproxBudget);
         lowerBoundContext->certifiedThreshold = lowerBoundContext->certifiedCeiling(L);
         // Diagnostic (stderr, does not touch the solution stream): the certified lower bound and the
         // acceptance threshold floor(a*L)+b the search may stop at.

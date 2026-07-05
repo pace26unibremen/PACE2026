@@ -65,11 +65,16 @@ struct RedBlue2
     ActiveSet& active;
     long dualSum = 0;
     bool sawStar = false;  // FinalCut or Merge-After-Cut seen in the current ResolveSet
+    solver::Deadline deadline = solver::noDeadline();
+    bool aborted = false;  // set if the wall-clock deadline was hit before the pass finished
 
-    RedBlue2(MutableForestView& w1, MutableForestView& w2, MutableForestView& o1, MutableForestView& o2, ActiveSet& a)
-        : t1(w1), t2(w2), t1o(o1), t2o(o2), active(a)
+    RedBlue2(MutableForestView& w1, MutableForestView& w2, MutableForestView& o1, MutableForestView& o2,
+             ActiveSet& a, solver::Deadline d)
+        : t1(w1), t2(w2), t1o(o1), t2o(o2), active(a), deadline(d)
     {
     }
+
+    bool timedOut() const { return std::chrono::steady_clock::now() > deadline; }
 
     // ---- active-leaf counts (lazy) ----
     // counts[node] in each WORKING view = active leaves under node in the current forest. Refreshed
@@ -586,6 +591,11 @@ struct RedBlue2
         bool changed = true;
         while (changed)
         {
+            if (timedOut())
+            {
+                aborted = true;
+                return;
+            }
             changed = false;
             std::vector<Label> act(active.begin(), active.end());
             bool done = false;
@@ -628,6 +638,11 @@ struct RedBlue2
         {
             if (++guard > 2000000)
                 break;
+            if (timedOut())
+            {
+                aborted = true;
+                break;
+            }
             if (active.size() == 1)
             {
                 active.clear();
@@ -693,39 +708,44 @@ namespace
 {
 /// The Red-Blue dual bound for the ordered forest pair (f1, f2). Cutting edges in f2 is charged, so the
 /// value can differ per ordering; callers take the max over orderings for the tightest valid bound.
-long redBlueTwoForest(const graph::Forest& f1, const graph::Forest& f2)
+/// Returns -1 if the deadline was hit before finishing (the partial dual sum is not a valid bound).
+long redBlueTwoForest(const graph::Forest& f1, const graph::Forest& f2, solver::Deadline deadline)
 {
     MutableForestView t1w(f1), t2w(f2), t1o(f1), t2o(f2);
     ActiveSet active;
     active.reserve(t1w.nodeOf.size());
     for (const auto& [label, node] : t1w.nodeOf)
         active.insert(label);
-    RedBlue2 rb(t1w, t2w, t1o, t2o, active);
-    return rb.run();
+    RedBlue2 rb(t1w, t2w, t1o, t2o, active, deadline);
+    const long value = rb.run();
+    return rb.aborted ? -1 : value;
 }
 }  // namespace
 
-long solver::computeDual2ApproxLowerBound(const graph::Instance& instance)
+long solver::computeDual2ApproxLowerBound(const graph::Instance& instance, Deadline deadline)
 {
     // A maximum agreement forest of all input forests is also an agreement forest of any pair of them,
     // so k*(all) >= k*(pair) >= L2(pair): the max over pairs is a valid lower bound for the full instance.
     const std::size_t k = instance.size();
     if (k < 2)
         return 1;
-    long best = 1;
+    long best = 0;  // 0 = no pair finished in time (the "did not finish" sentinel)
     for (std::size_t i = 0; i < k; ++i)
         for (std::size_t j = i + 1; j < k; ++j)
-        {
-            best = std::max(best, redBlueTwoForest(*instance.at(i), *instance.at(j)));
-            best = std::max(best, redBlueTwoForest(*instance.at(j), *instance.at(i)));
-        }
+            for (auto [a, b] : {std::pair{i, j}, std::pair{j, i}})  // both orderings
+            {
+                const long r = redBlueTwoForest(*instance.at(a), *instance.at(b), deadline);
+                if (r >= 0)  // finished in time -> a valid bound
+                    best = std::max(best, r);
+            }
     return best;
 }
 
-long solver::computeCertifiedLowerBound(const graph::Instance& instance)
+long solver::computeCertifiedLowerBound(const graph::Instance& instance, Deadline deadline)
 {
-    // Both duals are always valid (<= k*); their maximum is valid too and never worse than either.
+    // Always the fast 3-approx; add the tighter 2-approx only if it finishes within the deadline (it
+    // returns 0 otherwise). Both are valid (<= k*), so the maximum is valid and never below the 3-approx.
     const long l3 = computeDual3ApproxLowerBound(instance);
-    const long l2 = computeDual2ApproxLowerBound(instance);
+    const long l2 = computeDual2ApproxLowerBound(instance, deadline);
     return l2 > l3 ? l2 : l3;
 }
