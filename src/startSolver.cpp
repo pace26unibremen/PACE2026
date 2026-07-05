@@ -109,11 +109,11 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
                     solver::computeDual2ApproxLowerBound(*instanceCopy, solver::noDeadline(), &lbStop);
                 if (l2 <= 0)  // cancelled before finishing -> keep the 3-approx threshold
                     return;
+                // Raise the threshold (this thread is the only writer once the search has started, so a
+                // plain store is enough); the search reads it atomically on its next iteration.
                 const long threshold = lowerBoundContext->certifiedCeiling(std::max(l3, l2));
-                long cur = lowerBoundContext->certifiedThreshold.load();
-                while (threshold > cur
-                       && not lowerBoundContext->certifiedThreshold.compare_exchange_weak(cur, threshold))
-                { }  // raise the threshold monotonically; the search sees it on its next iteration
+                if (threshold > lowerBoundContext->certifiedThreshold.load())
+                    lowerBoundContext->certifiedThreshold.store(threshold);
                 std::clog << "#lb 2-approx L=" << l2 << " threshold=" << threshold << "\n";
             });
     }
