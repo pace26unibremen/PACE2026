@@ -32,19 +32,19 @@ solver::RuleReturnCode solver::ForcedCherryCutRule::apply()
 
     if (aNode->parent)
     {
-        changes.emplace(aNode, t2);
+        changes.emplace(aNode, t2, context.get());
         changes.top().doAction();
     }
 
     if (bNode and bNode->parent)
     {
-        changes.emplace(bNode, t2);
+        changes.emplace(bNode, t2, context.get());
         changes.top().doAction();
     }
 
     if (cNode->parent)
     {
-        changes.emplace(cNode, t2);
+        changes.emplace(cNode, t2, context.get());
         changes.top().doAction();
     }
 
