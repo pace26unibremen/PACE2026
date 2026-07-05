@@ -75,16 +75,18 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
     const auto instance = graph::ReadInstance(in, lowerBoundContext);
 
     // ---- Certified early exit (lower-bound track) ------------------------------------------------
-    // On the lower-bound track, compute a certified lower bound L <= k* from the 3-approximation's LP
-    // dual (on the pristine instance, before reductions) and turn it into the acceptance threshold
-    // floor(a*L)+b. The branching solver then stops and emits its incumbent the instant the incumbent's
-    // size is <= this threshold — a provably valid answer, often the approximation seed itself. Only done
-    // when a genuine "#a" line was parsed (a >= 1, b >= 0); otherwise the threshold stays at its -1
-    // default, which no positive size ever meets, so the search simply never certifies.
+    // On the lower-bound track, compute a certified lower bound L <= k* from the LP dual the
+    // approximation builds (on the pristine instance, before reductions) and turn it into the
+    // acceptance threshold floor(a*L)+b. The branching solver then stops and emits its incumbent the
+    // instant the incumbent's size is <= this threshold — a provably valid answer, often the
+    // approximation seed itself. We use the best certified bound available: max of the 3-approx and the
+    // tighter 2-approx (Red-Blue) duals (both are always <= k*, so their max is too). Only done when a
+    // genuine "#a" line was parsed (a >= 1, b >= 0); otherwise the threshold stays at its -1 default,
+    // which no positive size ever meets, so the search simply never certifies.
     if (config.track == solver::SolverConfig::Track::LowerBound
         && lowerBoundContext->a >= 1.0 && lowerBoundContext->b >= 0)
     {
-        const long L = solver::computeDual3ApproxLowerBound(*instance);
+        const long L = solver::computeCertifiedLowerBound(*instance);
         lowerBoundContext->certifiedThreshold = lowerBoundContext->certifiedCeiling(L);
         // Diagnostic (stderr, does not touch the solution stream): the certified lower bound and the
         // acceptance threshold floor(a*L)+b the search may stop at.
