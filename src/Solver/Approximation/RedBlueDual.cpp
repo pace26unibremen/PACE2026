@@ -2,6 +2,9 @@
 #include "MutableForestView.hpp"
 
 #include <algorithm>
+#include <cstdlib>
+#include <iostream>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -149,7 +152,8 @@ struct RedBlue2
         return m != nullptr && countUnder(v, m) == 2;
     }
 
-    bool compatibleSet(const std::vector<Label>& s)
+    /// Reference O(|s|^3) compatibility: no inconsistent triplet. Kept for the env-gated cross-check.
+    bool compatibleSlow(const std::vector<Label>& s)
     {
         for (std::size_t i = 0; i < s.size(); ++i)
             for (std::size_t j = i + 1; j < s.size(); ++j)
@@ -157,6 +161,118 @@ struct RedBlue2
                     if (not consistent(s[i], s[j], s[k]))
                         return false;
         return true;
+    }
+
+    /// The leaf-position ranges [lo,hi] of the clusters of the tree induced on \p order by view \p v.
+    /// \p order must be sorted by v's pre-order. The induced tree is the min-Cartesian tree over the
+    /// adjacent-pair LCA depths (for a binary tree the min in every subrange is unique, so this is
+    /// unambiguous); each internal node owns a contiguous leaf interval = a cluster.
+    std::vector<std::pair<int, int>> clusterRanges(MutableForestView& v, const std::vector<Label>& order)
+    {
+        const int m = static_cast<int>(order.size());
+        std::vector<int> a(m - 1);
+        for (int i = 0; i < m - 1; ++i)
+            a[i] = v.depth[v.idx(v.lcaFast(v.node(order[i]), v.node(order[i + 1])))];
+        std::vector<int> prevS(m - 1), nextS(m - 1), st;
+        for (int i = 0; i < m - 1; ++i)  // previous strictly-smaller
+        {
+            while (not st.empty() && a[st.back()] >= a[i])
+                st.pop_back();
+            prevS[i] = st.empty() ? -1 : st.back();
+            st.push_back(i);
+        }
+        st.clear();
+        for (int i = m - 2; i >= 0; --i)  // next smaller-or-equal
+        {
+            while (not st.empty() && a[st.back()] > a[i])
+                st.pop_back();
+            nextS[i] = st.empty() ? (m - 1) : st.back();
+            st.push_back(i);
+        }
+        std::vector<std::pair<int, int>> ranges(m - 1);
+        for (int i = 0; i < m - 1; ++i)
+            ranges[i] = {prevS[i] + 1, nextS[i]};  // leaf positions [lo,hi]
+        return ranges;
+    }
+
+    /// O(|s| log |s|) compatibility: the trees induced on s by T1 and T2 are isomorphic iff they have
+    /// the same clusters. Number s by T1's leaf order; every T1 cluster is then a contiguous interval.
+    /// For each T2 cluster, check its T1-numbers form the same interval and that interval is a T1
+    /// cluster. Both induced trees are binary with |s|-1 clusters, so all-T2-in-T1 implies equality.
+    bool compatibleFast(const std::vector<Label>& s)
+    {
+        const int k = static_cast<int>(s.size());
+        if (k <= 2)
+            return true;
+        std::vector<Label> s1(s), s2(s);
+        std::sort(s1.begin(), s1.end(),
+                  [&](Label x, Label y) { return t1o.idx(t1o.node(x)) < t1o.idx(t1o.node(y)); });
+        std::sort(s2.begin(), s2.end(),
+                  [&](Label x, Label y) { return t2o.idx(t2o.node(x)) < t2o.idx(t2o.node(y)); });
+        std::unordered_map<Label, int> rank1;
+        rank1.reserve(k * 2);
+        for (int i = 0; i < k; ++i)
+            rank1[s1[i]] = i;
+
+        auto key = [](int lo, int hi) { return (static_cast<long long>(lo) << 24) | hi; };
+        std::unordered_set<long long> t1clusters;
+        t1clusters.reserve(k * 2);
+        for (auto [lo, hi] : clusterRanges(t1o, s1))
+            t1clusters.insert(key(lo, hi));
+
+        // sparse tables for range min/max of the T1-rank sequence in T2 order
+        std::vector<int> r2(k);
+        for (int i = 0; i < k; ++i)
+            r2[i] = rank1[s2[i]];
+        int logn = 1;
+        while ((1 << logn) <= k)  // need floor(log2(k)) + 1 levels (rmin/rmax indexes row floor(log2(len)))
+            ++logn;
+        std::vector<std::vector<int>> mn(logn, std::vector<int>(k)), mx(logn, std::vector<int>(k));
+        for (int i = 0; i < k; ++i)
+            mn[0][i] = mx[0][i] = r2[i];
+        for (int j = 1; j < logn; ++j)
+            for (int i = 0; i + (1 << j) <= k; ++i)
+            {
+                mn[j][i] = std::min(mn[j - 1][i], mn[j - 1][i + (1 << (j - 1))]);
+                mx[j][i] = std::max(mx[j - 1][i], mx[j - 1][i + (1 << (j - 1))]);
+            }
+        auto rmin = [&](int l, int r) {
+            const int j = 31 - __builtin_clz(static_cast<unsigned>(r - l + 1));
+            return std::min(mn[j][l], mn[j][r - (1 << j) + 1]);
+        };
+        auto rmax = [&](int l, int r) {
+            const int j = 31 - __builtin_clz(static_cast<unsigned>(r - l + 1));
+            return std::max(mx[j][l], mx[j][r - (1 << j) + 1]);
+        };
+
+        for (auto [x, y] : clusterRanges(t2o, s2))
+        {
+            const int lo = rmin(x, y), hi = rmax(x, y);
+            if (hi - lo + 1 != y - x + 1)          // T2 cluster not contiguous in T1's numbering
+                return false;
+            if (not t1clusters.contains(key(lo, hi)))  // ... or not a T1 cluster
+                return false;
+        }
+        return true;
+    }
+
+    bool compatibleSet(const std::vector<Label>& s)
+    {
+        // Small sets: the O(k^3) check early-exits and has no sort/sparse-table overhead, so it wins.
+        // Large sets: the O(k log k) cluster comparison wins (and, for compatible sets, the cubic path
+        // has no early exit). Both give the identical answer (verified by the RB_CHECK_COMPAT gate).
+        if (std::getenv("RB_CHECK_COMPAT") == nullptr)
+            return s.size() <= 64 ? compatibleSlow(s) : compatibleFast(s);
+        const bool fast = compatibleFast(s);
+        // Opt-in cross-check against the O(k^3) reference on real workloads before the slow path is
+        // retired: RB_CHECK_COMPAT=1 aborts on any disagreement.
+        if (std::getenv("RB_CHECK_COMPAT") != nullptr && fast != compatibleSlow(s))
+        {
+            std::cerr << "RB_CHECK_COMPAT mismatch: fast=" << fast << " slow=" << compatibleSlow(s)
+                      << " |s|=" << s.size() << "\n";
+            std::abort();
+        }
+        return fast;
     }
 
     // ---- cut primitives on WORKING forests ----
