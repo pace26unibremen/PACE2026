@@ -8,12 +8,25 @@
 namespace solver
 {
 
+// forward declaration; the full definition is only needed in the .cpp
+struct Context;
+
 /// \brief Deletes an edge in a forest
 class DeleteEdgeAction : AbstractAction
 {
   protected:
     /// \brief forest on which the action will be performed
     std::shared_ptr<graph::Forest> forest;
+
+    /// \brief Optional context whose single-vertex-tree tracking is kept in sync
+    /// on do/undo. \c nullptr disables tracking (e.g. cluster/decouple or tests).
+    Context* svtContext = nullptr;
+
+    /// \brief whether \ref child was counted as a new single-vertex tree on doAction.
+    bool svtChildCounted = false;
+
+    /// \brief whether \ref sibling was counted as a new single-vertex tree on doAction.
+    bool svtSiblingCounted = false;
 
     /// \brief the child on which the edge points
     graph::Node* child;
@@ -60,7 +73,9 @@ class DeleteEdgeAction : AbstractAction
   public:
     /// \param child A Pointer to the child node to which the edge points.
     /// \param forest A shared pointer to the forest on which the action will be performed.
-    DeleteEdgeAction(graph::Node* child, const std::shared_ptr<graph::Forest>& forest);
+    /// \param svtContext Optional context for single-vertex-tree tracking; \c nullptr disables it.
+    DeleteEdgeAction(graph::Node* child, const std::shared_ptr<graph::Forest>& forest,
+                     Context* svtContext = nullptr);
 
     void doAction() override;
 

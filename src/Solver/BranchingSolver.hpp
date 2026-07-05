@@ -6,6 +6,7 @@
 #include "Context.hpp"
 
 #include <atomic>
+#include <chrono>
 #include <queue>
 
 namespace solver
@@ -17,8 +18,8 @@ class BranchingSolver : public AbstractSolver
 {
   protected:
     /// \brief The configuration of the branching solver.
-    const std::shared_ptr<BranchingSolverConfiguration>
-    configuration = std::make_shared<BranchingSolverConfiguration>();
+    const std::shared_ptr<BranchingSolverConfiguration> configuration =
+        std::make_shared<BranchingSolverConfiguration>();
 
     /// \brief stores all applied rules of the current branch in the order in which they were applied.
     std::list<std::shared_ptr<AbstractRule>> appliedRules = std::list<std::shared_ptr<AbstractRule>>();
@@ -33,9 +34,34 @@ class BranchingSolver : public AbstractSolver
     /// next branch rollback and returns whatever solution has been found so far. Null = disabled.
     std::atomic<bool>* timeoutFlag = nullptr;
 
+    /// \brief Soft wall-clock deadline for this solver. Once reached, solve() stops at the next
+    /// branch rollback and returns the best solution found so far — exactly like \ref timeoutFlag,
+    /// but self-contained (no external signal). Used to time-slice a per-cluster budget so one
+    /// hard cluster cannot consume the whole run. Default \c max() = disabled (never expires).
+    std::chrono::steady_clock::time_point deadline = std::chrono::steady_clock::time_point::max();
+
+    /// \brief How often \ref timeExpired actually reads the clock: once every this many calls.
+    /// steady_clock::now() is ~2-4% of the branch loop and is hit on every iteration on the deadline
+    /// path, so we amortise it. 1024 is chosen for the deadline-overshoot bound, not the overhead
+    /// (already negligible at any stride >= ~256): at ~1 us per iteration (measured, 800 leaves) the
+    /// deadline overshoots by at most ~1024 * 1 us ~= 1 ms, nothing against a seconds-scale budget.
+    /// A larger stride would only grow that overshoot for no further overhead saving.
+    static constexpr unsigned int kClockCheckStride = 1024;
+
+    /// \brief Countdown to the next real clock read in \ref timeExpired (see \ref kClockCheckStride).
+    mutable unsigned int clockCheckCountdown = 0;
+
+    /// \brief Cached "deadline has passed" verdict, reused between the throttled clock reads.
+    mutable bool deadlinePassed = false;
+
+    /// \brief True once either the external timeout flag is set or \ref deadline has passed.
+    /// \note Like the flag, this only stops the search once a solution candidate exists; the
+    ///       caller-side guard \c not solutionBranch.empty() is applied at each check site. The
+    ///       SIGTERM flag is honoured on every call; only the wall-clock deadline is throttled.
+    [[nodiscard]] bool timeExpired() const;
+
     /// \brief The branch that leads to the solution
-    std::list<std::shared_ptr<AbstractRule>> solutionBranch =
-        std::list<std::shared_ptr<AbstractRule>>();
+    std::list<std::shared_ptr<AbstractRule>> solutionBranch = std::list<std::shared_ptr<AbstractRule>>();
 
     /// \brief unapply all rules until the next branching possibility
     /// \returns Whether all rules are unapplied. (Means there is no branching possibility left)
@@ -89,7 +115,10 @@ class BranchingSolver : public AbstractSolver
     /// \brief The rules (clones) that make up the best solution found, in application order.
     /// Empty if no solution was found. Valid after \ref solve() returns.
     [[nodiscard]]
-    const std::list<std::shared_ptr<AbstractRule>>& SolutionBranch() const { return solutionBranch; }
+    const std::list<std::shared_ptr<AbstractRule>>& SolutionBranch() const
+    {
+        return solutionBranch;
+    }
 
     /// \brief Pre-seed the search with a known solution (e.g. from the approximation): sets the
     /// incumbent weight so \ref solver::CutBranchRule prunes from the first node, and stores \p branch
@@ -108,6 +137,11 @@ class BranchingSolver : public AbstractSolver
     /// solve() stops at the next branch rollback and returns the best solution found so far.
     /// Pass nullptr to disable. Returns false if no solution existed when the flag fired.
     void setTimeoutFlag(std::atomic<bool>* flag);
+
+    /// \brief Sets a soft wall-clock deadline. Once \p deadline has passed, solve() stops at the
+    /// next branch rollback and returns the best solution found so far (never before a first
+    /// candidate exists). Pass \c steady_clock::time_point::max() to disable.
+    void setDeadline(std::chrono::steady_clock::time_point deadline);
 };
 
 }  //namespace solver

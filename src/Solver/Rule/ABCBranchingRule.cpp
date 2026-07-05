@@ -39,7 +39,7 @@ solver::RuleReturnCode solver::ABCBranchingRule::apply()
                     continue;
                 if (context->protectedEdges.contains(aNode))
                     return RuleReturnCode::CutBranch;
-                changes.emplace(aNode, f);
+                changes.emplace(aNode, f, context.get());
                 changes.top().doAction();
 
 
@@ -64,7 +64,7 @@ solver::RuleReturnCode solver::ABCBranchingRule::apply()
                     continue;
                 if (context->protectedEdges.contains(cNode))
                     return RuleReturnCode::CutBranch;
-                changes.emplace(cNode, f);
+                changes.emplace(cNode, f, context.get());
                 changes.top().doAction();
             }
             return RuleReturnCode::Continue;
@@ -77,7 +77,7 @@ solver::RuleReturnCode solver::ABCBranchingRule::apply()
                 {
                     if (context->protectedEdges.contains(bNode))
                         return RuleReturnCode::CutBranch;
-                    changes.emplace(bNode, f);
+                    changes.emplace(bNode, f, context.get());
                     changes.top().doAction();
                 }
                 assert(f->LabelToTerminal()[aLabel]->parent == f->LabelToTerminal()[cLabel]->parent);

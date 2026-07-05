@@ -1,7 +1,11 @@
 #include "CollapseSubtreeAction.hpp"
 
-solver::CollapseSubtreeAction::CollapseSubtreeAction(graph::Node* node, const std::shared_ptr<graph::Forest>& forest) :
+#include "../Context.hpp"
+
+solver::CollapseSubtreeAction::CollapseSubtreeAction(graph::Node* node, const std::shared_ptr<graph::Forest>& forest,
+                                                     solver::Context* svtContext) :
     forest(forest),
+    svtContext(svtContext),
     node(node)
 {}
 
@@ -41,6 +45,15 @@ void solver::CollapseSubtreeAction::doAction()
     collapsedLabel = smallestLabel;
     forest->TerminalToLabel().emplace(node, collapsedLabel);
 
+    // If the collapsed node is a root it is now a childless root, i.e. a new
+    // single-vertex tree for every label it represents. Register it so the SVT
+    // tracking stays current (undoAction reverses exactly this).
+    if (svtContext != nullptr and node->parent == nullptr)
+    {
+        svtContext->adjustSingleVertexForNode(node, +1);
+        svtNodeCounted = true;
+    }
+
     #ifdef DEBUG_IMAGE_VIEW_GRAPH
     forest->renderImage();
     #endif
@@ -50,6 +63,14 @@ void solver::CollapseSubtreeAction::undoAction()
 {
     // the node may have changed (e.g., due to cluster reduction)
     node = forest->LabelToTerminal()[collapsedLabel];
+
+    // Reverse the SVT bookkeeping first, while 'node' is still the childless
+    // (collapsed) terminal that doAction counted.
+    if (svtContext != nullptr and svtNodeCounted)
+    {
+        svtContext->adjustSingleVertexForNode(node, -1);
+        svtNodeCounted = false;
+    }
 
     node->leftChild = leftChild;
     node->rightChild = rightChild;

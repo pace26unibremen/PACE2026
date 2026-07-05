@@ -48,6 +48,11 @@ class ClusterSolver : public AbstractSolver
     /// \note The term cluster root actually refers to the terminal, that annotates the actual root as a sibling.
     std::unordered_set<unsigned int> cuttedClusterRoots;
 
+    /// \brief Indices of clusters that \ref cutClusterTerminals actually reduced during the
+    /// \ref ClusterRange iteration (i.e. a child cluster cut its root). A cluster not in this set
+    /// is byte-for-byte the instance it was at \ref solve time. Queried via \ref wasModifiedByPropagation.
+    std::unordered_set<unsigned int> propagationModifiedClusters;
+
     /// \brief A list with an entry for each cluster.
     /// Each entry is itself a list that holds for each forest of the instance, the forest and the cluster point.
     ///
@@ -149,6 +154,47 @@ class ClusterSolver : public AbstractSolver
     /// \brief Provides the intended way to iterate over the cluster and solve them.
     /// \returns the cluster range, an iterable container that manages intermediate steps.
     ClusterRange& Clusters();
+
+    /// \brief Number of clusters produced by \ref solve (always >= 1).
+    /// \returns the size of the \ref cluster vector, i.e. how many sub-instances
+    ///          \ref Clusters will iterate over. Used to divide a time budget across them.
+    [[nodiscard]] unsigned int clusterCount() const;
+
+    /// \brief Difficulty weight of the cluster at \p index, used to size its time budget.
+    /// \returns the number of leaves (terminals) in the cluster's first tree — a cheap proxy
+    ///          for branch-and-bound difficulty. Larger clusters therefore get a larger share
+    ///          of the wall-clock budget than trivial ones (see \ref ClusterBudget).
+    /// \param index of the cluster in the \ref cluster vector; must be < \ref clusterCount.
+    [[nodiscard]] unsigned int clusterWeight(unsigned int index) const;
+
+    /// \brief The sub-instance of the cluster at \p index.
+    /// \returns the cluster's own \ref graph::Instance, for probing a difficulty estimate
+    ///          (e.g. running the approximation on it) before the \ref ClusterRange iteration
+    ///          starts. Accessing it directly does not trigger the cross-cluster cut propagation
+    ///          that the range iterator applies on \c ++.
+    /// \param index of the cluster in the \ref cluster vector; must be < \ref clusterCount.
+    [[nodiscard]] std::shared_ptr<graph::Instance> clusterInstanceAt(unsigned int index) const;
+
+    /// \brief Whether cluster \p index has been altered by cross-cluster cut propagation.
+    ///
+    /// Clusters are solved bottom-up (\ref sortClusters). Whenever a child cluster cuts its
+    /// cluster root, \ref cutClusterTerminals reduces the parent that contains it — cutting the
+    /// terminal that stood in for that child — before the parent is solved. This method reports
+    /// whether that reduction has happened to cluster \p index yet.
+    ///
+    /// The intended use is deciding whether a per-cluster result computed *before* the
+    /// \ref ClusterRange iteration (e.g. an approximation branch obtained via
+    /// \ref clusterInstanceAt to size the time budget) may still be reused: while this returns
+    /// \c false the cluster is byte-for-byte what it was at \ref solve time, so such a branch
+    /// still applies; once it returns \c true the instance has changed and any pre-computed
+    /// branch is stale and must be recomputed.
+    ///
+    /// \param index cluster position in the \ref cluster vector; must be < \ref clusterCount.
+    /// \returns \c true iff \ref cutClusterTerminals has reduced this cluster during the
+    ///          iteration so far. Only meaningful once the iteration has reached \p index
+    ///          (propagation into a cluster is applied when \ref ClusterRange advances onto it);
+    ///          before that it always reads \c false.
+    [[nodiscard]] bool wasModifiedByPropagation(unsigned int index) const;
 };
 
 }  //namespace solver
