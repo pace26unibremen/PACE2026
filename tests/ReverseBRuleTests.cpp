@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "../src/Graph/Forest.hpp"
+#include "../src/Solver/Context.hpp"
 #include "../src/Solver/Rule/ReverseBRule.hpp"
 
 using namespace graph;
@@ -18,7 +19,8 @@ TEST_CASE("ReverseBRule - Two Trees", "[Forest, ReverseBRule, AbstractRule]")
         instance->push_back(std::make_shared<Forest>(f1));
         instance->push_back(std::make_shared<Forest>(f2));
 
-        auto rule = ReverseBRule::isApplicable(instance, nullptr);
+        auto context = std::make_shared<solver::Context>();
+        auto rule = ReverseBRule::isApplicable(instance, context);
 
         REQUIRE(rule != nullptr);
 
@@ -57,7 +59,8 @@ TEST_CASE("ReverseBRule - Two Trees", "[Forest, ReverseBRule, AbstractRule]")
         instance->push_back(std::make_shared<Forest>(f1));
         instance->push_back(std::make_shared<Forest>(f2));
 
-        auto rule = ReverseBRule::isApplicable(instance, nullptr);
+        auto context = std::make_shared<solver::Context>();
+        auto rule = ReverseBRule::isApplicable(instance, context);
 
         REQUIRE(rule != nullptr);
 

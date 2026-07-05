@@ -1,6 +1,7 @@
 #include "Solver/BranchingSolver.hpp"
-#include "Solver/Cluster/ClusterSolver.hpp"
+#include "Solver/Cluster/ClusterBudget.hpp"
 #include "Solver/Cluster/ClusterRange.hpp"
+#include "Solver/Cluster/ClusterSolver.hpp"
 #include "Solver/Context.hpp"
 #include "Solver/Approximation/DualLowerBound.hpp"
 #include "Solver/Plugin/SigtermPlugin.hpp"
@@ -23,6 +24,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 // ============================================================
 //  Default preset
@@ -49,7 +51,10 @@ static solver::SolverConfig defaultConfig(std::ostream& /*out*/)
 // ============================================================
 #ifdef _POSIX_VERSION
 static std::atomic<bool> g_timeout{false};
-static void sigtermHandler(int) { g_timeout.store(true, std::memory_order_relaxed); }
+static void sigtermHandler(int)
+{
+    g_timeout.store(true, std::memory_order_relaxed);
+}
 #endif
 
 // ============================================================
@@ -66,8 +71,8 @@ static void sigtermHandler(int) { g_timeout.store(true, std::memory_order_relaxe
 static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfig config)
 {
     // Safety invariant: exact track must never be SIGTERM-armed.
-    assert(!(config.track == solver::SolverConfig::Track::Exact && config.enableSigterm)
-           && "Exact track must never enable SIGTERM");
+    assert(!(config.track == solver::SolverConfig::Track::Exact && config.enableSigterm) &&
+           "Exact track must never enable SIGTERM");
 
     const auto startTime = std::clock();
 
@@ -140,8 +145,7 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
     // a SIGTERM fires before its own first leaf, the solver still emits that valid agreement forest.
     // Running in place (no Forest::copy) is what makes this safe on decoupled cluster sub-instances.
     auto seedFromApproximation = [](const std::shared_ptr<graph::Instance>& inst)
-        -> std::pair<std::list<std::shared_ptr<solver::AbstractRule>>, unsigned int>
-    {
+        -> std::pair<std::list<std::shared_ptr<solver::AbstractRule>>, unsigned int> {
         auto approxConfig = std::make_shared<solver::BranchingSolverConfiguration>(
             solver::BranchingSolverConfiguration::approximationRules());
         auto approxSolver = std::make_shared<solver::BranchingSolver>(inst, approxConfig);
@@ -177,10 +181,14 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
             {
 
 #ifdef _POSIX_VERSION
-                if (config.enableSigterm) {
+                if (config.enableSigterm)
+                {
                     std::signal(SIGTERM, sigtermHandler);
-                    config.branchingConfig.plugins.push_back(
-                        std::make_shared<solver::plugin::SigtermPlugin>(&g_timeout, out));
+                    if (config.track == solver::SolverConfig::Track::Pipeline)
+                    {
+                        config.branchingConfig.plugins.push_back(
+                            std::make_shared<solver::plugin::SigtermPlugin>(&g_timeout, out));
+                    }
                 }
 #endif
                 if (clusterSolver)
@@ -189,21 +197,70 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
                     // seed each one from an in-place approximation on that (already reduced & decoupled)
                     // cluster. No Forest::copy, so this is safe on the cluster's fragile pointers.
                     bool allClustersSolved = true;
+                    // Time-slice the total budget across clusters so a single hard cluster cannot
+                    // consume the whole run and starve the rest.  Each cluster gets a share of the
+                    // time still remaining proportional to a difficulty weight; time left unused by
+                    // clusters that finish early rolls forward, and harder clusters get more.  A
+                    // deadline only bites once a cluster has a first candidate (see BranchingSolver);
+                    // since every cluster is seeded with the approximation, that is immediate.
+                    // Disabled when timeBudgetSeconds <= 0.
+                    //
+                    // Weight = leaves + kApproxWeight * approxSize.  Leaf count alone is a weak proxy
+                    // (a large but agreeing cluster is trivial); MAF branching cost grows exponentially
+                    // in the number of cuts, which the approximation size (~1-3x the optimum) tracks.
+                    // The approximation is run here per cluster once, up front (it must be, to build
+                    // the budget before the loop); its solution branch is kept in probedSeeds and
+                    // reused as that cluster's seed below, so it is not computed twice.  A cluster that
+                    // cross-cluster propagation later modifies is re-seeded fresh (its stored branch no
+                    // longer matches its instance) — the minority.  kApproxWeight is a stride A/B knob.
+                    const bool sliceBudget = config.timeBudgetSeconds > 0.0;
+                    constexpr double kApproxWeight = 20.0;
+                    using Seed = std::pair<std::list<std::shared_ptr<solver::AbstractRule>>, unsigned int>;
+                    std::vector<Seed> probedSeeds;
+                    std::vector<double> clusterWeights;
+                    if (sliceBudget)
+                    {
+                        probedSeeds.reserve(clusterSolver->clusterCount());
+                        clusterWeights.reserve(clusterSolver->clusterCount());
+                        for (unsigned int i = 0; i < clusterSolver->clusterCount(); ++i)
+                        {
+                            probedSeeds.push_back(seedFromApproximation(clusterSolver->clusterInstanceAt(i)));
+                            clusterWeights.push_back(static_cast<double>(clusterSolver->clusterWeight(i)) +
+                                                     kApproxWeight * static_cast<double>(probedSeeds.back().second));
+                        }
+                    }
+                    const solver::ClusterBudget clusterBudget(std::chrono::steady_clock::now(),
+                                                              config.timeBudgetSeconds, std::move(clusterWeights));
+                    unsigned int clusterIndex = 0;
                     for (const auto& [cluster, context] : clusterSolver->Clusters())
                     {
-                        auto [branch, size] = seedFromApproximation(cluster);
+                        // Reuse the approximation probed up front for the budget weights, unless
+                        // propagation has since modified this cluster (then its stored branch would
+                        // no longer match its instance, so re-seed fresh). Off the slice path there
+                        // is no probe, so every cluster is seeded here as before.
+                        Seed seed = (sliceBudget && not clusterSolver->wasModifiedByPropagation(clusterIndex))
+                                        ? std::move(probedSeeds[clusterIndex])
+                                        : seedFromApproximation(cluster);
+                        auto& [branch, size] = seed;
 
-                        auto branchingConfig = std::make_shared<solver::BranchingSolverConfiguration>(config.branchingConfig);
+                        auto branchingConfig =
+                            std::make_shared<solver::BranchingSolverConfiguration>(config.branchingConfig);
                         auto solver = std::make_shared<solver::BranchingSolver>(cluster, branchingConfig, context);
                         solver->seedSolution(std::move(branch), static_cast<float>(size));
-#ifdef   _POSIX_VERSION
+#ifdef _POSIX_VERSION
                         if (config.enableSigterm)
                         {
                             solver->setTimeoutFlag(&g_timeout);
                         }
 #endif
+                        if (sliceBudget)
+                        {
+                            solver->setDeadline(
+                                clusterBudget.deadlineFor(clusterIndex, std::chrono::steady_clock::now()));
+                        }
                         solverList.push_back(solver);
                         allClustersSolved &= solver->solve();
+                        ++clusterIndex;
                     }
                     solved = allClustersSolved;
                 }
@@ -211,12 +268,13 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
                 {
                     auto [branch, size] = seedFromApproximation(instance);
 
-                    auto branchingConfig = std::make_shared<solver::BranchingSolverConfiguration>(config.branchingConfig);
+                    auto branchingConfig =
+                        std::make_shared<solver::BranchingSolverConfiguration>(config.branchingConfig);
                     // Pass lowerBoundContext so the certified early-exit threshold (armed above on the
                     // lower-bound track) reaches the search. On other tracks it is a default context.
                     auto solver = std::make_shared<solver::BranchingSolver>(instance, branchingConfig, lowerBoundContext);
                     solver->seedSolution(std::move(branch), static_cast<float>(size));
-#ifdef   _POSIX_VERSION
+#ifdef _POSIX_VERSION
                     if (config.enableSigterm)
                     {
                         solver->setTimeoutFlag(&g_timeout);
@@ -231,8 +289,7 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
                 // above, before the pipeline reduced/decoupled it.
                 if (config.track == solver::SolverConfig::Track::Pipeline)
                 {
-                    out << "#s approx {\"size\":" << approxSize.value_or(0)
-                        << ",\"trees\":" << instance->size()
+                    out << "#s approx {\"size\":" << approxSize.value_or(0) << ",\"trees\":" << instance->size()
                         << ",\"applicable\":true}\n";
                     out.flush();
                 }
@@ -261,12 +318,13 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
         }
     }
 
-    for (int i = solverList.size()-1; i >= 0; --i)
+    for (int i = solverList.size() - 1; i >= 0; --i)
     {
         solverList[i]->unapplyReductions();
     }
 
-    if (!solved) {
+    if (!solved)
+    {
         // With the approximation seeded as the initial solution, a branching solver should always
         // have a forest to emit (its own, or the seed). Reaching here means even the approximation
         // produced no solution branch — only possible on a degenerate/empty instance.
@@ -275,8 +333,8 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
     }
 
     const auto endTime = std::clock();
-    const double time_delta_ms = static_cast<double>(endTime - startTime)
-                                 / (static_cast<double>(CLOCKS_PER_SEC) / 1000.0);
+    const double time_delta_ms =
+        static_cast<double>(endTime - startTime) / (static_cast<double>(CLOCKS_PER_SEC) / 1000.0);
 
     out << "# t " << time_delta_ms << "\n"
         << "# s " << instance->at(0)->Roots().size() << "\n";
@@ -300,25 +358,29 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
 static std::optional<std::string> readPaceTrackFromDotEnv()
 {
     std::ifstream f(".env");
-    if (!f) return std::nullopt;
+    if (!f)
+        return std::nullopt;
 
     std::string line;
-    while (std::getline(f, line)) {
+    while (std::getline(f, line))
+    {
         // strip trailing whitespace / CR
-        while (!line.empty() && (line.back() == ' ' || line.back() == '\t' || line.back() == '\r'))
-            line.pop_back();
+        while (!line.empty() && (line.back() == ' ' || line.back() == '\t' || line.back() == '\r')) line.pop_back();
 
-        if (line.empty() || line.front() == '#') continue;
+        if (line.empty() || line.front() == '#')
+            continue;
 
         const auto eq = line.find('=');
-        if (eq == std::string::npos) continue;
+        if (eq == std::string::npos)
+            continue;
 
         // strip whitespace from key
         std::string_view k{line.data(), eq};
         while (!k.empty() && (k.front() == ' ' || k.front() == '\t')) k.remove_prefix(1);
-        while (!k.empty() && (k.back()  == ' ' || k.back()  == '\t')) k.remove_suffix(1);
+        while (!k.empty() && (k.back() == ' ' || k.back() == '\t')) k.remove_suffix(1);
 
-        if (k != "PACE_TRACK") continue;
+        if (k != "PACE_TRACK")
+            continue;
 
         // strip leading whitespace from value
         std::string_view v{line.data() + eq + 1, line.size() - eq - 1};
@@ -331,39 +393,38 @@ static std::optional<std::string> readPaceTrackFromDotEnv()
 
 static void printHelp(std::string_view prog)
 {
-    std::cout
-        << "Usage: " << prog << " [--track PRESET] [INFILE [OUTFILE]]\n"
-        << "       " << prog << " --help\n"
-        << "\n"
-        << "Solve the Maximum Agreement Forest (MAF) problem.\n"
-        << "\n"
-        << "Positional arguments:\n"
-        << "  INFILE   Input forest file (.nw / .tree). Omit to read from stdin.\n"
-        << "  OUTFILE  Output file. Defaults to INFILE + \"_solution.tree\".\n"
-        << "           Omitting INFILE implies stdout for output as well.\n"
-        << "\n"
-        << "Options:\n"
-        << "  --track PRESET  Solver preset to use (default: pipeline):\n"
-        << "    pipeline    Full metrics suite, SIGTERM armed.\n"
-        << "                Use for CI runs and the PACE stride harness.\n"
-        << "    exact       No plugins, no SIGTERM. Use for the exact competition track.\n"
-        << "    heuristic   No metrics, SIGTERM armed. Use for the heuristic track.\n"
-        << "    lower-bound No metrics, SIGTERM armed. Use for the lower-bound track.\n"
-        << "  --help, -h  Print this message and exit.\n"
-        << "\n"
-        << "Stdin / stdout mode:\n"
-        << "  Invoking with no file arguments reads from stdin and writes to stdout.\n"
-        << "  This is the mode used by optil.io and the PACE stride evaluation harness.\n"
-        << "  Passing a single empty string as the only argument is treated identically\n"
-        << "  (some harnesses inject this).\n"
-        << "\n"
-        << "Track selection precedence (highest to lowest):\n"
-        << "  1. --track flag on the command line\n"
-        << "  2. PACE_TRACK environment variable\n"
-        << "  3. PACE_TRACK in a .env file in the current working directory\n"
-        << "  4. defaultConfig() in startSolver.cpp  (compiled-in default)\n"
-        << "\n"
-        << "  Accepted values for PACE_TRACK: pipeline, exact, heuristic\n";
+    std::cout << "Usage: " << prog << " [--track PRESET] [INFILE [OUTFILE]]\n"
+              << "       " << prog << " --help\n"
+              << "\n"
+              << "Solve the Maximum Agreement Forest (MAF) problem.\n"
+              << "\n"
+              << "Positional arguments:\n"
+              << "  INFILE   Input forest file (.nw / .tree). Omit to read from stdin.\n"
+              << "  OUTFILE  Output file. Defaults to INFILE + \"_solution.tree\".\n"
+              << "           Omitting INFILE implies stdout for output as well.\n"
+              << "\n"
+              << "Options:\n"
+              << "  --track PRESET  Solver preset to use (default: pipeline):\n"
+              << "    pipeline    Full metrics suite, SIGTERM armed.\n"
+              << "                Use for CI runs and the PACE stride harness.\n"
+              << "    exact       No plugins, no SIGTERM. Use for the exact competition track.\n"
+              << "    heuristic   No metrics, SIGTERM armed. Use for the heuristic track.\n"
+              << "    lower-bound No metrics, SIGTERM armed. Use for the lower-bound track.\n"
+              << "  --help, -h  Print this message and exit.\n"
+              << "\n"
+              << "Stdin / stdout mode:\n"
+              << "  Invoking with no file arguments reads from stdin and writes to stdout.\n"
+              << "  This is the mode used by optil.io and the PACE stride evaluation harness.\n"
+              << "  Passing a single empty string as the only argument is treated identically\n"
+              << "  (some harnesses inject this).\n"
+              << "\n"
+              << "Track selection precedence (highest to lowest):\n"
+              << "  1. --track flag on the command line\n"
+              << "  2. PACE_TRACK environment variable\n"
+              << "  3. PACE_TRACK in a .env file in the current working directory\n"
+              << "  4. defaultConfig() in startSolver.cpp  (compiled-in default)\n"
+              << "\n"
+              << "  Accepted values for PACE_TRACK: pipeline, exact, heuristic\n";
 }
 
 /// \brief Map a track name string to a \ref solver::SolverConfig.
@@ -374,13 +435,17 @@ static void printHelp(std::string_view prog)
 /// \throws std::invalid_argument for unknown names.
 static solver::SolverConfig resolveConfig(const std::string& name, std::ostream& out)
 {
-    if (name == "exact")       return solver::SolverConfig::exactTrack();
-    if (name == "heuristic")   return solver::SolverConfig::heuristicTrack();
-    if (name == "lower-bound") return solver::SolverConfig::lowerBoundTrack();
-    if (name == "pipeline")    return solver::SolverConfig::pipeline(out);
-    throw std::invalid_argument(
-        "Unknown --track value: \"" + name + "\". "
-        "Valid values: exact, heuristic, pipeline.");
+    if (name == "exact")
+        return solver::SolverConfig::exactTrack();
+    if (name == "heuristic")
+        return solver::SolverConfig::heuristicTrack();
+    if (name == "lower-bound")
+        return solver::SolverConfig::lowerBoundTrack();
+    if (name == "pipeline")
+        return solver::SolverConfig::pipeline(out);
+    throw std::invalid_argument("Unknown --track value: \"" + name +
+                                "\". "
+                                "Valid values: exact, heuristic, pipeline.");
 }
 
 // ============================================================
@@ -393,46 +458,61 @@ int main(int argc, char* argv[])
     std::string outfile;
 
     // ---- Parse arguments ------------------------------------------------
-    for (int i = 1; i < argc; ++i) {
+    for (int i = 1; i < argc; ++i)
+    {
         const std::string_view arg{argv[i]};
 
-        if (arg == "--help" || arg == "-h") {
+        if (arg == "--help" || arg == "-h")
+        {
             printHelp(argv[0]);
             return 0;
         }
 
-        if (arg == "--track") {
+        if (arg == "--track")
+        {
             if (++i >= argc)
                 throw std::invalid_argument("--track requires an argument");
             trackName = argv[i];
             continue;
         }
 
-        if (arg.starts_with("--track=")) {
+        if (arg.starts_with("--track="))
+        {
             trackName = std::string(arg.substr(8));
             continue;
         }
 
-        if (arg.starts_with("--")) {
-            throw std::invalid_argument("Unknown option: " + std::string(arg)
-                                        + ". Run with --help for usage.");
+        if (arg.starts_with("--"))
+        {
+            throw std::invalid_argument("Unknown option: " + std::string(arg) + ". Run with --help for usage.");
         }
 
         // Empty string: some evaluation harnesses (e.g. optil.io) pass a
         // single empty argument; treat it as if no file argument were given.
-        if (arg.empty()) continue;
+        if (arg.empty())
+            continue;
 
-        if (infile.empty())  { infile  = std::string(arg); continue; }
-        if (outfile.empty()) { outfile = std::string(arg); continue; }
+        if (infile.empty())
+        {
+            infile = std::string(arg);
+            continue;
+        }
+        if (outfile.empty())
+        {
+            outfile = std::string(arg);
+            continue;
+        }
         throw std::invalid_argument("Too many positional arguments. Run with --help for usage.");
     }
 
     // ---- Resolve preset: CLI flag > env var > .env file > compiled default
-    if (trackName.empty()) {
+    if (trackName.empty())
+    {
         if (const char* env = std::getenv("PACE_TRACK"); env != nullptr)
             trackName = env;
     }
-    if (trackName.empty()) {
+    if (trackName.empty())
+    {
         if (auto dotenv = readPaceTrackFromDotEnv())
             trackName = std::move(*dotenv);
     }
@@ -443,11 +523,11 @@ int main(int argc, char* argv[])
     // that both land in the same file or on stdout together.  The config must
     // therefore be built after the output stream is known.
 
-    if (infile.empty()) {
+    if (infile.empty())
+    {
         // Stdin / stdout mode — used by optil.io and the PACE stride harness.
-        const solver::SolverConfig config = trackName.empty()
-                                                ? defaultConfig(std::cout)
-                                                : resolveConfig(trackName, std::cout);
+        const solver::SolverConfig config =
+            trackName.empty() ? defaultConfig(std::cout) : resolveConfig(trackName, std::cout);
         runOnStream(std::cin, std::cout, config);
         return 0;
     }
@@ -463,9 +543,8 @@ int main(int argc, char* argv[])
     if (!outStream)
         throw std::runtime_error("Cannot open output file: " + outfile);
 
-    const solver::SolverConfig config = trackName.empty()
-                                            ? defaultConfig(outStream)
-                                            : resolveConfig(trackName, outStream);
+    const solver::SolverConfig config =
+        trackName.empty() ? defaultConfig(outStream) : resolveConfig(trackName, outStream);
     runOnStream(inStream, outStream, config);
     return 0;
 }

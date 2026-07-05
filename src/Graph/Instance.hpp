@@ -33,8 +33,7 @@ namespace graph
 
     /// \brief Reads an instance from a stream, additionally parsing the lower-bound-track
     /// "#a {a} {b}" line (a = validity multiplier, b = offset) into \p context if present and
-    /// non-null. The multiplier is stored both as a double (Context::a) and as the exact
-    /// rational Context::aNumerator / Context::aScale taken from its decimal digits.
+    /// non-null. The multiplier is stored as a double in Context::a.
     /// \param inputStream the stream to read from
     /// \param context context to populate, or nullptr to ignore the "#a" line
     std::shared_ptr<Instance> ReadInstance(std::istream& inputStream,

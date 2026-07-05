@@ -22,7 +22,7 @@ solver::RuleReturnCode solver::ReverseBRule::apply()
             continue;
         if (context->protectedEdges.contains(toCutNode))
             return RuleReturnCode::CutBranch;
-        changes.emplace(toCutNode, f);
+        changes.emplace(toCutNode, f, context.get());
         changes.top().doAction();
     }
 

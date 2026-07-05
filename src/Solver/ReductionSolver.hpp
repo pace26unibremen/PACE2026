@@ -3,8 +3,7 @@
 
 #include "AbstractSolver.hpp"
 #include "BranchingSolverConfiguration.hpp"
-
-#include <list>
+#include "Rule/SubtreeReductionRule.hpp"
 
 namespace solver
 {
@@ -12,18 +11,18 @@ namespace solver
 class ReductionSolver : public AbstractSolver
 {
 private:
-    std::list<std::shared_ptr<solver::AbstractRule>> appliedRules;
+    std::shared_ptr<solver::AbstractRule> subtreeReductionRule = nullptr;
+    std::shared_ptr<solver::AbstractRule> chainReductionRule = nullptr;
     std::shared_ptr<solver::Context> context = std::make_shared<solver::Context>();
 public:
     /// \brief Constructor for a reduction solver.
     /// \param instance to solve
     explicit ReductionSolver(const std::shared_ptr<graph::Instance>& instance);
 
-    /// \brief solve the instance: applies SubtreeReductionRule and ChainReductionRule
-    /// repeatedly until neither is applicable anymore (a true fixpoint).
+    /// \brief solve the instance
     bool solve() override;
 
-    /// \brief Unapplies all reduction rules that were applied, in reverse order.
+    /// \brief Unapplies all reduction rules, that where applied to the instance.
     void unapplyReductions() override;
 
 };
