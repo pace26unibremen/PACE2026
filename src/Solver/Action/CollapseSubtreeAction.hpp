@@ -8,12 +8,22 @@
 namespace solver
 {
 
+// forward declaration; the full definition is only needed in the .cpp
+struct Context;
+
 /// \brief collapses a subtree into a single new leaf node
 class CollapseSubtreeAction : AbstractAction
 {
   private:
     /// \brief forest on which the action will be performed
     std::shared_ptr<graph::Forest> forest;
+
+    /// \brief Optional context whose single-vertex-tree tracking is kept in sync
+    /// on do/undo. \c nullptr disables tracking (e.g. reduction solver or tests).
+    Context* svtContext = nullptr;
+
+    /// \brief whether the collapsed \ref node was counted as a new single-vertex tree.
+    bool svtNodeCounted = false;
 
     /// \brief A Pointer to the node from which the subtree will be collapsed into a single leaf
     graph::Node* node;
@@ -36,7 +46,9 @@ class CollapseSubtreeAction : AbstractAction
   public:
     /// \param node The node from which the subtree will be collapsed into single leaf.
     /// \param forest A shared pointer to the forest on which the action will be performed.
-    CollapseSubtreeAction(graph::Node* node, const std::shared_ptr<graph::Forest>& forest);
+    /// \param svtContext Optional context for single-vertex-tree tracking; \c nullptr disables it.
+    CollapseSubtreeAction(graph::Node* node, const std::shared_ptr<graph::Forest>& forest,
+                          Context* svtContext = nullptr);
 
     void doAction() override;
 

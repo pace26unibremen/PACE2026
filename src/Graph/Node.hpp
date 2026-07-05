@@ -53,18 +53,45 @@ struct Node
     [[nodiscard]]
     bool hasTerminal(unsigned int label) const;
 
+    // hasSubsetTerminals / hasSmallestTerminal are defined inline here (rather than
+    // in Node.cpp) because they are hot: hasSubsetTerminals drives getSiblings and
+    // hasSmallestTerminal drives the child/root sorting in DeleteEdgeAction. With no
+    // LTO in the build, keeping them out-of-line cost a cross-TU call each time.
+
     /// Checks if the terminals in the subtree of a node is a \b subset of
     /// the terminals of another node.
     /// \param other
     /// \return true if terminals of \c this are a subset of the terminals of \c other, else false
     [[nodiscard]]
-    bool hasSubsetTerminals(const Node* other) const;
+    bool hasSubsetTerminals(const Node* other) const
+    {
+        for (unsigned int i = 0; i < subtreeTerminals.size(); i++)
+        {
+            if ((subtreeTerminals[i] | other->subtreeTerminals[i]) != other->subtreeTerminals[i])
+            {
+                return false;
+            }
+        }
+        return true;
+    }
 
     /// Checks if a node has the minimal terminal in its subtree, compared to another node.
     /// \param other
     /// \return true if \c this has the minimal terminal, else false
     [[nodiscard]]
-    bool hasSmallestTerminal(const Node* other) const;
+    bool hasSmallestTerminal(const Node* other) const
+    {
+        for (unsigned int i = 0; i < subtreeTerminals.size(); i++)
+        {
+            if (subtreeTerminals[i] == other->subtreeTerminals[i])
+            {
+                continue;
+            }
+            // __builtin_ctzll counts trailing zeros
+            return __builtin_ctzll(subtreeTerminals[i]) < __builtin_ctzll(other->subtreeTerminals[i]);
+        }
+        return false;
+    }
 
     /// \brief returns the smallest label in the nodes' subtree.
     /// \returns the smallest label

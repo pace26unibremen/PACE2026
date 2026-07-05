@@ -30,7 +30,7 @@ namespace graph
 
 Forest::Forest(std::shared_ptr<std::vector<Node>> nodes,
                std::shared_ptr<std::unordered_map<Node*, unsigned int>> terminalToLabel,
-               std::shared_ptr<std::unordered_map<unsigned int, Node*>> labelToTerminal,
+               std::shared_ptr<LabelToTerminalMap> labelToTerminal,
                std::shared_ptr<std::vector<Node*>> roots) :
         nodes(std::move(nodes)),
         terminalToLabel(std::move(terminalToLabel)),
@@ -95,46 +95,8 @@ void Forest::dot(const string& path) const
 // ------------------------------------------------------------- //
 // ---- access to member fields -------------------------------- //
 // ------------------------------------------------------------- //
-
-std::shared_ptr<std::vector<Node>>& Forest::Nodes()
-{
-    return this->nodes;
-}
-
-const std::shared_ptr<std::vector<Node>>& Forest::Nodes() const
-{
-    return this->nodes;
-}
-
-std::unordered_map<Node*, unsigned int>& Forest::TerminalToLabel()
-{
-    return *this->terminalToLabel;
-}
-
-const std::unordered_map<Node*, unsigned int>& Forest::TerminalToLabel() const
-{
-    return *this->terminalToLabel;
-}
-
-std::unordered_map<unsigned int, Node*>& Forest::LabelToTerminal()
-{
-    return *this->labelToTerminal;
-}
-
-const std::unordered_map<unsigned int, Node*>& Forest::LabelToTerminal() const
-{
-    return *this->labelToTerminal;
-}
-
-std::vector<Node*>& Forest::Roots()
-{
-    return *this->roots;
-}
-
-const std::vector<Node*>& Forest::Roots() const
-{
-    return *this->roots;
-}
+// Trivial field accessors (Nodes / TerminalToLabel / LabelToTerminal / Roots)
+// are defined inline in Forest.hpp so they inline at their call sites.
 
 Node* Forest::rootOf(Node* node) const
 {
@@ -216,7 +178,7 @@ bool Forest::isTrueSubtreeOf(const Forest& other) const
         return false;
     }
 
-    for (auto& [key, value]: *labelToTerminal)
+    for (const auto& [key, value]: *labelToTerminal)
     {
         if (not traverseUp(value, other.labelToTerminal->at(key)))
         {
@@ -479,7 +441,7 @@ void Forest::renderImage()
 void Forest::sortChildrenAndCollectTerminals()
 {
     // the number of elements in the `subtreeTerminals` vector of each node
-    const unsigned int numberOfEntries = (std::ranges::max(*labelToTerminal | std::views::keys) + 63) / 64;
+    const unsigned int numberOfEntries = (labelToTerminal->maxLabel() + 63) / 64;
 
     std::function<unsigned int(Node*)> orderSubtree = [&, numberOfEntries](Node* subtreePtr) -> unsigned int {
         subtreePtr->subtreeTerminals.resize(numberOfEntries,0);
@@ -490,6 +452,12 @@ void Forest::sortChildrenAndCollectTerminals()
             subtreePtr->subtreeTerminals[(label - 1) / 64] = ((uint64_t) 1 << (label -1) % 64);
             return label;
         }
+        // KNOWN BUG: unconditionally recurses into leftChild/rightChild. A Newick input
+        // containing a unary node (a "(...)" clade with only one child, typically from a
+        // redundant wrapping paren, e.g. "((c,(d,e)))") leaves one child null here, and the
+        // recursive call segfaults. Not fixed as of 2026-07-02 (found while implementing the
+        // approximation solver on branch approximation-solver / task-2 review) — needs a
+        // null/arity check, or the Newick parser needs to reject/collapse unary clades.
         unsigned int firstMinLabel = orderSubtree(subtreePtr->leftChild);
         unsigned int secondMinLabel = orderSubtree(subtreePtr->rightChild);
         if (firstMinLabel > secondMinLabel)
@@ -626,7 +594,7 @@ Forest Forest::copy() const
     // initialize the member fields of the copy forest with correct capacity
     auto nodes_copy = std::make_shared<std::vector<Node>>();
     auto terminalToLabel_copy = std::make_shared<std::unordered_map<Node*, unsigned int>>();
-    auto labelToTerminal_copy = std::make_shared<std::unordered_map<unsigned int, Node*>>();
+    auto labelToTerminal_copy = std::make_shared<LabelToTerminalMap>();
     auto roots_copy = std::make_shared<std::vector<Node*>>();
     nodes_copy->reserve(nodes->capacity());
     terminalToLabel_copy->reserve(terminalToLabel->size());

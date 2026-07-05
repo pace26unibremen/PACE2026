@@ -26,38 +26,7 @@ bool graph::Node::hasTerminal(unsigned int label) const
     return (subtreeTerminals[(label -1) / 64] & (uint64_t) 1 << (label -1) % 64) > 0;
 }
 
-bool graph::Node::hasSmallestTerminal(const graph::Node* other) const
-{
-    for(unsigned int i = 0; i < subtreeTerminals.size(); i++ )
-    {
-        if(subtreeTerminals[i] == other->subtreeTerminals[i])
-        {
-            continue;
-        }
-        else if(__builtin_ctzll(subtreeTerminals[i]) < __builtin_ctzll(other->subtreeTerminals[i]))
-        {
-            // __builtin_ctzll counts trailing zeros
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-    return false;
-}
-
-bool graph::Node::hasSubsetTerminals(const graph::Node* other) const
-{
-    for(unsigned int i = 0; i < subtreeTerminals.size(); i++ )
-    {
-        if((subtreeTerminals[i] | other->subtreeTerminals[i]) != other->subtreeTerminals[i])
-        {
-            return false;
-        }
-    }
-    return true;
-}
+// hasSmallestTerminal and hasSubsetTerminals are defined inline in Node.hpp (hot path).
 
 unsigned int graph::Node::smallestTerminal() const
 {

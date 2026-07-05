@@ -12,6 +12,7 @@ class ReductionSolver : public AbstractSolver
 {
 private:
     std::shared_ptr<solver::AbstractRule> subtreeReductionRule = nullptr;
+    std::shared_ptr<solver::AbstractRule> chainReductionRule = nullptr;
     std::shared_ptr<solver::Context> context = std::make_shared<solver::Context>();
 public:
     /// \brief Constructor for a reduction solver.

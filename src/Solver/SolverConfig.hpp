@@ -61,10 +61,10 @@ struct SolverConfig
     /// \brief Competition or evaluation track.
     enum class Track
     {
-        Exact,      ///< Find the provably optimal solution (complete search).
-        Heuristic,  ///< Best solution under a time limit; solver is stopped by SIGTERM.
-        LowerBound, ///< Reserved — not yet implemented (see issue #55).
-        Pipeline,   ///< Internal CI / stride benchmark mode; not a competition track.
+        Exact,       ///< Find the provably optimal solution (complete search).
+        Heuristic,   ///< Best solution under a time limit; solver is stopped by SIGTERM.
+        LowerBound,  ///< Reserved — not yet implemented (see issue #55).
+        Pipeline,    ///< Internal CI / stride benchmark mode; not a competition track.
     };
 
     /// \brief Which solver backend drives the search.
@@ -73,9 +73,9 @@ struct SolverConfig
     /// issue #55; the field exists now to avoid a breaking change later.
     enum class SolverType
     {
-        Branching, ///< Branching + reduction rules solver (\ref BranchingSolver).
-        Reduction, ///< Subtree Reduction (\ref ReductionSolver).
-        Cluster,   ///< Cluster Reduction (\ref ClusterSolver).
+        Branching,  ///< Branching + reduction rules solver (\ref BranchingSolver).
+        Reduction,  ///< Subtree Reduction (\ref ReductionSolver).
+        Cluster,    ///< Cluster Reduction (\ref ClusterSolver).
     };
 
     // -----------------------------------------------------------------------
@@ -101,6 +101,14 @@ struct SolverConfig
 
     /// \brief Which solver backend to use.  Default: \c Reduction -> Cluster -> Branching.
     std::vector<SolverType> solverPipeline = {SolverType::Reduction, SolverType::Cluster, SolverType::Branching};
+
+    /// \brief Total wall-clock budget (seconds) the solver may divide across clusters.
+    ///
+    /// When \c > 0 and the pipeline includes a \c Cluster stage, the per-cluster branching
+    /// deadlines are derived from this so one hard cluster cannot consume the whole run
+    /// (see \ref solver::ClusterBudget).  \c 0 disables time-slicing (rely solely on the
+    /// external SIGTERM).  Set to the track's wall-clock limit by the named presets.
+    double timeBudgetSeconds = 0.0;
 
     /// \brief Solver-specific options for the branching solver backend.
     ///
@@ -145,8 +153,9 @@ struct SolverConfig
     {
         SolverConfig c;
         c.track = Track::Heuristic;
-        c.solverPipeline = {SolverType::Reduction, SolverType::Branching};
+        c.solverPipeline = {SolverType::Reduction, SolverType::Cluster, SolverType::Branching};
         c.enableSigterm = true;
+        c.timeBudgetSeconds = 300.0;  // heuristic-track wall-clock limit; used to slice a Cluster stage
         return c;
     }
 
@@ -166,8 +175,9 @@ struct SolverConfig
         SolverConfig c;
         c.track = Track::Pipeline;
         c.enableSigterm = true;
-        for (auto& p : solver::plugin::MetricsPlugins::makeAll(out))
-            c.branchingConfig.plugins.push_back(p);
+        auto collector = std::make_shared<solver::plugin::MetricsCollector>();
+        c.branchingConfig.plugins.push_back(std::make_shared<solver::plugin::BranchCountPlugin>(collector, out));
+        c.branchingConfig.plugins.push_back(std::make_shared<solver::plugin::RuleStatsPlugin>(collector, true, out));
         return c;
     }
 
@@ -184,26 +194,31 @@ struct SolverConfig
     static SolverConfig debug(const std::string& dirPath, std::ostream& out = std::cout)
     {
         SolverConfig c;
-        for (auto& p : solver::plugin::MetricsPlugins::makeAll(out))
-            c.branchingConfig.plugins.push_back(p);
-        c.branchingConfig.plugins.push_back(
-            std::make_shared<solver::plugin::VisualizationPlugin>(dirPath));
+        for (auto& p : solver::plugin::MetricsPlugins::makeAll(out)) c.branchingConfig.plugins.push_back(p);
+        c.branchingConfig.plugins.push_back(std::make_shared<solver::plugin::VisualizationPlugin>(dirPath));
         return c;
     }
 
-    /// \brief Reserved placeholder for the lower-bound competition track.
+    /// \brief Preset for the PACE lower-bound competition track.
     ///
-    /// No lower-bound solver exists yet.  The preset is defined now to reserve
-    /// the name and avoid a breaking API change once the implementation is
-    /// added (issue #55).
-    ///
-    /// \throws std::logic_error always.
-    [[noreturn]] static SolverConfig lowerBoundTrack()
+    /// A submission of size U is valid iff U <= floor(a*k*)+b, where a,b come from the instance's
+    /// "#a {a} {b}" line and k* is never given. No Cluster stage and no SIGTERM: unlike the heuristic
+    /// track, an interrupted/unproven answer here is not just suboptimal, it may be outright invalid, so
+    /// the search runs to either a proven optimum or a certified early exit (see
+    /// \ref BranchingSolverConfiguration::certifiedEarlyExit and \ref Context::certifiedThreshold).
+    static SolverConfig lowerBoundTrack()
     {
-        throw std::logic_error("SolverConfig::lowerBoundTrack() is not yet implemented");
+        SolverConfig c;
+        c.track = Track::LowerBound;
+        c.solverPipeline = {SolverType::Reduction, SolverType::Branching};
+        c.enableSigterm = false;
+        // Stop and emit the incumbent as soon as it is certified valid against floor(a*L)+b. This is the
+        // strategy switch; startSolver computes the certified lower bound L and fills Context::certifiedThreshold.
+        c.branchingConfig.certifiedEarlyExit = true;
+        return c;
     }
 };
 
-} // namespace solver
+}  // namespace solver
 
 #endif  //PACE2026_SOLVER_CONFIG_HPP

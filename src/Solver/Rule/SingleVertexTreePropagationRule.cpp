@@ -27,7 +27,7 @@ solver::RuleReturnCode solver::SingleVertexTreePropagationRule::apply()
                 {
                     return RuleReturnCode::CutBranch;
                 }
-                changes.emplace(terminal, fi);
+                changes.emplace(terminal, fi, context.get());
                 changes.top().doAction();
             }
         }
@@ -55,34 +55,32 @@ std::shared_ptr<solver::AbstractRule>
 solver::SingleVertexTreePropagationRule::isApplicable(const std::shared_ptr<graph::Instance>& instance,
                                                       const std::shared_ptr<Context>& context)
 {
-    auto labelsToBeReduced = std::unordered_set<unsigned int>();
-
-    for (const auto& [_, label] : instance->at(0)->TerminalToLabel())
+    // Applicability is read from the context's incrementally-maintained
+    // single-vertex-tree tracking instead of rescanning the whole instance every
+    // solver iteration (see Context::singleVertexMismatchCount). The tracking is
+    // kept current by DeleteEdgeAction / CollapseSubtreeAction on do/undo; here we
+    // just initialise it once, then the common "nothing to do" case is O(1).
+    if (not context->singleVertexTrackingInitialised)
     {
-        bool anySingleVertexTree = false;
-        bool anyNotSingleVertexTree = false;
+        context->initSingleVertexTracking(instance);
+    }
 
-        for (const auto& f_ptr : *instance)
-        {
-            const graph::Node* terminal = f_ptr->LabelToTerminal()[label];
-            if (terminal->parent != nullptr)
-            {
-                anyNotSingleVertexTree = true;
-            }
-            else
-            {
-                anySingleVertexTree = true;
-            }
-        }
-        if (anySingleVertexTree and anyNotSingleVertexTree)
+    if (context->singleVertexMismatchCount == 0)
+    {
+        return nullptr;
+    }
+
+    // Materialise the reduction set only now that the rule is known to fire: the
+    // labels that are an SVT in some but not all forests.
+    auto labelsToBeReduced = std::unordered_set<unsigned int>();
+    const unsigned int forests = context->singleVertexNumForests;
+    for (unsigned int label = 0; label < context->singleVertexForestCount.size(); ++label)
+    {
+        const unsigned int count = context->singleVertexForestCount[label];
+        if (count > 0 and count < forests)
         {
             labelsToBeReduced.insert(label);
         }
-    }
-
-    if(labelsToBeReduced.empty())
-    {
-        return nullptr;
     }
     return std::make_shared<SingleVertexTreePropagationRule>(instance, context, labelsToBeReduced);
 }
