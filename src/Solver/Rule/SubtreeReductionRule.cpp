@@ -56,7 +56,7 @@ solver::SubtreeReductionRule::isApplicable(const std::shared_ptr<graph::Instance
 {
     if (instance->size() <= 1) return nullptr;
 
-    auto labels = instance->at(0)->LabelToTerminal();
+    const auto& labels = instance->at(0)->LabelToTerminal();
 
     /// a set of all visited nodes over all forests, that where part of identical subtrees
     auto seenNodes_identical = std::unordered_set<graph::Node*>();
@@ -90,7 +90,7 @@ solver::SubtreeReductionRule::isApplicable(const std::shared_ptr<graph::Instance
     auto maximumSubtree = std::list<std::vector<graph::Node*>>();
 
     // first we fill the 'identicalSubtreeRoot' queue with the trivial terminal subtrees
-    for (const auto& label : labels | std::views::keys)
+    for (const auto& [label, labelNode] : labels)
     {
         // all nodes for the current label
         auto terminalsForLabel = std::vector<graph::Node*>();

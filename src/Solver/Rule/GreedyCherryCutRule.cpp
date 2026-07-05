@@ -31,7 +31,7 @@ solver::RuleReturnCode solver::GreedyCherryCutRule::apply()
         {
             return RuleReturnCode::CutBranch;
         }
-        changes.emplace(aNode, f);
+        changes.emplace(aNode, f, context.get());
         changes.top().doAction();
     }
 

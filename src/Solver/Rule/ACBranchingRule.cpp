@@ -35,7 +35,7 @@ solver::RuleReturnCode solver::ACBranchingRule::apply()
                     continue;
                 if (context->protectedEdges.contains(aNode))
                     return RuleReturnCode::CutBranch;
-                changes.emplace(aNode, f);
+                changes.emplace(aNode, f, context.get());
                 changes.top().doAction();
             }
             break;
@@ -47,7 +47,7 @@ solver::RuleReturnCode solver::ACBranchingRule::apply()
                     continue;
                 if (context->protectedEdges.contains(cNode))
                     return RuleReturnCode::CutBranch;
-                changes.emplace(cNode, f);
+                changes.emplace(cNode, f, context.get());
                 changes.top().doAction();
 
                 // we can protect edges to a-Node

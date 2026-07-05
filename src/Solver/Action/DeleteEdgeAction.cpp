@@ -1,14 +1,18 @@
 
 #include "DeleteEdgeAction.hpp"
 
+#include "../Context.hpp"
+
 #include <algorithm>
 #include <utility>
 
 using namespace graph;
 using namespace solver;
 
-solver::DeleteEdgeAction::DeleteEdgeAction(graph::Node* child, const std::shared_ptr<graph::Forest>& forest) :
+solver::DeleteEdgeAction::DeleteEdgeAction(graph::Node* child, const std::shared_ptr<graph::Forest>& forest,
+                                           solver::Context* svtContext) :
         forest(forest),
+        svtContext(svtContext),
         child(child)
 {
     if (not child->parent)
@@ -37,6 +41,24 @@ void solver::DeleteEdgeAction::doAction()
         doParentIsInner();
     }
 
+    // Cutting the edge turns 'child' into a new root (and, when the parent was a
+    // root, 'sibling' too). A childless new root is a new single-vertex tree, so
+    // register it with the context's SVT tracking. Childless nodes cannot change
+    // until this action is undone (LIFO), so undoAction reverses exactly this.
+    if (svtContext != nullptr)
+    {
+        if (child->leftChild == nullptr)
+        {
+            svtContext->adjustSingleVertexForNode(child, +1);
+            svtChildCounted = true;
+        }
+        if (parentIsRoot and sibling->leftChild == nullptr)
+        {
+            svtContext->adjustSingleVertexForNode(sibling, +1);
+            svtSiblingCounted = true;
+        }
+    }
+
     #ifdef DEBUG_IMAGE_VIEW_GRAPH
     forest->renderImage();
     #endif
@@ -44,6 +66,22 @@ void solver::DeleteEdgeAction::doAction()
 
 void DeleteEdgeAction::undoAction()
 {
+    // Reverse the SVT bookkeeping first, while 'child'/'sibling' still reflect the
+    // cut (childless-root) state that doAction counted.
+    if (svtContext != nullptr)
+    {
+        if (svtChildCounted)
+        {
+            svtContext->adjustSingleVertexForNode(child, -1);
+            svtChildCounted = false;
+        }
+        if (svtSiblingCounted)
+        {
+            svtContext->adjustSingleVertexForNode(sibling, -1);
+            svtSiblingCounted = false;
+        }
+    }
+
     if (parentIsRoot)
     {
         undoParentIsRoot();

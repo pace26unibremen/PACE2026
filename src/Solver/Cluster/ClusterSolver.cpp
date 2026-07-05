@@ -15,16 +15,21 @@ std::shared_ptr<graph::Instance> solver::ClusterSolver::buildSingleCluster(unsig
     {
         graph::Node* root = f->Roots()[i];
         std::unordered_map<graph::Node*, unsigned int> mapTL = f->TerminalToLabel();
-        std::unordered_map<unsigned int, graph::Node*> mapLT = f->LabelToTerminal();
         std::vector<graph::Node*> roots;
 
         roots.push_back(root);
         std::erase_if(mapTL, [root](const auto& entry) { return not root->hasTerminal(entry.second); });
-        std::erase_if(mapLT, [root](const auto& entry) { return not root->hasTerminal(entry.first); });
+
+        // Keep only the labels whose terminals live in this cluster's root subtree.
+        auto mapLT = std::make_shared<graph::LabelToTerminalMap>();
+        for (const auto& [label, node] : f->LabelToTerminal())
+        {
+            if (root->hasTerminal(label))
+                mapLT->emplace(label, node);
+        }
 
         auto forest = std::make_shared<graph::Forest>(
-            f->Nodes(), std::make_shared<std::unordered_map<graph::Node*, unsigned int>>(mapTL),
-            std::make_shared<std::unordered_map<unsigned int, graph::Node*>>(mapLT),
+            f->Nodes(), std::make_shared<std::unordered_map<graph::Node*, unsigned int>>(mapTL), mapLT,
             std::make_shared<std::vector<graph::Node*>>(roots));
         subInstance->push_back(forest);
     }
@@ -59,7 +64,7 @@ void solver::ClusterSolver::getClusterPoints()
 
 void solver::ClusterSolver::resizeSubtreeTerminalsVector()
 {
-    auto maxLabel = std::ranges::max(instance->at(0)->LabelToTerminal() | std::ranges::views::keys);
+    auto maxLabel = instance->at(0)->LabelToTerminal().maxLabel();
     unsigned int numberOfNewLabels = 2 * pointsAndForests_perCluster.size();
     if ((maxLabel + numberOfNewLabels + 63) / 64 > (maxLabel + 63) / 64)
     {
@@ -75,7 +80,7 @@ void solver::ClusterSolver::resizeSubtreeTerminalsVector()
 
 void solver::ClusterSolver::decoupleSubtrees()
 {
-    auto maxLabel = std::ranges::max(instance->at(0)->LabelToTerminal() | std::ranges::views::keys);
+    auto maxLabel = instance->at(0)->LabelToTerminal().maxLabel();
     for (const auto& _cluster : pointsAndForests_perCluster)
     {
 
