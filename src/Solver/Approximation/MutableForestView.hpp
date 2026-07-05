@@ -6,6 +6,7 @@
 
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace solver::approx
@@ -131,6 +132,60 @@ struct MutableForestView
         while (n->parent != nullptr)
             n = n->parent;
         return n;
+    }
+
+    // ----------------------------------------------------------------------------------------------
+    // Static-tree LCA acceleration. ONLY valid while the forest is not cut (i.e. the original/topology
+    // clones). Binary lifting: O(n log n) build, O(log n) query. Used to make the triplet-consistency
+    // check (outlier) cheap -- it is the dominant cost on large instances, and the original trees never
+    // change during the pass, so their depths and ancestors are fixed.
+    // ----------------------------------------------------------------------------------------------
+    std::vector<int> depth;             // node index -> depth (root = 0); empty until buildStaticLca()
+    std::vector<std::vector<int>> anc;  // anc[k][i] = 2^k-th ancestor index of i, or NO_NODE
+    int logN = 1;
+
+    void buildStaticLca()
+    {
+        const int size = static_cast<int>(nodes.size());
+        depth.assign(size, 0);
+        // nodes is pre-order, so parentIdx[i] < i: parents are finalised before their children.
+        for (int i = 0; i < size; ++i)
+            depth[i] = (parentIdx[i] == NO_NODE) ? 0 : depth[parentIdx[i]] + 1;
+        logN = 1;
+        while ((1 << logN) < (size > 0 ? size : 1))
+            ++logN;
+        anc.assign(logN, std::vector<int>(size, NO_NODE));
+        for (int i = 0; i < size; ++i)
+            anc[0][i] = parentIdx[i];
+        for (int k = 1; k < logN; ++k)
+            for (int i = 0; i < size; ++i)
+                anc[k][i] = (anc[k - 1][i] == NO_NODE) ? NO_NODE : anc[k - 1][anc[k - 1][i]];
+    }
+
+    /// LCA via the precomputed table (buildStaticLca must have run). O(log n). nullptr if disconnected.
+    Node* lcaFast(Node* aNode, Node* bNode) const
+    {
+        int a = indexOf.at(aNode);
+        int b = indexOf.at(bNode);
+        if (depth[a] < depth[b])
+            std::swap(a, b);
+        int diff = depth[a] - depth[b];
+        for (int k = 0; k < logN; ++k)
+            if (diff & (1 << k))
+            {
+                a = anc[k][a];
+                if (a == NO_NODE)
+                    return nullptr;
+            }
+        if (a == b)
+            return nodes[a];
+        for (int k = logN - 1; k >= 0; --k)
+            if (anc[k][a] != anc[k][b])
+            {
+                a = anc[k][a];
+                b = anc[k][b];
+            }
+        return anc[0][a] == NO_NODE ? nullptr : nodes[anc[0][a]];
     }
 };
 

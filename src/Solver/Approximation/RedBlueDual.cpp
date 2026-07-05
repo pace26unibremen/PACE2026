@@ -48,15 +48,6 @@ std::vector<Label> activeLabelsUnder(const MutableForestView& v, Node* n, const 
     return out;
 }
 
-/// Depth (distance from root) of \p n via parent pointers.
-int depthOf(Node* n)
-{
-    int d = 0;
-    for (Node* x = n->parent; x != nullptr; x = x->parent)
-        ++d;
-    return d;
-}
-
 /// The Red-Blue dual construction as a self-contained pass over four ForestViews.
 struct RedBlue2
 {
@@ -72,6 +63,10 @@ struct RedBlue2
              ActiveSet& a, solver::Deadline d)
         : t1(w1), t2(w2), t1o(o1), t2o(o2), active(a), deadline(d)
     {
+        // The original (topology) clones are never cut, so precompute their LCA tables once: the
+        // triplet-consistency check (outlier) is the dominant cost at scale and queries them heavily.
+        t1o.buildStaticLca();
+        t2o.buildStaticLca();
     }
 
     bool timedOut() const { return std::chrono::steady_clock::now() > deadline; }
@@ -119,15 +114,16 @@ struct RedBlue2
     /// (xy|z => outlier z). Returns 0 if degenerate. Uses the deepest of the three pairwise LCAs.
     Label outlier(MutableForestView& v, Label a, Label b, Label c)
     {
+        // v is always an original (topology) view, so its static LCA table is built: O(log n) per query.
         Node* na = v.node(a);
         Node* nb = v.node(b);
         Node* nc = v.node(c);
-        Node* lab = lca(na, nb);
-        Node* lac = lca(na, nc);
-        Node* lbc = lca(nb, nc);
-        const int dab = lab ? depthOf(lab) : -1;
-        const int dac = lac ? depthOf(lac) : -1;
-        const int dbc = lbc ? depthOf(lbc) : -1;
+        Node* lab = v.lcaFast(na, nb);
+        Node* lac = v.lcaFast(na, nc);
+        Node* lbc = v.lcaFast(nb, nc);
+        const int dab = lab ? v.depth[v.idx(lab)] : -1;
+        const int dac = lac ? v.depth[v.idx(lac)] : -1;
+        const int dbc = lbc ? v.depth[v.idx(lbc)] : -1;
         if (dab >= dac && dab >= dbc)
             return (dab > dac || dab > dbc) ? c : 0;  // a,b closest -> outlier c
         if (dac >= dab && dac >= dbc)
