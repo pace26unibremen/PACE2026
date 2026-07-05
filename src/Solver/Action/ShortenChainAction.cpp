@@ -146,7 +146,7 @@ namespace solver
 
          // remove the reduced labels / terminals from the maps
          std::erase_if(forest->TerminalToLabel(), [chainLabels](const auto& entry){return chainLabels.contains(entry.second);});
-         std::erase_if(forest->LabelToTerminal(), [chainLabels](const auto& entry){return chainLabels.contains(entry.first);});
+         forest->LabelToTerminal().erase_if([chainLabels](const auto& entry){return chainLabels.contains(entry.first);});
     }
 
     void ShortenChainAction::undoAction()

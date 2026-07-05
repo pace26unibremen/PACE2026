@@ -86,12 +86,30 @@ class LabelToTerminalMap
         }
     }
 
+    /// \brief Inserts a \c {label, node} pair, mirroring \c std::unordered_map::insert
+    /// (no overwrite of an existing key).
+    void insert(std::pair<unsigned int, Node*> entry) { emplace(entry.first, entry.second); }
+
     /// \brief Removes \p label if present.
     void erase(unsigned int label)
     {
         if (label < data_.size())
         {
             data_[label] = nullptr;
+        }
+    }
+
+    /// \brief Removes every present entry for which \p predicate returns true.
+    /// Mirrors \c std::erase_if; the predicate receives a \c {label, node} pair.
+    template <typename Predicate>
+    void erase_if(Predicate predicate)
+    {
+        for (unsigned int label = 0; label < data_.size(); ++label)
+        {
+            if (data_[label] != nullptr && predicate(std::pair<unsigned int, Node*>{label, data_[label]}))
+            {
+                data_[label] = nullptr;
+            }
         }
     }
 
