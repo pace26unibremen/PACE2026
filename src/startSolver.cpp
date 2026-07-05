@@ -445,7 +445,7 @@ static solver::SolverConfig resolveConfig(const std::string& name, std::ostream&
         return solver::SolverConfig::pipeline(out);
     throw std::invalid_argument("Unknown --track value: \"" + name +
                                 "\". "
-                                "Valid values: exact, heuristic, pipeline.");
+                                "Valid values: exact, heuristic, lower-bound, pipeline.");
 }
 
 // ============================================================
