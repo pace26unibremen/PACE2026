@@ -24,14 +24,13 @@ std::shared_ptr<graph::Instance> solver::ClusterSolver::buildSingleCluster(unsig
         auto mapLT = std::make_shared<graph::LabelToTerminalMap>();
         for (const auto& [label, node] : f->LabelToTerminal())
         {
-            if (root->hasTerminal(label)) mapLT->emplace(label, node);
+            if (root->hasTerminal(label))
+                mapLT->emplace(label, node);
         }
 
-        auto forest =
-            std::make_shared<graph::Forest>(f->Nodes(),
-                                            std::make_shared<std::unordered_map<graph::Node*, unsigned int>>(mapTL),
-                                            mapLT,
-                                            std::make_shared<std::vector<graph::Node*>>(roots));
+        auto forest = std::make_shared<graph::Forest>(
+            f->Nodes(), std::make_shared<std::unordered_map<graph::Node*, unsigned int>>(mapTL), mapLT,
+            std::make_shared<std::vector<graph::Node*>>(roots));
         subInstance->push_back(forest);
     }
     return subInstance;
@@ -215,6 +214,7 @@ void solver::ClusterSolver::cutClusterTerminals(unsigned int index)
     {
         auto r = solver::SingleVertexTreePropagationRule(c, std::make_shared<Context>(), cutClusterTerminals);
         r.apply();
+        propagationModifiedClusters.insert(index);
     }
 }
 
@@ -256,4 +256,26 @@ void solver::ClusterSolver::unapplyReductions()
 solver::ClusterRange& solver::ClusterSolver::Clusters()
 {
     return *clusterRange.get();
+}
+
+unsigned int solver::ClusterSolver::clusterCount() const
+{
+    return static_cast<unsigned int>(cluster.size());
+}
+
+unsigned int solver::ClusterSolver::clusterWeight(unsigned int index) const
+{
+    // Leaf count of the first tree is our difficulty proxy: MAF branching cost grows with the
+    // number of terminals, so this weights the time budget toward the clusters that need it.
+    return static_cast<unsigned int>(cluster.at(index)->at(0)->TerminalToLabel().size());
+}
+
+std::shared_ptr<graph::Instance> solver::ClusterSolver::clusterInstanceAt(unsigned int index) const
+{
+    return cluster.at(index);
+}
+
+bool solver::ClusterSolver::wasModifiedByPropagation(unsigned int index) const
+{
+    return propagationModifiedClusters.contains(index);
 }

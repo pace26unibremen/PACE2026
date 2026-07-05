@@ -3,16 +3,16 @@
 #include <algorithm>
 #include <ranges>
 
-solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>& instance)
-    : AbstractSolver(instance)
+solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>& instance) :
+        AbstractSolver(instance)
 {
     initializeContext();
 }
 
 solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>& instance,
                                          const std::shared_ptr<solver::BranchingSolverConfiguration>& configuration) :
-    AbstractSolver(instance),
-    configuration(configuration)
+        AbstractSolver(instance),
+        configuration(configuration)
 {
     initializeContext();
 }
@@ -20,9 +20,9 @@ solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>&
 solver::BranchingSolver::BranchingSolver(const std::shared_ptr<graph::Instance>& instance,
                                          const std::shared_ptr<solver::BranchingSolverConfiguration>& configuration,
                                          const std::shared_ptr<solver::Context>& context) :
-    AbstractSolver(instance),
-    configuration(configuration),
-    context(context)
+        AbstractSolver(instance),
+        configuration(configuration),
+        context(context)
 {
     initializeContext();
 }
@@ -45,6 +45,40 @@ void solver::BranchingSolver::unapplySolutionBranch()
         (*it)->unapply();
     }
     solutionBranch.clear();
+}
+
+void solver::BranchingSolver::setDeadline(std::chrono::steady_clock::time_point deadline)
+{
+    this->deadline = deadline;
+}
+
+bool solver::BranchingSolver::timeExpired() const
+{
+    // SIGTERM is honoured on every call so the process still stops promptly on the grace signal.
+    if (timeoutFlag && timeoutFlag->load(std::memory_order_relaxed))
+    {
+        return true;
+    }
+    if (deadlinePassed)
+    {
+        return true;
+    }
+    // No deadline armed (exact track, approximation seed pass, any non-time-sliced run): the
+    // deadline stays at its max() sentinel and can never be reached, so never read the clock.
+    if (deadline == std::chrono::steady_clock::time_point::max())
+    {
+        return false;
+    }
+    // Throttle the wall-clock read: steady_clock::now() is ~2-4% of the branch loop, so we only
+    // sample it once every kClockCheckStride calls and reuse the verdict in between.
+    if (clockCheckCountdown == 0)
+    {
+        clockCheckCountdown = kClockCheckStride;
+        deadlinePassed = std::chrono::steady_clock::now() >= deadline;
+        return deadlinePassed;
+    }
+    --clockCheckCountdown;
+    return false;
 }
 
 void solver::BranchingSolver::unwindAppliedRules()
@@ -70,7 +104,7 @@ bool solver::BranchingSolver::rollBackBranch()
     // (see below), so the currently in-progress branch must be fully unwound
     // first — otherwise the replay applies its cloned rules on top of a
     // half-cut, abandoned branch and corrupts the tree.
-    if (timeoutFlag && timeoutFlag->load(std::memory_order_relaxed) && not solutionBranch.empty())
+    if (timeExpired() && not solutionBranch.empty())
     {
         unwindAppliedRules();
         return true;
@@ -109,12 +143,11 @@ void solver::BranchingSolver::checkSolutionCandidate()
     if (context->bestSolutionWeight > candidateWeight)
     {
 
-        for (const auto& plugin : configuration->plugins)
-            plugin->onNewBestSolution(candidateWeight);
+        for (const auto& plugin : configuration->plugins) plugin->onNewBestSolution(candidateWeight);
 
         context->bestSolutionWeight = candidateWeight;
-        auto branchCloneView = appliedRules | std::views::transform(
-            [](const std::shared_ptr<AbstractRule>& r) { return r->clone(); });
+        auto branchCloneView =
+            appliedRules | std::views::transform([](const std::shared_ptr<AbstractRule>& r) { return r->clone(); });
         solutionBranch = {branchCloneView.begin(), branchCloneView.end()};
     }
 }
@@ -125,8 +158,7 @@ void solver::BranchingSolver::initializeContext()
     this->context->branchingSolverConfiguration = this->configuration;
 
     // define label order
-    std::function<void(graph::Node*)> collectTerminalsDFS = [this, &collectTerminalsDFS](graph::Node* const & n)
-    {
+    std::function<void(graph::Node*)> collectTerminalsDFS = [this, &collectTerminalsDFS](graph::Node* const& n) {
         if (n->leftChild)
         {
             collectTerminalsDFS(n->leftChild);
@@ -149,11 +181,16 @@ void solver::BranchingSolver::unapplyReductions()
     // Find it upfront so we can pass lastRule=true to plugins without a separate allocation.
     std::shared_ptr<AbstractRule> firstReduction;
     for (const auto& r : appliedRules)
-        if (r->IsReduction()) { firstReduction = r; break; }
+        if (r->IsReduction())
+        {
+            firstReduction = r;
+            break;
+        }
 
     // unapply all reduction rules to get solution for the original instance
-    for (const auto& reductionRule : appliedRules | std::views::reverse
-        | std::views::filter([](const std::shared_ptr<AbstractRule>& r){ return r->IsReduction();}))
+    for (const auto& reductionRule :
+         appliedRules | std::views::reverse |
+             std::views::filter([](const std::shared_ptr<AbstractRule>& r) { return r->IsReduction(); }))
     {
         reductionRule->unapply();
         for (const auto& plugin : configuration->plugins)
@@ -176,7 +213,7 @@ bool solver::BranchingSolver::solve()
         // On timeout, stop before starting a new iteration — but only once at
         // least one solution candidate has been found.  Without one, keep
         // searching so the solver always produces output within the grace period.
-        if (timeoutFlag && timeoutFlag->load(std::memory_order_relaxed) && not solutionBranch.empty())
+        if (timeExpired() && not solutionBranch.empty())
         {
             unwindAppliedRules();
             break;
@@ -198,7 +235,8 @@ bool solver::BranchingSolver::solve()
             {
                 rule = isApplicable(instance, context);
                 // take first applicable rule
-                if (rule) break;
+                if (rule)
+                    break;
             }
         }
 
@@ -210,8 +248,7 @@ bool solver::BranchingSolver::solve()
         bool calculationFinished = false;
         switch (returnCode)
         {
-            case RuleReturnCode::Continue:
-                break;
+            case RuleReturnCode::Continue: break;
             case RuleReturnCode::ContinueWithRuleSuggestion:
                 for (const auto& r : *rule->NextRuleSuggestion())
                 {
@@ -236,11 +273,8 @@ bool solver::BranchingSolver::solve()
                 for (const auto& plugin : configuration->plugins) plugin->onBranchEnd();
                 calculationFinished = rollBackBranch();
                 break;
-            case RuleReturnCode::ImidateReturn:
-                calculationFinished = true;
-                break;
-            default:
-                throw std::logic_error("BranchingSolver : solve : undefined return code rule " + rule->name());
+            case RuleReturnCode::ImidateReturn: calculationFinished = true; break;
+            default: throw std::logic_error("BranchingSolver : solve : undefined return code rule " + rule->name());
         }
 
         if (calculationFinished)
