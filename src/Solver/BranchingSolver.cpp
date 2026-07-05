@@ -54,19 +54,31 @@ void solver::BranchingSolver::setDeadline(std::chrono::steady_clock::time_point 
 
 bool solver::BranchingSolver::timeExpired() const
 {
+    // SIGTERM is honoured on every call so the process still stops promptly on the grace signal.
     if (timeoutFlag && timeoutFlag->load(std::memory_order_relaxed))
     {
         return true;
     }
-    // Skip the clock read when no deadline is armed. steady_clock::now() is ~3-4% of
-    // runtime in the branch loop (it is called on every iteration), and it is pure waste
-    // whenever the deadline can never be reached: the exact track, the approximation seed
-    // pass, and any non-time-sliced run all leave the deadline at its max() sentinel.
+    if (deadlinePassed)
+    {
+        return true;
+    }
+    // No deadline armed (exact track, approximation seed pass, any non-time-sliced run): the
+    // deadline stays at its max() sentinel and can never be reached, so never read the clock.
     if (deadline == std::chrono::steady_clock::time_point::max())
     {
         return false;
     }
-    return std::chrono::steady_clock::now() >= deadline;
+    // Throttle the wall-clock read: steady_clock::now() is ~2-4% of the branch loop, so we only
+    // sample it once every kClockCheckStride calls and reuse the verdict in between.
+    if (clockCheckCountdown == 0)
+    {
+        clockCheckCountdown = kClockCheckStride;
+        deadlinePassed = std::chrono::steady_clock::now() >= deadline;
+        return deadlinePassed;
+    }
+    --clockCheckCountdown;
+    return false;
 }
 
 void solver::BranchingSolver::unwindAppliedRules()

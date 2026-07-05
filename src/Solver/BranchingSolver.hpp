@@ -40,9 +40,24 @@ class BranchingSolver : public AbstractSolver
     /// hard cluster cannot consume the whole run. Default \c max() = disabled (never expires).
     std::chrono::steady_clock::time_point deadline = std::chrono::steady_clock::time_point::max();
 
+    /// \brief How often \ref timeExpired actually reads the clock: once every this many calls.
+    /// steady_clock::now() is ~2-4% of the branch loop and is hit on every iteration on the deadline
+    /// path, so we amortise it. 1024 is chosen for the deadline-overshoot bound, not the overhead
+    /// (already negligible at any stride >= ~256): at ~1 us per iteration (measured, 800 leaves) the
+    /// deadline overshoots by at most ~1024 * 1 us ~= 1 ms, nothing against a seconds-scale budget.
+    /// A larger stride would only grow that overshoot for no further overhead saving.
+    static constexpr unsigned int kClockCheckStride = 1024;
+
+    /// \brief Countdown to the next real clock read in \ref timeExpired (see \ref kClockCheckStride).
+    mutable unsigned int clockCheckCountdown = 0;
+
+    /// \brief Cached "deadline has passed" verdict, reused between the throttled clock reads.
+    mutable bool deadlinePassed = false;
+
     /// \brief True once either the external timeout flag is set or \ref deadline has passed.
     /// \note Like the flag, this only stops the search once a solution candidate exists; the
-    ///       caller-side guard \c not solutionBranch.empty() is applied at each check site.
+    ///       caller-side guard \c not solutionBranch.empty() is applied at each check site. The
+    ///       SIGTERM flag is honoured on every call; only the wall-clock deadline is throttled.
     [[nodiscard]] bool timeExpired() const;
 
     /// \brief The branch that leads to the solution
