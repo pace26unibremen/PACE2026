@@ -1,6 +1,8 @@
 #include "Solver/BranchingSolver.hpp"
 #include "Solver/Cluster/ClusterSolver.hpp"
 #include "Solver/Cluster/ClusterRange.hpp"
+#include "Solver/Context.hpp"
+#include "Solver/DualLowerBound.hpp"
 #include "Solver/Plugin/SigtermPlugin.hpp"
 #include "Solver/ReductionSolver.hpp"
 #include "Solver/SolverConfig.hpp"
@@ -65,7 +67,30 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
            && "Exact track must never enable SIGTERM");
 
     const auto startTime = std::clock();
-    const auto instance = graph::ReadInstance(in);
+
+    // A context carried across the whole solve. On the lower-bound track it also holds the parsed
+    // "#a {a} {b}" validity constants and the certified early-exit threshold; on other tracks its
+    // extra fields stay at their unset defaults and it behaves like any freshly-constructed context.
+    auto lowerBoundContext = std::make_shared<solver::Context>();
+    const auto instance = graph::ReadInstance(in, lowerBoundContext);
+
+    // ---- Certified early exit (lower-bound track) ------------------------------------------------
+    // On the lower-bound track, compute a certified lower bound L <= k* from the 3-approximation's LP
+    // dual (on the pristine instance, before reductions) and turn it into the acceptance threshold
+    // floor(a*L)+b. The branching solver then stops and emits its incumbent the instant the incumbent's
+    // size is <= this threshold — a provably valid answer, often the approximation seed itself. Only done
+    // when a genuine "#a" line was parsed (a >= 1, b >= 0); otherwise the threshold stays at its -1
+    // default, which no positive size ever meets, so the search simply never certifies.
+    if (config.track == solver::SolverConfig::Track::LowerBound
+        && lowerBoundContext->a >= 1.0 && lowerBoundContext->b >= 0)
+    {
+        const long L = solver::computeDual3ApproxLowerBound(*instance);
+        lowerBoundContext->certifiedThreshold = lowerBoundContext->certifiedCeiling(L);
+        // Diagnostic (stderr, does not touch the solution stream): the certified lower bound and the
+        // acceptance threshold floor(a*L)+b the search may stop at.
+        std::clog << "#lb a=" << lowerBoundContext->a << " b=" << lowerBoundContext->b
+                  << " L=" << L << " threshold=" << lowerBoundContext->certifiedThreshold << "\n";
+    }
 
     // ---- Approximation-seeded branch & bound ------------------------------------------------
     // Before the real branch-and-bound search on an instance (or cluster), run the approximation
@@ -148,7 +173,9 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
                     auto [branch, size] = seedFromApproximation(instance);
 
                     auto branchingConfig = std::make_shared<solver::BranchingSolverConfiguration>(config.branchingConfig);
-                    auto solver = std::make_shared<solver::BranchingSolver>(instance, branchingConfig);
+                    // Pass lowerBoundContext so the certified early-exit threshold (armed above on the
+                    // lower-bound track) reaches the search. On other tracks it is a default context.
+                    auto solver = std::make_shared<solver::BranchingSolver>(instance, branchingConfig, lowerBoundContext);
                     solver->seedSolution(std::move(branch), static_cast<float>(size));
 #ifdef   _POSIX_VERSION
                     if (config.enableSigterm)
