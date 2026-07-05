@@ -135,15 +135,32 @@ struct MutableForestView
 };
 
 /// LCA of \p a and \p b within the current forest, or nullptr if they are in different components.
+/// Allocation-free: equalize depths by parent-walking, then ascend in lockstep until the pointers meet
+/// (or both reach a null root, i.e. different components). O(depth), no heap traffic in the hot loop.
 inline Node* lca(Node* a, Node* b)
 {
-    std::unordered_set<const Node*> anc;
+    int da = 0;
     for (Node* x = a; x != nullptr; x = x->parent)
-        anc.insert(x);
+        ++da;
+    int db = 0;
     for (Node* x = b; x != nullptr; x = x->parent)
-        if (anc.contains(x))
-            return x;
-    return nullptr;
+        ++db;
+    while (da > db)
+    {
+        a = a->parent;
+        --da;
+    }
+    while (db > da)
+    {
+        b = b->parent;
+        --db;
+    }
+    while (a != b)  // meets at the LCA, or both become nullptr in different components
+    {
+        a = a->parent;
+        b = b->parent;
+    }
+    return a;
 }
 
 }  // namespace solver::approx

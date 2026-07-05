@@ -48,35 +48,6 @@ std::vector<Label> activeLabelsUnder(const MutableForestView& v, Node* n, const 
     return out;
 }
 
-bool subtreeHasActive(const MutableForestView& v, Node* n, const ActiveSet& active)
-{
-    std::vector<Node*> stack{n};
-    while (not stack.empty())
-    {
-        Node* x = stack.back();
-        stack.pop_back();
-        const int lbl = labelOfNode(v, x);
-        if (lbl != 0)
-        {
-            if (active.contains(static_cast<Label>(lbl)))
-                return true;
-        }
-        else
-        {
-            if (x->leftChild)
-                stack.push_back(x->leftChild);
-            if (x->rightChild)
-                stack.push_back(x->rightChild);
-        }
-    }
-    return false;
-}
-
-int activeCountUnder(const MutableForestView& v, Node* n, const ActiveSet& active)
-{
-    return static_cast<int>(activeLabelsUnder(v, n, active).size());
-}
-
 /// Depth (distance from root) of \p n via parent pointers.
 int depthOf(Node* n)
 {
@@ -99,6 +70,44 @@ struct RedBlue2
         : t1(w1), t2(w2), t1o(o1), t2o(o2), active(a)
     {
     }
+
+    // ---- active-leaf counts (lazy) ----
+    // counts[node] in each WORKING view = active leaves under node in the current forest. Refreshed
+    // lazily: every mutation (deactivate / cutEdge) marks them dirty; the next count query rebuilds both
+    // views in one O(n) sweep, then serves O(1) reads until the next mutation. This turns the structural
+    // predicates from per-call O(subtree) walks (the dominant cost -- see profiling) into O(1) lookups.
+    bool countsDirty = true;
+
+    void ensureCounts()
+    {
+        if (countsDirty)
+        {
+            t1.refreshCounts(active);
+            t2.refreshCounts(active);
+            countsDirty = false;
+        }
+    }
+
+    void deactivate(Label u)
+    {
+        active.erase(u);
+        countsDirty = true;
+    }
+
+    void cutEdge(MutableForestView& v, Node* n)
+    {
+        v.cut(n);
+        countsDirty = true;
+    }
+
+    /// Active leaves under \p n in working view \p v (current forest); O(1) after an amortized refresh.
+    int countUnder(MutableForestView& v, Node* n)
+    {
+        ensureCounts();
+        return v.counts[v.idx(n)];
+    }
+
+    bool hasActiveUnder(MutableForestView& v, Node* n) { return countUnder(v, n) > 0; }
 
     // ---- topology on ORIGINAL trees ----
     /// The "outlier" of triplet {a,b,c} in original view \p v: the leaf split off from the closer pair
@@ -129,17 +138,14 @@ struct RedBlue2
     // ---- structural predicates on WORKING forests ----
     bool sameTree(MutableForestView& v, Label a, Label b) { return v.rootOf(v.node(a)) == v.rootOf(v.node(b)); }
 
-    bool aloneInTree(MutableForestView& v, Label u)
-    {
-        return activeCountUnder(v, v.rootOf(v.node(u)), active) == 1;
-    }
+    bool aloneInTree(MutableForestView& v, Label u) { return countUnder(v, v.rootOf(v.node(u))) == 1; }
 
     bool activeSiblings(MutableForestView& v, Label a, Label b)
     {
         if (not sameTree(v, a, b))
             return false;
         Node* m = lca(v.node(a), v.node(b));
-        return m != nullptr && activeCountUnder(v, m, active) == 2;
+        return m != nullptr && countUnder(v, m) == 2;
     }
 
     bool compatibleSet(const std::vector<Label>& s)
@@ -165,9 +171,9 @@ struct RedBlue2
             {
                 if (sib == nullptr || sib == child)
                     continue;
-                if (subtreeHasActive(v, sib, active))
+                if (hasActiveUnder(v, sib))
                 {
-                    v.cut(child);
+                    cutEdge(v, child);
                     return;
                 }
             }
@@ -186,9 +192,9 @@ struct RedBlue2
             {
                 if (sib == nullptr || sib == child)
                     continue;
-                if (subtreeHasActive(v, sib, active))
+                if (hasActiveUnder(v, sib))
                 {
-                    v.cut(sib);
+                    cutEdge(v, sib);
                     return;
                 }
             }
@@ -208,7 +214,7 @@ struct RedBlue2
             {
                 if (sib == nullptr || sib == child)
                     continue;
-                if (subtreeHasActive(v, sib, active))
+                if (hasActiveUnder(v, sib))
                     return true;
             }
             child = parent;
@@ -249,21 +255,21 @@ struct RedBlue2
             {
                 cutOffLeaf(t2, u);
                 cutOffLeaf(t1, u);
-                active.erase(u);
+                deactivate(u);
                 dualSum += 1;  // FinalCut, y_u <- 1
                 sawStar = true;
             }
             else
             {
                 cutOffLeaf(t1, u);  // line 6: cut in T1' only
-                active.erase(u);
+                deactivate(u);
                 dualSum += 1;  // y_u <- 1
             }
             return;
         }
         if (activeSiblings(t2, u, vv))
         {
-            active.erase(u);  // merge, no dual change
+            deactivate(u);  // merge, no dual change
             return;
         }
         if (not pBelowLca(t2, u, vv))
@@ -272,7 +278,7 @@ struct RedBlue2
         dualSum -= 1;  // y_{p2(u)} <- y_{p2(u)} - 1
         if (activeSiblings(t2, u, vv))
         {
-            active.erase(u);  // Merge-After-Cut
+            deactivate(u);  // Merge-After-Cut
             dualSum += 1;     // y_u <- 1
             sawStar = true;
         }
@@ -280,7 +286,7 @@ struct RedBlue2
         {
             cutOffLeaf(t1, u);
             cutOffLeaf(t2, u);
-            active.erase(u);
+            deactivate(u);
             dualSum += 1;  // y_u <- 1
         }
     }
@@ -324,7 +330,7 @@ struct RedBlue2
         Label uh = rem[0], vh = rem[1];
         if (activeSiblings(t2, uh, vh))
         {
-            active.erase(uh);
+            deactivate(uh);
             dualSum += 1;  // merge, y_uh <- 1
             return true;
         }
@@ -348,12 +354,12 @@ struct RedBlue2
             if (not aloneInTree(t2, uh))
                 cutOffLeaf(t2, uh);
             cutOffLeaf(t1, uh);
-            active.erase(uh);
+            deactivate(uh);
             dualSum += 1;  // y_uh <- 1
             if (not aloneInTree(t2, vh))
                 cutOffLeaf(t2, vh);
             cutOffLeaf(t1, vh);
-            active.erase(vh);
+            deactivate(vh);
             dualSum += 1;  // y_vh <- 1
             return true;
         }
@@ -367,7 +373,7 @@ struct RedBlue2
                 if (not aloneInTree(t2, lv))
                     cutOffLeaf(t2, lv);
                 cutOffLeaf(t1, lv);
-                active.erase(lv);
+                deactivate(lv);
                 dualSum += 1;  // y_vh <- 1
             }
             return true;
@@ -468,25 +474,25 @@ struct RedBlue2
             std::swap(r1, r2);  // ensure b r1 | r2 in original T2
         Node* m = lca(t2.node(r1), t2.node(b));
         if (m != nullptr && m->parent != nullptr)
-            t2.cut(m);
+            cutEdge(t2, m);
         dualSum -= 1;  // y_{lca2(r1,b)} <- ... - 1
         cutOffLeaf(t2, r2);
         cutOffLeaf(t1, r2);
-        active.erase(r2);
+        deactivate(r2);
         dualSum += 1;  // y_r2 <- 1
         if (activeSiblings(t2, r1, b))
         {
-            active.erase(b);
+            deactivate(b);
             dualSum += 1;  // merge b into r1, y_b <- 1
         }
         else
         {
             cutOffLeaf(t2, r1);
             cutOffLeaf(t1, r1);
-            active.erase(r1);
+            deactivate(r1);
             cutOffLeaf(t2, b);
             cutOffLeaf(t1, b);
-            active.erase(b);
+            deactivate(b);
             dualSum += 2;  // y_r1 <- 1, y_b <- 1
         }
     }
@@ -495,14 +501,14 @@ struct RedBlue2
     {
         cutOffLeaf(t2, b);
         cutOffLeaf(t1, b);
-        active.erase(b);
+        deactivate(b);
         dualSum += 1;  // y_b <- 1
         for (Label r : {r1, r2})
         {
             if (not aloneInTree(t2, r))
                 cutOffLeaf(t2, r);
             cutOffLeaf(t1, r);
-            active.erase(r);
+            deactivate(r);
             dualSum += 1;  // y_r <- 1
         }
         // retroactive merge (line 76): skipped (no y change)
@@ -545,13 +551,13 @@ struct RedBlue2
             cutOffLeaf(t2, uHat);
             cutOffLeaf(t1, uHat);
         }
-        active.erase(uHat);
+        deactivate(uHat);
         dualSum += 1;  // y_uHat <- 1
         if (activeSiblings(t2, v1, v2))
         {
             if (v2 == b)
                 std::swap(v1, v2);  // relabel so v1 = b (Claim 5)
-            active.erase(v1);
+            deactivate(v1);
             dualSum += 1;  // merge, y_b <- 1
         }
         else
@@ -567,7 +573,7 @@ struct RedBlue2
                 if (not aloneInTree(t2, lv))
                     cutOffLeaf(t2, lv);
                 cutOffLeaf(t1, lv);
-                active.erase(lv);
+                deactivate(lv);
                 dualSum += 1;  // y_v2 <- 1
             }
         }
@@ -589,7 +595,7 @@ struct RedBlue2
                     Label u = act[i], v = act[j];
                     if (activeSiblings(t1, u, v) && activeSiblings(t2, u, v))
                     {
-                        active.erase(u);  // merge, no dual change
+                        deactivate(u);  // merge, no dual change
                         changed = true;
                         done = true;
                         break;
@@ -604,7 +610,7 @@ struct RedBlue2
                 if (active.contains(u) && aloneInTree(t2, u))
                 {
                     cutOffLeaf(t1, u);
-                    active.erase(u);
+                    deactivate(u);
                     dualSum += 1;  // y_u <- 1
                     changed = true;
                     break;
@@ -671,7 +677,7 @@ struct RedBlue2
                             if (not aloneInTree(t2, x))
                                 cutOffLeaf(t2, x);
                             cutOffLeaf(t1, x);
-                            active.erase(x);
+                            deactivate(x);
                             dualSum += 1;
                         }
                 }
