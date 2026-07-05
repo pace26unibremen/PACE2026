@@ -123,27 +123,51 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
                     // seed each one from an in-place approximation on that (already reduced & decoupled)
                     // cluster. No Forest::copy, so this is safe on the cluster's fragile pointers.
                     bool allClustersSolved = true;
-                    // Time-slice the total budget across clusters so a single hard cluster
-                    // cannot consume the whole run and starve the rest.  Each cluster gets a
-                    // share of the time still remaining that is proportional to its size (leaf
-                    // count), so time left unused by clusters that finish early rolls forward and
-                    // larger/harder clusters are budgeted more than trivial ones.  A deadline only
-                    // bites once a cluster has a first candidate (see BranchingSolver); since every
-                    // cluster is seeded with the approximation below, that is immediate.  Disabled
-                    // when timeBudgetSeconds <= 0.
+                    // Time-slice the total budget across clusters so a single hard cluster cannot
+                    // consume the whole run and starve the rest.  Each cluster gets a share of the
+                    // time still remaining proportional to a difficulty weight; time left unused by
+                    // clusters that finish early rolls forward, and harder clusters get more.  A
+                    // deadline only bites once a cluster has a first candidate (see BranchingSolver);
+                    // since every cluster is seeded with the approximation, that is immediate.
+                    // Disabled when timeBudgetSeconds <= 0.
+                    //
+                    // Weight = leaves + kApproxWeight * approxSize.  Leaf count alone is a weak proxy
+                    // (a large but agreeing cluster is trivial); MAF branching cost grows exponentially
+                    // in the number of cuts, which the approximation size (~1-3x the optimum) tracks.
+                    // The approximation is run here per cluster once, up front (it must be, to build
+                    // the budget before the loop); its solution branch is kept in probedSeeds and
+                    // reused as that cluster's seed below, so it is not computed twice.  A cluster that
+                    // cross-cluster propagation later modifies is re-seeded fresh (its stored branch no
+                    // longer matches its instance) — the minority.  kApproxWeight is a stride A/B knob.
                     const bool sliceBudget = config.timeBudgetSeconds > 0.0;
+                    constexpr double kApproxWeight = 20.0;
+                    using Seed = std::pair<std::list<std::shared_ptr<solver::AbstractRule>>, unsigned int>;
+                    std::vector<Seed> probedSeeds;
                     std::vector<double> clusterWeights;
-                    clusterWeights.reserve(clusterSolver->clusterCount());
-                    for (unsigned int i = 0; i < clusterSolver->clusterCount(); ++i)
+                    if (sliceBudget)
                     {
-                        clusterWeights.push_back(static_cast<double>(clusterSolver->clusterWeight(i)));
+                        probedSeeds.reserve(clusterSolver->clusterCount());
+                        clusterWeights.reserve(clusterSolver->clusterCount());
+                        for (unsigned int i = 0; i < clusterSolver->clusterCount(); ++i)
+                        {
+                            probedSeeds.push_back(seedFromApproximation(clusterSolver->clusterInstanceAt(i)));
+                            clusterWeights.push_back(static_cast<double>(clusterSolver->clusterWeight(i)) +
+                                                     kApproxWeight * static_cast<double>(probedSeeds.back().second));
+                        }
                     }
                     const solver::ClusterBudget clusterBudget(std::chrono::steady_clock::now(),
                                                               config.timeBudgetSeconds, std::move(clusterWeights));
                     unsigned int clusterIndex = 0;
                     for (const auto& [cluster, context] : clusterSolver->Clusters())
                     {
-                        auto [branch, size] = seedFromApproximation(cluster);
+                        // Reuse the approximation probed up front for the budget weights, unless
+                        // propagation has since modified this cluster (then its stored branch would
+                        // no longer match its instance, so re-seed fresh). Off the slice path there
+                        // is no probe, so every cluster is seeded here as before.
+                        Seed seed = (sliceBudget && not clusterSolver->wasModifiedByPropagation(clusterIndex))
+                                        ? std::move(probedSeeds[clusterIndex])
+                                        : seedFromApproximation(cluster);
+                        auto& [branch, size] = seed;
                         approxSize += size;  // whole-instance approx = sum over independent clusters
 
                         auto branchingConfig =

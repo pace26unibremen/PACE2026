@@ -209,6 +209,7 @@ void solver::ClusterSolver::cutClusterTerminals(unsigned int index)
     {
         auto r = solver::SingleVertexTreePropagationRule(c, std::make_shared<Context>(), cutClusterTerminals);
         r.apply();
+        propagationModifiedClusters.insert(index);
     }
 }
 
@@ -262,4 +263,14 @@ unsigned int solver::ClusterSolver::clusterWeight(unsigned int index) const
     // Leaf count of the first tree is our difficulty proxy: MAF branching cost grows with the
     // number of terminals, so this weights the time budget toward the clusters that need it.
     return static_cast<unsigned int>(cluster.at(index)->at(0)->TerminalToLabel().size());
+}
+
+std::shared_ptr<graph::Instance> solver::ClusterSolver::clusterInstanceAt(unsigned int index) const
+{
+    return cluster.at(index);
+}
+
+bool solver::ClusterSolver::wasModifiedByPropagation(unsigned int index) const
+{
+    return propagationModifiedClusters.contains(index);
 }
