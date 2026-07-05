@@ -58,6 +58,14 @@ bool solver::BranchingSolver::timeExpired() const
     {
         return true;
     }
+    // Skip the clock read when no deadline is armed. steady_clock::now() is ~3-4% of
+    // runtime in the branch loop (it is called on every iteration), and it is pure waste
+    // whenever the deadline can never be reached: the exact track, the approximation seed
+    // pass, and any non-time-sliced run all leave the deadline at its max() sentinel.
+    if (deadline == std::chrono::steady_clock::time_point::max())
+    {
+        return false;
+    }
     return std::chrono::steady_clock::now() >= deadline;
 }
 
