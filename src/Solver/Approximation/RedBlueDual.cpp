@@ -422,14 +422,90 @@ struct RedBlue2
         return out;
     }
 
-    /// An active sibling pair in T1' with both leaves in \p s, or {0,0} if none.
+    /// The two active leaves under node index \p start of view \p v (which holds exactly two), read via
+    /// the counts array -- descends only into children that still carry an active leaf, so O(depth).
+    std::pair<Label, Label> twoActiveUnder(MutableForestView& v, int start)
+    {
+        Label found[2] = {0, 0};
+        int nf = 0;
+        std::vector<int> stack{start};
+        while (not stack.empty() && nf < 2)
+        {
+            const int i = stack.back();
+            stack.pop_back();
+            if (v.labelOf[i] != 0)
+                found[nf++] = static_cast<Label>(v.labelOf[i]);
+            else
+            {
+                if (v.leftIdx[i] != NO_NODE && v.counts[v.leftIdx[i]] > 0)
+                    stack.push_back(v.leftIdx[i]);
+                if (v.rightIdx[i] != NO_NODE && v.counts[v.rightIdx[i]] > 0)
+                    stack.push_back(v.rightIdx[i]);
+            }
+        }
+        return {found[0], found[1]};
+    }
+
+    /// The single active leaf under node index \p start of view \p v (which holds exactly one).
+    Label oneActiveUnder(MutableForestView& v, int start)
+    {
+        int i = start;
+        while (v.labelOf[i] == 0)
+            i = (v.leftIdx[i] != NO_NODE && v.counts[v.leftIdx[i]] > 0) ? v.leftIdx[i] : v.rightIdx[i];
+        return static_cast<Label>(v.labelOf[i]);
+    }
+
+    /// A T1 active cherry (lowest node holding exactly two active leaves) that is also an active sibling
+    /// pair in T2, or {0,0}. O(n) counts scan -- replaces preprocess's old O(k^2) pairwise search.
+    std::pair<Label, Label> findBothForestCherry()
+    {
+        ensureCounts();
+        const int size = static_cast<int>(t1.nodes.size());
+        for (int i = 0; i < size; ++i)
+        {
+            if (t1.labelOf[i] != 0 || t1.counts[i] != 2)
+                continue;
+            if (t1.countAt(t1.leftIdx[i]) >= 2 || t1.countAt(t1.rightIdx[i]) >= 2)
+                continue;
+            auto [u, v] = twoActiveUnder(t1, i);
+            if (activeSiblings(t2, u, v))
+                return {u, v};
+        }
+        return {0, 0};
+    }
+
+    /// An active leaf that is the only active leaf in its T2 tree (and not the last active leaf overall),
+    /// or 0. O(n) scan of the T2 component roots.
+    Label findT2Alone()
+    {
+        if (active.size() <= 1)
+            return 0;
+        ensureCounts();
+        const int size = static_cast<int>(t2.nodes.size());
+        for (int i = 0; i < size; ++i)
+            if (t2.parentIdx[i] == NO_NODE && t2.counts[i] == 1)
+                return oneActiveUnder(t2, i);
+        return 0;
+    }
+
+    /// An active sibling pair in T1' with both leaves in \p s, or {0,0} if none. O(n) counts scan (s is
+    /// an active sibling set, so its leaves are exactly the active leaves under lca1(s); a T1 cherry with
+    /// both leaves in s is therefore a sibling pair within s).
     std::pair<Label, Label> activeSiblingPairIn(const std::vector<Label>& s)
     {
-        std::vector<Label> act = activeIn(s);
-        for (std::size_t i = 0; i < act.size(); ++i)
-            for (std::size_t j = i + 1; j < act.size(); ++j)
-                if (activeSiblings(t1, act[i], act[j]))
-                    return {act[i], act[j]};
+        ensureCounts();
+        const std::unordered_set<Label> sset(s.begin(), s.end());
+        const int size = static_cast<int>(t1.nodes.size());
+        for (int i = 0; i < size; ++i)
+        {
+            if (t1.labelOf[i] != 0 || t1.counts[i] != 2)
+                continue;
+            if (t1.countAt(t1.leftIdx[i]) >= 2 || t1.countAt(t1.rightIdx[i]) >= 2)
+                continue;
+            auto [u, v] = twoActiveUnder(t1, i);
+            if (sset.contains(u) && sset.contains(v))
+                return {u, v};
+        }
         return {0, 0};
     }
 
@@ -714,34 +790,22 @@ struct RedBlue2
                 return;
             }
             changed = false;
-            std::vector<Label> act(active.begin(), active.end());
-            bool done = false;
-            for (std::size_t i = 0; i < act.size() && not done; ++i)
-                for (std::size_t j = i + 1; j < act.size(); ++j)
-                {
-                    Label u = act[i], v = act[j];
-                    if (activeSiblings(t1, u, v) && activeSiblings(t2, u, v))
-                    {
-                        deactivate(u);  // merge, no dual change
-                        changed = true;
-                        done = true;
-                        break;
-                    }
-                }
-            if (done)
-                continue;
-            for (Label u : act)
+            // 1. merge an active sibling pair that is a sibling pair in BOTH forests (no dual change).
+            auto [u, v] = findBothForestCherry();
+            if (u != 0)
             {
-                if (active.size() <= 1)
-                    break;
-                if (active.contains(u) && aloneInTree(t2, u))
-                {
-                    cutOffLeaf(t1, u);
-                    deactivate(u);
-                    dualSum += 1;  // y_u <- 1
-                    changed = true;
-                    break;
-                }
+                deactivate(u);
+                changed = true;
+                continue;
+            }
+            // 2. else finalise a leaf that is the only active leaf in its T2 tree.
+            const Label w = findT2Alone();
+            if (w != 0)
+            {
+                cutOffLeaf(t1, w);
+                deactivate(w);
+                dualSum += 1;  // y_w <- 1
+                changed = true;
             }
         }
     }
