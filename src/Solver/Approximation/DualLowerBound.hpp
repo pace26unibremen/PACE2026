@@ -3,6 +3,7 @@
 
 #include "../../Graph/Instance.hpp"
 
+#include <atomic>
 #include <chrono>
 
 namespace solver
@@ -49,8 +50,12 @@ long computeDual3ApproxLowerBound(const graph::Instance& instance);
 /// \param deadline optional wall-clock cap. If the computation would run past it, it aborts and returns
 ///        0 (the "did not finish in time" sentinel) rather than a partial -- hence invalid -- bound.
 ///        With the default \ref noDeadline it always runs to completion and returns L >= 1.
-/// \return a certified lower bound L >= 1 with L <= k*, or 0 if the deadline was hit before finishing.
-long computeDual2ApproxLowerBound(const graph::Instance& instance, Deadline deadline = noDeadline());
+/// \param stop optional cooperative-cancellation flag. When it becomes true the computation aborts and
+///        returns 0, exactly like a hit deadline. Used to run this on a background thread and cancel it
+///        the moment the search finishes. Checked at the top of the main loop and of preprocess.
+/// \return a certified lower bound L >= 1 with L <= k*, or 0 if it was cancelled before finishing.
+long computeDual2ApproxLowerBound(const graph::Instance& instance, Deadline deadline = noDeadline(),
+                                  const std::atomic<bool>* stop = nullptr);
 
 /// \brief The best certified lower bound available, staged: always the fast 3-approx dual, plus the
 /// tighter 2-approx dual when it finishes within \p deadline. Both are valid (<= k*), so their maximum

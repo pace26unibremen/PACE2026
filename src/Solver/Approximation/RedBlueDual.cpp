@@ -60,11 +60,12 @@ struct RedBlue2
     long dualSum = 0;
     bool sawStar = false;  // FinalCut or Merge-After-Cut seen in the current ResolveSet
     solver::Deadline deadline = solver::noDeadline();
-    bool aborted = false;  // set if the wall-clock deadline was hit before the pass finished
+    const std::atomic<bool>* stop = nullptr;  // cooperative-cancellation flag (or null)
+    bool aborted = false;  // set if the deadline was hit or cancellation requested before finishing
 
     RedBlue2(MutableForestView& w1, MutableForestView& w2, MutableForestView& o1, MutableForestView& o2,
-             ActiveSet& a, solver::Deadline d)
-        : t1(w1), t2(w2), t1o(o1), t2o(o2), active(a), deadline(d)
+             ActiveSet& a, solver::Deadline d, const std::atomic<bool>* s)
+        : t1(w1), t2(w2), t1o(o1), t2o(o2), active(a), deadline(d), stop(s)
     {
         // The original (topology) clones are never cut, so precompute their LCA tables once: the
         // triplet-consistency check (outlier) is the dominant cost at scale and queries them heavily.
@@ -72,7 +73,11 @@ struct RedBlue2
         t2o.buildStaticLca();
     }
 
-    bool timedOut() const { return std::chrono::steady_clock::now() > deadline; }
+    bool timedOut() const
+    {
+        return (stop != nullptr && stop->load(std::memory_order_relaxed))
+            || std::chrono::steady_clock::now() > deadline;
+    }
 
     // ---- active-leaf counts (lazy) ----
     // counts[node] in each WORKING view = active leaves under node in the current forest. Refreshed
@@ -821,20 +826,22 @@ namespace
 /// The Red-Blue dual bound for the ordered forest pair (f1, f2). Cutting edges in f2 is charged, so the
 /// value can differ per ordering; callers take the max over orderings for the tightest valid bound.
 /// Returns -1 if the deadline was hit before finishing (the partial dual sum is not a valid bound).
-long redBlueTwoForest(const graph::Forest& f1, const graph::Forest& f2, solver::Deadline deadline)
+long redBlueTwoForest(const graph::Forest& f1, const graph::Forest& f2, solver::Deadline deadline,
+                      const std::atomic<bool>* stop)
 {
     MutableForestView t1w(f1), t2w(f2), t1o(f1), t2o(f2);
     ActiveSet active;
     active.reserve(t1w.nodeOf.size());
     for (const auto& [label, node] : t1w.nodeOf)
         active.insert(label);
-    RedBlue2 rb(t1w, t2w, t1o, t2o, active, deadline);
+    RedBlue2 rb(t1w, t2w, t1o, t2o, active, deadline, stop);
     const long value = rb.run();
     return rb.aborted ? -1 : value;
 }
 }  // namespace
 
-long solver::computeDual2ApproxLowerBound(const graph::Instance& instance, Deadline deadline)
+long solver::computeDual2ApproxLowerBound(const graph::Instance& instance, Deadline deadline,
+                                          const std::atomic<bool>* stop)
 {
     // A maximum agreement forest of all input forests is also an agreement forest of any pair of them,
     // so k*(all) >= k*(pair) >= L2(pair): the max over pairs is a valid lower bound for the full instance.
@@ -846,7 +853,7 @@ long solver::computeDual2ApproxLowerBound(const graph::Instance& instance, Deadl
         for (std::size_t j = i + 1; j < k; ++j)
             for (auto [a, b] : {std::pair{i, j}, std::pair{j, i}})  // both orderings
             {
-                const long r = redBlueTwoForest(*instance.at(a), *instance.at(b), deadline);
+                const long r = redBlueTwoForest(*instance.at(a), *instance.at(b), deadline, stop);
                 if (r >= 0)  // finished in time -> a valid bound
                     best = std::max(best, r);
             }

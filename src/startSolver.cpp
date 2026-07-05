@@ -7,9 +7,11 @@
 #include "Solver/ReductionSolver.hpp"
 #include "Solver/SolverConfig.hpp"
 
+#include <algorithm>
 #include <atomic>
 #include <cassert>
 #include <chrono>
+#include <thread>
 #include <csignal>
 #include <cstdlib>
 #include <fstream>
@@ -76,31 +78,58 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
     const auto instance = graph::ReadInstance(in, lowerBoundContext);
 
     // ---- Certified early exit (lower-bound track) ------------------------------------------------
-    // On the lower-bound track, compute a certified lower bound L <= k* from the LP dual the
-    // approximation builds (on the pristine instance, before reductions) and turn it into the
-    // acceptance threshold floor(a*L)+b. The branching solver then stops and emits its incumbent the
-    // instant the incumbent's size is <= this threshold — a provably valid answer, often the
-    // approximation seed itself. We use the best certified bound available: max of the 3-approx and the
-    // tighter 2-approx (Red-Blue) duals (both are always <= k*, so their max is too). Only done when a
-    // genuine "#a" line was parsed (a >= 1, b >= 0); otherwise the threshold stays at its -1 default,
-    // which no positive size ever meets, so the search simply never certifies.
+    // A certified lower bound L <= k* turns into the acceptance threshold floor(a*L)+b; the branching
+    // search may stop and emit its incumbent the instant its size is <= this threshold — a provably valid
+    // answer. We stage two duals so the search never blocks on the expensive one: the fast 3-approx dual
+    // gives an immediate (loose) threshold so the search starts — and can certify — right away, while the
+    // tighter but slower 2-approx (Red-Blue) dual runs on a BACKGROUND THREAD and, when it finishes,
+    // atomically RAISES the threshold, which the search reads on its next iteration. On a single core the
+    // two just time-slice: easy instances finish before the 2-approx matters, hard ones get the tighter
+    // threshold once it lands. Only done when a genuine "#a" line was parsed (a >= 1, b >= 0).
+    std::atomic<bool> lbStop{false};
+    std::thread lbThread;
     if (config.track == solver::SolverConfig::Track::LowerBound
         && lowerBoundContext->a >= 1.0 && lowerBoundContext->b >= 0)
     {
-        // Staged: the fast 3-approx dual is always computed; the tighter but slower 2-approx (Red-Blue)
-        // dual is given a small wall-clock budget and dropped if it would not finish in time, so the
-        // certification threshold is never bought at the cost of the track's overall time budget on a
-        // large instance. The budget is deliberately a few seconds -- a rounding error against the
-        // track limit -- so easy instances get the tighter bound and huge ones fall back cheaply.
-        constexpr auto twoApproxBudget = std::chrono::seconds(10);
-        const long L = solver::computeCertifiedLowerBound(*instance,
-                                                          std::chrono::steady_clock::now() + twoApproxBudget);
-        lowerBoundContext->certifiedThreshold = lowerBoundContext->certifiedCeiling(L);
-        // Diagnostic (stderr, does not touch the solution stream): the certified lower bound and the
-        // acceptance threshold floor(a*L)+b the search may stop at.
-        std::clog << "#lb a=" << lowerBoundContext->a << " b=" << lowerBoundContext->b
-                  << " L=" << L << " threshold=" << lowerBoundContext->certifiedThreshold << "\n";
+        const long l3 = solver::computeDual3ApproxLowerBound(*instance);
+        lowerBoundContext->certifiedThreshold = lowerBoundContext->certifiedCeiling(l3);
+        std::clog << "#lb 3-approx a=" << lowerBoundContext->a << " b=" << lowerBoundContext->b
+                  << " L=" << l3 << " threshold=" << lowerBoundContext->certifiedThreshold.load() << "\n";
+
+        // Deep-copy the pristine instance so the background thread never races the search, which mutates
+        // the original instance's forests in place.
+        auto instanceCopy = std::make_shared<graph::Instance>();
+        for (const auto& forest : *instance)
+            instanceCopy->push_back(std::make_shared<graph::Forest>(forest->copy()));
+
+        lbThread = std::thread(
+            [instanceCopy, lowerBoundContext, l3, &lbStop]()
+            {
+                const long l2 =
+                    solver::computeDual2ApproxLowerBound(*instanceCopy, solver::noDeadline(), &lbStop);
+                if (l2 <= 0)  // cancelled before finishing -> keep the 3-approx threshold
+                    return;
+                const long threshold = lowerBoundContext->certifiedCeiling(std::max(l3, l2));
+                long cur = lowerBoundContext->certifiedThreshold.load();
+                while (threshold > cur
+                       && not lowerBoundContext->certifiedThreshold.compare_exchange_weak(cur, threshold))
+                { }  // raise the threshold monotonically; the search sees it on its next iteration
+                std::clog << "#lb 2-approx L=" << l2 << " threshold=" << threshold << "\n";
+            });
     }
+    // Once the search returns (found / certified / interrupted) a still-running bound is useless: cancel
+    // and join the background thread on every exit path from this function.
+    struct LbJoiner
+    {
+        std::atomic<bool>& stop;
+        std::thread& thread;
+        ~LbJoiner()
+        {
+            stop.store(true);
+            if (thread.joinable())
+                thread.join();
+        }
+    } lbJoiner{lbStop, lbThread};
 
     // ---- Approximation-seeded branch & bound ------------------------------------------------
     // Before the real branch-and-bound search on an instance (or cluster), run the approximation
