@@ -199,20 +199,22 @@ struct SolverConfig
         return c;
     }
 
-    /// \brief Reserved placeholder for the lower-bound competition track.
+    /// \brief Preset for the PACE lower-bound competition track.
     ///
-    /// No lower-bound solver exists yet.  The preset is defined now to reserve
-    /// the name and avoid a breaking API change once the implementation is
-    /// added (issue #55).
-    ///
-    /// \throws std::logic_error always.
+    /// A submission of size U is valid iff U <= floor(a*k*)+b, where a,b come from the instance's
+    /// "#a {a} {b}" line and k* is never given. No Cluster stage and no SIGTERM: unlike the heuristic
+    /// track, an interrupted/unproven answer here is not just suboptimal, it may be outright invalid, so
+    /// the search runs to either a proven optimum or a certified early exit (see
+    /// \ref BranchingSolverConfiguration::certifiedEarlyExit and \ref Context::certifiedThreshold).
     static SolverConfig lowerBoundTrack()
     {
         SolverConfig c;
         c.track = Track::LowerBound;
-        c.solverPipeline = {SolverType::Reduction, SolverType::Cluster, SolverType::Branching};
-        c.enableSigterm = true;
-        c.timeBudgetSeconds = 600.0;  // lower-bound-track wall-clock limit; used to slice a Cluster stage
+        c.solverPipeline = {SolverType::Reduction, SolverType::Branching};
+        c.enableSigterm = false;
+        // Stop and emit the incumbent as soon as it is certified valid against floor(a*L)+b. This is the
+        // strategy switch; startSolver computes the certified lower bound L and fills Context::certifiedThreshold.
+        c.branchingConfig.certifiedEarlyExit = true;
         return c;
     }
 };
