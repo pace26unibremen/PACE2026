@@ -30,6 +30,10 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Wpedantic")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -Wall")
 
 set(CMAKE_CXX_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_COVERAGE}  -fprofile-instr-generate -fcoverage-mapping")
+
+set(CMAKE_CXX_FLAGS_PGOGEN "${CMAKE_CXX_FLAGS_PGOGEN} -O3  -fprofile-generate")
+set(CMAKE_CXX_FLAGS_PGORELEASE "${CMAKE_CXX_FLAGS_PGORELEASE} -O3 -Wall -fprofile-use=${CMAKE_SOURCE_DIR}/pgoData.profdata")
+
 set(CMAKE_CXX_FLAGS_PROFILING  "${CMAKE_CXX_FLAGS_PROFILING}  -O2 -g -gline-tables-only -fdebug-info-for-profiling -funique-internal-linkage-names")
 
 add_subdirectory(src)
