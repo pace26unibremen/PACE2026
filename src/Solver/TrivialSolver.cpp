@@ -11,7 +11,8 @@ bool solver::TrivialSolver::solve()
     auto nodes = std::make_shared<std::vector<graph::Node>>(numberOfTerminals);
     auto roots = std::make_shared<std::vector<graph::Node*>>(numberOfTerminals);
     auto terminalToLabel = std::make_shared<std::unordered_map<graph::Node*, unsigned int>>(numberOfTerminals);
-    auto labelToTerminal = std::make_shared<std::unordered_map<unsigned int, graph::Node*>>(numberOfTerminals);
+    auto labelToTerminal = std::make_shared<graph::LabelToTerminalMap>();
+    labelToTerminal->reserve(numberOfTerminals);
 
     int index = 0;
     for(const auto & [_, label] : instance->at(0)->TerminalToLabel())

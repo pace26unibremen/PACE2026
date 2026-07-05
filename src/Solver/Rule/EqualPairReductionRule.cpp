@@ -22,7 +22,7 @@ solver::RuleReturnCode solver::EqualPairReductionRule::apply()
     for(const auto& f : *instance)
     {
         const auto& siblingRoot = f->LabelToTerminal().at(aLabel)->parent;
-        changes.emplace(siblingRoot, f);
+        changes.emplace(siblingRoot, f, context.get());
         changes.top().doAction();
     }
 
