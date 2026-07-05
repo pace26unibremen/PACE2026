@@ -404,7 +404,7 @@ static void printHelp(std::string_view prog)
               << "           Omitting INFILE implies stdout for output as well.\n"
               << "\n"
               << "Options:\n"
-              << "  --track PRESET  Solver preset to use (default: pipeline):\n"
+              << "  --track PRESET  Solver preset to use (default: exact):\n"
               << "    pipeline    Full metrics suite, SIGTERM armed.\n"
               << "                Use for CI runs and the PACE stride harness.\n"
               << "    exact       No plugins, no SIGTERM. Use for the exact competition track.\n"
