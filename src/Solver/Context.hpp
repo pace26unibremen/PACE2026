@@ -4,6 +4,7 @@
 #include "../Graph/Instance.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <cstdint>
 #include <functional>
@@ -93,7 +94,12 @@ struct Context
     /// when \ref BranchingSolverConfiguration::certifiedEarlyExit is on. Defaults to -1: since a real
     /// threshold is always >= 1 (L >= 1, a >= 1, b >= 0), the default can never fire, so an instance
     /// without a computed bound never certifies even if the flag is on.
-    long certifiedThreshold = -1;
+    ///
+    /// Atomic because the lower-bound track may raise it from a background thread (the tighter 2-approx
+    /// dual is computed concurrently with the search; when it lands it raises this threshold and the
+    /// search picks it up on its next iteration). All accesses are single loads/stores, so relaxed
+    /// ordering suffices, but the default (seq_cst) is used for simplicity -- the read is off the hot path.
+    std::atomic<long> certifiedThreshold = -1;
 
     /// \brief floor(a * value) + b for a certified lower bound `value` (= L, in component units).
     /// \param value a non-negative integer.
