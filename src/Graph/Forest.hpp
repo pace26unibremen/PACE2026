@@ -1,6 +1,7 @@
 #ifndef PACE2026_FOREST_HPP
 #define PACE2026_FOREST_HPP
 
+#include "LabelToTerminalMap.hpp"
 #include "Node.hpp"
 
 #include <filesystem>
@@ -25,7 +26,7 @@ class Forest
     std::shared_ptr<std::unordered_map<Node*, unsigned int>> terminalToLabel;
 
     /// \brief A map that stores all leaf labels with corresponding terminal Pointers.
-    std::shared_ptr<std::unordered_map<unsigned int, Node*>> labelToTerminal;
+    std::shared_ptr<LabelToTerminalMap> labelToTerminal;
 
     /// \brief Node pointers to root Nodes.
     std::shared_ptr<std::vector<Node*>> roots;
@@ -59,7 +60,7 @@ class Forest
     /// \brief Constructor.
     Forest(std::shared_ptr<std::vector<Node>> nodes,
            std::shared_ptr<std::unordered_map<Node*, unsigned int>> terminalToLabel,
-           std::shared_ptr<std::unordered_map<unsigned int, Node*>> labelToTerminal,
+           std::shared_ptr<LabelToTerminalMap> labelToTerminal,
            std::shared_ptr<std::vector<Node*>> roots);
 
     /// \brief Constructor. Loads forest from a file in newick format.
@@ -106,15 +107,19 @@ class Forest
     // ---- access to member fields -------------------------------- //
     // ------------------------------------------------------------- //
 
+    // These accessors are trivial one-liners kept inline in the header so callers
+    // in other translation units can inline them (there is no LTO in the build);
+    // out-of-line they showed up as real call overhead in the branching hot path.
+
     /// \brief Reference to nodes vector.
     /// \property Nodes
     [[nodiscard, maybe_unused]]
-    std::shared_ptr<std::vector<Node>>& Nodes();
+    std::shared_ptr<std::vector<Node>>& Nodes() { return this->nodes; }
 
     /// \brief \c const reference to nodes vector.
     /// \property Nodes
     [[nodiscard, maybe_unused]]
-    const std::shared_ptr<std::vector<Node>>& Nodes() const;
+    const std::shared_ptr<std::vector<Node>>& Nodes() const { return this->nodes; }
 
     /// \brief Reference terminals to label map.
     /// It maps a pointer of a terminal node to its label.
@@ -122,7 +127,7 @@ class Forest
     /// the map should return the smallest one.
     /// \property TerminalToLabel.
     [[nodiscard, maybe_unused]]
-    std::unordered_map<Node*, unsigned int>& TerminalToLabel();
+    std::unordered_map<Node*, unsigned int>& TerminalToLabel() { return *this->terminalToLabel; }
 
     /// \brief \c const reference to terminals to label map.
     /// It maps a pointer of a terminal node to its label.
@@ -130,29 +135,29 @@ class Forest
     /// the map should return the smallest one.
     /// \property TerminalToLabel.
     [[nodiscard, maybe_unused]]
-    const std::unordered_map<Node*, unsigned int>& TerminalToLabel() const;
+    const std::unordered_map<Node*, unsigned int>& TerminalToLabel() const { return *this->terminalToLabel; }
 
     /// \brief Reference to label to terminal map.
     /// It maps a label to the associated terminal pointer.
     /// \property LabelToTerminal.
     [[nodiscard, maybe_unused]]
-    std::unordered_map<unsigned int, Node*>& LabelToTerminal();
+    LabelToTerminalMap& LabelToTerminal() { return *this->labelToTerminal; }
 
     /// \brief \c const reference to label to terminal map.
     /// It maps a label to the associated terminal pointer.
     /// \property LabelToTerminal.
     [[nodiscard, maybe_unused]]
-    const std::unordered_map<unsigned int, Node*>& LabelToTerminal() const;
+    const LabelToTerminalMap& LabelToTerminal() const { return *this->labelToTerminal; }
 
     /// \brief Reference vector of root node pointer.
     /// \property Roots
     [[nodiscard, maybe_unused]]
-    std::vector<Node*>& Roots();
+    std::vector<Node*>& Roots() { return *this->roots; }
 
     /// \brief \c const reference vector of root node pointer.
     /// \property Roots
     [[nodiscard, maybe_unused]]
-    const std::vector<Node*>& Roots() const;
+    const std::vector<Node*>& Roots() const { return *this->roots; }
 
     /// \brief returns a pointer to the root node, that has \c node in its subtree
     /// \param node pointer to node

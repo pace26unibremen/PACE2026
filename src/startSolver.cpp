@@ -115,8 +115,11 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
 #ifdef _POSIX_VERSION
                 if (config.enableSigterm) {
                     std::signal(SIGTERM, sigtermHandler);
-                    config.branchingConfig.plugins.push_back(
+                    if (config.track == solver::SolverConfig::Track::Pipeline)
+                    {
+                        config.branchingConfig.plugins.push_back(
                         std::make_shared<solver::plugin::SigtermPlugin>(&g_timeout, out));
+                    }
                 }
 #endif
                 if (clusterSolver)

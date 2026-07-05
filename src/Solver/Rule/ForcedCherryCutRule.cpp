@@ -36,7 +36,7 @@ solver::RuleReturnCode solver::ForcedCherryCutRule::apply()
         changes.top().doAction();
     }
 
-    if (bNode->parent)
+    if (bNode and bNode->parent)
     {
         changes.emplace(bNode, t2);
         changes.top().doAction();

@@ -28,7 +28,7 @@ solver::RuleReturnCode solver::BRule::apply()
         {
             if (context->protectedEdges.contains(bNode))
                 return RuleReturnCode::CutBranch;
-            changes.emplace(bNode, forest);
+            changes.emplace(bNode, forest, context.get());
             changes.top().doAction();
         }
 
@@ -39,7 +39,7 @@ solver::RuleReturnCode solver::BRule::apply()
                 continue;
             if (context->protectedEdges.contains(b2Node))
                 return RuleReturnCode::CutBranch;
-            changes.emplace(b2Node, forest);
+            changes.emplace(b2Node, forest, context.get());
             changes.top().doAction();
         }
     }
