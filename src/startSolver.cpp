@@ -2,7 +2,7 @@
 #include "Solver/Cluster/ClusterSolver.hpp"
 #include "Solver/Cluster/ClusterRange.hpp"
 #include "Solver/Context.hpp"
-#include "Solver/DualLowerBound.hpp"
+#include "Solver/Approximation/DualLowerBound.hpp"
 #include "Solver/Plugin/SigtermPlugin.hpp"
 #include "Solver/ReductionSolver.hpp"
 #include "Solver/SolverConfig.hpp"

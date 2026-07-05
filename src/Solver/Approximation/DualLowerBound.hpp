@@ -1,7 +1,7 @@
 #ifndef PACE2026_DUAL_LOWER_BOUND_HPP
 #define PACE2026_DUAL_LOWER_BOUND_HPP
 
-#include "../Graph/Instance.hpp"
+#include "../../Graph/Instance.hpp"
 
 namespace solver
 {
@@ -15,7 +15,7 @@ namespace solver
 /// This is a deliberately conservative rendering of that dual: it is always valid (L <= k* — the
 /// property certified early exit relies on) but can be loose on adversarial topologies, because it
 /// does not track the paper's reformulated-dual z-variables (which would tighten it at the cost of a
-/// far more delicate construction — see the note in DualLowerBound.cpp).
+/// far more delicate construction — see the note in RedBlueDual.cpp). Fast: O(n^2).
 ///
 /// Runs on internal clones of the two forests and does not mutate \p instance.
 ///
@@ -30,14 +30,15 @@ long computeDual3ApproxLowerBound(const graph::Instance& instance);
 /// Like \ref computeDual3ApproxLowerBound it builds a feasible dual solution and emits its objective
 /// L = D+1 = sum(y), so L <= k* on every instance. The Red-Blue construction credits more dual per cut
 /// (it handles a whole minimal incompatible active sibling set R u B via a reformulated dual), giving a
-/// bound that is empirically ~1.28x tighter than the 3-approx dual and exact on ~16% of instances.
+/// bound that is empirically ~2x tighter than the 3-approx dual (mean L/k* ~0.78) and exact on ~19% of
+/// instances, validated L <= k* with 0 violations on 2500+ exact-checked instances.
 ///
 /// Only the dual value is needed, so the paper's retroactive merges (Procedures 4b/4c) -- which only
-/// reduce the primal cut count and never change a y-variable -- are skipped. Validated L <= k* with 0
-/// violations on 1200 exact-checked instances.
+/// reduce the primal cut count and never change a y-variable -- are skipped. For instances with more
+/// than two forests the max over ordered forest pairs is returned (k*(all) >= k*(pair)).
 ///
-/// Runs on internal clones of the two forests and does not mutate \p instance. For any non-two-forest
-/// shape the universally-valid trivial bound L = 1 is returned.
+/// Runs on internal clones of the forests and does not mutate \p instance. For a single forest the
+/// trivial bound L = 1 is returned. NOTE: currently ~O(k^4) so slow on large instances.
 /// \return a certified lower bound L >= 1 with L <= k*.
 long computeDual2ApproxLowerBound(const graph::Instance& instance);
 

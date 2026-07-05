@@ -1,0 +1,151 @@
+#ifndef PACE2026_APPROXIMATION_MUTABLE_FOREST_VIEW_HPP
+#define PACE2026_APPROXIMATION_MUTABLE_FOREST_VIEW_HPP
+
+#include "../../Graph/Forest.hpp"
+#include "../../Graph/Node.hpp"
+
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
+namespace solver::approx
+{
+
+using graph::Node;
+using Label = unsigned int;
+using ActiveSet = std::unordered_set<Label>;
+
+constexpr int NO_NODE = -1;
+
+inline bool isLeaf(const Node* n)
+{
+    // A cut turns an internal node unary (one child nulled); a genuine leaf has no children at all.
+    return n->leftChild == nullptr && n->rightChild == nullptr;
+}
+
+/// A mutable clone of one input forest, indexed for fast active-leaf counting. Shared by both dual
+/// lower-bound algorithms (the 3-approx and the Red-Blue 2-approx).
+///
+/// Every node has a fixed index (its position in \ref nodes, a pre-order listing, so a parent's index
+/// is always smaller than any of its descendants'). The live tree shape is mirrored in the
+/// \ref parentIdx / \ref leftIdx / \ref rightIdx arrays; \ref cut keeps both the node pointers and those
+/// arrays in sync, so the count sweep and cherry scan never touch a hash map.
+struct MutableForestView
+{
+    graph::Forest forest;  // owns the cloned nodes
+    std::vector<Node*> nodes;
+    std::unordered_map<const Node*, int> indexOf;
+    std::unordered_map<Label, Node*> nodeOf;  // label -> leaf node
+    std::vector<int> labelOf;                 // node index -> label, or 0 for internal nodes
+    std::vector<int> parentIdx, leftIdx, rightIdx;
+    std::vector<int> counts;  // reused active-leaf-count buffer, refilled each sweep
+
+    explicit MutableForestView(const graph::Forest& source) : forest(source.copy())
+    {
+        // Collect nodes in pre-order (root before its descendants) and assign each a fixed index.
+        for (Node* root : forest.Roots())
+        {
+            std::vector<Node*> stack{root};
+            while (not stack.empty())
+            {
+                Node* n = stack.back();
+                stack.pop_back();
+                indexOf[n] = static_cast<int>(nodes.size());
+                nodes.push_back(n);
+                if (n->leftChild)
+                    stack.push_back(n->leftChild);
+                if (n->rightChild)
+                    stack.push_back(n->rightChild);
+            }
+        }
+
+        const int size = static_cast<int>(nodes.size());
+        labelOf.assign(size, 0);
+        parentIdx.assign(size, NO_NODE);
+        leftIdx.assign(size, NO_NODE);
+        rightIdx.assign(size, NO_NODE);
+        counts.assign(size, 0);
+        for (const auto& [label, node] : forest.LabelToTerminal())
+        {
+            nodeOf[label] = node;
+            labelOf[indexOf.at(node)] = static_cast<int>(label);
+        }
+        for (int i = 0; i < size; ++i)
+        {
+            Node* n = nodes[i];
+            if (n->parent)
+                parentIdx[i] = indexOf.at(n->parent);
+            if (n->leftChild)
+                leftIdx[i] = indexOf.at(n->leftChild);
+            if (n->rightChild)
+                rightIdx[i] = indexOf.at(n->rightChild);
+        }
+    }
+
+    int idx(const Node* n) const { return indexOf.at(n); }
+
+    Node* node(Label label) const { return nodeOf.at(label); }
+
+    /// Detach the edge above \p n (\p n becomes a new root), updating both the node pointers and the
+    /// parent/child index arrays. No-op if \p n is already a root.
+    void cut(Node* n)
+    {
+        Node* p = n->parent;
+        if (p == nullptr)
+            return;
+        const int a = indexOf.at(n);
+        const int pi = indexOf.at(p);
+        if (p->leftChild == n)
+        {
+            p->leftChild = nullptr;
+            leftIdx[pi] = NO_NODE;
+        }
+        else if (p->rightChild == n)
+        {
+            p->rightChild = nullptr;
+            rightIdx[pi] = NO_NODE;
+        }
+        n->parent = nullptr;
+        parentIdx[a] = NO_NODE;
+    }
+
+    /// Refill \ref counts with the number of active leaves in each node's subtree, in one O(n) sweep.
+    void refreshCounts(const ActiveSet& active)
+    {
+        const int size = static_cast<int>(nodes.size());
+        for (int i = 0; i < size; ++i)
+        {
+            const int label = labelOf[i];
+            counts[i] = (label != 0 && active.contains(static_cast<Label>(label))) ? 1 : 0;
+        }
+        // nodes is pre-order, so descending i visits every child before its parent.
+        for (int i = size - 1; i >= 0; --i)
+            if (parentIdx[i] != NO_NODE)
+                counts[parentIdx[i]] += counts[i];
+    }
+
+    int countAt(int i) const { return i == NO_NODE ? 0 : counts[i]; }
+
+    Node* rootOf(Node* n) const
+    {
+        while (n->parent != nullptr)
+            n = n->parent;
+        return n;
+    }
+};
+
+/// LCA of \p a and \p b within the current forest, or nullptr if they are in different components.
+inline Node* lca(Node* a, Node* b)
+{
+    std::unordered_set<const Node*> anc;
+    for (Node* x = a; x != nullptr; x = x->parent)
+        anc.insert(x);
+    for (Node* x = b; x != nullptr; x = x->parent)
+        if (anc.contains(x))
+            return x;
+    return nullptr;
+}
+
+}  // namespace solver::approx
+
+#endif  // PACE2026_APPROXIMATION_MUTABLE_FOREST_VIEW_HPP

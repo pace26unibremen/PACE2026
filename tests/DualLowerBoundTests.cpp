@@ -4,7 +4,7 @@
 #include "../src/Solver/BranchingSolver.hpp"
 #include "../src/Solver/BranchingSolverConfiguration.hpp"
 #include "../src/Solver/Context.hpp"
-#include "../src/Solver/DualLowerBound.hpp"
+#include "../src/Solver/Approximation/DualLowerBound.hpp"
 
 #include <algorithm>
 #include <cmath>
