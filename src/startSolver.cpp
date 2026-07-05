@@ -424,7 +424,7 @@ static void printHelp(std::string_view prog)
               << "  3. PACE_TRACK in a .env file in the current working directory\n"
               << "  4. defaultConfig() in startSolver.cpp  (compiled-in default)\n"
               << "\n"
-              << "  Accepted values for PACE_TRACK: pipeline, exact, heuristic\n";
+              << "  Accepted values for PACE_TRACK: pipeline, exact, heuristic, lower-bound\n";
 }
 
 /// \brief Map a track name string to a \ref solver::SolverConfig.
