@@ -85,56 +85,11 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
     // ---- Certified early exit (lower-bound track) ------------------------------------------------
     // A certified lower bound L <= k* turns into the acceptance threshold floor(a*L)+b; the branching
     // search may stop and emit its incumbent the instant its size is <= this threshold — a provably valid
-    // answer. We stage two duals so the search never blocks on the expensive one: the fast 3-approx dual
-    // gives an immediate (loose) threshold so the search starts — and can certify — right away, while the
-    // tighter but slower 2-approx (Red-Blue) dual runs on a BACKGROUND THREAD and, when it finishes,
-    // atomically RAISES the threshold, which the search reads on its next iteration. On a single core the
-    // two just time-slice: easy instances finish before the 2-approx matters, hard ones get the tighter
-    // threshold once it lands. Only done when a genuine "#a" line was parsed (a >= 1, b >= 0).
-    std::atomic<bool> lbStop{false};
-    std::thread lbThread;
-    if (config.track == solver::SolverConfig::Track::LowerBound
-        && lowerBoundContext->a >= 1.0 && lowerBoundContext->b >= 0)
-    {
-        const long l3 = solver::computeDual3ApproxLowerBound(*instance);
-        lowerBoundContext->certifiedThreshold = lowerBoundContext->certifiedCeiling(l3);
-        std::clog << "#lb 3-approx a=" << lowerBoundContext->a << " b=" << lowerBoundContext->b
-                  << " L=" << l3 << " threshold=" << lowerBoundContext->certifiedThreshold.load() << "\n";
-
-        // Deep-copy the pristine instance so the background thread never races the search, which mutates
-        // the original instance's forests in place.
-        auto instanceCopy = std::make_shared<graph::Instance>();
-        for (const auto& forest : *instance)
-            instanceCopy->push_back(std::make_shared<graph::Forest>(forest->copy()));
-
-        lbThread = std::thread(
-            [instanceCopy, lowerBoundContext, l3, &lbStop]()
-            {
-                const long l2 =
-                    solver::computeDual2ApproxLowerBound(*instanceCopy, solver::noDeadline(), &lbStop);
-                if (l2 <= 0)  // cancelled before finishing -> keep the 3-approx threshold
-                    return;
-                // Raise the threshold (this thread is the only writer once the search has started, so a
-                // plain store is enough); the search reads it atomically on its next iteration.
-                const long threshold = lowerBoundContext->certifiedCeiling(std::max(l3, l2));
-                if (threshold > lowerBoundContext->certifiedThreshold.load())
-                    lowerBoundContext->certifiedThreshold.store(threshold);
-                std::clog << "#lb 2-approx L=" << l2 << " threshold=" << threshold << "\n";
-            });
-    }
-    // Once the search returns (found / certified / interrupted) a still-running bound is useless: cancel
-    // and join the background thread on every exit path from this function.
-    struct LbJoiner
-    {
-        std::atomic<bool>& stop;
-        std::thread& thread;
-        ~LbJoiner()
-        {
-            stop.store(true);
-            if (thread.joinable())
-                thread.join();
-        }
-    } lbJoiner{lbStop, lbThread};
+    // answer. On the lower-bound track the bound is composed OVER THE CLUSTER DECOMPOSITION (see the
+    // clustered-lower-bound handling in the Branching stage below): the 2-approx dual is computed per
+    // cluster, L_total = sum(l_i) - #clusters is a certified whole-instance bound, and each cluster
+    // early-exits against a slice of the single shared global budget floor(a*L_total)+b. No up-front
+    // whole-instance dual and no background thread — clustering makes the per-cluster bounds cheap.
 
     // ---- Approximation-seeded branch & bound ------------------------------------------------
     // Before the real branch-and-bound search on an instance (or cluster), run the approximation
@@ -231,6 +186,40 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
                     }
                     const solver::ClusterBudget clusterBudget(std::chrono::steady_clock::now(),
                                                               config.timeBudgetSeconds, std::move(clusterWeights));
+
+                    // ---- Clustered certified lower bound + per-cluster early exit ----------------------
+                    // On the lower-bound track, each cluster early-exits against its own certified bound:
+                    // cluster i stops as soon as its incumbent U_i <= floor(a * l_i) + b_i, where l_i is the
+                    // cluster's 2-approx dual. The offset b is a WHOLE-submission allowance, so it must be
+                    // counted once: b_i = b only for the root cluster (the last one in the post-order walk),
+                    // and 0 for every other cluster. The whole then satisfies
+                    //   U_total = sum(U_i) - merges <= sum(floor(a*l_i)) + b - merges,
+                    // i.e. the single leftover b is spent on the root cluster.
+                    const bool lbEarlyExit = config.track == solver::SolverConfig::Track::LowerBound &&
+                                             lowerBoundContext->a >= 1.0 && lowerBoundContext->b >= 0;
+                    std::vector<long> clusterL;
+                    const unsigned int lbClusterCount = clusterSolver->clusterCount();
+                    if (lbEarlyExit)
+                    {
+                        clusterL.reserve(lbClusterCount);
+                        long sumL = 0;
+                        // Shared wall-clock cap for the whole per-cluster bound pass: a cluster whose slow
+                        // 2-approx does not finish in time falls back to its fast 3-approx bound (still a
+                        // valid l_i), so the composition never blocks the search.
+                        const auto lbDeadline = std::chrono::steady_clock::now() + std::chrono::seconds(60);
+                        for (unsigned int i = 0; i < lbClusterCount; ++i)
+                        {
+                            const long li = solver::computeCertifiedLowerBound(
+                                *clusterSolver->clusterInstanceAt(i), lbDeadline);
+                            clusterL.push_back(li);
+                            sumL += li;
+                        }
+                        const long lTotal = std::max(1L, sumL - static_cast<long>(lbClusterCount));
+                        std::clog << "#lb clustered a=" << lowerBoundContext->a << " b=" << lowerBoundContext->b
+                                  << " C=" << lbClusterCount << " sumL=" << sumL << " L_total=" << lTotal
+                                  << " threshold=" << lowerBoundContext->certifiedCeiling(lTotal) << std::endl;
+                    }
+
                     unsigned int clusterIndex = 0;
                     for (const auto& [cluster, context] : clusterSolver->Clusters())
                     {
@@ -257,6 +246,16 @@ static void runOnStream(std::istream& in, std::ostream& out, solver::SolverConfi
                         {
                             solver->setDeadline(
                                 clusterBudget.deadlineFor(clusterIndex, std::chrono::steady_clock::now()));
+                        }
+                        if (lbEarlyExit)
+                        {
+                            context->a = lowerBoundContext->a;
+                            // b is the whole-submission offset: give it to exactly one cluster (the last in
+                            // the post-order walk = the root cluster); every other cluster gets b = 0.
+                            context->b = (clusterIndex + 1 == lbClusterCount) ? lowerBoundContext->b : 0;
+                            // Early-exit cap floor(a * l_i) + b_i. If a cluster's optimum exceeds this it just
+                            // solves to its exact optimum (the safe fallback).
+                            context->certifiedThreshold = context->certifiedCeiling(clusterL[clusterIndex]);
                         }
                         solverList.push_back(solver);
                         allClustersSolved &= solver->solve();
