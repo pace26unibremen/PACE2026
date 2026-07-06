@@ -81,6 +81,16 @@ class Forest
     [[nodiscard]]
     Forest copy() const;
 
+    /// \brief Makes a deep copy by traversing from the roots, rather than enumerating the \c nodes
+    /// vector. Unlike \ref copy this is correct for a decoupled cluster sub-instance, whose live tree
+    /// hangs off virtual/twin nodes that live outside \c nodes (created by \ref DecoupleSubtreeAction)
+    /// and whose \c nodes vector is the whole shared parent forest. The copy contains exactly the nodes
+    /// reachable from the roots and the label-map entries for reachable terminals. For a pristine forest
+    /// (roots reach every node, every terminal reachable) it is equivalent to \ref copy.
+    /// @return The copy
+    [[nodiscard]]
+    Forest copyFromRoots() const;
+
     // ------------------------------------------------------------- //
     // ---- persistence -------------------------------------------- //
     // ------------------------------------------------------------- //

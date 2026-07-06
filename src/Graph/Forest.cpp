@@ -633,5 +633,77 @@ Forest Forest::copy() const
     return {nodes_copy, terminalToLabel_copy, labelToTerminal_copy, roots_copy};
 }
 
+Forest Forest::copyFromRoots() const
+{
+    std::unordered_map<Node*, Node*> newPointerLookup;
+    newPointerLookup.emplace(nullptr, nullptr);
+
+    // First pass: collect every node reachable from the roots (via children). This is the reliable
+    // enumeration of a forest's live nodes -- the `nodes` vector is unreliable for a decoupled cluster
+    // (it is the whole shared parent forest and omits the virtual/twin nodes the cluster hangs off).
+    std::vector<Node*> reachable;
+    std::unordered_set<Node*> seen;
+    std::vector<Node*> stack(roots->begin(), roots->end());
+    while (not stack.empty())
+    {
+        Node* n = stack.back();
+        stack.pop_back();
+        if (n == nullptr or not seen.insert(n).second)
+            continue;
+        reachable.push_back(n);
+        if (n->leftChild)
+            stack.push_back(n->leftChild);
+        if (n->rightChild)
+            stack.push_back(n->rightChild);
+    }
+
+    auto nodes_copy = std::make_shared<std::vector<Node>>();
+    auto terminalToLabel_copy = std::make_shared<std::unordered_map<Node*, unsigned int>>();
+    auto labelToTerminal_copy = std::make_shared<LabelToTerminalMap>();
+    auto roots_copy = std::make_shared<std::vector<Node*>>();
+    // reserve exactly, so no reallocation invalidates the &(*nodes_copy)[i] pointers taken below
+    nodes_copy->reserve(reachable.size());
+    terminalToLabel_copy->reserve(terminalToLabel->size());
+    labelToTerminal_copy->reserve(labelToTerminal->size());
+    roots_copy->reserve(roots->size());
+
+    for (Node* n : reachable)
+    {
+        nodes_copy->push_back(*n);
+        newPointerLookup.emplace(n, &nodes_copy->back());
+    }
+
+    // adjust the pointers. Children are always reachable; a parent/sibling that points outside the
+    // reachable set (should not happen within a well-formed cluster) is remapped to nullptr.
+    auto remap = [&](Node* p) -> Node* {
+        auto it = newPointerLookup.find(p);
+        return it == newPointerLookup.end() ? nullptr : it->second;
+    };
+    for (Node& node : *nodes_copy)
+    {
+        node.parent = remap(node.parent);
+        node.sibling = remap(node.sibling);
+        node.leftChild = remap(node.leftChild);
+        node.rightChild = remap(node.rightChild);
+    }
+
+    // rebuild the label maps for reachable terminals only (an unreachable terminal is dropped rather
+    // than mapped to a nullptr key, as the nodes-vector copy would do).
+    for (auto [terminal, label] : *terminalToLabel)
+    {
+        if (auto it = newPointerLookup.find(terminal); it != newPointerLookup.end())
+            terminalToLabel_copy->emplace(it->second, label);
+    }
+    for (auto [label, terminal] : *labelToTerminal)
+    {
+        if (auto it = newPointerLookup.find(terminal); it != newPointerLookup.end())
+            labelToTerminal_copy->emplace(label, it->second);
+    }
+    for (Node* root : *roots)
+        roots_copy->push_back(newPointerLookup[root]);
+
+    return {nodes_copy, terminalToLabel_copy, labelToTerminal_copy, roots_copy};
+}
+
 
 }  //namespace graph
