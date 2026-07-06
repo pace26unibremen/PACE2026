@@ -61,6 +61,11 @@ build-solver:
   image: alpine:3.20
   script:
     - apk add --no-cache cmake ninja clang musl-dev libc++-dev git file binutils mimalloc2-dev
+     # Generate PGO Data
+    - cd pgo
+    - bash pgodatagen.sh
+    - cd ..
+    # Continue with ordinariy pipeline
     - mkdir -p build
     - cd build
     # Configure CMake: use clang, link fully statically, and statically link mimalloc.
@@ -69,7 +74,7 @@ build-solver:
     # optimal scores. The binary stays fully static, so the same artifact runs on the
     # Debian 13.5 judge as well as the HPC benchmark nodes. (No -flto: it gave no
     # measurable speedup here and only slowed the link.)
-    - cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXE_LINKER_FLAGS="-static -Wl,--whole-archive /usr/lib/libmimalloc.a -Wl,--no-whole-archive"
+    - cmake .. -G Ninja -DCMAKE_BUILD_TYPE=PGORELEASE -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXE_LINKER_FLAGS="-static -Wl,--whole-archive /usr/lib/libmimalloc.a -Wl,--no-whole-archive"
     - ninja
     # Check that the resulting binary is indeed statically linked
     - |
