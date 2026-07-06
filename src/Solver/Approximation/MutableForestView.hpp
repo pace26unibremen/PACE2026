@@ -41,10 +41,7 @@ struct MutableForestView
     std::vector<int> parentIdx, leftIdx, rightIdx;
     std::vector<int> counts;  // reused active-leaf-count buffer, refilled each sweep
 
-    // copyFromRoots (not copy): a cluster sub-instance's live tree hangs off virtual/twin nodes outside
-    // the shared `nodes` vector, so a nodes-based copy would dangle. The view re-indexes from the roots
-    // regardless, so a reachability copy is equivalent for pristine forests and correct for clusters.
-    explicit MutableForestView(const graph::Forest& source) : forest(source.copyFromRoots())
+    explicit MutableForestView(const graph::Forest& source) : forest(source.copy())
     {
         // Collect nodes in pre-order (root before its descendants) and assign each a fixed index.
         for (Node* root : forest.Roots())

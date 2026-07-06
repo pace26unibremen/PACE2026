@@ -210,10 +210,7 @@ struct SolverConfig
     {
         SolverConfig c;
         c.track = Track::LowerBound;
-        // Cluster before Branching: the certified lower bound is composed per cluster (L_total = sum l_i
-        // - #clusters) and each cluster early-exits against a slice of one shared global budget. See the
-        // clustered-lower-bound handling in startSolver.
-        c.solverPipeline = {SolverType::Reduction, SolverType::Cluster, SolverType::Branching};
+        c.solverPipeline = {SolverType::Reduction, SolverType::Branching};
         c.enableSigterm = false;
         // Stop and emit the incumbent as soon as it is certified valid against floor(a*L)+b. This is the
         // strategy switch; startSolver computes the certified lower bound L and fills Context::certifiedThreshold.
