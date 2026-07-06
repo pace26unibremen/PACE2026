@@ -62,7 +62,8 @@ build-solver:
   script:
     - apk add --no-cache cmake ninja clang musl-dev libc++-dev git file binutils mimalloc2-dev
      # Generate PGO Data
-    - bash ../pgo/pgodatagen.sh
+    - cd pgo
+    - sh pgodatagen.sh
     # Continue with ordinariy pipeline
     - mkdir -p build
     - cd build
