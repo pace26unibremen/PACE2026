@@ -19,7 +19,10 @@ installs the toolchain and builds the solver with the flags below:
 ./docker_setup.sh
 ```
 
-The result is `build/src/startSolver`.
+The result is `build/src/startSolver`. `docker_setup.sh` also applies
+profile-guided optimization (PGO) — it profiles the solver on the instances in
+`res/profiler-instances/` and rebuilds with that profile, which measured ~14%
+faster on top of mimalloc. The manual build below is PGO-free for simplicity.
 
 To build manually on any system that already has the dependencies:
 
